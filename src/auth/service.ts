@@ -114,4 +114,11 @@ export async function logoutSession(
   await repository.deleteSessionByTokenHash(hashSessionToken(sessionToken));
 }
 
+export async function cleanupExpiredSessions(
+  repository: AuthRepository,
+  now = new Date(),
+): Promise<void> {
+  await repository.deleteExpiredSessions(now);
+}
+
 export type { LoginInput };

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AuthRepository, CreateUserInput } from "@/auth/repository";
 import {
+  cleanupExpiredSessions,
   getUserForSessionToken,
   loginWithPassword,
   logoutSession,
@@ -14,6 +15,7 @@ class FakeAuthRepository implements AuthRepository {
   users = new Map<string, { user: AuthUser; passwordHash: string }>();
   sessions = new Map<string, AuthSessionRecord>();
   deletedSessionHashes: string[] = [];
+  cleanupDates: Date[] = [];
 
   async findUserWithPasswordByEmail(email: string) {
     return this.users.get(email) ?? null;
@@ -63,8 +65,8 @@ class FakeAuthRepository implements AuthRepository {
     this.sessions.delete(sessionTokenHash);
   }
 
-  async deleteExpiredSessions() {
-    return undefined;
+  async deleteExpiredSessions(now: Date) {
+    this.cleanupDates.push(now);
   }
 }
 
@@ -166,5 +168,14 @@ describe("auth service", () => {
     expect(repository.deletedSessionHashes).toEqual([
       hashSessionToken("raw-session-token"),
     ]);
+  });
+
+  it("delegates expired session cleanup to the repository", async () => {
+    const repository = new FakeAuthRepository();
+    const now = new Date("2026-05-19T07:00:00.000Z");
+
+    await cleanupExpiredSessions(repository, now);
+
+    expect(repository.cleanupDates).toEqual([now]);
   });
 });

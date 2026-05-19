@@ -42,8 +42,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   guard.
 - `src/auth/password.ts`: Argon2id password hash and verify functions.
 - `src/auth/repository.ts`: auth persistence interface used by service logic.
-- `src/auth/service.ts`: registration, login, current-session, and logout use
-  cases.
+- `src/auth/service.ts`: registration, login, current-session, logout, and
+  expired-session cleanup use cases.
 - `src/auth/session.ts`: raw session token generation, hashing, and expiry
   helpers.
 - `src/auth/session-cookie.ts`: secure session cookie options.
@@ -104,8 +104,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `scripts/check-docs.mjs`: checks required public docs exist and avoids
   disallowed process-origin wording.
 - `tests/unit`: unit tests for domain, provider registry, and security helpers.
-- `tests/unit/auth-service.test.ts`: verifies registration, login, session, and
-  logout use cases.
+- `tests/unit/auth-service.test.ts`: verifies registration, login, session,
+  logout, and expired-session cleanup use cases.
 - `tests/unit/auth-validation.test.ts`: verifies email normalization and
   password input validation.
 - `tests/unit/encryption.test.ts`: verifies secret envelope encryption.
