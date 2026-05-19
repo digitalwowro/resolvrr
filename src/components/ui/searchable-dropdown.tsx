@@ -148,96 +148,147 @@ export function SearchableDropdown({
   }
 
   return (
-    <div className={cn("relative inline-block", className)} ref={rootRef}>
+    <div className={cn("inline-block", className)} ref={rootRef}>
       {label ? (
         <span className="mb-1 block font-medium text-slate-800">
           {label}
         </span>
       ) : null}
-      <button
-        aria-label={ariaLabel ?? label}
-        aria-controls={`${id}-listbox`}
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        className={cn(dropdownTriggerClass, triggerClassName)}
-        disabled={disabled}
-        onClick={() => (open ? close() : openMenu())}
-        role="combobox"
-        type="button"
-      >
-        <span className="flex min-w-0 items-center gap-2 truncate">
-          {selected?.icon}
-          <span className={selected ? "truncate" : "truncate text-slate-500"}>
-            {selected?.label ?? placeholder}
-          </span>
-        </span>
-        <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
-      </button>
-      {open ? (
-        <div className={dropdownMenuClass}>
-          <label className="flex h-8 min-w-full items-center gap-2 rounded-md px-2 text-slate-600">
-            <Search aria-hidden="true" className="size-4 shrink-0" />
-            <input
-              ref={inputRef}
-              aria-activedescendant={
-                highlightedIndex >= 0
-                  ? `${id}-option-${visibleOptions[highlightedIndex]?.optionIndex}`
-                  : undefined
-              }
-              aria-controls={`${id}-listbox`}
-              aria-expanded={open}
-              className="w-0 min-w-0 flex-1 bg-transparent text-slate-900 outline-none placeholder:text-slate-400"
-              onChange={(event) => {
-                const nextQuery = event.currentTarget.value;
-                const nextOptions = visibleOptionsFor(options, nextQuery);
-                setQuery(nextQuery);
-                setHighlightedIndex(initialHighlightIndex(nextOptions, value));
-              }}
-              onKeyDown={handleInputKeyDown}
-              placeholder={searchPlaceholder}
-              role="combobox"
-              type="text"
-              value={query}
-            />
-          </label>
-          <div className="mt-1" id={`${id}-listbox`} role="listbox">
-            {visibleOptions.length > 0 ? (
-              visibleOptions.map((option, index) => {
-                const highlighted = index === highlightedIndex;
-                const selectedOption = option.value === value;
-
-                return (
-                  <button
-                    aria-disabled={option.disabled || undefined}
-                    aria-selected={selectedOption}
-                    className={cn(
-                      dropdownOptionClass,
-                      dropdownOptionStateClass.idle,
-                      highlighted && dropdownOptionStateClass.highlighted,
-                      selectedOption && dropdownOptionStateClass.selected,
-                      option.disabled && dropdownOptionStateClass.disabled,
-                    )}
-                    disabled={option.disabled}
-                    id={`${id}-option-${option.optionIndex}`}
-                    key={option.value}
-                    onClick={() => selectVisibleOption(index)}
-                    role="option"
-                    type="button"
-                  >
-                    {option.icon}
-                    <span className="min-w-0 flex-1 truncate">{option.label}</span>
-                    {selectedOption ? (
-                      <Check aria-hidden="true" className="size-4 shrink-0" />
-                    ) : null}
-                  </button>
-                );
-              })
-            ) : (
-              <p className="px-2 py-1 text-slate-500">{emptyMessage}</p>
+      <div className="relative grid w-max min-w-full max-w-sm">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none invisible col-start-1 row-start-1 grid"
+        >
+          <div
+            className={cn(
+              dropdownTriggerClass,
+              triggerClassName,
+              "col-start-1 row-start-1",
             )}
+          >
+            <span className="flex min-w-0 items-center gap-2 truncate">
+              {selected?.icon}
+              <span className={selected ? "truncate" : "truncate text-slate-500"}>
+                {selected?.label ?? placeholder}
+              </span>
+            </span>
+            <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
           </div>
+          {options.map((option) => (
+            <div
+              className="col-start-1 row-start-1 flex h-0 min-w-full items-center gap-2 overflow-hidden rounded-md px-3 text-left text-sm outline-none"
+              key={option.value}
+            >
+              {option.icon}
+              <span className="min-w-0 flex-1 truncate">{option.label}</span>
+              <Check aria-hidden="true" className="size-4 shrink-0" />
+            </div>
+          ))}
         </div>
-      ) : null}
+        <button
+          aria-hidden={open || undefined}
+          aria-label={ariaLabel ?? label}
+          aria-controls={`${id}-listbox`}
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          className={cn(
+            dropdownTriggerClass,
+            triggerClassName,
+            "col-start-1 row-start-1 w-full",
+            open && "pointer-events-none opacity-0",
+          )}
+          disabled={disabled}
+          onClick={() => (open ? close() : openMenu())}
+          role="combobox"
+          tabIndex={open ? -1 : undefined}
+          type="button"
+        >
+          <span className="flex min-w-0 items-center gap-2 truncate">
+            {selected?.icon}
+            <span className={selected ? "truncate" : "truncate text-slate-500"}>
+              {selected?.label ?? placeholder}
+            </span>
+          </span>
+          <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+        </button>
+        {open ? (
+          <>
+            <label
+              className={cn(
+                dropdownTriggerClass,
+                triggerClassName,
+                "absolute left-0 top-0 z-50 w-full",
+              )}
+            >
+              <Search aria-hidden="true" className="size-4 shrink-0 text-slate-600" />
+              <input
+                ref={inputRef}
+                aria-activedescendant={
+                  highlightedIndex >= 0
+                    ? `${id}-option-${visibleOptions[highlightedIndex]?.optionIndex}`
+                    : undefined
+                }
+                aria-controls={`${id}-listbox`}
+                aria-expanded={open}
+                aria-label={ariaLabel ?? label}
+                className="min-w-0 flex-1 bg-transparent text-slate-900 outline-none placeholder:text-slate-400"
+                onChange={(event) => {
+                  const nextQuery = event.currentTarget.value;
+                  const nextOptions = visibleOptionsFor(options, nextQuery);
+                  setQuery(nextQuery);
+                  setHighlightedIndex(initialHighlightIndex(nextOptions, value));
+                }}
+                onKeyDown={handleInputKeyDown}
+                placeholder={searchPlaceholder}
+                role="combobox"
+                type="text"
+                value={query}
+              />
+              <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+            </label>
+            <div
+              className={cn(dropdownMenuClass, "left-0 top-full w-full")}
+              id={`${id}-listbox`}
+              role="listbox"
+            >
+              {visibleOptions.length > 0 ? (
+                visibleOptions.map((option, index) => {
+                  const highlighted = index === highlightedIndex;
+                  const selectedOption = option.value === value;
+
+                  return (
+                    <button
+                      aria-disabled={option.disabled || undefined}
+                      aria-selected={selectedOption}
+                      className={cn(
+                        dropdownOptionClass,
+                        dropdownOptionStateClass.idle,
+                        highlighted && dropdownOptionStateClass.highlighted,
+                        selectedOption && dropdownOptionStateClass.selected,
+                        option.disabled && dropdownOptionStateClass.disabled,
+                      )}
+                      disabled={option.disabled}
+                      id={`${id}-option-${option.optionIndex}`}
+                      key={option.value}
+                      onClick={() => selectVisibleOption(index)}
+                      role="option"
+                      type="button"
+                    >
+                      {option.icon}
+                      <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                      {selectedOption ? (
+                        <Check aria-hidden="true" className="size-4 shrink-0" />
+                      ) : null}
+                    </button>
+                  );
+                })
+              ) : (
+                <p className="px-2 py-1 text-slate-500">{emptyMessage}</p>
+              )}
+            </div>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

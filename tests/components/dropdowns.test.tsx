@@ -94,12 +94,27 @@ describe("SearchableDropdown", () => {
 
     await user.click(screen.getByRole("combobox", { name: "Assignee" }));
 
-    expect(screen.getByRole("listbox").parentElement).toHaveClass(
+    const searchInput = screen.getByRole("combobox", { name: "Assignee" });
+    const placeholderTrigger = searchInput.parentElement?.previousElementSibling;
+    expect(placeholderTrigger?.parentElement).toHaveClass(
       "w-max",
       "min-w-full",
       "max-w-sm",
     );
-    expect(screen.getByPlaceholderText("Search")).toHaveClass("w-0", "min-w-0");
+    expect(placeholderTrigger).toHaveClass(
+      "pointer-events-none",
+      "w-full",
+      "opacity-0",
+    );
+    expect(searchInput).toHaveClass("min-w-0");
+    expect(screen.getByRole("listbox")).toHaveClass(
+      "w-max",
+      "min-w-full",
+      "max-w-sm",
+      "top-full",
+    );
+    expect(screen.getByPlaceholderText("Search")).toHaveClass("min-w-0");
+    expect(screen.getByPlaceholderText("Search")).not.toHaveClass("w-0");
   });
 
   it("shows all options on open and focuses the search input", async () => {
