@@ -17,8 +17,10 @@ describe("MenuDropdown and ProfileMenu", () => {
 
     expect(screen.getByRole("menu")).toHaveClass("w-max", "min-w-full", "max-w-sm");
     expect(screen.getByRole("menuitem", { name: "First" })).toHaveClass(
-      "h-8",
+      "h-10",
       "min-w-full",
+      "px-3",
+      "rounded-md",
       "text-sm",
     );
   });

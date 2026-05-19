@@ -188,7 +188,7 @@ export function MenuDropdown({
             if (item.type === "heading") {
               return (
                 <div
-                  className="px-2 py-1 text-xs font-medium uppercase text-slate-500"
+                  className="px-2 py-1 font-medium uppercase text-slate-500"
                   key={item.id}
                 >
                   {item.label}

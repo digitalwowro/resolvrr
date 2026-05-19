@@ -26,7 +26,7 @@ export function TicketTab({
   return (
     <div
       className={cn(
-        "inline-flex h-8 max-w-48 items-center gap-1.5 border px-2 text-sm",
+        "inline-flex h-8 max-w-48 items-center gap-1.5 border px-2",
         active
           ? "border-slate-300 border-b-white bg-white text-slate-950"
           : "border-transparent bg-transparent text-slate-600 hover:bg-slate-100",
@@ -52,7 +52,7 @@ export function TicketTab({
       {onClose ? (
         <button
           aria-label={`Close ${label}`}
-          className="grid size-5 shrink-0 place-items-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+          className="grid size-5 shrink-0 place-items-center rounded-md text-slate-400 hover:bg-slate-200 hover:text-slate-700"
           onClick={onClose}
           type="button"
         >

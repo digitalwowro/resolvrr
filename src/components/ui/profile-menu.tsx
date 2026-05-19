@@ -24,15 +24,15 @@ export function ProfileMenu({
       items={items}
       triggerContent={
         <span className="flex min-w-0 items-center gap-2">
-          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-slate-900 font-semibold text-white">
             {avatarText}
           </span>
           <span className="min-w-0 text-left">
-            <span className="block truncate text-sm font-medium text-slate-800">
+            <span className="block truncate font-medium text-slate-800">
               {displayName}
             </span>
             {subtitle ? (
-              <span className="block truncate text-xs text-slate-500">
+              <span className="block truncate text-slate-500">
                 {subtitle}
               </span>
             ) : null}

@@ -55,8 +55,10 @@ describe("DropdownSelect", () => {
     expect(trigger).not.toHaveClass("min-w-40");
     expect(screen.getByRole("listbox")).toHaveClass("w-max", "min-w-full", "max-w-sm");
     expect(screen.getByRole("option", { name: "Alpha" })).toHaveClass(
-      "h-8",
+      "h-10",
       "min-w-full",
+      "px-3",
+      "rounded-md",
       "text-sm",
     );
   });

@@ -64,10 +64,10 @@ function VerticalTicketTab({
         className={`mt-1 size-3.5 shrink-0 ${stateColor[tab.state]}`}
       />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-slate-950">
+        <span className="block truncate font-semibold text-slate-950">
           {tab.title}
         </span>
-        <span className="mt-0.5 block truncate text-xs text-slate-500">
+        <span className="mt-0.5 block truncate text-slate-500">
           {tab.label.split(" ")[0]} · {tab.customer}
         </span>
       </span>
@@ -84,7 +84,7 @@ export function TicketTabsPanel({
   if (orientation === "vertical") {
     return (
       <aside className="flex w-72 shrink-0 flex-col border-r border-slate-200 bg-slate-50">
-        <div className="flex h-10 shrink-0 items-center border-b border-slate-200 px-3 text-sm font-semibold text-slate-700">
+        <div className="flex h-10 shrink-0 items-center border-b border-slate-200 px-3 font-semibold text-slate-700">
           Open tickets
         </div>
         <div

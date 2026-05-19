@@ -51,7 +51,7 @@ export function TableHeaderCell({
     <th
       aria-sort={sortDirection ?? "none"}
       className={cn(
-        "h-9 border-b border-slate-200 bg-slate-50 px-2 text-left text-sm font-medium text-slate-700",
+        "h-9 border-b border-slate-200 bg-slate-50 px-2 text-left font-medium text-slate-700",
         className,
       )}
       scope="col"
@@ -59,7 +59,7 @@ export function TableHeaderCell({
       <div className="flex h-full items-center gap-1">
         <button
           className={cn(
-            "flex min-w-0 flex-1 items-center gap-1 rounded px-1 text-left",
+            "flex min-w-0 flex-1 items-center gap-1 rounded-md px-1 text-left",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
             sortable ? "hover:bg-slate-100" : "cursor-default",
           )}
@@ -73,7 +73,7 @@ export function TableHeaderCell({
         {resizable ? (
           <button
             aria-label={`Resize ${label} column`}
-            className="grid h-7 w-3 shrink-0 place-items-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            className="grid h-7 w-3 shrink-0 place-items-center rounded-md text-slate-400 hover:bg-slate-200 hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             onKeyDown={handleResizeKeyDown}
             onPointerDown={onResizeStart}
             type="button"

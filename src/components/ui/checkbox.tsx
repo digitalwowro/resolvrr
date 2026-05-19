@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { useEffect, useRef, type InputHTMLAttributes } from "react";
 import { cn } from "./classnames";
 
@@ -31,25 +32,31 @@ export function Checkbox({
   }, [indeterminate]);
 
   return (
-    <label className={cn("flex items-start gap-2 text-sm", className)}>
-      <input
-        ref={inputRef}
-        aria-describedby={[helpId, errorId].filter(Boolean).join(" ") || undefined}
-        aria-invalid={error ? true : undefined}
-        className="mt-0.5 size-4 rounded border-slate-300 text-indigo-600 focus:ring-2 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-50"
-        id={checkboxId}
-        type="checkbox"
-        {...props}
-      />
+    <label className={cn("flex items-start gap-2", className)}>
+      <span className="relative mt-0.5 inline-grid size-5 place-items-center">
+        <input
+          ref={inputRef}
+          aria-describedby={[helpId, errorId].filter(Boolean).join(" ") || undefined}
+          aria-invalid={error ? true : undefined}
+          className="peer size-5 appearance-none rounded-md border-1 border-slate-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+          id={checkboxId}
+          type="checkbox"
+          {...props}
+        />
+        <Check
+          aria-hidden="true"
+          className="pointer-events-none absolute size-3 text-white opacity-0 peer-checked:opacity-100"
+        />
+      </span>
       <span>
         <span className="font-medium text-slate-800">{label}</span>
         {helpText ? (
-          <span className="block text-xs leading-5 text-slate-500" id={helpId}>
+          <span className="block leading-5 text-slate-500" id={helpId}>
             {helpText}
           </span>
         ) : null}
         {error ? (
-          <span className="block text-xs leading-5 text-rose-700" id={errorId}>
+          <span className="block leading-5 text-rose-700" id={errorId}>
             {error}
           </span>
         ) : null}

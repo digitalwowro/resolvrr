@@ -150,7 +150,7 @@ export function SearchableDropdown({
   return (
     <div className={cn("relative inline-block", className)} ref={rootRef}>
       {label ? (
-        <span className="mb-1 block text-sm font-medium text-slate-800">
+        <span className="mb-1 block font-medium text-slate-800">
           {label}
         </span>
       ) : null}
@@ -175,7 +175,7 @@ export function SearchableDropdown({
       </button>
       {open ? (
         <div className={dropdownMenuClass}>
-          <label className="flex h-8 min-w-full items-center gap-2 rounded px-2 text-sm text-slate-600">
+          <label className="flex h-8 min-w-full items-center gap-2 rounded-md px-2 text-slate-600">
             <Search aria-hidden="true" className="size-4 shrink-0" />
             <input
               ref={inputRef}
@@ -186,7 +186,7 @@ export function SearchableDropdown({
               }
               aria-controls={`${id}-listbox`}
               aria-expanded={open}
-              className="w-0 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+              className="w-0 min-w-0 flex-1 bg-transparent text-slate-900 outline-none placeholder:text-slate-400"
               onChange={(event) => {
                 const nextQuery = event.currentTarget.value;
                 const nextOptions = visibleOptionsFor(options, nextQuery);
@@ -233,7 +233,7 @@ export function SearchableDropdown({
                 );
               })
             ) : (
-              <p className="px-2 py-1 text-sm text-slate-500">{emptyMessage}</p>
+              <p className="px-2 py-1 text-slate-500">{emptyMessage}</p>
             )}
           </div>
         </div>

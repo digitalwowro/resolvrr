@@ -25,7 +25,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const classes = cn(
-    "inline-flex h-9 items-center gap-1 rounded-md border px-3 text-sm font-medium",
+    "inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-normal",
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
     "disabled:cursor-not-allowed disabled:opacity-50",
     variantClass[variant],

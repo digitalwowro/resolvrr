@@ -81,11 +81,11 @@ export function WorkspaceHeader({
           />
         ) : null}
       </div>
-      <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500 focus-within:border-indigo-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-100">
+      <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-slate-500 focus-within:border-indigo-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-100">
         <Search aria-hidden="true" className="size-4 shrink-0" />
         <span className="sr-only">Search workspace</span>
         <input
-          className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+          className="min-w-0 flex-1 bg-transparent text-slate-900 outline-none placeholder:text-slate-400"
           onChange={(event) => setQuery(event.currentTarget.value)}
           placeholder="Search tickets, customers, owners"
           type="search"
@@ -99,7 +99,7 @@ export function WorkspaceHeader({
         showChevron={false}
         triggerClassName="inline-grid size-10 place-items-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
         triggerContent={
-          <span className="grid size-10 place-items-center rounded-full bg-indigo-600 text-sm font-semibold text-white">
+          <span className="grid size-10 place-items-center rounded-full bg-indigo-600 font-semibold text-white">
             {userEmail.slice(0, 2).toUpperCase()}
           </span>
         }

@@ -16,7 +16,7 @@ export function LoadingState({
     <div
       aria-label={label}
       className={cn(
-        "flex items-center gap-2 text-sm text-slate-600",
+        "flex items-center gap-2 text-slate-600",
         compact ? "py-1" : "py-3",
         className,
       )}

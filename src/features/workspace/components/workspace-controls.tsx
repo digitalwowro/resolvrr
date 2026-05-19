@@ -61,14 +61,13 @@ export function WorkspaceControls({
       <div className="flex flex-wrap items-center gap-2">
         <Checkbox
           checked={allSelected}
-          className="items-center [&>span]:sr-only"
+          className="items-center [&>span:last-child]:sr-only"
           indeterminate={partiallySelected}
           label="Select all tickets"
           name="workspace-select-all"
           onChange={onSelectAll}
         />
         <Button
-          className="h-8 px-2 text-xs"
           icon={<RefreshCw aria-hidden="true" className="size-3.5" />}
           onClick={onRefresh}
           type="button"
@@ -82,7 +81,6 @@ export function WorkspaceControls({
             { id: "pending", label: "Set pending", onSelect: () => undefined },
             { id: "close", label: "Close", onSelect: () => undefined },
           ]}
-          triggerClassName="h-8 px-2 text-xs"
           triggerContent={
             <span className="flex items-center gap-1.5">
               <MoreHorizontal aria-hidden="true" className="size-3.5" />
@@ -98,7 +96,6 @@ export function WorkspaceControls({
           onValueChange={onSavedViewChange}
           options={savedViewOptions}
           searchPlaceholder="Find view"
-          triggerClassName="h-8 px-2 text-xs"
           value={selectedSavedViewId}
         />
         <DropdownSelect
@@ -107,12 +104,10 @@ export function WorkspaceControls({
             onTabOrientationChange(value as StaticTabOrientation)
           }
           options={orientationOptions}
-          triggerClassName="h-8 px-2 text-xs"
           value={tabOrientation}
         />
         <MenuDropdown
           items={columnItems}
-          triggerClassName="h-8 px-2 text-xs"
           triggerContent={
             <span className="flex items-center gap-1.5">
               <Columns3 aria-hidden="true" className="size-3.5" />

@@ -24,7 +24,7 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center rounded border px-2 text-xs font-medium",
+        "inline-flex h-6 items-center rounded-md border px-2 font-medium",
         toneClass[tone],
         className,
       )}
