@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -29,6 +29,7 @@ export type MenuDropdownItem =
       id: string;
       label: string;
       icon?: ReactNode;
+      selected?: boolean;
       disabled?: boolean;
       destructive?: boolean;
       onSelect(): void;
@@ -50,6 +51,7 @@ type MenuDropdownProps = {
   align?: "start" | "end";
   className?: string;
   triggerClassName?: string;
+  menuClassName?: string;
   showChevron?: boolean;
   unstyledTrigger?: boolean;
 };
@@ -61,6 +63,7 @@ export function MenuDropdown({
   align = "start",
   className,
   triggerClassName,
+  menuClassName,
   showChevron = true,
   unstyledTrigger = false,
 }: MenuDropdownProps) {
@@ -181,8 +184,10 @@ export function MenuDropdown({
       }
       className={cn(
         dropdownMenuClass,
-        !unstyledTrigger && "left-0 top-full w-full",
-        align === "end" && "right-0",
+        menuClassName,
+        "top-full",
+        !unstyledTrigger && "w-full",
+        align === "end" ? "right-0" : "left-0",
       )}
       id={`${id}-menu`}
       onKeyDown={handleMenuKeyDown}
@@ -206,13 +211,15 @@ export function MenuDropdown({
         }
 
         const highlighted = index === highlightedIndex;
+        const selected = item.selected;
         return (
           <button
             aria-disabled={item.disabled || undefined}
             className={cn(
               dropdownOptionClass,
-              dropdownOptionStateClass.idle,
-              highlighted && dropdownOptionStateClass.highlighted,
+              !selected && dropdownOptionStateClass.idle,
+              selected && dropdownOptionStateClass.selected,
+              highlighted && !selected && dropdownOptionStateClass.highlighted,
               item.disabled && dropdownOptionStateClass.disabled,
               item.destructive && !item.disabled && "text-rose-700",
             )}
@@ -226,6 +233,7 @@ export function MenuDropdown({
           >
             {item.icon}
             <span className="min-w-0 flex-1 truncate">{item.label}</span>
+            {selected ? <Check aria-hidden="true" className="size-4 shrink-0" /> : null}
           </button>
         );
       })}
@@ -246,7 +254,10 @@ export function MenuDropdown({
       <div className="relative grid w-max min-w-full max-w-sm">
         <div
           aria-hidden="true"
-          className="pointer-events-none invisible col-start-1 row-start-1 grid"
+          className={cn(
+            "pointer-events-none invisible col-start-1 row-start-1 grid text-sm",
+            menuClassName,
+          )}
         >
           <div
             className={cn(
@@ -278,7 +289,7 @@ export function MenuDropdown({
 
             return (
               <div
-                className="col-start-1 row-start-1 flex h-0 min-w-full items-center gap-2 overflow-hidden rounded-md px-2 text-left text-sm outline-none"
+                className="col-start-1 row-start-1 flex h-0 min-w-full items-center gap-2 overflow-hidden rounded-md px-2 text-left outline-none"
                 key={item.id}
               >
                 {item.icon}

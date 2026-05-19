@@ -12,4 +12,10 @@ export { StatusBadge } from "./status-badge";
 export { TableHeaderCell } from "./table-header-cell";
 export type { SortDirection } from "./table-header-cell";
 export { TicketTab } from "./ticket-tab";
+export {
+  ToolbarButton,
+  ToolbarDropdownSelect,
+  ToolbarMenuDropdown,
+  ToolbarSearchableDropdown,
+} from "./toolbar-controls";
 export { Tooltip } from "./tooltip";

@@ -73,6 +73,13 @@ describe("StaticWorkspace", () => {
 
     await user.click(screen.getByRole("button", { name: /open profile menu/i }));
     const menu = screen.getByRole("menu");
+    const selectedWorkspace = within(menu).getByRole("menuitem", {
+      name: "Northwind Support",
+    });
+    expect(selectedWorkspace).toHaveClass("text-indigo-700", "bg-transparent");
+    expect(selectedWorkspace).toContainHTML("lucide-building");
+    expect(selectedWorkspace).toContainHTML("lucide-check");
+
     await user.click(within(menu).getByRole("menuitem", { name: "Contoso Care" }));
 
     expect(

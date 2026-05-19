@@ -33,6 +33,7 @@ type SearchableDropdownProps = {
   ariaLabel?: string;
   className?: string;
   triggerClassName?: string;
+  menuClassName?: string;
 };
 
 type VisibleOption = DropdownOption & {
@@ -75,6 +76,7 @@ export function SearchableDropdown({
   ariaLabel,
   className,
   triggerClassName,
+  menuClassName,
 }: SearchableDropdownProps) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -157,7 +159,10 @@ export function SearchableDropdown({
       <div className="relative grid w-max min-w-full max-w-sm">
         <div
           aria-hidden="true"
-          className="pointer-events-none invisible col-start-1 row-start-1 grid"
+          className={cn(
+            "pointer-events-none invisible col-start-1 row-start-1 grid text-sm",
+            menuClassName,
+          )}
         >
           <div
             className={cn(
@@ -176,7 +181,7 @@ export function SearchableDropdown({
           </div>
           {options.map((option) => (
             <div
-              className="col-start-1 row-start-1 flex h-0 min-w-full items-center gap-2 overflow-hidden rounded-md px-2 text-left text-sm outline-none"
+              className="col-start-1 row-start-1 flex h-0 min-w-full items-center gap-2 overflow-hidden rounded-md px-2 text-left outline-none"
               key={option.value}
             >
               {option.icon}
@@ -247,7 +252,7 @@ export function SearchableDropdown({
               <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
             </label>
             <div
-              className={cn(dropdownMenuClass, "left-0 top-full w-full")}
+              className={cn(dropdownMenuClass, menuClassName, "left-0 top-full w-full")}
               id={`${id}-listbox`}
               role="listbox"
             >

@@ -130,6 +130,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/components/ui/table-header-cell.tsx`: sortable and resizable table header
   affordance primitive.
 - `src/components/ui/ticket-tab.tsx`: open-ticket tab primitive.
+- `src/components/ui/toolbar-controls.tsx`: compact toolbar wrappers over
+  button and dropdown primitives.
 - `src/components/ui/tooltip.tsx`: custom non-interactive tooltip primitive.
 - `src/components/ui/index.ts`: UI primitive exports.
 - `src/components/ui/use-outside-click.ts`: shared outside-click close helper.

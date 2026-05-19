@@ -73,6 +73,7 @@ describe("DropdownSelect", () => {
       "min-w-full",
       "max-w-sm",
       "w-full",
+      "text-sm",
       "shadow-lg",
     );
     expect(screen.getByRole("option", { name: "Alpha" })).toHaveClass(
@@ -80,7 +81,7 @@ describe("DropdownSelect", () => {
       "min-w-full",
       "px-2",
       "rounded-md",
-      "text-sm",
+      "text-slate-800",
     );
   });
 

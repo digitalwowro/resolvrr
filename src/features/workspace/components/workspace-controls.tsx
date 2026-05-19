@@ -2,11 +2,11 @@
 
 import { Check, Columns3, MoreHorizontal, RefreshCw } from "lucide-react";
 import {
-  Button,
   Checkbox,
-  DropdownSelect,
-  MenuDropdown,
-  SearchableDropdown,
+  ToolbarButton,
+  ToolbarDropdownSelect,
+  ToolbarMenuDropdown,
+  ToolbarSearchableDropdown,
   type DropdownOption,
   type MenuDropdownItem,
 } from "@/components/ui";
@@ -57,7 +57,7 @@ export function WorkspaceControls({
   }));
 
   return (
-    <section className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3">
+    <section className="flex h-10 shrink-0 items-center justify-between gap-2 bg-slate-50 px-3">
       <div className="flex flex-wrap items-center gap-2">
         <Checkbox
           checked={allSelected}
@@ -67,22 +67,22 @@ export function WorkspaceControls({
           name="workspace-select-all"
           onChange={onSelectAll}
         />
-        <Button
+        <ToolbarButton
           icon={<RefreshCw aria-hidden="true" className="size-3.5" />}
           onClick={onRefresh}
           type="button"
           variant="secondary"
         >
           Refresh list
-        </Button>
-        <MenuDropdown
+        </ToolbarButton>
+        <ToolbarMenuDropdown
           items={[
             { id: "assign", label: "Assign owner", onSelect: () => undefined },
             { id: "pending", label: "Set pending", onSelect: () => undefined },
             { id: "close", label: "Close", onSelect: () => undefined },
           ]}
           triggerContent={
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1">
               <MoreHorizontal aria-hidden="true" className="size-3.5" />
               Bulk actions
             </span>
@@ -91,14 +91,14 @@ export function WorkspaceControls({
         />
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <SearchableDropdown
+        <ToolbarSearchableDropdown
           ariaLabel="Saved view"
           onValueChange={onSavedViewChange}
           options={savedViewOptions}
           searchPlaceholder="Find view"
           value={selectedSavedViewId}
         />
-        <DropdownSelect
+        <ToolbarDropdownSelect
           ariaLabel="Tab orientation"
           onValueChange={(value) =>
             onTabOrientationChange(value as StaticTabOrientation)
@@ -106,10 +106,10 @@ export function WorkspaceControls({
           options={orientationOptions}
           value={tabOrientation}
         />
-        <MenuDropdown
+        <ToolbarMenuDropdown
           items={columnItems}
           triggerContent={
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1">
               <Columns3 aria-hidden="true" className="size-3.5" />
               Columns
             </span>

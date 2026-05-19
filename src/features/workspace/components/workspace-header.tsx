@@ -2,7 +2,6 @@
 
 import {
   Building2,
-  Check,
   Cpu,
   Keyboard,
   Search,
@@ -41,18 +40,11 @@ export function WorkspaceHeader({
   );
 
   const items: MenuDropdownItem[] = [
-    { type: "heading", id: "user-heading", label: userEmail },
-    { type: "separator", id: "user-separator" },
-    { type: "heading", id: "workspace-heading", label: "Workspaces" },
     ...workspaces.map<MenuDropdownItem>((workspace) => ({
       id: `workspace-${workspace.id}`,
       label: workspace.label,
-      icon:
-        workspace.id === selectedWorkspaceId ? (
-          <Check aria-hidden="true" className="size-4" />
-        ) : (
-          <Building2 aria-hidden="true" className="size-4" />
-        ),
+      icon: <Building2 aria-hidden="true" className="size-4" />,
+      selected: workspace.id === selectedWorkspaceId,
       onSelect: () => onWorkspaceChange(workspace.id),
     })),
     { type: "separator", id: "profile-separator" },

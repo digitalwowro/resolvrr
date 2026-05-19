@@ -15,13 +15,49 @@ describe("MenuDropdown and ProfileMenu", () => {
 
     await user.click(screen.getByRole("button", { name: "Actions" }));
 
-    expect(screen.getByRole("menu")).toHaveClass("w-max", "min-w-full", "max-w-sm");
-    expect(screen.getByRole("menuitem", { name: "First" })).toHaveClass(
-      "h-10",
+    expect(screen.getByRole("menu")).toHaveClass(
+      "w-max",
       "min-w-full",
-      "px-3",
-      "rounded-md",
+      "max-w-sm",
       "text-sm",
+    );
+    expect(screen.getByRole("menuitem", { name: "First" })).toHaveClass(
+      "h-8",
+      "min-w-full",
+      "px-2",
+      "rounded-md",
+      "text-slate-800",
+    );
+  });
+
+  it("renders selected menu items like selected dropdown options", async () => {
+    const user = userEvent.setup();
+    render(
+      <MenuDropdown
+        items={[
+          { id: "selected", label: "Selected", selected: true, onSelect: vi.fn() },
+          { id: "other", label: "Other", onSelect: vi.fn() },
+        ]}
+        triggerLabel="Actions"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Actions" }));
+
+    expect(screen.getByRole("menuitem", { name: "Selected" })).toHaveClass(
+      "text-indigo-700",
+      "bg-transparent",
+      "hover:bg-transparent",
+    );
+    expect(screen.getByRole("menuitem", { name: "Selected" })).toContainHTML(
+      "lucide-check",
+    );
+    expect(screen.getByRole("menuitem", { name: "Other" })).toHaveClass(
+      "text-slate-800",
+      "hover:bg-indigo-50",
+    );
+    expect(screen.getByRole("menuitem", { name: "Other" })).not.toContainHTML(
+      "lucide-check",
     );
   });
 
@@ -59,7 +95,19 @@ describe("MenuDropdown and ProfileMenu", () => {
 
     await user.click(screen.getByRole("button", { name: /open profile menu/i }));
 
-    expect(screen.getByText("Demo User")).toBeInTheDocument();
+    expect(screen.getAllByText("Demo User").length).toBeGreaterThan(0);
+    expect(screen.getByRole("menu")).toHaveClass(
+      "top-full",
+      "w-max",
+      "min-w-full",
+      "max-w-sm",
+      "text-sm",
+    );
+    expect(screen.getByRole("menuitem", { name: "Profile" })).toHaveClass(
+      "h-8",
+      "px-2",
+      "text-indigo-700",
+    );
     expect(screen.getByRole("menuitem", { name: "Profile" })).toBeInTheDocument();
   });
 

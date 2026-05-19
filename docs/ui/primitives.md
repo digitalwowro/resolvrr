@@ -16,6 +16,8 @@ inline.
 - `ProfileMenu`: generic profile-style menu trigger and menu composition.
 - `TicketTab`: single open-ticket tab control with active, unread, dirty,
   loading, and close affordances.
+- `ToolbarButton`, `ToolbarDropdownSelect`, `ToolbarSearchableDropdown`, and
+  `ToolbarMenuDropdown`: compact toolbar wrappers over the base primitives.
 - `TableHeaderCell`: sortable and resizable table header affordance.
 - `Spinner` and `LoadingState`: compact loading indicators.
 - `StatusBadge`: compact provider-neutral state badge.
@@ -46,6 +48,10 @@ Both searchable and non-searchable dropdowns share the same visual system:
 - same natural width behavior;
 - same outside-click close behavior.
 
+Dropdown children inherit the menu font size. Base dropdown menus use `text-sm`;
+toolbar dropdown wrappers pass their compact `text-xs` size to the menu so rows
+match the toolbar trigger.
+
 Width is content-driven by default. Triggers do not set a default minimum width.
 Menus use natural content width, stay at least as wide as the trigger, and use a
 standard Tailwind maximum width only as an overflow guard. The searchable input
@@ -56,6 +62,15 @@ the shared dropdown behavior and menu rhythm.
 
 Menus reuse the same row rhythm where possible, but may include headings,
 separators, and actions because they are menus rather than selects.
+
+## Toolbar Controls
+
+Toolbar wrappers compose the base button and dropdown primitives for dense
+toolbar rows. They apply compact trigger/button sizing: `h-6`, `px-2`,
+`text-xs`, `gap-1`, and normal font weight. Toolbar dropdown wrappers also pass
+`text-xs` to their menus so option rows inherit the same font size. They do not
+change base primitive defaults, dropdown option rhythm, width behavior,
+keyboard behavior, or outside-click behavior.
 
 ## Keyboard Behavior
 
