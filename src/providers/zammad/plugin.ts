@@ -52,7 +52,6 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
       key: zammadBasicAuthScheme,
       label: "Basic Auth",
       fields: [
-        { name: "baseUrl", label: "Base URL", type: "url", required: true },
         { name: "username", label: "Username", type: "text", required: true },
         {
           name: "password",

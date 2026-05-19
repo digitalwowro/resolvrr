@@ -3,6 +3,7 @@ import {
   buildBasicAuthHeader,
   normalizeZammadBaseUrl,
 } from "@/providers/zammad/credentials";
+import { zammadProviderPlugin } from "@/providers/zammad";
 
 describe("Zammad Basic Auth credentials", () => {
   it("normalizes base URLs without path slashes, search, or hash", () => {
@@ -15,5 +16,16 @@ describe("Zammad Basic Auth credentials", () => {
     expect(
       buildBasicAuthHeader({ username: "agent", password: "secret" }),
     ).toBe("Basic YWdlbnQ6c2VjcmV0");
+  });
+
+  it("keeps base URL on the helpdesk connection, not the credential payload", () => {
+    const basicAuth = zammadProviderPlugin.credentialSchemes.find(
+      (scheme) => scheme.key === "basic-auth",
+    );
+
+    expect(basicAuth?.fields.map((field) => field.name)).toEqual([
+      "username",
+      "password",
+    ]);
   });
 });

@@ -50,7 +50,7 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/providers/registry.ts`: provider-neutral registry factory.
 - `src/providers/index.ts`: registry exports.
 - `src/providers/zammad`: first provider plugin implementation; provider-specific
-  details stay in this folder and provider-specific tests/fixtures.
+  details stay in this folder and provider-specific tests.
 - `src/providers/zammad/credentials.ts`: provider-specific Basic Auth credential
   parsing and header construction.
 - `src/providers/zammad/errors.ts`: provider HTTP status classification.
@@ -94,7 +94,6 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/providers`: provider-specific tests.
 - `tests/providers/zammad/credentials.test.ts`: verifies provider-specific Basic
   Auth credential helpers.
-- `tests/fixtures`: synthetic fixtures only; no production customer data.
 - `docs/architecture`: public architecture and boundary docs.
 - `docs/architecture/overview.md`: core product and architecture boundaries.
 - `docs/architecture/provider-plugins.md`: provider plugin ownership and
