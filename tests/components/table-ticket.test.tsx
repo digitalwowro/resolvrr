@@ -1,0 +1,63 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
+import { TableHeaderCell, TicketTab } from "@/components/ui";
+
+describe("TicketTab", () => {
+  it("selects and closes through separate keyboard-accessible controls", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <TicketTab
+        active
+        dirty
+        label="Ticket 101"
+        onClose={onClose}
+        onSelect={onSelect}
+        unread
+      />,
+    );
+
+    await user.click(screen.getByRole("tab", { name: /ticket 101/i }));
+    await user.click(screen.getByRole("button", { name: "Close Ticket 101" }));
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("TableHeaderCell", () => {
+  it("calls sort and keyboard resize callbacks only", async () => {
+    const user = userEvent.setup();
+    const onSort = vi.fn();
+    const onResizeStep = vi.fn();
+    const onResizeStart = vi.fn();
+    render(
+      <table>
+        <thead>
+          <tr>
+            <TableHeaderCell
+              label="Updated"
+              onResizeStart={onResizeStart}
+              onResizeStep={onResizeStep}
+              onSort={onSort}
+              sortDirection="ascending"
+            />
+          </tr>
+        </thead>
+      </table>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Updated" }));
+    const resize = screen.getByRole("button", { name: "Resize Updated column" });
+    resize.focus();
+    await user.keyboard("{ArrowRight}{Shift>}{ArrowLeft}{/Shift}");
+    fireEvent.pointerDown(resize);
+
+    expect(onSort).toHaveBeenCalledTimes(1);
+    expect(onResizeStep).toHaveBeenNthCalledWith(1, 8);
+    expect(onResizeStep).toHaveBeenNthCalledWith(2, -24);
+    expect(onResizeStart).toHaveBeenCalledTimes(1);
+  });
+});
