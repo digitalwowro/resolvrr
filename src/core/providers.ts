@@ -1,0 +1,108 @@
+import type { HelpdeskConnection } from "./helpdesk-connections";
+import type { SavedViewFilter } from "./saved-views";
+import type { TicketDetail, TicketListItem, TicketUpdateInput } from "./tickets";
+
+export type ProviderCapability =
+  | "ticket:list"
+  | "ticket:count"
+  | "ticket:detail"
+  | "ticket:update-owner"
+  | "ticket:update-state"
+  | "ticket:update-priority"
+  | "ticket:update-group"
+  | "ticket:tags"
+  | "ticket:links"
+  | "ticket:subscription"
+  | "lookup:assignable-users"
+  | "lookup:groups"
+  | "search:full-text";
+
+export type ProviderErrorKind =
+  | "credential-auth-failure"
+  | "permission-denied"
+  | "rate-limited"
+  | "temporary-provider-failure"
+  | "unsupported-capability"
+  | "validation-failure"
+  | "provider-data-mismatch";
+
+export class ProviderError extends Error {
+  readonly kind: ProviderErrorKind;
+  readonly retryable: boolean;
+
+  constructor(kind: ProviderErrorKind, message: string, retryable = false) {
+    super(message);
+    this.name = "ProviderError";
+    this.kind = kind;
+    this.retryable = retryable;
+  }
+}
+
+export type ProviderCredentialField = {
+  name: string;
+  label: string;
+  type: "text" | "password" | "url";
+  required: boolean;
+};
+
+export type ProviderCredentialScheme = {
+  key: string;
+  label: string;
+  fields: ProviderCredentialField[];
+};
+
+export type ProviderConnectionInput = {
+  baseUrl: string;
+  credentialScheme: string;
+  credentialPayload: unknown;
+};
+
+export type ProviderContext = {
+  connection: HelpdeskConnection;
+  credentialScheme: string;
+  credentialPayload: unknown;
+};
+
+export type TicketListQuery = {
+  filter: SavedViewFilter;
+  cursor?: string;
+  limit: number;
+};
+
+export type TicketListResult = {
+  tickets: TicketListItem[];
+  nextCursor?: string;
+  measuredAt: Date;
+};
+
+export type ProviderLookupOption = {
+  externalId: string;
+  label: string;
+};
+
+export type HelpdeskProviderPlugin = {
+  key: string;
+  label: string;
+  capabilities: ProviderCapability[];
+  credentialSchemes: ProviderCredentialScheme[];
+  validateConnection(input: ProviderConnectionInput): Promise<void>;
+  listTickets(
+    context: ProviderContext,
+    query: TicketListQuery,
+  ): Promise<TicketListResult>;
+  countTickets?(
+    context: ProviderContext,
+    filter: SavedViewFilter,
+  ): Promise<number>;
+  getTicketDetail(
+    context: ProviderContext,
+    ticketExternalId: string,
+  ): Promise<TicketDetail>;
+  updateTicketFields(
+    context: ProviderContext,
+    ticketExternalId: string,
+    input: TicketUpdateInput,
+  ): Promise<TicketDetail>;
+  listAssignableUsers?(context: ProviderContext): Promise<ProviderLookupOption[]>;
+  listGroups?(context: ProviderContext): Promise<ProviderLookupOption[]>;
+};

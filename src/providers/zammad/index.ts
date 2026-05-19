@@ -1,0 +1,1 @@
+export { zammadProviderPlugin } from "./plugin";

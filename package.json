@@ -1,0 +1,54 @@
+{
+  "name": "resolvrr",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "overrides": {
+    "@hono/node-server": "1.19.14",
+    "postcss": "8.5.14"
+  },
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0 --port 3005",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0 --port ${PORT:-3005}",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "db:compose:config": "docker compose -p resolvrr config --quiet",
+    "docs:check": "node scripts/check-docs.mjs",
+    "cache:clear": "node scripts/cache-clear.mjs",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "2.0.2",
+    "@prisma/adapter-pg": "7.8.0",
+    "@prisma/client": "7.8.0",
+    "dotenv": "17.2.3",
+    "lucide-react": "1.16.0",
+    "next": "16.2.6",
+    "pg": "8.21.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "sanitize-html": "2.17.4",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.4",
+    "@tailwindcss/postcss": "4.3.0",
+    "@types/node": "24.12.4",
+    "@types/pg": "8.20.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@types/sanitize-html": "2.16.1",
+    "@vitest/coverage-v8": "4.1.6",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.2.6",
+    "prisma": "7.8.0",
+    "tailwindcss": "4.3.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.59.4",
+    "vitest": "4.1.6"
+  }
+}

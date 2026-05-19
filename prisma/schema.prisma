@@ -1,0 +1,234 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum HelpdeskConnectionStatus {
+  ACTIVE
+  DISCONNECTED
+  AUTH_FAILED
+}
+
+enum SavedViewVisibility {
+  PERSONAL
+  SHARED
+}
+
+enum TicketState {
+  NEW
+  OPEN
+  PENDING_REMINDER
+  PENDING_CLOSE
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id                       String                    @id @default(cuid())
+  email                    String                    @unique
+  displayName              String?
+  role                     UserRole                  @default(USER)
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  passwordLogin            PasswordLogin?
+  sessions                 Session[]
+  helpdeskConnections      HelpdeskConnection[]
+  savedViews               SavedView[]
+  savedViewPreferences     UserSavedViewPreference[]
+  ticketSnapshotCaches     TicketSnapshotCache[]
+  threadSnapshotCaches     ThreadSnapshotCache[]
+  uiPreferences            UiPreference[]
+  providerMutationLogs     ProviderMutationLog[]
+}
+
+model PasswordLogin {
+  userId       String   @id
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id               String   @id @default(cuid())
+  userId           String
+  sessionTokenHash String   @unique
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model HelpdeskConnection {
+  id                   String                    @id @default(cuid())
+  userId               String
+  providerKey          String
+  displayName          String
+  baseUrl              String
+  status               HelpdeskConnectionStatus  @default(ACTIVE)
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  user                 User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentials          ProviderCredential[]
+  savedViews           SavedView[]
+  ticketSnapshotCaches TicketSnapshotCache[]
+  threadSnapshotCaches ThreadSnapshotCache[]
+  uiPreferences        UiPreference[]
+  providerMutationLogs ProviderMutationLog[]
+
+  @@index([userId])
+  @@index([providerKey])
+}
+
+model ProviderCredential {
+  id                   String             @id @default(cuid())
+  helpdeskConnectionId String
+  scheme               String
+  encryptedPayload     String
+  keyVersion           String             @default("v1")
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  helpdeskConnection   HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([helpdeskConnectionId, scheme])
+}
+
+model SavedView {
+  id                   String                     @id @default(cuid())
+  ownerUserId          String
+  helpdeskConnectionId String?
+  name                 String
+  visibility           SavedViewVisibility        @default(PERSONAL)
+  iconName             String?
+  colorName            String?
+  filterJson           Json
+  isSystem             Boolean                    @default(false)
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  owner                User                       @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  helpdeskConnection   HelpdeskConnection?        @relation(fields: [helpdeskConnectionId], references: [id], onDelete: SetNull)
+  preferences          UserSavedViewPreference[]
+  ticketSnapshotCaches TicketSnapshotCache[]
+
+  @@index([ownerUserId])
+  @@index([helpdeskConnectionId])
+  @@index([visibility])
+}
+
+model UserSavedViewPreference {
+  userId      String
+  savedViewId String
+  position    Int
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  savedView   SavedView @relation(fields: [savedViewId], references: [id], onDelete: Cascade)
+
+  @@id([userId, savedViewId])
+  @@index([userId, position])
+}
+
+model TicketSnapshotCache {
+  id                   String             @id @default(cuid())
+  userId               String
+  helpdeskConnectionId String
+  sourceSavedViewId    String?
+  providerTicketId     String
+  ticketNumber         String
+  title                String
+  customerDisplayName  String?
+  customerExternalId   String?
+  ownerDisplayName     String?
+  ownerExternalId      String?
+  groupDisplayName     String?
+  groupExternalId      String?
+  state                TicketState?
+  priority             TicketPriority?
+  pendingUntil         DateTime?
+  providerUpdatedAt    DateTime?
+  tagNamesJson         Json
+  capabilityJson       Json?
+  fetchedAt            DateTime           @default(now())
+  expiresAt            DateTime
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpdeskConnection   HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+  sourceSavedView      SavedView?         @relation(fields: [sourceSavedViewId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, helpdeskConnectionId, providerTicketId])
+  @@index([helpdeskConnectionId, expiresAt])
+  @@index([sourceSavedViewId])
+}
+
+model ThreadSnapshotCache {
+  id                        String             @id @default(cuid())
+  userId                    String
+  helpdeskConnectionId      String
+  providerTicketId          String
+  messageMetadataJson       Json
+  encryptedSanitizedContent String?
+  fetchedAt                 DateTime           @default(now())
+  expiresAt                 DateTime
+  user                      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpdeskConnection        HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, helpdeskConnectionId, providerTicketId])
+  @@index([helpdeskConnectionId, expiresAt])
+}
+
+model UiPreference {
+  id                   String              @id @default(cuid())
+  userId               String
+  helpdeskConnectionId String?
+  key                  String
+  valueJson            Json
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpdeskConnection   HelpdeskConnection? @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, helpdeskConnectionId, key])
+  @@index([userId])
+}
+
+model ProviderMutationLog {
+  id                   String              @id @default(cuid())
+  userId               String
+  helpdeskConnectionId String
+  providerKey          String
+  providerTicketId     String?
+  capability           String
+  status               String
+  errorKind            String?
+  durationMs           Int?
+  createdAt            DateTime            @default(now())
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpdeskConnection   HelpdeskConnection  @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([helpdeskConnectionId, createdAt])
+}
+
+model AppPolicy {
+  key       String   @id
+  valueJson Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

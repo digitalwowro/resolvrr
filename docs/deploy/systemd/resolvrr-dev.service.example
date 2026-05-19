@@ -1,0 +1,15 @@
+[Unit]
+Description=Resolvrr dev server
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/resolvrr/resolvrr
+Environment=NODE_ENV=development
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/local/bin/npm run dev
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target
