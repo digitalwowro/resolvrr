@@ -45,6 +45,22 @@ function SearchableHarness({ onChange = vi.fn() }: { onChange?: (value: string) 
 }
 
 describe("DropdownSelect", () => {
+  it("uses content-driven trigger and menu width classes", async () => {
+    const user = userEvent.setup();
+    render(<DropdownHarness />);
+
+    const trigger = screen.getByRole("combobox", { name: "Queue" });
+    await user.click(trigger);
+
+    expect(trigger).not.toHaveClass("min-w-40");
+    expect(screen.getByRole("listbox")).toHaveClass("w-max", "min-w-full", "max-w-sm");
+    expect(screen.getByRole("option", { name: "Alpha" })).toHaveClass(
+      "h-8",
+      "min-w-full",
+      "text-sm",
+    );
+  });
+
   it("opens with the keyboard and selects the highlighted option", async () => {
     const user = userEvent.setup();
     render(<DropdownHarness />);
@@ -70,6 +86,20 @@ describe("DropdownSelect", () => {
 });
 
 describe("SearchableDropdown", () => {
+  it("keeps the open search input from controlling menu width", async () => {
+    const user = userEvent.setup();
+    render(<SearchableHarness />);
+
+    await user.click(screen.getByRole("combobox", { name: "Assignee" }));
+
+    expect(screen.getByRole("listbox").parentElement).toHaveClass(
+      "w-max",
+      "min-w-full",
+      "max-w-sm",
+    );
+    expect(screen.getByPlaceholderText("Search")).toHaveClass("w-0", "min-w-0");
+  });
+
   it("shows all options on open and focuses the search input", async () => {
     const user = userEvent.setup();
     render(<SearchableHarness />);

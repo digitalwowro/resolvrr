@@ -98,6 +98,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/components/ui/dropdown-types.ts`: shared dropdown option type.
 - `src/components/ui/loading-state.tsx`: labeled compact loading state.
 - `src/components/ui/menu-dropdown.tsx`: generic action menu primitive.
+- `src/components/ui/menu-navigation.ts`: shared menu item navigation and
+  typeahead helpers.
 - `src/components/ui/profile-menu.tsx`: generic profile-style menu trigger and
   menu composition.
 - `src/components/ui/searchable-dropdown.tsx`: searchable single-select

@@ -17,6 +17,10 @@ import {
   dropdownOptionStateClass,
   dropdownTriggerClass,
 } from "./dropdown-styles";
+import {
+  nextActionableIndex,
+  typeaheadActionableIndex,
+} from "./menu-navigation";
 import { useOutsideClick } from "./use-outside-click";
 
 export type MenuDropdownItem =
@@ -47,32 +51,6 @@ type MenuDropdownProps = {
   className?: string;
 };
 
-function actionableIndexes(items: MenuDropdownItem[]): number[] {
-  return items
-    .map((item, index) =>
-      (!item.type || item.type === "item") && !item.disabled ? index : -1,
-    )
-    .filter((index) => index >= 0);
-}
-
-function nextActionableIndex(
-  items: MenuDropdownItem[],
-  currentIndex: number,
-  direction: 1 | -1,
-): number {
-  const indexes = actionableIndexes(items);
-  if (indexes.length === 0) {
-    return -1;
-  }
-
-  const position = indexes.indexOf(currentIndex);
-  if (position === -1) {
-    return direction === 1 ? indexes[0] : indexes[indexes.length - 1];
-  }
-
-  return indexes[(position + direction + indexes.length) % indexes.length];
-}
-
 export function MenuDropdown({
   triggerLabel,
   triggerContent,
@@ -84,6 +62,7 @@ export function MenuDropdown({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const typeaheadRef = useRef({ key: "", time: 0 });
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const close = useCallback(() => setOpen(false), []);
@@ -145,6 +124,18 @@ export function MenuDropdown({
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       activate(highlightedIndex);
+      return;
+    }
+
+    if (event.key.length === 1 && !event.metaKey && !event.ctrlKey) {
+      const key = event.key.toLocaleLowerCase();
+      const now = event.timeStamp;
+      const repeated =
+        typeaheadRef.current.key === key && now - typeaheadRef.current.time < 750;
+      typeaheadRef.current = { key, time: now };
+      setHighlightedIndex((current) =>
+        typeaheadActionableIndex(items, current, event.key, repeated),
+      );
     }
   }
 

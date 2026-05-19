@@ -4,6 +4,25 @@ import { describe, expect, it, vi } from "vitest";
 import { MenuDropdown, ProfileMenu, Tooltip } from "@/components/ui";
 
 describe("MenuDropdown and ProfileMenu", () => {
+  it("uses the shared dropdown shell and row rhythm", async () => {
+    const user = userEvent.setup();
+    render(
+      <MenuDropdown
+        items={[{ id: "first", label: "First", onSelect: vi.fn() }]}
+        triggerLabel="Actions"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Actions" }));
+
+    expect(screen.getByRole("menu")).toHaveClass("w-max", "min-w-full", "max-w-sm");
+    expect(screen.getByRole("menuitem", { name: "First" })).toHaveClass(
+      "h-8",
+      "min-w-full",
+      "text-sm",
+    );
+  });
+
   it("opens from the keyboard, navigates items, and activates with Enter", async () => {
     const user = userEvent.setup();
     const onSecond = vi.fn();
@@ -57,6 +76,27 @@ describe("MenuDropdown and ProfileMenu", () => {
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
+  });
+
+  it("cycles first-letter typeahead through actionable items only", async () => {
+    const user = userEvent.setup();
+    const onArchive = vi.fn();
+    render(
+      <MenuDropdown
+        items={[
+          { type: "heading", id: "heading", label: "Archive heading" },
+          { id: "alpha", label: "Alpha", onSelect: vi.fn() },
+          { type: "separator", id: "separator" },
+          { id: "archive", label: "Archive", onSelect: onArchive },
+        ]}
+        triggerLabel="Actions"
+      />,
+    );
+
+    screen.getByRole("button", { name: "Actions" }).focus();
+    await user.keyboard("{Enter}aa{Enter}");
+
+    expect(onArchive).toHaveBeenCalledTimes(1);
   });
 });
 

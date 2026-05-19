@@ -107,7 +107,7 @@ export function DropdownSelect({
 
     if (event.key.length === 1 && !event.metaKey && !event.ctrlKey) {
       const key = event.key.toLocaleLowerCase();
-      const now = Date.now();
+      const now = event.timeStamp;
       const repeated =
         typeaheadRef.current.key === key && now - typeaheadRef.current.time < 750;
       typeaheadRef.current = { key, time: now };

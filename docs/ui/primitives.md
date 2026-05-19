@@ -46,6 +46,11 @@ Both searchable and non-searchable dropdowns share the same visual system:
 - same natural width behavior;
 - same outside-click close behavior.
 
+Width is content-driven by default. Triggers do not set a default minimum width.
+Menus use natural content width, stay at least as wide as the trigger, and use a
+standard Tailwind maximum width only as an overflow guard. The searchable input
+fills the open menu but does not set menu width.
+
 Menus reuse the same row rhythm where possible, but may include headings,
 separators, and actions because they are menus rather than selects.
 
@@ -73,6 +78,8 @@ separators, and actions because they are menus rather than selects.
 
 - Enter, Space, or ArrowDown opens the menu.
 - ArrowUp, ArrowDown, Home, and End move between enabled menu items.
+- First-letter typeahead moves through enabled menu items and skips headings and
+  separators. Repeated letters cycle downward and wrap.
 - Enter or Space activates the highlighted item.
 - Escape closes the menu and restores focus to the trigger.
 - Tab closes the menu and allows natural focus movement.

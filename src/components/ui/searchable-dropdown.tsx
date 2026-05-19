@@ -171,7 +171,7 @@ export function SearchableDropdown({
       </button>
       {open ? (
         <div className={dropdownMenuClass}>
-          <label className="flex h-8 items-center gap-2 rounded px-2 text-sm text-slate-600">
+          <label className="flex h-8 min-w-full items-center gap-2 rounded px-2 text-sm text-slate-600">
             <Search aria-hidden="true" className="size-4 shrink-0" />
             <input
               ref={inputRef}
@@ -182,7 +182,7 @@ export function SearchableDropdown({
               }
               aria-controls={`${id}-listbox`}
               aria-expanded={open}
-              className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+              className="w-0 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
               onChange={(event) => {
                 const nextQuery = event.currentTarget.value;
                 const nextOptions = visibleOptionsFor(options, nextQuery);
