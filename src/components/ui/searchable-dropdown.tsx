@@ -30,6 +30,7 @@ type SearchableDropdownProps = {
   emptyMessage?: string;
   disabled?: boolean;
   label?: string;
+  ariaLabel?: string;
   className?: string;
 };
 
@@ -70,6 +71,7 @@ export function SearchableDropdown({
   emptyMessage = "No options",
   disabled = false,
   label,
+  ariaLabel,
   className,
 }: SearchableDropdownProps) {
   const id = useId();
@@ -151,7 +153,7 @@ export function SearchableDropdown({
         </span>
       ) : null}
       <button
-        aria-label={label}
+        aria-label={ariaLabel ?? label}
         aria-controls={`${id}-listbox`}
         aria-expanded={open}
         aria-haspopup="listbox"

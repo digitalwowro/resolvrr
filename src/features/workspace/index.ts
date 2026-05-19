@@ -1,1 +1,1 @@
-export type { HelpdeskConnection } from "@/core/helpdesk-connections";
+export { StaticWorkspace } from "./components/static-workspace";

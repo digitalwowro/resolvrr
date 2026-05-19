@@ -59,6 +59,7 @@ separators, and actions because they are menus rather than selects.
 `DropdownSelect`:
 
 - Enter, Space, ArrowDown, or ArrowUp opens the menu.
+- Toolbar or icon-adjacent dropdowns should provide a stable accessible label.
 - ArrowUp and ArrowDown move the highlighted enabled option.
 - First-letter typeahead jumps to the first matching enabled option and cycles
   through repeated matching keys.

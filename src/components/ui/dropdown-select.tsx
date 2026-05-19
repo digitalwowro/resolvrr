@@ -31,6 +31,7 @@ type DropdownSelectProps = {
   placeholder?: string;
   disabled?: boolean;
   label?: string;
+  ariaLabel?: string;
   className?: string;
 };
 
@@ -41,6 +42,7 @@ export function DropdownSelect({
   placeholder = "Select",
   disabled = false,
   label,
+  ariaLabel,
   className,
 }: DropdownSelectProps) {
   const id = useId();
@@ -128,7 +130,7 @@ export function DropdownSelect({
         aria-activedescendant={
           open && highlightedIndex >= 0 ? `${id}-option-${highlightedIndex}` : undefined
         }
-        aria-label={label}
+        aria-label={ariaLabel ?? label}
         aria-controls={`${id}-listbox`}
         aria-expanded={open}
         aria-haspopup="listbox"

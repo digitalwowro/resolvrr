@@ -18,6 +18,10 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `docker-compose.yml`: project-specific local Postgres service.
 - `prisma.config.ts`: Prisma 7 CLI configuration and database URL loading.
 - `next-env.d.ts`: Next-maintained TypeScript references.
+- `public/brand`: static rendered brand assets for the app shell, such as the
+  Resolvrr logo file when supplied.
+- `public/brand/resolvrr-logo.svg`: supplied Resolvrr brand image rendered in
+  the workspace header.
 
 ## Source Folders
 
@@ -28,7 +32,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/app/login/page.tsx`: minimal sign-in form wired to a server action.
 - `src/app/register/page.tsx`: minimal registration form wired to a server
   action.
-- `src/app/workspace/page.tsx`: protected authenticated placeholder route.
+- `src/app/workspace/page.tsx`: protected authenticated workspace route that
+  keeps auth guarding and route composition thin.
 - `src/app/globals.css`: global Tailwind import and base document styles.
 - `src/core`: provider-neutral domain contracts and canonical values.
 - `src/core/tickets.ts`: canonical ticket states, priorities, list, detail,
@@ -85,6 +90,26 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/settings/index.ts`: settings feature boundary.
 - `src/features/workspace/index.ts`: workspace feature boundary. UI copy may say
   workspace, but persisted domain concepts remain helpdesk connections.
+- `src/features/workspace/static-types.ts`: feature-local synthetic workspace
+  UI fixture types, not core/provider/data models.
+- `src/features/workspace/static-fixtures.ts`: synthetic saved views, profile
+  menu rows, ticket tabs, ticket rows, columns, and state variants for static
+  workspace review.
+- `src/features/workspace/components/static-workspace.tsx`: client-side static
+  workspace shell with local-only interaction state.
+- `src/features/workspace/components/workspace-header.tsx`: compact workspace
+  header with brand image hook, local search input, and generic profile menu.
+- `src/features/workspace/components/workspace-controls.tsx`: static workspace
+  controls for local saved view, state preview, tab orientation, bulk action,
+  refresh, select-all, and column visibility behavior.
+- `src/features/workspace/components/ticket-tabs-panel.tsx`: horizontal or
+  vertical open-ticket tab presentation for synthetic tickets.
+- `src/features/workspace/components/ticket-table.tsx`: dense synthetic ticket
+  table using shared checkbox, badge, and header primitives.
+- `src/features/workspace/components/selected-ticket-preview.tsx`: small static
+  selected-ticket field preview without thread, composer, or mutation controls.
+- `src/features/workspace/components/workspace-state-panel.tsx`: lightweight
+  static loading, empty, error, and disconnected state renderings.
 - `src/components/ui`: reusable UI primitives.
 - `src/components/ui/button.tsx`: compact button primitive.
 - `src/components/ui/checkbox.tsx`: labeled checkbox primitive.
@@ -144,6 +169,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/components/primitives-state.test.tsx`: verifies basic primitive states.
 - `tests/components/table-ticket.test.tsx`: verifies ticket tab and table header
   callbacks.
+- `tests/features`: feature-level component tests.
+- `tests/features/static-workspace.test.tsx`: verifies local-only static
+  workspace interactions and render states.
 - `tests/providers`: provider-specific tests.
 - `tests/providers/zammad/credentials.test.ts`: verifies provider-specific Basic
   Auth credential helpers.

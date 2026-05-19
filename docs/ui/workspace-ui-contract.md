@@ -28,3 +28,14 @@ later.
 AI features are deferred. The first workspace UI should omit AI status. If a
 future interim indicator is added before AI features are approved, it must only
 communicate unavailable or not configured state.
+
+## Static Workspace Slice
+
+The first composed workspace is static and synthetic. It validates layout,
+primitive usage, density, local interaction states, horizontal and vertical
+ticket tabs, a dense ticket table, and lightweight loading, empty, error, and
+disconnected render states.
+
+Static workspace data is feature-local fixture data. It does not represent a
+core domain model, provider contract, saved-view backend, helpdesk connection,
+ticket cache, or persisted user preference.
