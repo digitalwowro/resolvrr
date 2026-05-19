@@ -8,7 +8,8 @@ conversation content.
 
 - Resolvrr users authenticate with email/password and server-side SQL sessions.
 - Passwords are hashed with Argon2id.
-- Browser storage receives only the Resolvrr session cookie.
+- Browser storage receives only the http-only `resolvrr_session` cookie.
+- SQL stores only a hash of the session token.
 - Helpdesk credentials are stored server-side, encrypted at rest, and scoped to
   the Resolvrr user and helpdesk connection.
 - Provider credentials must never be stored in cookies, localStorage,

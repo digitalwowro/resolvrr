@@ -24,8 +24,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/app`: thin Next route and layout files. Product logic should move into
   feature, core, provider, data, or UI modules.
 - `src/app/layout.tsx`: root document shell and metadata.
-- `src/app/page.tsx`: minimal landing surface until the real workspace screen is
-  implemented.
+- `src/app/page.tsx`: auth-aware root redirect to `/login` or `/workspace`.
+- `src/app/login/page.tsx`: minimal sign-in form wired to a server action.
+- `src/app/register/page.tsx`: minimal registration form wired to a server
+  action.
+- `src/app/workspace/page.tsx`: protected authenticated placeholder route.
 - `src/app/globals.css`: global Tailwind import and base document styles.
 - `src/core`: provider-neutral domain contracts and canonical values.
 - `src/core/tickets.ts`: canonical ticket states, priorities, list, detail,
@@ -35,12 +38,22 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/core/providers.ts`: provider plugin contract, capability names, provider
   errors, and provider operation types.
 - `src/auth`: Resolvrr-native authentication helpers.
+- `src/auth/current-user.ts`: server-only current-user lookup and protected route
+  guard.
 - `src/auth/password.ts`: Argon2id password hash and verify functions.
-- `src/auth/session.ts`: session token generation, hashing, and expiry helpers.
+- `src/auth/repository.ts`: auth persistence interface used by service logic.
+- `src/auth/service.ts`: registration, login, current-session, and logout use
+  cases.
+- `src/auth/session.ts`: raw session token generation, hashing, and expiry
+  helpers.
+- `src/auth/session-cookie.ts`: secure session cookie options.
+- `src/auth/types.ts`: auth user, result, and session types.
+- `src/auth/validation.ts`: email/password input parsing and normalization.
 - `src/config`: typed runtime configuration.
 - `src/config/env.ts`: Zod validation for required app, database, encryption,
   session, and dev-origin variables.
 - `src/data`: server-only database access boundaries.
+- `src/data/auth-repository.ts`: Prisma-backed auth repository.
 - `src/data/prisma.ts`: Prisma Client singleton with PostgreSQL driver adapter.
 - `src/security`: security-sensitive helpers shared by server-side code.
 - `src/security/encryption.ts`: AES-256-GCM secret envelope encryption.
@@ -61,6 +74,10 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/providers/zammad/index.ts`: provider plugin export.
 - `src/features`: product feature boundaries that compose core contracts into
   workflows.
+- `src/features/auth`: auth server actions and auth form messages.
+- `src/features/auth/actions.ts`: login, register, and logout server actions.
+- `src/features/auth/messages.ts`: auth form error message helpers.
+- `src/features/auth/index.ts`: auth feature exports.
 - `src/features/helpdesk-connections/index.ts`: helpdesk connection feature
   boundary.
 - `src/features/saved-views/index.ts`: saved view feature boundary.
@@ -87,10 +104,15 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `scripts/check-docs.mjs`: checks required public docs exist and avoids
   disallowed process-origin wording.
 - `tests/unit`: unit tests for domain, provider registry, and security helpers.
+- `tests/unit/auth-service.test.ts`: verifies registration, login, session, and
+  logout use cases.
+- `tests/unit/auth-validation.test.ts`: verifies email normalization and
+  password input validation.
 - `tests/unit/encryption.test.ts`: verifies secret envelope encryption.
 - `tests/unit/provider-registry.test.ts`: verifies provider registry lookup and
   duplicate-key protection.
 - `tests/unit/sanitize-html.test.ts`: verifies provider HTML sanitization.
+- `tests/unit/session-cookie.test.ts`: verifies secure session cookie options.
 - `tests/providers`: provider-specific tests.
 - `tests/providers/zammad/credentials.test.ts`: verifies provider-specific Basic
   Auth credential helpers.
@@ -118,4 +140,5 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `docs/ui/workspace-ui-contract.md`: approved workspace layout and interaction
   contract.
 - `docs/features`: user-facing feature behavior docs.
+- `docs/features/auth.md`: authentication behavior and security notes.
 - `docs/features/foundation.md`: first foundation feature set and exclusions.

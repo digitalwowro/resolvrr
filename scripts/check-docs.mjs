@@ -8,6 +8,7 @@ const requiredFiles = [
   "docs/deploy/.env.example",
   "docs/deploy/environment.md",
   "docs/development/local-development.md",
+  "docs/features/auth.md",
   "docs/operations/dev-service.md",
   "docs/security/privacy.md",
   "docs/ui/primitives.md",
