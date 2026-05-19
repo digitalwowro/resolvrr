@@ -10,6 +10,8 @@ operational, calm, and keyboard-accessible.
   selector, column visibility, and open-ticket tabs.
 - Work area: ticket table first, with selected-ticket detail added when that
   workflow is implemented.
+- Initial table columns: select, `#`, `Title`, `Customer`, `Owner`, `State`,
+  `Priority`, `Pending till`, and `Updated at`.
 
 ## Workspace Selection
 
@@ -33,8 +35,8 @@ communicate unavailable or not configured state.
 
 The first composed workspace is static and synthetic. It validates layout,
 primitive usage, density, local interaction states, horizontal and vertical
-ticket tabs, a dense ticket table, and lightweight loading, empty, error, and
-disconnected render states.
+ticket tabs, and a dense ticket table. Static state gallery controls are omitted
+from the operational toolbar.
 
 Static workspace data is feature-local fixture data. It does not represent a
 core domain model, provider contract, saved-view backend, helpdesk connection,

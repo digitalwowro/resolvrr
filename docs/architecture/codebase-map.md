@@ -93,23 +93,18 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/static-types.ts`: feature-local synthetic workspace
   UI fixture types, not core/provider/data models.
 - `src/features/workspace/static-fixtures.ts`: synthetic saved views, profile
-  menu rows, ticket tabs, ticket rows, columns, and state variants for static
-  workspace review.
+  menu rows, ticket tabs, ticket rows, and columns for static workspace review.
 - `src/features/workspace/components/static-workspace.tsx`: client-side static
   workspace shell with local-only interaction state.
 - `src/features/workspace/components/workspace-header.tsx`: compact workspace
-  header with brand image hook, local search input, and generic profile menu.
+  header with brand image hook, local search input, and compact profile menu.
 - `src/features/workspace/components/workspace-controls.tsx`: static workspace
-  controls for local saved view, state preview, tab orientation, bulk action,
-  refresh, select-all, and column visibility behavior.
+  controls for local saved view search, tab orientation, bulk action, refresh,
+  select-all, and column visibility behavior.
 - `src/features/workspace/components/ticket-tabs-panel.tsx`: horizontal or
   vertical open-ticket tab presentation for synthetic tickets.
 - `src/features/workspace/components/ticket-table.tsx`: dense synthetic ticket
-  table using shared checkbox, badge, and header primitives.
-- `src/features/workspace/components/selected-ticket-preview.tsx`: small static
-  selected-ticket field preview without thread, composer, or mutation controls.
-- `src/features/workspace/components/workspace-state-panel.tsx`: lightweight
-  static loading, empty, error, and disconnected state renderings.
+  table using shared checkbox and header primitives.
 - `src/components/ui`: reusable UI primitives.
 - `src/components/ui/button.tsx`: compact button primitive.
 - `src/components/ui/checkbox.tsx`: labeled checkbox primitive.

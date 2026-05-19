@@ -1,26 +1,23 @@
-export type StaticWorkspaceVariant =
-  | "ready"
-  | "loading"
-  | "empty"
-  | "error"
-  | "disconnected";
-
 export type StaticTabOrientation = "horizontal" | "vertical";
 
-export type StaticTicketState = "open" | "pending" | "escalated" | "resolved";
+export type StaticTicketState =
+  | "New"
+  | "Open"
+  | "Pending Reminder"
+  | "Pending Close"
+  | "Closed";
 
-export type StaticTicketPriority = "low" | "normal" | "high" | "urgent";
+export type StaticTicketPriority = "Low" | "Medium" | "High";
 
 export type StaticColumnKey =
-  | "requester"
-  | "workspace"
+  | "customer"
+  | "owner"
   | "state"
   | "priority"
-  | "assignee"
-  | "updated"
-  | "sla";
+  | "pendingTill"
+  | "updatedAt";
 
-export type StaticSortKey = "ticket" | "updated" | "priority" | "sla";
+export type StaticSortKey = "number" | "title" | "priority" | "pendingTill" | "updatedAt";
 
 export type StaticSavedView = {
   id: string;
@@ -47,26 +44,18 @@ export type StaticTicketTab = {
 
 export type StaticTicketRow = {
   id: string;
-  ticketNumber: string;
-  subject: string;
-  requester: string;
-  workspace: string;
+  number: string;
+  title: string;
+  customer: string;
+  owner: string;
   state: StaticTicketState;
   priority: StaticTicketPriority;
-  assignee: string;
-  updated: string;
-  sla: string;
+  pendingTill: string;
+  updatedAt: string;
   preview: string;
 };
 
 export type StaticColumn = {
   key: StaticColumnKey;
   label: string;
-};
-
-export type StaticStateVariant = {
-  id: StaticWorkspaceVariant;
-  label: string;
-  title: string;
-  detail: string;
 };

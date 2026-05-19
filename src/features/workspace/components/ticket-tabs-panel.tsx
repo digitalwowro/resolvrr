@@ -21,8 +21,8 @@ export function TicketTabsPanel({
       aria-label="Open tickets"
       className={
         vertical
-          ? "flex w-64 shrink-0 flex-col gap-2 border-r border-slate-200 bg-slate-50 p-2"
-          : "flex min-w-0 gap-2 overflow-x-auto border-b border-slate-200 bg-slate-50 p-2"
+          ? "flex w-44 shrink-0 flex-col gap-1 border-r border-slate-200 bg-slate-50 p-1.5"
+          : "flex min-w-0 gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 px-2 pt-1.5"
       }
       role="tablist"
     >

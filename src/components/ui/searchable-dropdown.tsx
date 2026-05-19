@@ -32,6 +32,7 @@ type SearchableDropdownProps = {
   label?: string;
   ariaLabel?: string;
   className?: string;
+  triggerClassName?: string;
 };
 
 type VisibleOption = DropdownOption & {
@@ -73,6 +74,7 @@ export function SearchableDropdown({
   label,
   ariaLabel,
   className,
+  triggerClassName,
 }: SearchableDropdownProps) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -157,7 +159,7 @@ export function SearchableDropdown({
         aria-controls={`${id}-listbox`}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className={dropdownTriggerClass}
+        className={cn(dropdownTriggerClass, triggerClassName)}
         disabled={disabled}
         onClick={() => (open ? close() : openMenu())}
         role="combobox"

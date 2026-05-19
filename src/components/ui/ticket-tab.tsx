@@ -26,10 +26,10 @@ export function TicketTab({
   return (
     <div
       className={cn(
-        "inline-flex h-9 max-w-56 items-center gap-2 rounded-md border px-2 text-sm",
+        "inline-flex h-8 max-w-48 items-center gap-1.5 border px-2 text-sm",
         active
-          ? "border-indigo-200 bg-indigo-50 text-indigo-950"
-          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+          ? "border-slate-300 border-b-white bg-white text-slate-950"
+          : "border-transparent bg-transparent text-slate-600 hover:bg-slate-100",
       )}
     >
       <button
@@ -43,7 +43,7 @@ export function TicketTab({
         {unread ? (
           <span
             aria-label="Unread"
-            className="size-2 shrink-0 rounded-full bg-indigo-600"
+            className="size-1.5 shrink-0 rounded-full bg-indigo-500"
           />
         ) : null}
         <span className="min-w-0 truncate font-medium">{label}</span>
@@ -52,7 +52,7 @@ export function TicketTab({
       {onClose ? (
         <button
           aria-label={`Close ${label}`}
-          className="grid size-5 shrink-0 place-items-center rounded hover:bg-slate-200"
+          className="grid size-5 shrink-0 place-items-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-700"
           onClick={onClose}
           type="button"
         >

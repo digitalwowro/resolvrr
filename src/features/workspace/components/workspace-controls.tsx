@@ -6,6 +6,7 @@ import {
   Checkbox,
   DropdownSelect,
   MenuDropdown,
+  SearchableDropdown,
   type DropdownOption,
   type MenuDropdownItem,
 } from "@/components/ui";
@@ -13,7 +14,6 @@ import type {
   StaticColumn,
   StaticColumnKey,
   StaticTabOrientation,
-  StaticWorkspaceVariant,
 } from "../static-types";
 
 type WorkspaceControlsProps = {
@@ -23,9 +23,6 @@ type WorkspaceControlsProps = {
   orientationOptions: DropdownOption[];
   tabOrientation: StaticTabOrientation;
   onTabOrientationChange(orientation: StaticTabOrientation): void;
-  stateOptions: DropdownOption[];
-  previewState: StaticWorkspaceVariant;
-  onPreviewStateChange(state: StaticWorkspaceVariant): void;
   columns: StaticColumn[];
   visibleColumns: Set<StaticColumnKey>;
   onColumnToggle(column: StaticColumnKey): void;
@@ -44,9 +41,6 @@ export function WorkspaceControls({
   orientationOptions,
   tabOrientation,
   onTabOrientationChange,
-  stateOptions,
-  previewState,
-  onPreviewStateChange,
   columns,
   visibleColumns,
   onColumnToggle,
@@ -67,21 +61,22 @@ export function WorkspaceControls({
   }));
 
   return (
-    <section className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2">
+    <section className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-1.5">
       <div className="flex flex-wrap items-center gap-2">
         <Checkbox
           checked={allSelected}
-          className="items-center"
+          className="items-center text-xs"
           indeterminate={partiallySelected}
-          label="Select all tickets"
+          label="Select all"
           name="workspace-select-all"
           onChange={onSelectAll}
         />
-        <span className="text-sm text-slate-500">
-          {selectedCount} of {rowCount} selected
+        <span className="text-xs text-slate-500">
+          {selectedCount} / {rowCount}
         </span>
         <Button
-          icon={<RefreshCw aria-hidden="true" className="size-4" />}
+          className="h-8 px-2 text-xs"
+          icon={<RefreshCw aria-hidden="true" className="size-3.5" />}
           onClick={onRefresh}
           type="button"
           variant="secondary"
@@ -90,24 +85,27 @@ export function WorkspaceControls({
         </Button>
         <MenuDropdown
           items={[
-            { id: "assign", label: "Assign", onSelect: () => undefined },
-            { id: "mark-read", label: "Mark read", onSelect: () => undefined },
-            { id: "tag", label: "Add tag", onSelect: () => undefined },
+            { id: "assign", label: "Assign owner", onSelect: () => undefined },
+            { id: "pending", label: "Set pending", onSelect: () => undefined },
+            { id: "close", label: "Close", onSelect: () => undefined },
           ]}
+          triggerClassName="h-8 px-2 text-xs"
           triggerContent={
-            <span className="flex items-center gap-2">
-              <MoreHorizontal aria-hidden="true" className="size-4" />
-              Bulk actions
+            <span className="flex items-center gap-1.5">
+              <MoreHorizontal aria-hidden="true" className="size-3.5" />
+              Bulk
             </span>
           }
           triggerLabel="Bulk actions"
         />
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <DropdownSelect
+        <SearchableDropdown
           ariaLabel="Saved view"
           onValueChange={onSavedViewChange}
           options={savedViewOptions}
+          searchPlaceholder="Find view"
+          triggerClassName="h-8 px-2 text-xs"
           value={selectedSavedViewId}
         />
         <DropdownSelect
@@ -116,25 +114,19 @@ export function WorkspaceControls({
             onTabOrientationChange(value as StaticTabOrientation)
           }
           options={orientationOptions}
+          triggerClassName="h-8 px-2 text-xs"
           value={tabOrientation}
         />
         <MenuDropdown
           items={columnItems}
+          triggerClassName="h-8 px-2 text-xs"
           triggerContent={
-            <span className="flex items-center gap-2">
-              <Columns3 aria-hidden="true" className="size-4" />
+            <span className="flex items-center gap-1.5">
+              <Columns3 aria-hidden="true" className="size-3.5" />
               Columns
             </span>
           }
           triggerLabel="Column visibility"
-        />
-        <DropdownSelect
-          ariaLabel="State preview"
-          onValueChange={(value) =>
-            onPreviewStateChange(value as StaticWorkspaceVariant)
-          }
-          options={stateOptions}
-          value={previewState}
         />
       </div>
     </section>

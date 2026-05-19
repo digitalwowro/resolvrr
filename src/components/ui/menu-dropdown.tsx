@@ -49,6 +49,7 @@ type MenuDropdownProps = {
   items: MenuDropdownItem[];
   align?: "start" | "end";
   className?: string;
+  triggerClassName?: string;
 };
 
 export function MenuDropdown({
@@ -57,6 +58,7 @@ export function MenuDropdown({
   items,
   align = "start",
   className,
+  triggerClassName,
 }: MenuDropdownProps) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -147,7 +149,7 @@ export function MenuDropdown({
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={triggerLabel}
-        className={dropdownTriggerClass}
+        className={cn(dropdownTriggerClass, triggerClassName)}
         onClick={() => (open ? close() : openMenu())}
         onKeyDown={(event) => {
           if (["Enter", " ", "ArrowDown"].includes(event.key)) {

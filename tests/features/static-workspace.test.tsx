@@ -8,15 +8,16 @@ function renderWorkspace() {
 }
 
 describe("StaticWorkspace", () => {
-  it("changes saved view selection locally", async () => {
+  it("changes saved view selection with the searchable selector", async () => {
     const user = userEvent.setup();
     renderWorkspace();
 
     await user.click(screen.getByRole("combobox", { name: "Saved view" }));
-    await user.click(screen.getByRole("option", { name: "Assigned to me" }));
+    await user.type(screen.getByPlaceholderText("Find view"), "owned");
+    await user.click(screen.getByRole("option", { name: "Owned by me" }));
 
     expect(screen.getByRole("combobox", { name: "Saved view" })).toHaveTextContent(
-      "Assigned to me",
+      "Owned by me",
     );
   });
 
@@ -30,42 +31,41 @@ describe("StaticWorkspace", () => {
     expect(screen.getByLabelText("Open tickets")).toHaveClass("flex-col");
   });
 
-  it("updates active ticket from tabs and table rows", async () => {
+  it("keeps tabs visible and changes active ticket locally", async () => {
     const user = userEvent.setup();
     renderWorkspace();
 
-    await user.click(screen.getByRole("tab", { name: /#48288 login loop/i }));
-    expect(
-      screen.getByRole("heading", { name: /#48288 login loop/i }),
-    ).toBeInTheDocument();
+    const tab = screen.getByRole("tab", { name: /#48288/i });
+    await user.click(tab);
+
+    expect(tab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByLabelText("Open tickets")).toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", {
-        name: /#48277 webhook delivery failed overnight/i,
+        name: /Webhook delivery failed overnight/i,
       }),
     );
     expect(
-      screen.getByRole("heading", { name: /#48277 webhook delivery/i }),
-    ).toBeInTheDocument();
+      screen.getByRole("row", { name: /Webhook delivery failed overnight/i }),
+    ).toHaveAttribute("aria-selected", "true");
   });
 
   it("supports local row selection and column visibility", async () => {
     const user = userEvent.setup();
     renderWorkspace();
 
-    await user.click(screen.getByRole("checkbox", { name: "Select all tickets" }));
-    expect(screen.getByText("7 of 7 selected")).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(screen.getByText("7 / 7")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Column visibility" }));
-    await user.click(screen.getByRole("menuitem", { name: "Requester" }));
+    await user.click(screen.getByRole("menuitem", { name: "Customer" }));
 
-    expect(
-      within(screen.getByRole("table")).queryByText("Maya Patel"),
-    ).not.toBeInTheDocument();
-    expect(screen.getByText("7 of 7 selected")).toBeInTheDocument();
+    expect(screen.queryByText("Maya Patel")).not.toBeInTheDocument();
+    expect(screen.getByText("7 / 7")).toBeInTheDocument();
   });
 
-  it("changes visual workspace selection through the profile menu", async () => {
+  it("changes visual workspace selection through the compact profile menu", async () => {
     const user = userEvent.setup();
     renderWorkspace();
 
@@ -73,27 +73,28 @@ describe("StaticWorkspace", () => {
     const menu = screen.getByRole("menu");
     await user.click(within(menu).getByRole("menuitem", { name: "Contoso Care" }));
 
-    expect(screen.getAllByText("Contoso Care").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("button", { name: /open profile menu, contoso care/i }),
+    ).toBeInTheDocument();
   });
 
-  it("renders static loading, empty, error, and disconnected variants", async () => {
-    const user = userEvent.setup();
+  it("renders the agreed table columns and omits the state review control", () => {
     renderWorkspace();
 
-    await user.click(screen.getByRole("combobox", { name: "State preview" }));
-    await user.click(screen.getByRole("option", { name: "Loading" }));
-    expect(screen.getByRole("status", { name: "Loading tickets" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("combobox", { name: "State preview" }));
-    await user.click(screen.getByRole("option", { name: "Empty" }));
-    expect(screen.getByText("No tickets in this view")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("combobox", { name: "State preview" }));
-    await user.click(screen.getByRole("option", { name: "Error" }));
-    expect(screen.getByText("Ticket list unavailable")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("combobox", { name: "State preview" }));
-    await user.click(screen.getByRole("option", { name: "Disconnected" }));
-    expect(screen.getByText("No workspace connected")).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Title" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Customer" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Owner" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "State" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Priority" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Pending till" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Updated at" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "State preview" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "Workspace" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "SLA" })).not.toBeInTheDocument();
   });
 });

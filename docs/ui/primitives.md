@@ -51,6 +51,9 @@ Menus use natural content width, stay at least as wide as the trigger, and use a
 standard Tailwind maximum width only as an overflow guard. The searchable input
 fills the open menu but does not set menu width.
 
+Dense product toolbars may tighten trigger height and padding while preserving
+the shared dropdown behavior and menu rhythm.
+
 Menus reuse the same row rhythm where possible, but may include headings,
 separators, and actions because they are menus rather than selects.
 

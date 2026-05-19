@@ -33,6 +33,7 @@ type DropdownSelectProps = {
   label?: string;
   ariaLabel?: string;
   className?: string;
+  triggerClassName?: string;
 };
 
 export function DropdownSelect({
@@ -44,6 +45,7 @@ export function DropdownSelect({
   label,
   ariaLabel,
   className,
+  triggerClassName,
 }: DropdownSelectProps) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -134,7 +136,7 @@ export function DropdownSelect({
         aria-controls={`${id}-listbox`}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className={dropdownTriggerClass}
+        className={cn(dropdownTriggerClass, triggerClassName)}
         disabled={disabled}
         onClick={() => (open ? close() : openMenu())}
         onKeyDown={handleKeyDown}
