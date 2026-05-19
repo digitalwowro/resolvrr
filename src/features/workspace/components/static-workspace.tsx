@@ -137,6 +137,47 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
     setSelectedRowIds(new Set());
   }
 
+  const controls = (
+    <WorkspaceControls
+      allSelected={allSelected}
+      columns={staticColumns}
+      onColumnToggle={toggleColumn}
+      onRefresh={handleRefresh}
+      onSavedViewChange={setSelectedSavedViewId}
+      onSelectAll={toggleSelectAll}
+      onTabOrientationChange={setTabOrientation}
+      orientationOptions={orientationOptions}
+      partiallySelected={partiallySelected}
+      savedViewOptions={savedViewOptions}
+      selectedSavedViewId={selectedSavedViewId}
+      tabOrientation={tabOrientation}
+      visibleColumns={visibleColumns}
+    />
+  );
+
+  const tabs = (
+    <TicketTabsPanel
+      activeTicketId={activeTicketId}
+      onSelect={setActiveTicketId}
+      orientation={tabOrientation}
+      tabs={staticTicketTabs}
+    />
+  );
+
+  const table = (
+    <TicketTable
+      activeTicketId={activeTicketId}
+      onRowSelect={setActiveTicketId}
+      onSort={handleSort}
+      onToggleRow={toggleRow}
+      rows={rows}
+      selectedRowIds={selectedRowIds}
+      sortDirection={sortDirection}
+      sortKey={sortKey}
+      visibleColumns={visibleColumns}
+    />
+  );
+
   return (
     <main className="flex min-h-screen flex-col bg-slate-100 text-slate-950">
       <WorkspaceHeader
@@ -146,50 +187,23 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
         userEmail={userEmail}
         workspaces={staticProfileWorkspaces}
       />
-      <WorkspaceControls
-        allSelected={allSelected}
-        columns={staticColumns}
-        onColumnToggle={toggleColumn}
-        onRefresh={handleRefresh}
-        onSavedViewChange={setSelectedSavedViewId}
-        onSelectAll={toggleSelectAll}
-        onTabOrientationChange={setTabOrientation}
-        orientationOptions={orientationOptions}
-        partiallySelected={partiallySelected}
-        rowCount={rows.length}
-        savedViewOptions={savedViewOptions}
-        selectedCount={selectedRowIds.size}
-        selectedSavedViewId={selectedSavedViewId}
-        tabOrientation={tabOrientation}
-        visibleColumns={visibleColumns}
-      />
-      <section
-        className={
-          tabOrientation === "vertical"
-            ? "flex min-h-0 flex-1 overflow-hidden"
-            : "flex min-h-0 flex-1 flex-col overflow-hidden"
-        }
-      >
-        <TicketTabsPanel
-          activeTicketId={activeTicketId}
-          onSelect={setActiveTicketId}
-          orientation={tabOrientation}
-          tabs={staticTicketTabs}
-        />
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          <TicketTable
-            activeTicketId={activeTicketId}
-            onRowSelect={setActiveTicketId}
-            onSort={handleSort}
-            onToggleRow={toggleRow}
-            rows={rows}
-            selectedRowIds={selectedRowIds}
-            sortDirection={sortDirection}
-            sortKey={sortKey}
-            visibleColumns={visibleColumns}
-          />
-        </div>
-      </section>
+      {tabOrientation === "vertical" ? (
+        <section className="flex min-h-0 flex-1 overflow-hidden bg-white">
+          {tabs}
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            {controls}
+            {table}
+          </div>
+        </section>
+      ) : (
+        <>
+          {controls}
+          <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
+            {tabs}
+            {table}
+          </section>
+        </>
+      )}
     </main>
   );
 }

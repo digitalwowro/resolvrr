@@ -3,6 +3,7 @@
 import {
   Building2,
   Check,
+  Cpu,
   Keyboard,
   Search,
   Settings,
@@ -68,20 +69,19 @@ export function WorkspaceHeader({
   ];
 
   return (
-    <header className="flex h-12 items-center gap-3 border-b border-slate-200 bg-white px-3">
-      <div className="flex min-w-32 items-center gap-2">
+    <header className="flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-3">
+      <div className="flex shrink-0 items-center">
         {logoAvailable ? (
           /* eslint-disable-next-line @next/next/no-img-element -- Static brand assets render as supplied from public/brand. */
           <img
             alt="Resolvrr"
-            className="h-7 w-auto shrink-0"
+            className="h-9 w-auto shrink-0"
             onError={() => setLogoAvailable(false)}
             src="/brand/resolvrr-logo.svg"
           />
         ) : null}
-        <span className="text-sm font-semibold text-slate-950">Resolvrr</span>
       </div>
-      <label className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 text-sm text-slate-500 focus-within:border-indigo-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-100">
+      <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500 focus-within:border-indigo-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-100">
         <Search aria-hidden="true" className="size-4 shrink-0" />
         <span className="sr-only">Search workspace</span>
         <input
@@ -92,16 +92,19 @@ export function WorkspaceHeader({
           value={query}
         />
       </label>
+      <Cpu aria-label="System status" className="size-5 shrink-0 text-slate-500" />
       <MenuDropdown
         align="end"
         items={items}
-        triggerClassName="h-8 px-2"
+        showChevron={false}
+        triggerClassName="inline-grid size-10 place-items-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
         triggerContent={
-          <span className="grid size-6 place-items-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+          <span className="grid size-10 place-items-center rounded-full bg-indigo-600 text-sm font-semibold text-white">
             {userEmail.slice(0, 2).toUpperCase()}
           </span>
         }
         triggerLabel={`Open profile menu, ${selectedWorkspace?.label ?? "workspace"}`}
+        unstyledTrigger
       />
     </header>
   );

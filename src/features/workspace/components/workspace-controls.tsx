@@ -29,8 +29,6 @@ type WorkspaceControlsProps = {
   allSelected: boolean;
   partiallySelected: boolean;
   onSelectAll(): void;
-  selectedCount: number;
-  rowCount: number;
   onRefresh(): void;
 };
 
@@ -47,8 +45,6 @@ export function WorkspaceControls({
   allSelected,
   partiallySelected,
   onSelectAll,
-  selectedCount,
-  rowCount,
   onRefresh,
 }: WorkspaceControlsProps) {
   const columnItems: MenuDropdownItem[] = columns.map((column) => ({
@@ -61,19 +57,16 @@ export function WorkspaceControls({
   }));
 
   return (
-    <section className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-1.5">
+    <section className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3">
       <div className="flex flex-wrap items-center gap-2">
         <Checkbox
           checked={allSelected}
-          className="items-center text-xs"
+          className="items-center [&>span]:sr-only"
           indeterminate={partiallySelected}
-          label="Select all"
+          label="Select all tickets"
           name="workspace-select-all"
           onChange={onSelectAll}
         />
-        <span className="text-xs text-slate-500">
-          {selectedCount} / {rowCount}
-        </span>
         <Button
           className="h-8 px-2 text-xs"
           icon={<RefreshCw aria-hidden="true" className="size-3.5" />}
@@ -81,7 +74,7 @@ export function WorkspaceControls({
           type="button"
           variant="secondary"
         >
-          Refresh
+          Refresh list
         </Button>
         <MenuDropdown
           items={[
@@ -93,7 +86,7 @@ export function WorkspaceControls({
           triggerContent={
             <span className="flex items-center gap-1.5">
               <MoreHorizontal aria-hidden="true" className="size-3.5" />
-              Bulk
+              Bulk actions
             </span>
           }
           triggerLabel="Bulk actions"

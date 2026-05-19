@@ -50,6 +50,8 @@ type MenuDropdownProps = {
   align?: "start" | "end";
   className?: string;
   triggerClassName?: string;
+  showChevron?: boolean;
+  unstyledTrigger?: boolean;
 };
 
 export function MenuDropdown({
@@ -59,6 +61,8 @@ export function MenuDropdown({
   align = "start",
   className,
   triggerClassName,
+  showChevron = true,
+  unstyledTrigger = false,
 }: MenuDropdownProps) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -149,7 +153,7 @@ export function MenuDropdown({
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={triggerLabel}
-        className={cn(dropdownTriggerClass, triggerClassName)}
+        className={cn(!unstyledTrigger && dropdownTriggerClass, triggerClassName)}
         onClick={() => (open ? close() : openMenu())}
         onKeyDown={(event) => {
           if (["Enter", " ", "ArrowDown"].includes(event.key)) {
@@ -160,7 +164,9 @@ export function MenuDropdown({
         type="button"
       >
         {triggerContent ?? <span className="truncate">{triggerLabel}</span>}
-        <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+        {showChevron ? (
+          <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+        ) : null}
       </button>
       {open ? (
         <div

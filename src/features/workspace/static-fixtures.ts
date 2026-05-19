@@ -10,8 +10,8 @@ import type {
 
 // Static workspace fixtures are feature-local review data, not app domain data.
 export const staticSavedViews: StaticSavedView[] = [
+  { id: "my-work", label: "My work" },
   { id: "open", label: "Open tickets" },
-  { id: "mine", label: "Owned by me" },
   { id: "pending", label: "Pending reminders" },
   { id: "unassigned", label: "Unassigned tickets" },
   { id: "high-priority", label: "High priority" },
@@ -30,11 +30,44 @@ export const staticProfileActions: StaticProfileAction[] = [
 ];
 
 export const staticTicketTabs: StaticTicketTab[] = [
-  { id: "48291", label: "#48291", unread: true },
-  { id: "48288", label: "#48288", dirty: true },
-  { id: "48277", label: "#48277" },
-  { id: "48271", label: "#48271" },
-  { id: "48255", label: "#48255", loading: true },
+  {
+    id: "48291",
+    label: "#48291 Billing follow-up",
+    title: "Billing follow-up for annual renewal",
+    customer: "Maya Patel",
+    state: "Open",
+    unread: true,
+  },
+  {
+    id: "48288",
+    label: "#48288 Login loop",
+    title: "Login loop after password reset",
+    customer: "Daniel Cho",
+    state: "Pending Reminder",
+    dirty: true,
+  },
+  {
+    id: "48277",
+    label: "#48277 Webhook delivery",
+    title: "Webhook delivery failed overnight",
+    customer: "Owen Brooks",
+    state: "Open",
+  },
+  {
+    id: "48271",
+    label: "#48271 Plan change",
+    title: "Plan change for regional team",
+    customer: "Elena Vasquez",
+    state: "Pending Close",
+  },
+  {
+    id: "48255",
+    label: "#48255 Invoice copy",
+    title: "Invoice copy requested",
+    customer: "Initech Service Desk",
+    state: "New",
+    loading: true,
+  },
 ];
 
 export const staticTicketRows: StaticTicketRow[] = [

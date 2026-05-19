@@ -13,11 +13,11 @@ describe("StaticWorkspace", () => {
     renderWorkspace();
 
     await user.click(screen.getByRole("combobox", { name: "Saved view" }));
-    await user.type(screen.getByPlaceholderText("Find view"), "owned");
-    await user.click(screen.getByRole("option", { name: "Owned by me" }));
+    await user.type(screen.getByPlaceholderText("Find view"), "pending");
+    await user.click(screen.getByRole("option", { name: "Pending reminders" }));
 
     expect(screen.getByRole("combobox", { name: "Saved view" })).toHaveTextContent(
-      "Owned by me",
+      "Pending reminders",
     );
   });
 
@@ -29,6 +29,7 @@ describe("StaticWorkspace", () => {
     await user.click(screen.getByRole("option", { name: "Vertical tabs" }));
 
     expect(screen.getByLabelText("Open tickets")).toHaveClass("flex-col");
+    expect(screen.getByLabelText("Open tickets")).toHaveClass("overflow-y-auto");
   });
 
   it("keeps tabs visible and changes active ticket locally", async () => {
@@ -55,14 +56,15 @@ describe("StaticWorkspace", () => {
     const user = userEvent.setup();
     renderWorkspace();
 
-    await user.click(screen.getByRole("checkbox", { name: "Select all" }));
-    expect(screen.getByText("7 / 7")).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: "Select all tickets" }));
+    expect(screen.getByRole("checkbox", { name: "Select #48291" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Select #48260" })).toBeChecked();
 
     await user.click(screen.getByRole("button", { name: "Column visibility" }));
     await user.click(screen.getByRole("menuitem", { name: "Customer" }));
 
     expect(screen.queryByText("Maya Patel")).not.toBeInTheDocument();
-    expect(screen.getByText("7 / 7")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Select #48291" })).toBeChecked();
   });
 
   it("changes visual workspace selection through the compact profile menu", async () => {

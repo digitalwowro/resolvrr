@@ -25,6 +25,10 @@ Ticket tabs are navigation for open tickets. One ticket is active at a time. Do
 not add single, split, or compare mode selectors unless that workflow is approved
 later.
 
+Horizontal ticket tabs sit directly above the table. Vertical ticket tabs use a
+fixed left rail below the header while toolbar controls remain with the table
+side. The vertical rail and ticket table scroll independently.
+
 ## AI Status
 
 AI features are deferred. The first workspace UI should omit AI status. If a

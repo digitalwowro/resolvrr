@@ -37,6 +37,9 @@ export type StaticProfileAction = {
 export type StaticTicketTab = {
   id: string;
   label: string;
+  title: string;
+  customer: string;
+  state: StaticTicketState;
   unread?: boolean;
   dirty?: boolean;
   loading?: boolean;

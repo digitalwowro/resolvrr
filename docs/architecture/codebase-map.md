@@ -102,7 +102,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   controls for local saved view search, tab orientation, bulk action, refresh,
   select-all, and column visibility behavior.
 - `src/features/workspace/components/ticket-tabs-panel.tsx`: horizontal or
-  vertical open-ticket tab presentation for synthetic tickets.
+  vertical open-ticket tab presentation, including the fixed vertical tab rail
+  for synthetic tickets.
 - `src/features/workspace/components/ticket-table.tsx`: dense synthetic ticket
   table using shared checkbox and header primitives.
 - `src/components/ui`: reusable UI primitives.
