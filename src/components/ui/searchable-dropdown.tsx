@@ -176,7 +176,7 @@ export function SearchableDropdown({
           </div>
           {options.map((option) => (
             <div
-              className="col-start-1 row-start-1 flex h-0 min-w-full items-center gap-2 overflow-hidden rounded-md px-3 text-left text-sm outline-none"
+              className="col-start-1 row-start-1 flex h-0 min-w-full items-center gap-2 overflow-hidden rounded-md px-2 text-left text-sm outline-none"
               key={option.value}
             >
               {option.icon}
@@ -231,7 +231,7 @@ export function SearchableDropdown({
                 aria-controls={`${id}-listbox`}
                 aria-expanded={open}
                 aria-label={ariaLabel ?? label}
-                className="min-w-0 flex-1 bg-transparent text-slate-900 outline-none placeholder:text-slate-400"
+                className="w-0 min-w-0 flex-1 bg-transparent text-slate-900 outline-none placeholder:text-slate-400"
                 onChange={(event) => {
                   const nextQuery = event.currentTarget.value;
                   const nextOptions = visibleOptionsFor(options, nextQuery);
@@ -262,9 +262,11 @@ export function SearchableDropdown({
                       aria-selected={selectedOption}
                       className={cn(
                         dropdownOptionClass,
-                        dropdownOptionStateClass.idle,
-                        highlighted && dropdownOptionStateClass.highlighted,
+                        !selectedOption && dropdownOptionStateClass.idle,
                         selectedOption && dropdownOptionStateClass.selected,
+                        highlighted &&
+                          !selectedOption &&
+                          dropdownOptionStateClass.highlighted,
                         option.disabled && dropdownOptionStateClass.disabled,
                       )}
                       disabled={option.disabled}

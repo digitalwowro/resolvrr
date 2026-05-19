@@ -4,6 +4,7 @@ import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import {
   DropdownSelect,
+  MenuDropdown,
   SearchableDropdown,
   type DropdownOption,
 } from "@/components/ui";
@@ -44,6 +45,18 @@ function SearchableHarness({ onChange = vi.fn() }: { onChange?: (value: string) 
   );
 }
 
+function MenuHarness() {
+  return (
+    <MenuDropdown
+      items={[
+        { id: "short", label: "Short", onSelect: vi.fn() },
+        { id: "long", label: "Much wider action label", onSelect: vi.fn() },
+      ]}
+      triggerLabel="Actions"
+    />
+  );
+}
+
 describe("DropdownSelect", () => {
   it("uses content-driven trigger and menu width classes", async () => {
     const user = userEvent.setup();
@@ -52,12 +65,20 @@ describe("DropdownSelect", () => {
     const trigger = screen.getByRole("combobox", { name: "Queue" });
     await user.click(trigger);
 
+    expect(trigger.parentElement).toHaveClass("w-max", "min-w-full", "max-w-sm");
+    expect(trigger).toHaveClass("w-full", "col-start-1", "row-start-1");
     expect(trigger).not.toHaveClass("min-w-40");
-    expect(screen.getByRole("listbox")).toHaveClass("w-max", "min-w-full", "max-w-sm");
-    expect(screen.getByRole("option", { name: "Alpha" })).toHaveClass(
-      "h-10",
+    expect(screen.getByRole("listbox")).toHaveClass(
+      "w-max",
       "min-w-full",
-      "px-3",
+      "max-w-sm",
+      "w-full",
+      "shadow-lg",
+    );
+    expect(screen.getByRole("option", { name: "Alpha" })).toHaveClass(
+      "h-8",
+      "min-w-full",
+      "px-2",
       "rounded-md",
       "text-sm",
     );
@@ -87,6 +108,25 @@ describe("DropdownSelect", () => {
   });
 });
 
+describe("MenuDropdown", () => {
+  it("uses measured trigger ownership for styled menu dropdowns", async () => {
+    const user = userEvent.setup();
+    render(<MenuHarness />);
+
+    const trigger = screen.getByRole("button", { name: "Actions" });
+    await user.click(trigger);
+
+    expect(trigger.parentElement).toHaveClass("w-max", "min-w-full", "max-w-sm");
+    expect(trigger).toHaveClass("w-full", "col-start-1", "row-start-1");
+    expect(screen.getByRole("menu")).toHaveClass(
+      "w-max",
+      "min-w-full",
+      "max-w-sm",
+      "w-full",
+    );
+  });
+});
+
 describe("SearchableDropdown", () => {
   it("keeps the open search input from controlling menu width", async () => {
     const user = userEvent.setup();
@@ -113,8 +153,7 @@ describe("SearchableDropdown", () => {
       "max-w-sm",
       "top-full",
     );
-    expect(screen.getByPlaceholderText("Search")).toHaveClass("min-w-0");
-    expect(screen.getByPlaceholderText("Search")).not.toHaveClass("w-0");
+    expect(screen.getByPlaceholderText("Search")).toHaveClass("w-0", "min-w-0");
   });
 
   it("shows all options on open and focuses the search input", async () => {

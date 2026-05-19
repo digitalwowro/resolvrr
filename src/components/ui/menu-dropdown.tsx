@@ -145,50 +145,130 @@ export function MenuDropdown({
     }
   }
 
+  const triggerButton = (
+    <button
+      ref={triggerRef}
+      aria-controls={`${id}-menu`}
+      aria-expanded={open}
+      aria-haspopup="menu"
+      aria-label={triggerLabel}
+      className={cn(
+        !unstyledTrigger && dropdownTriggerClass,
+        triggerClassName,
+        !unstyledTrigger && "col-start-1 row-start-1 w-full",
+      )}
+      onClick={() => (open ? close() : openMenu())}
+      onKeyDown={(event) => {
+        if (["Enter", " ", "ArrowDown"].includes(event.key)) {
+          event.preventDefault();
+          openMenu();
+        }
+      }}
+      type="button"
+    >
+      {triggerContent ?? <span className="truncate">{triggerLabel}</span>}
+      {showChevron ? (
+        <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+      ) : null}
+    </button>
+  );
+
+  const menuPanel = open ? (
+    <div
+      ref={menuRef}
+      aria-activedescendant={
+        highlightedIndex >= 0 ? `${id}-item-${highlightedIndex}` : undefined
+      }
+      className={cn(
+        dropdownMenuClass,
+        !unstyledTrigger && "left-0 top-full w-full",
+        align === "end" && "right-0",
+      )}
+      id={`${id}-menu`}
+      onKeyDown={handleMenuKeyDown}
+      role="menu"
+      tabIndex={-1}
+    >
+      {items.map((item, index) => {
+        if (item.type === "separator") {
+          return <div className="my-1 h-px bg-slate-200" key={item.id} />;
+        }
+
+        if (item.type === "heading") {
+          return (
+            <div
+              className="px-2 py-1 font-medium uppercase text-slate-500"
+              key={item.id}
+            >
+              {item.label}
+            </div>
+          );
+        }
+
+        const highlighted = index === highlightedIndex;
+        return (
+          <button
+            aria-disabled={item.disabled || undefined}
+            className={cn(
+              dropdownOptionClass,
+              dropdownOptionStateClass.idle,
+              highlighted && dropdownOptionStateClass.highlighted,
+              item.disabled && dropdownOptionStateClass.disabled,
+              item.destructive && !item.disabled && "text-rose-700",
+            )}
+            disabled={item.disabled}
+            id={`${id}-item-${index}`}
+            key={item.id}
+            onClick={() => activate(index)}
+            role="menuitem"
+            tabIndex={-1}
+            type="button"
+          >
+            {item.icon}
+            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  ) : null;
+
+  if (unstyledTrigger) {
+    return (
+      <div className={cn("relative inline-block", className)} ref={rootRef}>
+        {triggerButton}
+        {menuPanel}
+      </div>
+    );
+  }
+
   return (
-    <div className={cn("relative inline-block", className)} ref={rootRef}>
-      <button
-        ref={triggerRef}
-        aria-controls={`${id}-menu`}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label={triggerLabel}
-        className={cn(!unstyledTrigger && dropdownTriggerClass, triggerClassName)}
-        onClick={() => (open ? close() : openMenu())}
-        onKeyDown={(event) => {
-          if (["Enter", " ", "ArrowDown"].includes(event.key)) {
-            event.preventDefault();
-            openMenu();
-          }
-        }}
-        type="button"
-      >
-        {triggerContent ?? <span className="truncate">{triggerLabel}</span>}
-        {showChevron ? (
-          <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
-        ) : null}
-      </button>
-      {open ? (
+    <div className={cn("inline-block", className)} ref={rootRef}>
+      <div className="relative grid w-max min-w-full max-w-sm">
         <div
-          ref={menuRef}
-          aria-activedescendant={
-            highlightedIndex >= 0 ? `${id}-item-${highlightedIndex}` : undefined
-          }
-          className={cn(dropdownMenuClass, align === "end" && "right-0")}
-          id={`${id}-menu`}
-          onKeyDown={handleMenuKeyDown}
-          role="menu"
-          tabIndex={-1}
+          aria-hidden="true"
+          className="pointer-events-none invisible col-start-1 row-start-1 grid"
         >
-          {items.map((item, index) => {
+          <div
+            className={cn(
+              dropdownTriggerClass,
+              triggerClassName,
+              "col-start-1 row-start-1",
+            )}
+          >
+            {triggerContent ?? <span className="truncate">{triggerLabel}</span>}
+            {showChevron ? (
+              <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+            ) : null}
+          </div>
+          {items.map((item) => {
             if (item.type === "separator") {
-              return <div className="my-1 h-px bg-slate-200" key={item.id} />;
+              return null;
             }
 
             if (item.type === "heading") {
               return (
                 <div
-                  className="px-2 py-1 font-medium uppercase text-slate-500"
+                  className="col-start-1 row-start-1 h-0 overflow-hidden px-2 py-0 font-medium uppercase text-slate-500"
                   key={item.id}
                 >
                   {item.label}
@@ -196,32 +276,20 @@ export function MenuDropdown({
               );
             }
 
-            const highlighted = index === highlightedIndex;
             return (
-              <button
-                aria-disabled={item.disabled || undefined}
-                className={cn(
-                  dropdownOptionClass,
-                  dropdownOptionStateClass.idle,
-                  highlighted && dropdownOptionStateClass.highlighted,
-                  item.disabled && dropdownOptionStateClass.disabled,
-                  item.destructive && !item.disabled && "text-rose-700",
-                )}
-                disabled={item.disabled}
-                id={`${id}-item-${index}`}
+              <div
+                className="col-start-1 row-start-1 flex h-0 min-w-full items-center gap-2 overflow-hidden rounded-md px-2 text-left text-sm outline-none"
                 key={item.id}
-                onClick={() => activate(index)}
-                role="menuitem"
-                tabIndex={-1}
-                type="button"
               >
                 {item.icon}
                 <span className="min-w-0 flex-1 truncate">{item.label}</span>
-              </button>
+              </div>
             );
           })}
         </div>
-      ) : null}
+        {triggerButton}
+        {menuPanel}
+      </div>
     </div>
   );
 }
