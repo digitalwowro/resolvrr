@@ -70,7 +70,7 @@ export const staticTicketTabs: StaticTicketTab[] = [
   },
 ];
 
-export const staticTicketRows: StaticTicketRow[] = [
+const baseTicketRows: StaticTicketRow[] = [
   {
     id: "48291",
     number: "#48291",
@@ -155,6 +155,105 @@ export const staticTicketRows: StaticTicketRow[] = [
     updatedAt: "1h ago",
     preview: "Customer confirmed the onboarding checklist is complete.",
   },
+];
+
+const generatedTitles = [
+  "Payment confirmation needed",
+  "Customer cannot update profile",
+  "Email notifications delayed",
+  "Portal invitation expired",
+  "Subscription renewal question",
+  "Invoice address mismatch",
+  "Webhook retry requested",
+  "Account access review",
+  "Plan downgrade follow-up",
+  "CSV export missing filters",
+  "Agent assignment question",
+  "Billing contact update",
+];
+
+const generatedCustomers = [
+  "Northwind Support",
+  "Contoso Care",
+  "Fabrikam Desk",
+  "Acme Robotics",
+  "Globex Operations",
+  "Initech Service Desk",
+  "Umbrella Logistics",
+  "Stark Industries",
+  "Wayne Enterprises",
+  "Hooli Support",
+];
+
+const generatedOwners = [
+  "R. Rosca",
+  "N. Ionescu",
+  "A. Pop",
+  "M. Stan",
+  "Unassigned",
+];
+
+const generatedStates: StaticTicketRow["state"][] = [
+  "New",
+  "Open",
+  "Pending Reminder",
+  "Pending Close",
+  "Closed",
+];
+
+const generatedPriorities: StaticTicketRow["priority"][] = [
+  "Low",
+  "Medium",
+  "High",
+];
+
+const generatedPendingLabels = [
+  "Now",
+  "In 4m",
+  "Today 15:40",
+  "Today 17:25",
+  "Tomorrow 09:00",
+  "Tomorrow 16:05",
+  "May 27, 14:35",
+  "May 30, 10:20",
+];
+
+const generatedUpdatedLabels = [
+  "Now",
+  "4m ago",
+  "18m ago",
+  "Today 15:40",
+  "Yesterday 16:05",
+  "May 17, 14:35",
+  "May 14, 09:20",
+  "May 12, 11:10",
+];
+
+const generatedRows: StaticTicketRow[] = Array.from({ length: 93 }, (_, index) => {
+  const number = 48259 - index;
+  const state = generatedStates[index % generatedStates.length];
+  const priority = generatedPriorities[index % generatedPriorities.length];
+
+  return {
+    id: String(number),
+    number: `#${number}`,
+    title: generatedTitles[index % generatedTitles.length],
+    customer: generatedCustomers[index % generatedCustomers.length],
+    owner: generatedOwners[index % generatedOwners.length],
+    state,
+    priority,
+    pendingTill:
+      state === "Closed"
+        ? "-"
+        : generatedPendingLabels[index % generatedPendingLabels.length],
+    updatedAt: generatedUpdatedLabels[index % generatedUpdatedLabels.length],
+    preview: "Synthetic workspace review row for table density and scrolling.",
+  };
+});
+
+export const staticTicketRows: StaticTicketRow[] = [
+  ...baseTicketRows,
+  ...generatedRows,
 ];
 
 export const staticColumns: StaticColumn[] = [

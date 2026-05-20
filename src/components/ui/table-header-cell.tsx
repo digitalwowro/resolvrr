@@ -51,7 +51,7 @@ export function TableHeaderCell({
     <th
       aria-sort={sortDirection ?? "none"}
       className={cn(
-        "h-9 border-b border-slate-200 bg-slate-50 px-2 text-left font-medium text-slate-700",
+        "h-9 border-b border-slate-200 bg-white px-2 text-left font-normal",
         className,
       )}
       scope="col"

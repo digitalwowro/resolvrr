@@ -202,7 +202,7 @@ export function MenuDropdown({
         if (item.type === "heading") {
           return (
             <div
-              className="px-2 py-1 font-medium uppercase text-slate-500"
+              className="px-2 py-1 uppercase text-slate-500"
               key={item.id}
             >
               {item.label}
@@ -279,7 +279,7 @@ export function MenuDropdown({
             if (item.type === "heading") {
               return (
                 <div
-                  className="col-start-1 row-start-1 h-0 overflow-hidden px-2 py-0 font-medium uppercase text-slate-500"
+                  className="col-start-1 row-start-1 h-0 overflow-hidden px-2 py-0 uppercase text-slate-500"
                   key={item.id}
                 >
                   {item.label}

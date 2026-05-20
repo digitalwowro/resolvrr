@@ -64,8 +64,8 @@ function StateCell({ state }: { state: StaticTicketState }) {
   const Icon = stateIcon[state];
 
   return (
-    <span className={`inline-flex items-center gap-1.5 ${stateClass[state]}`}>
-      <Icon aria-hidden="true" className="size-3.5" />
+    <span className="inline-flex items-center gap-1.5">
+      <Icon aria-hidden="true" className={`size-3.5 ${stateClass[state]}`} />
       {state}
     </span>
   );
@@ -73,7 +73,7 @@ function StateCell({ state }: { state: StaticTicketState }) {
 
 function PriorityCell({ priority }: { priority: StaticTicketPriority }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-slate-700">
+    <span className="inline-flex items-center gap-1.5">
       <span
         aria-hidden="true"
         className={`size-2 rounded-full ${priorityClass[priority]}`}
@@ -95,22 +95,22 @@ export function TicketTable({
   onToggleRow,
 }: TicketTableProps) {
   return (
-    <div className="min-h-0 flex-1 overflow-auto bg-white">
-      <table className="w-full min-w-[1120px] table-fixed border-separate border-spacing-0">
+    <div className="min-h-0 flex-1 overflow-auto rounded-md border-x border-slate-200 bg-white">
+      <table className="w-full min-w-6xl table-fixed border-separate border-spacing-0">
         <colgroup>
-          <col className="w-10" />
+          <col className="w-9" />
           <col className="w-24" />
-          <col className="w-[28%]" />
-          {visibleColumns.has("customer") ? <col className="w-[18%]" /> : null}
-          {visibleColumns.has("owner") ? <col className="w-[14%]" /> : null}
-          {visibleColumns.has("state") ? <col className="w-40" /> : null}
-          {visibleColumns.has("priority") ? <col className="w-28" /> : null}
-          {visibleColumns.has("pendingTill") ? <col className="w-36" /> : null}
+          <col />
+          {visibleColumns.has("customer") ? <col /> : null}
+          {visibleColumns.has("owner") ? <col /> : null}
+          {visibleColumns.has("state") ? <col className="w-38" /> : null}
+          {visibleColumns.has("priority") ? <col className="w-24" /> : null}
+          {visibleColumns.has("pendingTill") ? <col className="w-34" /> : null}
           {visibleColumns.has("updatedAt") ? <col className="w-36" /> : null}
         </colgroup>
         <thead className="sticky top-0 z-10">
           <tr>
-            <th className="h-8 w-9 border-b border-slate-200 bg-slate-50 px-2" />
+            <th className="h-8 w-9 border-b border-slate-200 bg-white px-2" />
             <TableHeaderCell
               className="w-24"
               label="#"
@@ -129,11 +129,11 @@ export function TicketTable({
               <TableHeaderCell label="Owner" />
             ) : null}
             {visibleColumns.has("state") ? (
-              <TableHeaderCell className="w-40" label="State" />
+              <TableHeaderCell className="w-38" label="State" />
             ) : null}
             {visibleColumns.has("priority") ? (
               <TableHeaderCell
-                className="w-28"
+                className="w-24"
                 label="Priority"
                 onSort={() => onSort("priority")}
                 sortDirection={sortDirectionFor("priority", sortKey, sortDirection)}
@@ -141,7 +141,7 @@ export function TicketTable({
             ) : null}
             {visibleColumns.has("pendingTill") ? (
               <TableHeaderCell
-                className="w-36"
+                className="w-34"
                 label="Pending till"
                 onSort={() => onSort("pendingTill")}
                 sortDirection={sortDirectionFor("pendingTill", sortKey, sortDirection)}
@@ -170,33 +170,34 @@ export function TicketTable({
                 <td className="border-b border-slate-100 px-2 py-1.5 align-middle">
                   <Checkbox
                     checked={selectedRowIds.has(row.id)}
-                    className="items-center [&>span:last-child]:sr-only"
+                    className="items-center"
+                    hideLabel
                     label={`Select ${row.number}`}
                     name={`select-${row.id}`}
                     onChange={() => onToggleRow(row.id)}
                   />
                 </td>
-                <td className="whitespace-nowrap border-b border-slate-100 px-2 py-2 font-semibold text-slate-600">
+                <td className="whitespace-nowrap border-b border-slate-100 px-2 py-2">
                   {row.number}
                 </td>
-                <td className="border-b border-slate-100 px-2 py-2">
+                <td className="min-w-0 border-b border-slate-100 px-2 py-2">
                   <button
                     className="block w-full rounded-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                     onClick={() => onRowSelect(row.id)}
                     type="button"
                   >
-                    <span className="block truncate font-semibold text-slate-800">
+                    <span className="block truncate">
                       {row.title}
                     </span>
                   </button>
                 </td>
                 {visibleColumns.has("customer") ? (
-                  <td className="truncate border-b border-slate-100 px-2 py-2 text-slate-700">
+                  <td className="min-w-0 truncate border-b border-slate-100 px-2 py-2">
                     {row.customer}
                   </td>
                 ) : null}
                 {visibleColumns.has("owner") ? (
-                  <td className="truncate border-b border-slate-100 px-2 py-2 text-slate-700">
+                  <td className="min-w-0 truncate border-b border-slate-100 px-2 py-2">
                     {row.owner}
                   </td>
                 ) : null}
@@ -211,12 +212,12 @@ export function TicketTable({
                   </td>
                 ) : null}
                 {visibleColumns.has("pendingTill") ? (
-                  <td className="whitespace-nowrap border-b border-slate-100 px-2 py-2 text-slate-700">
+                  <td className="whitespace-nowrap border-b border-slate-100 px-2 py-2">
                     {row.pendingTill}
                   </td>
                 ) : null}
                 {visibleColumns.has("updatedAt") ? (
-                  <td className="whitespace-nowrap border-b border-slate-100 px-2 py-2 text-slate-700">
+                  <td className="whitespace-nowrap border-b border-slate-100 px-2 py-2">
                     {row.updatedAt}
                   </td>
                 ) : null}

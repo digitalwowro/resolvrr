@@ -9,6 +9,7 @@ type CheckboxProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
   helpText?: string;
   error?: string;
   indeterminate?: boolean;
+  hideLabel?: boolean;
 };
 
 export function Checkbox({
@@ -16,6 +17,7 @@ export function Checkbox({
   helpText,
   error,
   indeterminate = false,
+  hideLabel = false,
   className,
   id,
   ...props
@@ -48,8 +50,8 @@ export function Checkbox({
           className="pointer-events-none absolute size-3 text-white opacity-0 peer-checked:opacity-100"
         />
       </span>
-      <span>
-        <span className="font-medium text-slate-800">{label}</span>
+      <span className={cn(hideLabel && "sr-only")}>
+        <span className="text-slate-800">{label}</span>
         {helpText ? (
           <span className="block leading-5 text-slate-500" id={helpId}>
             {helpText}

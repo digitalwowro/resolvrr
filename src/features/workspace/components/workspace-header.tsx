@@ -61,7 +61,7 @@ export function WorkspaceHeader({
   ];
 
   return (
-    <header className="flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-3">
+    <header className="flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-5">
       <div className="flex shrink-0 items-center">
         {logoAvailable ? (
           /* eslint-disable-next-line @next/next/no-img-element -- Static brand assets render as supplied from public/brand. */
@@ -73,11 +73,11 @@ export function WorkspaceHeader({
           />
         ) : null}
       </div>
-      <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-slate-500 focus-within:border-indigo-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-100">
+      <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 focus-within:border-indigo-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-100">
         <Search aria-hidden="true" className="size-4 shrink-0" />
         <span className="sr-only">Search workspace</span>
         <input
-          className="min-w-0 flex-1 bg-transparent text-slate-900 outline-none placeholder:text-slate-400"
+          className="min-w-0 flex-1 bg-transparent outline-none"
           onChange={(event) => setQuery(event.currentTarget.value)}
           placeholder="Search tickets, customers, owners"
           type="search"

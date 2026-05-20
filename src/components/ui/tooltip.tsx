@@ -47,7 +47,7 @@ export function Tooltip({ content, children, delayMs = 250 }: TooltipProps) {
       {children}
       {open ? (
         <span
-          className="absolute bottom-full left-1/2 z-50 mb-2 max-w-xs -translate-x-1/2 rounded-md bg-slate-950 px-2 py-1 font-medium text-white"
+          className="absolute bottom-full left-1/2 z-50 mb-2 max-w-xs -translate-x-1/2 rounded-md bg-slate-950 px-2 py-1 text-white"
           id={tooltipId}
           role="tooltip"
         >

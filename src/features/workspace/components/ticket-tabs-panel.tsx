@@ -64,10 +64,10 @@ function VerticalTicketTab({
         className={`mt-1 size-3.5 shrink-0 ${stateColor[tab.state]}`}
       />
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-semibold text-slate-950">
+        <span className="block truncate">
           {tab.title}
         </span>
-        <span className="mt-0.5 block truncate text-slate-500">
+        <span className="mt-0.5 block truncate">
           {tab.label.split(" ")[0]} · {tab.customer}
         </span>
       </span>
@@ -84,7 +84,7 @@ export function TicketTabsPanel({
   if (orientation === "vertical") {
     return (
       <aside className="flex w-72 shrink-0 flex-col border-r border-slate-200 bg-slate-50">
-        <div className="flex h-10 shrink-0 items-center border-b border-slate-200 px-3 font-semibold text-slate-700">
+        <div className="flex h-10 shrink-0 items-center border-b border-slate-200 px-3">
           Open tickets
         </div>
         <div
@@ -108,7 +108,7 @@ export function TicketTabsPanel({
   return (
     <div
       aria-label="Open tickets"
-      className="flex min-w-0 shrink-0 gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 px-2 pt-1.5"
+      className="flex min-w-0 shrink-0 gap-1 overflow-x-auto rounded-t-md border-b border-slate-200 bg-slate-50 px-2 pt-1.5"
       role="tablist"
     >
       {tabs.map((tab) => (

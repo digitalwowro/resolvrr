@@ -179,7 +179,7 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
   );
 
   return (
-    <main className="flex min-h-screen flex-col bg-slate-100 text-slate-950">
+    <main className="flex min-h-screen flex-col">
       <WorkspaceHeader
         actions={staticProfileActions}
         onWorkspaceChange={setSelectedWorkspaceId}
@@ -188,7 +188,7 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
         workspaces={staticProfileWorkspaces}
       />
       {tabOrientation === "vertical" ? (
-        <section className="flex min-h-0 flex-1 overflow-hidden bg-white">
+        <section className="flex min-h-0 flex-1 overflow-hidden bg-white px-5 pb-5">
           {tabs}
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             {controls}
@@ -198,7 +198,7 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
       ) : (
         <>
           {controls}
-          <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
+          <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white px-5 pb-5">
             {tabs}
             {table}
           </section>

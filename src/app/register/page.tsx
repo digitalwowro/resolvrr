@@ -26,13 +26,13 @@ export default async function RegisterPage({
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-10">
       <section className="w-full max-w-sm">
-        <p className="text-sm font-medium text-indigo-600">Resolvrr</p>
-        <h1 className="mt-3 text-2xl font-semibold tracking-normal text-slate-950">
+        <p className="text-sm text-indigo-600">Resolvrr</p>
+        <h1 className="mt-3 text-2xl tracking-normal text-slate-950">
           Create account
         </h1>
         <form action={registerAction} className="mt-8 space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-800" htmlFor="email">
+            <label className="text-sm text-slate-800" htmlFor="email">
               Email
             </label>
             <input
@@ -46,7 +46,7 @@ export default async function RegisterPage({
           </div>
           <div>
             <label
-              className="text-sm font-medium text-slate-800"
+              className="text-sm text-slate-800"
               htmlFor="password"
             >
               Password
@@ -67,7 +67,7 @@ export default async function RegisterPage({
             </p>
           ) : null}
           <button
-            className="h-10 w-full rounded-md border border-indigo-600 bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            className="h-10 w-full rounded-md border border-indigo-600 bg-indigo-600 px-3 text-sm text-white hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             type="submit"
           >
             Create account
@@ -75,7 +75,7 @@ export default async function RegisterPage({
         </form>
         <p className="mt-5 text-sm text-slate-600">
           Already have an account?{" "}
-          <Link className="font-medium text-indigo-600" href="/login">
+          <Link className="text-indigo-600" href="/login">
             Sign in
           </Link>
         </p>

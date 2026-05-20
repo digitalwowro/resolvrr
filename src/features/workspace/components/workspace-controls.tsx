@@ -57,11 +57,12 @@ export function WorkspaceControls({
   }));
 
   return (
-    <section className="flex h-10 shrink-0 items-center justify-between gap-2 bg-slate-50 px-3">
+    <section className="flex h-10 shrink-0 items-center justify-between gap-2 bg-slate-50 px-5">
       <div className="flex flex-wrap items-center gap-2">
         <Checkbox
           checked={allSelected}
-          className="items-center [&>span:last-child]:sr-only"
+          className="items-center"
+          hideLabel
           indeterminate={partiallySelected}
           label="Select all tickets"
           name="workspace-select-all"

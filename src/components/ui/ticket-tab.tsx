@@ -28,8 +28,8 @@ export function TicketTab({
       className={cn(
         "inline-flex h-8 max-w-48 items-center gap-1.5 border px-2",
         active
-          ? "border-slate-300 border-b-white bg-white text-slate-950"
-          : "border-transparent bg-transparent text-slate-600 hover:bg-slate-100",
+          ? "border-slate-300 border-b-white bg-white"
+          : "border-transparent bg-transparent hover:bg-slate-100",
       )}
     >
       <button
@@ -46,7 +46,7 @@ export function TicketTab({
             className="size-1.5 shrink-0 rounded-full bg-indigo-500"
           />
         ) : null}
-        <span className="min-w-0 truncate font-medium">{label}</span>
+        <span className="min-w-0 truncate">{label}</span>
         {dirty ? <span aria-label="Unsaved changes">*</span> : null}
       </button>
       {onClose ? (

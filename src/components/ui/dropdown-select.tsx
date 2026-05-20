@@ -126,7 +126,7 @@ export function DropdownSelect({
   return (
     <div className={cn("inline-block", className)} ref={rootRef}>
       {label ? (
-        <span className="mb-1 block font-medium text-slate-800">
+        <span className="mb-1 block text-slate-800">
           {label}
         </span>
       ) : null}
