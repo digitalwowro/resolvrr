@@ -1,6 +1,13 @@
 "use client";
 
-import { Check, Columns3, MoreHorizontal, RefreshCw } from "lucide-react";
+import {
+  Check,
+  Columns3,
+  ListChecks,
+  PanelLeft,
+  PanelTop,
+  RefreshCw,
+} from "lucide-react";
 import {
   Checkbox,
   ToolbarButton,
@@ -58,7 +65,7 @@ export function WorkspaceControls({
 
   return (
     <section className="flex h-10 shrink-0 items-center justify-between gap-2 bg-slate-50 px-5">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 pl-2">
         <Checkbox
           checked={allSelected}
           className="items-center"
@@ -84,7 +91,7 @@ export function WorkspaceControls({
           ]}
           triggerContent={
             <span className="flex items-center gap-1">
-              <MoreHorizontal aria-hidden="true" className="size-3.5" />
+              <ListChecks aria-hidden="true" className="size-3.5" />
               Bulk actions
             </span>
           }
@@ -104,7 +111,15 @@ export function WorkspaceControls({
           onValueChange={(value) =>
             onTabOrientationChange(value as StaticTabOrientation)
           }
-          options={orientationOptions}
+          options={orientationOptions.map((option) => ({
+            ...option,
+            icon:
+              option.value === "vertical" ? (
+                <PanelLeft aria-hidden="true" className="size-4" />
+              ) : (
+                <PanelTop aria-hidden="true" className="size-4" />
+              ),
+          }))}
           value={tabOrientation}
         />
         <ToolbarMenuDropdown

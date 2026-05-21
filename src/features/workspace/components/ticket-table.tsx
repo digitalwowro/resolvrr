@@ -3,12 +3,25 @@
 import {
   CheckCircle2,
   Circle,
-  CircleDot,
+  CirclePlus,
   Clock3,
   PauseCircle,
+  SignalHigh,
+  SignalLow,
+  SignalMedium,
   type LucideIcon,
 } from "lucide-react";
-import { Checkbox, TableHeaderCell } from "@/components/ui";
+import {
+  Checkbox,
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableHeaderCell,
+  TableHeadStaticCell,
+  TableRoot,
+  TableRow,
+} from "@/components/ui";
 import type { SortDirection } from "@/components/ui";
 import type {
   StaticColumnKey,
@@ -23,42 +36,39 @@ type TicketTableProps = {
   visibleColumns: Set<StaticColumnKey>;
   selectedRowIds: Set<string>;
   activeTicketId: string;
-  sortKey: StaticSortKey;
-  sortDirection: SortDirection;
+  sortDirectionFor(key: StaticSortKey): SortDirection | undefined;
   onSort(key: StaticSortKey): void;
   onRowSelect(ticketId: string): void;
   onToggleRow(ticketId: string): void;
 };
 
 const stateClass: Record<StaticTicketState, string> = {
-  New: "text-sky-700",
-  Open: "text-indigo-700",
-  "Pending Reminder": "text-amber-700",
-  "Pending Close": "text-slate-600",
-  Closed: "text-emerald-700",
+  New: "text-rose-600",
+  Open: "text-indigo-600",
+  "Pending Reminder": "text-amber-600",
+  "Pending Close": "text-violet-600",
+  Closed: "text-emerald-600",
 };
 
 const stateIcon: Record<StaticTicketState, LucideIcon> = {
-  New: Circle,
-  Open: CircleDot,
+  New: CirclePlus,
+  Open: Circle,
   "Pending Reminder": Clock3,
   "Pending Close": PauseCircle,
   Closed: CheckCircle2,
 };
 
 const priorityClass: Record<StaticTicketPriority, string> = {
-  Low: "bg-slate-400",
-  Medium: "bg-amber-500",
-  High: "bg-rose-500",
+  Low: "text-emerald-600",
+  Medium: "text-indigo-600",
+  High: "text-rose-600",
 };
 
-function sortDirectionFor(
-  key: StaticSortKey,
-  sortKey: StaticSortKey,
-  direction: SortDirection,
-) {
-  return key === sortKey ? direction : undefined;
-}
+const priorityIcon: Record<StaticTicketPriority, LucideIcon> = {
+  Low: SignalLow,
+  Medium: SignalMedium,
+  High: SignalHigh,
+};
 
 function StateCell({ state }: { state: StaticTicketState }) {
   const Icon = stateIcon[state];
@@ -72,12 +82,11 @@ function StateCell({ state }: { state: StaticTicketState }) {
 }
 
 function PriorityCell({ priority }: { priority: StaticTicketPriority }) {
+  const Icon = priorityIcon[priority];
+
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span
-        aria-hidden="true"
-        className={`size-2 rounded-full ${priorityClass[priority]}`}
-      />
+      <Icon aria-hidden="true" className={`size-3.5 ${priorityClass[priority]}`} />
       {priority}
     </span>
   );
@@ -88,15 +97,14 @@ export function TicketTable({
   visibleColumns,
   selectedRowIds,
   activeTicketId,
-  sortKey,
-  sortDirection,
+  sortDirectionFor,
   onSort,
   onRowSelect,
   onToggleRow,
 }: TicketTableProps) {
   return (
-    <div className="min-h-0 flex-1 overflow-auto rounded-md border-x border-slate-200 bg-white">
-      <table className="w-full min-w-6xl table-fixed border-separate border-spacing-0">
+    <TableRoot className="rounded-t-none border-t">
+      <Table className="min-w-6xl">
         <colgroup>
           <col className="w-9" />
           <col className="w-24" />
@@ -104,70 +112,83 @@ export function TicketTable({
           {visibleColumns.has("customer") ? <col /> : null}
           {visibleColumns.has("owner") ? <col /> : null}
           {visibleColumns.has("state") ? <col className="w-38" /> : null}
-          {visibleColumns.has("priority") ? <col className="w-24" /> : null}
-          {visibleColumns.has("pendingTill") ? <col className="w-34" /> : null}
-          {visibleColumns.has("updatedAt") ? <col className="w-36" /> : null}
+          {visibleColumns.has("priority") ? <col className="w-25" /> : null}
+          {visibleColumns.has("pendingTill") ? <col className="w-32" /> : null}
+          {visibleColumns.has("updatedAt") ? <col className="w-34" /> : null}
         </colgroup>
-        <thead className="sticky top-0 z-10">
-          <tr>
-            <th className="h-8 w-9 border-b border-slate-200 bg-white px-2" />
+        <TableHeader>
+          <TableRow>
+            <TableHeadStaticCell className="w-9" />
             <TableHeaderCell
               className="w-24"
               label="#"
               onSort={() => onSort("number")}
-              sortDirection={sortDirectionFor("number", sortKey, sortDirection)}
+              sortDirection={sortDirectionFor("number")}
             />
             <TableHeaderCell
               label="Title"
               onSort={() => onSort("title")}
-              sortDirection={sortDirectionFor("title", sortKey, sortDirection)}
+              sortDirection={sortDirectionFor("title")}
             />
             {visibleColumns.has("customer") ? (
-              <TableHeaderCell label="Customer" />
+              <TableHeaderCell
+                label="Customer"
+                onSort={() => onSort("customer")}
+                sortDirection={sortDirectionFor("customer")}
+              />
             ) : null}
             {visibleColumns.has("owner") ? (
-              <TableHeaderCell label="Owner" />
+              <TableHeaderCell
+                label="Owner"
+                onSort={() => onSort("owner")}
+                sortDirection={sortDirectionFor("owner")}
+              />
             ) : null}
             {visibleColumns.has("state") ? (
-              <TableHeaderCell className="w-38" label="State" />
+              <TableHeaderCell
+                className="w-38"
+                label="State"
+                onSort={() => onSort("state")}
+                sortDirection={sortDirectionFor("state")}
+              />
             ) : null}
             {visibleColumns.has("priority") ? (
               <TableHeaderCell
-                className="w-24"
+                className="w-25"
                 label="Priority"
                 onSort={() => onSort("priority")}
-                sortDirection={sortDirectionFor("priority", sortKey, sortDirection)}
+                sortDirection={sortDirectionFor("priority")}
               />
             ) : null}
             {visibleColumns.has("pendingTill") ? (
               <TableHeaderCell
-                className="w-34"
+                className="w-32"
                 label="Pending till"
                 onSort={() => onSort("pendingTill")}
-                sortDirection={sortDirectionFor("pendingTill", sortKey, sortDirection)}
+                sortDirection={sortDirectionFor("pendingTill")}
               />
             ) : null}
             {visibleColumns.has("updatedAt") ? (
               <TableHeaderCell
-                className="w-36"
+                className="w-34"
                 label="Updated at"
                 onSort={() => onSort("updatedAt")}
-                sortDirection={sortDirectionFor("updatedAt", sortKey, sortDirection)}
+                sortDirection={sortDirectionFor("updatedAt")}
               />
             ) : null}
-          </tr>
-        </thead>
-        <tbody>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((row) => {
             const active = row.id === activeTicketId;
 
             return (
-              <tr
+              <TableRow
                 aria-selected={active}
                 className={active ? "bg-slate-50" : "bg-white hover:bg-slate-50"}
                 key={row.id}
               >
-                <td className="border-b border-slate-100 px-2 py-1.5 align-middle">
+                <TableCell className="align-middle">
                   <Checkbox
                     checked={selectedRowIds.has(row.id)}
                     className="items-center"
@@ -176,56 +197,56 @@ export function TicketTable({
                     name={`select-${row.id}`}
                     onChange={() => onToggleRow(row.id)}
                   />
-                </td>
-                <td className="whitespace-nowrap border-b border-slate-100 px-2 py-2">
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
                   {row.number}
-                </td>
-                <td className="min-w-0 border-b border-slate-100 px-2 py-2">
+                </TableCell>
+                <TableCell className="min-w-0">
                   <button
                     className="block w-full rounded-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                     onClick={() => onRowSelect(row.id)}
                     type="button"
                   >
-                    <span className="block truncate">
+                    <span className="block truncate font-semibold">
                       {row.title}
                     </span>
                   </button>
-                </td>
+                </TableCell>
                 {visibleColumns.has("customer") ? (
-                  <td className="min-w-0 truncate border-b border-slate-100 px-2 py-2">
+                  <TableCell className="min-w-0 truncate">
                     {row.customer}
-                  </td>
+                  </TableCell>
                 ) : null}
                 {visibleColumns.has("owner") ? (
-                  <td className="min-w-0 truncate border-b border-slate-100 px-2 py-2">
+                  <TableCell className="min-w-0 truncate">
                     {row.owner}
-                  </td>
+                  </TableCell>
                 ) : null}
                 {visibleColumns.has("state") ? (
-                  <td className="whitespace-nowrap border-b border-slate-100 px-2 py-2">
+                  <TableCell className="whitespace-nowrap">
                     <StateCell state={row.state} />
-                  </td>
+                  </TableCell>
                 ) : null}
                 {visibleColumns.has("priority") ? (
-                  <td className="whitespace-nowrap border-b border-slate-100 px-2 py-2">
+                  <TableCell className="whitespace-nowrap">
                     <PriorityCell priority={row.priority} />
-                  </td>
+                  </TableCell>
                 ) : null}
                 {visibleColumns.has("pendingTill") ? (
-                  <td className="whitespace-nowrap border-b border-slate-100 px-2 py-2">
+                  <TableCell className="whitespace-nowrap">
                     {row.pendingTill}
-                  </td>
+                  </TableCell>
                 ) : null}
                 {visibleColumns.has("updatedAt") ? (
-                  <td className="whitespace-nowrap border-b border-slate-100 px-2 py-2">
+                  <TableCell className="whitespace-nowrap">
                     {row.updatedAt}
-                  </td>
+                  </TableCell>
                 ) : null}
-              </tr>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </TableRoot>
   );
 }

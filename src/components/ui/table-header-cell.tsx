@@ -51,7 +51,7 @@ export function TableHeaderCell({
     <th
       aria-sort={sortDirection ?? "none"}
       className={cn(
-        "h-9 border-b border-slate-200 bg-white px-2 text-left font-normal",
+        "h-10 border-b border-slate-200 bg-white px-2 text-left text-xs font-semibold",
         className,
       )}
       scope="col"
@@ -61,14 +61,15 @@ export function TableHeaderCell({
           className={cn(
             "flex min-w-0 flex-1 items-center gap-1 rounded-md px-1 text-left",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
-            sortable ? "hover:bg-slate-100" : "cursor-default",
+            sortable ? null : "cursor-default",
           )}
           disabled={!sortable}
           onClick={onSort}
           type="button"
         >
+          <GripVertical aria-hidden="true" className="size-3 shrink-0" />
           <span className="min-w-0 truncate">{children ?? label}</span>
-          {sortable ? <SortIcon aria-hidden="true" className="size-3.5" /> : null}
+          {sortable ? <SortIcon aria-hidden="true" className="size-3" /> : null}
         </button>
         {resizable ? (
           <button

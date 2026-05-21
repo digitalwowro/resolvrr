@@ -18,7 +18,11 @@ inline.
   loading, and close affordances.
 - `ToolbarButton`, `ToolbarDropdownSelect`, `ToolbarSearchableDropdown`, and
   `ToolbarMenuDropdown`: compact toolbar wrappers over the base primitives.
+- `TableRoot`, `Table`, `TableHeader`, `TableBody`, `TableRow`,
+  `TableCell`, and `TableHeadStaticCell`: shared table shell, sticky header,
+  and compact row rhythm primitives.
 - `TableHeaderCell`: sortable and resizable table header affordance.
+- `useTableSort`: shared sort-state hook for sortable table headers.
 - `Spinner` and `LoadingState`: compact loading indicators.
 - `StatusBadge`: compact provider-neutral state badge.
 
@@ -109,6 +113,26 @@ keyboard behavior, or outside-click behavior.
 - Closes on blur, pointer leave, or Escape.
 - Uses `aria-describedby` while visible.
 - Does not contain interactive controls.
+
+## Table Contract
+
+Table primitives provide structure, surface, and rhythm only:
+
+- `TableRoot` owns the scroll container, rounded surface, border, overflow, and
+  white background.
+- `Table` owns the base table layout: full width, fixed table layout, separated
+  borders, and zero border spacing.
+- `TableHeader` provides the sticky header layer.
+- `TableCell` provides body cell rhythm with `h-11`, `px-2`, and row dividers.
+- `TableHeadStaticCell` provides static header cells for non-sortable columns.
+- `TableHeaderCell` provides sortable header controls and optional resize
+  callbacks.
+
+`useTableSort` owns only sort interaction state: active sort key, direction,
+same-key toggling, new-key direction, and `sortDirectionFor`. Row comparison and
+data sorting stay in the feature that owns the data shape.
+
+## Table Keyboard Behavior
 
 `TableHeaderCell`:
 

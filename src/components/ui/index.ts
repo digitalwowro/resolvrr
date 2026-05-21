@@ -9,6 +9,15 @@ export { ProfileMenu } from "./profile-menu";
 export { SearchableDropdown } from "./searchable-dropdown";
 export { Spinner } from "./spinner";
 export { StatusBadge } from "./status-badge";
+export {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableHeadStaticCell,
+  TableRoot,
+  TableRow,
+} from "./table";
 export { TableHeaderCell } from "./table-header-cell";
 export type { SortDirection } from "./table-header-cell";
 export { TicketTab } from "./ticket-tab";
@@ -19,3 +28,4 @@ export {
   ToolbarSearchableDropdown,
 } from "./toolbar-controls";
 export { Tooltip } from "./tooltip";
+export { useTableSort } from "./use-table-sort";

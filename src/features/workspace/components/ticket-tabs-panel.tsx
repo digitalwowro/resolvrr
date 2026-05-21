@@ -1,9 +1,10 @@
 import {
   CheckCircle2,
   Circle,
-  CircleDot,
+  CirclePlus,
   Clock3,
   PauseCircle,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { TicketTab } from "@/components/ui";
@@ -21,7 +22,7 @@ type TicketTabsPanelProps = {
 };
 
 const stateColor: Record<StaticTicketState, string> = {
-  New: "text-sky-600",
+  New: "text-rose-600",
   Open: "text-indigo-600",
   "Pending Reminder": "text-amber-600",
   "Pending Close": "text-violet-600",
@@ -29,8 +30,8 @@ const stateColor: Record<StaticTicketState, string> = {
 };
 
 const stateIcon: Record<StaticTicketState, LucideIcon> = {
-  New: Circle,
-  Open: CircleDot,
+  New: CirclePlus,
+  Open: Circle,
   "Pending Reminder": Clock3,
   "Pending Close": PauseCircle,
   Closed: CheckCircle2,
@@ -64,12 +65,18 @@ function VerticalTicketTab({
         className={`mt-1 size-3.5 shrink-0 ${stateColor[tab.state]}`}
       />
       <span className="min-w-0 flex-1">
-        <span className="block truncate">
+        <span className="block truncate font-semibold">
           {tab.title}
         </span>
         <span className="mt-0.5 block truncate">
           {tab.label.split(" ")[0]} · {tab.customer}
         </span>
+      </span>
+      <span
+        aria-label={`Close ${tab.label}`}
+        className="grid size-5 shrink-0 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+      >
+        <X aria-hidden="true" className="size-3" />
       </span>
     </button>
   );
@@ -84,7 +91,7 @@ export function TicketTabsPanel({
   if (orientation === "vertical") {
     return (
       <aside className="flex w-72 shrink-0 flex-col border-r border-slate-200 bg-slate-50">
-        <div className="flex h-10 shrink-0 items-center border-b border-slate-200 px-3">
+        <div className="flex h-10 shrink-0 items-center border-b border-slate-200">
           Open tickets
         </div>
         <div
@@ -108,20 +115,32 @@ export function TicketTabsPanel({
   return (
     <div
       aria-label="Open tickets"
-      className="flex min-w-0 shrink-0 gap-1 overflow-x-auto rounded-t-md border-b border-slate-200 bg-slate-50 px-2 pt-1.5"
+      className="flex min-w-0 shrink-0 gap-1 bg-slate-50"
       role="tablist"
     >
-      {tabs.map((tab) => (
-        <TicketTab
-          active={tab.id === activeTicketId}
-          dirty={tab.dirty}
-          key={tab.id}
-          label={tab.label}
-          loading={tab.loading}
-          onSelect={() => onSelect(tab.id)}
-          unread={tab.unread}
-        />
-      ))}
+      {tabs.map((tab) => {
+        const Icon = stateIcon[tab.state];
+
+        return (
+          <TicketTab
+            active={tab.id === activeTicketId}
+            dirty={tab.dirty}
+            icon={
+              <Icon
+                aria-hidden="true"
+                className={`size-3.5 shrink-0 ${stateColor[tab.state]}`}
+              />
+            }
+            key={tab.id}
+            label={tab.label.split(" ")[0]}
+            loading={tab.loading}
+            onClose={() => undefined}
+            onSelect={() => onSelect(tab.id)}
+            title={tab.title}
+            unread={tab.unread}
+          />
+        );
+      })}
     </div>
   );
 }

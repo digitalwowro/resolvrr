@@ -1,11 +1,13 @@
 "use client";
 
 import { X } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "./classnames";
-import { Spinner } from "./spinner";
 
 type TicketTabProps = {
   label: string;
+  title?: string;
+  icon?: ReactNode;
   active?: boolean;
   unread?: boolean;
   dirty?: boolean;
@@ -16,6 +18,8 @@ type TicketTabProps = {
 
 export function TicketTab({
   label,
+  title,
+  icon,
   active = false,
   unread = false,
   dirty = false,
@@ -26,10 +30,10 @@ export function TicketTab({
   return (
     <div
       className={cn(
-        "inline-flex h-8 max-w-48 items-center gap-1.5 border px-2",
+        "inline-flex h-9 min-w-0 flex-1 items-center gap-1.5 rounded-t-md border border-b-0 border-slate-200 px-3",
         active
-          ? "border-slate-300 border-b-white bg-white"
-          : "border-transparent bg-transparent hover:bg-slate-100",
+          ? "bg-white"
+          : "border-slate-200 bg-slate-50 hover:bg-white",
       )}
     >
       <button
@@ -39,20 +43,24 @@ export function TicketTab({
         role="tab"
         type="button"
       >
-        {loading ? <Spinner label={`${label} loading`} /> : null}
-        {unread ? (
-          <span
-            aria-label="Unread"
-            className="size-1.5 shrink-0 rounded-full bg-indigo-500"
-          />
-        ) : null}
-        <span className="min-w-0 truncate">{label}</span>
-        {dirty ? <span aria-label="Unsaved changes">*</span> : null}
+        {loading ? <span className="sr-only">{label} loading</span> : null}
+        {icon}
+        {unread ? <span className="sr-only">Unread</span> : null}
+        <span className="min-w-0 truncate">
+          {title ? (
+            <>
+              {label} <span className="font-semibold">{title}</span>
+            </>
+          ) : (
+            <span className="font-semibold">{label}</span>
+          )}
+        </span>
+        {dirty ? <span className="sr-only">Unsaved changes</span> : null}
       </button>
       {onClose ? (
         <button
           aria-label={`Close ${label}`}
-          className="grid size-5 shrink-0 place-items-center rounded-md text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+          className="grid size-5 shrink-0 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
           onClick={onClose}
           type="button"
         >

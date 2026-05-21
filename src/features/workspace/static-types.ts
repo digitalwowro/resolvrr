@@ -17,7 +17,15 @@ export type StaticColumnKey =
   | "pendingTill"
   | "updatedAt";
 
-export type StaticSortKey = "number" | "title" | "priority" | "pendingTill" | "updatedAt";
+export type StaticSortKey =
+  | "number"
+  | "title"
+  | "customer"
+  | "owner"
+  | "state"
+  | "priority"
+  | "pendingTill"
+  | "updatedAt";
 
 export type StaticSavedView = {
   id: string;
