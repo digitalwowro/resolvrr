@@ -7,6 +7,8 @@ export const dropdownMenuClass =
 export const dropdownOptionClass =
   "flex h-8 min-w-full items-center gap-2 rounded-md px-2 text-left outline-none hover:bg-indigo-50 hover:text-indigo-950";
 
+export const dropdownIconClass = "size-[1em] shrink-0";
+
 export const dropdownOptionStateClass = {
   idle: "text-slate-800",
   highlighted: "bg-indigo-50 text-indigo-700",

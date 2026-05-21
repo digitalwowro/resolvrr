@@ -173,7 +173,7 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
   );
 
   return (
-    <main className="flex min-h-screen flex-col">
+    <main className="flex h-screen min-h-screen flex-col overflow-hidden">
       <WorkspaceHeader
         actions={staticProfileActions}
         onWorkspaceChange={setSelectedWorkspaceId}

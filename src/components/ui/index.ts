@@ -1,6 +1,7 @@
 export { Button } from "./button";
 export { Checkbox } from "./checkbox";
 export { DropdownSelect } from "./dropdown-select";
+export { dropdownIconClass } from "./dropdown-styles";
 export type { DropdownOption } from "./dropdown-types";
 export { LoadingState } from "./loading-state";
 export { MenuDropdown } from "./menu-dropdown";

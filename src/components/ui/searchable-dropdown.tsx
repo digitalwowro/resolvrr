@@ -14,6 +14,7 @@ import { cn } from "./classnames";
 import { firstEnabledIndex, nextEnabledIndex } from "./dropdown-navigation";
 import {
   dropdownMenuClass,
+  dropdownIconClass,
   dropdownOptionClass,
   dropdownOptionStateClass,
   dropdownTriggerClass,
@@ -177,7 +178,7 @@ export function SearchableDropdown({
                 {selected?.label ?? placeholder}
               </span>
             </span>
-            <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+            <ChevronDown aria-hidden="true" className={dropdownIconClass} />
           </div>
           {options.map((option) => (
             <div
@@ -186,7 +187,7 @@ export function SearchableDropdown({
             >
               {option.icon}
               <span className="min-w-0 flex-1 truncate">{option.label}</span>
-              <Check aria-hidden="true" className="size-4 shrink-0" />
+              <Check aria-hidden="true" className={dropdownIconClass} />
             </div>
           ))}
         </div>
@@ -214,7 +215,7 @@ export function SearchableDropdown({
               {selected?.label ?? placeholder}
             </span>
           </span>
-          <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+          <ChevronDown aria-hidden="true" className={dropdownIconClass} />
         </button>
         {open ? (
           <>
@@ -225,7 +226,10 @@ export function SearchableDropdown({
                 "absolute left-0 top-0 z-50 w-full",
               )}
             >
-              <Search aria-hidden="true" className="size-4 shrink-0 text-slate-600" />
+              <Search
+                aria-hidden="true"
+                className={`${dropdownIconClass} text-slate-600`}
+              />
               <input
                 ref={inputRef}
                 aria-activedescendant={
@@ -249,7 +253,7 @@ export function SearchableDropdown({
                 type="text"
                 value={query}
               />
-              <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+              <ChevronDown aria-hidden="true" className={dropdownIconClass} />
             </label>
             <div
               className={cn(dropdownMenuClass, menuClassName, "left-0 top-full w-full")}
@@ -284,7 +288,7 @@ export function SearchableDropdown({
                       {option.icon}
                       <span className="min-w-0 flex-1 truncate">{option.label}</span>
                       {selectedOption ? (
-                        <Check aria-hidden="true" className="size-4 shrink-0" />
+                        <Check aria-hidden="true" className={dropdownIconClass} />
                       ) : null}
                     </button>
                   );

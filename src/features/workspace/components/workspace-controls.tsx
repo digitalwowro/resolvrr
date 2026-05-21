@@ -2,11 +2,16 @@
 
 import {
   Check,
+  BriefcaseBusiness,
   Columns3,
+  CircleDot,
   ListChecks,
   PanelLeft,
   PanelTop,
   RefreshCw,
+  SignalHigh,
+  Trash2,
+  User,
 } from "lucide-react";
 import {
   Checkbox,
@@ -14,6 +19,7 @@ import {
   ToolbarDropdownSelect,
   ToolbarMenuDropdown,
   ToolbarSearchableDropdown,
+  dropdownIconClass,
   type DropdownOption,
   type MenuDropdownItem,
 } from "@/components/ui";
@@ -58,10 +64,19 @@ export function WorkspaceControls({
     id: `column-${column.key}`,
     label: column.label,
     icon: visibleColumns.has(column.key) ? (
-      <Check aria-hidden="true" className="size-4" />
+      <Check aria-hidden="true" className={dropdownIconClass} />
     ) : undefined,
     onSelect: () => onColumnToggle(column.key),
   }));
+  const savedViewOption = savedViewOptions.find((option) => option.value === "my-work");
+  const savedViewOptionsWithIcon = savedViewOption
+    ? [
+        {
+          ...savedViewOption,
+          icon: <BriefcaseBusiness aria-hidden="true" className={dropdownIconClass} />,
+        },
+      ]
+    : savedViewOptions;
 
   return (
     <section className="flex h-10 shrink-0 items-center justify-between gap-2 bg-slate-50 px-5">
@@ -85,13 +100,35 @@ export function WorkspaceControls({
         </ToolbarButton>
         <ToolbarMenuDropdown
           items={[
-            { id: "assign", label: "Assign owner", onSelect: () => undefined },
-            { id: "pending", label: "Set pending", onSelect: () => undefined },
-            { id: "close", label: "Close", onSelect: () => undefined },
+            {
+              id: "owner",
+              label: "Owner",
+              icon: <User aria-hidden="true" className={dropdownIconClass} />,
+              onSelect: () => undefined,
+            },
+            {
+              id: "state",
+              label: "State",
+              icon: <CircleDot aria-hidden="true" className={dropdownIconClass} />,
+              onSelect: () => undefined,
+            },
+            {
+              id: "priority",
+              label: "Priority",
+              icon: <SignalHigh aria-hidden="true" className={dropdownIconClass} />,
+              onSelect: () => undefined,
+            },
+            {
+              id: "delete",
+              label: "Delete",
+              destructive: true,
+              icon: <Trash2 aria-hidden="true" className={dropdownIconClass} />,
+              onSelect: () => undefined,
+            },
           ]}
           triggerContent={
             <span className="flex items-center gap-1">
-              <ListChecks aria-hidden="true" className="size-3.5" />
+              <ListChecks aria-hidden="true" className={dropdownIconClass} />
               Bulk actions
             </span>
           }
@@ -102,7 +139,7 @@ export function WorkspaceControls({
         <ToolbarSearchableDropdown
           ariaLabel="Saved view"
           onValueChange={onSavedViewChange}
-          options={savedViewOptions}
+          options={savedViewOptionsWithIcon}
           searchPlaceholder="Find view"
           value={selectedSavedViewId}
         />
@@ -115,9 +152,9 @@ export function WorkspaceControls({
             ...option,
             icon:
               option.value === "vertical" ? (
-                <PanelLeft aria-hidden="true" className="size-4" />
+                <PanelLeft aria-hidden="true" className={dropdownIconClass} />
               ) : (
-                <PanelTop aria-hidden="true" className="size-4" />
+                <PanelTop aria-hidden="true" className={dropdownIconClass} />
               ),
           }))}
           value={tabOrientation}
@@ -126,7 +163,7 @@ export function WorkspaceControls({
           items={columnItems}
           triggerContent={
             <span className="flex items-center gap-1">
-              <Columns3 aria-hidden="true" className="size-3.5" />
+              <Columns3 aria-hidden="true" className={dropdownIconClass} />
               Columns
             </span>
           }

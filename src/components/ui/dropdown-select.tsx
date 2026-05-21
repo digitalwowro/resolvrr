@@ -17,6 +17,7 @@ import {
 } from "./dropdown-navigation";
 import {
   dropdownMenuClass,
+  dropdownIconClass,
   dropdownOptionClass,
   dropdownOptionStateClass,
   dropdownTriggerClass,
@@ -151,7 +152,7 @@ export function DropdownSelect({
                 {selected?.label ?? placeholder}
               </span>
             </span>
-            <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+            <ChevronDown aria-hidden="true" className={dropdownIconClass} />
           </div>
           {options.map((option) => (
             <div
@@ -160,7 +161,7 @@ export function DropdownSelect({
             >
               {option.icon}
               <span className="min-w-0 flex-1 truncate">{option.label}</span>
-              <Check aria-hidden="true" className="size-4 shrink-0" />
+              <Check aria-hidden="true" className={dropdownIconClass} />
             </div>
           ))}
         </div>
@@ -189,7 +190,7 @@ export function DropdownSelect({
               {selected?.label ?? placeholder}
             </span>
           </span>
-          <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+          <ChevronDown aria-hidden="true" className={dropdownIconClass} />
         </button>
         {open ? (
           <div
@@ -224,7 +225,7 @@ export function DropdownSelect({
                   {option.icon}
                   <span className="min-w-0 flex-1 truncate">{option.label}</span>
                   {selectedOption ? (
-                    <Check aria-hidden="true" className="size-4 shrink-0" />
+                    <Check aria-hidden="true" className={dropdownIconClass} />
                   ) : null}
                 </button>
               );

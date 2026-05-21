@@ -13,6 +13,7 @@ import {
 import { cn } from "./classnames";
 import {
   dropdownMenuClass,
+  dropdownIconClass,
   dropdownOptionClass,
   dropdownOptionStateClass,
   dropdownTriggerClass,
@@ -171,7 +172,7 @@ export function MenuDropdown({
     >
       {triggerContent ?? <span className="truncate">{triggerLabel}</span>}
       {showChevron ? (
-        <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+        <ChevronDown aria-hidden="true" className={dropdownIconClass} />
       ) : null}
     </button>
   );
@@ -221,7 +222,7 @@ export function MenuDropdown({
               selected && dropdownOptionStateClass.selected,
               highlighted && !selected && dropdownOptionStateClass.highlighted,
               item.disabled && dropdownOptionStateClass.disabled,
-              item.destructive && !item.disabled && "text-rose-700",
+              item.destructive && !item.disabled && "!text-rose-700 hover:!text-rose-700",
             )}
             disabled={item.disabled}
             id={`${id}-item-${index}`}
@@ -233,7 +234,7 @@ export function MenuDropdown({
           >
             {item.icon}
             <span className="min-w-0 flex-1 truncate">{item.label}</span>
-            {selected ? <Check aria-hidden="true" className="size-4 shrink-0" /> : null}
+            {selected ? <Check aria-hidden="true" className={dropdownIconClass} /> : null}
           </button>
         );
       })}
@@ -268,7 +269,7 @@ export function MenuDropdown({
           >
             {triggerContent ?? <span className="truncate">{triggerLabel}</span>}
             {showChevron ? (
-              <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
+              <ChevronDown aria-hidden="true" className={dropdownIconClass} />
             ) : null}
           </div>
           {items.map((item) => {

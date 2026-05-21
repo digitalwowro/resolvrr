@@ -1,5 +1,5 @@
 @import "tailwindcss";
 
 body {
-  @apply bg-slate-50 text-sm text-slate-700;
+  @apply overflow-hidden bg-slate-50 text-sm text-slate-700;
 }

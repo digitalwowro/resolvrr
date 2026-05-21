@@ -56,6 +56,9 @@ Dropdown children inherit the menu font size. Base dropdown menus use `text-sm`;
 toolbar dropdown wrappers pass their compact `text-xs` size to the menu so rows
 match the toolbar trigger.
 
+Dropdown icons use the shared dropdown icon class so they scale with the current
+dropdown font size instead of a fixed spacing token.
+
 Width is content-driven by default. Triggers do not set a default minimum width.
 Menus use natural content width, stay at least as wide as the trigger, and use a
 standard Tailwind maximum width only as an overflow guard. The searchable input
