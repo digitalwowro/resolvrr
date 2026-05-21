@@ -14,6 +14,10 @@ import { cn } from "./classnames";
 import {
   dropdownMenuClass,
   dropdownIconClass,
+  dropdownMeasureMenuClass,
+  dropdownMeasureMenuFrameClass,
+  dropdownMeasureOptionClass,
+  dropdownMeasureRootClass,
   dropdownOptionClass,
   dropdownOptionStateClass,
   dropdownTriggerClass,
@@ -79,8 +83,8 @@ export function MenuDropdown({
 
   useOutsideClick(rootRef, close, open);
 
-  function openMenu() {
-    setHighlightedIndex(nextActionableIndex(items, -1, 1));
+  function openMenu(nextIndex = -1) {
+    setHighlightedIndex(nextIndex);
     setOpen(true);
   }
 
@@ -165,7 +169,9 @@ export function MenuDropdown({
       onKeyDown={(event) => {
         if (["Enter", " ", "ArrowDown"].includes(event.key)) {
           event.preventDefault();
-          openMenu();
+          openMenu(
+            event.key === "ArrowDown" ? nextActionableIndex(items, -1, 1) : -1,
+          );
         }
       }}
       type="button"
@@ -187,7 +193,7 @@ export function MenuDropdown({
         dropdownMenuClass,
         menuClassName,
         "top-full",
-        !unstyledTrigger && "w-full",
+        !unstyledTrigger ? "w-full" : "w-max min-w-full",
         align === "end" ? "right-0" : "left-0",
       )}
       id={`${id}-menu`}
@@ -233,7 +239,7 @@ export function MenuDropdown({
             type="button"
           >
             {item.icon}
-            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+            <span className="min-w-0 truncate">{item.label}</span>
             {selected ? <Check aria-hidden="true" className={dropdownIconClass} /> : null}
           </button>
         );
@@ -252,13 +258,10 @@ export function MenuDropdown({
 
   return (
     <div className={cn("inline-block", className)} ref={rootRef}>
-      <div className="relative grid w-max min-w-full max-w-sm">
+      <div className="relative grid w-max max-w-sm">
         <div
           aria-hidden="true"
-          className={cn(
-            "pointer-events-none invisible col-start-1 row-start-1 grid text-sm",
-            menuClassName,
-          )}
+          className={cn(dropdownMeasureRootClass, menuClassName)}
         >
           <div
             className={cn(
@@ -272,32 +275,36 @@ export function MenuDropdown({
               <ChevronDown aria-hidden="true" className={dropdownIconClass} />
             ) : null}
           </div>
-          {items.map((item) => {
-            if (item.type === "separator") {
-              return null;
-            }
+          <div className={dropdownMeasureMenuFrameClass}>
+            <div className={dropdownMeasureMenuClass}>
+              {items.map((item) => {
+                if (item.type === "separator") {
+                  return null;
+                }
 
-            if (item.type === "heading") {
-              return (
-                <div
-                  className="col-start-1 row-start-1 h-0 overflow-hidden px-2 py-0 uppercase text-slate-500"
-                  key={item.id}
-                >
-                  {item.label}
-                </div>
-              );
-            }
+                if (item.type === "heading") {
+                  return (
+                    <div
+                      className="h-8 w-max overflow-hidden px-2 py-0 uppercase whitespace-nowrap text-slate-500"
+                      key={item.id}
+                    >
+                      {item.label}
+                    </div>
+                  );
+                }
 
-            return (
-              <div
-                className="col-start-1 row-start-1 flex h-0 min-w-full items-center gap-2 overflow-hidden rounded-md px-2 text-left outline-none"
-                key={item.id}
-              >
-                {item.icon}
-                <span className="min-w-0 flex-1 truncate">{item.label}</span>
-              </div>
-            );
-          })}
+                return (
+                  <div className={dropdownMeasureOptionClass} key={item.id}>
+                    {item.icon}
+                    <span>{item.label}</span>
+                    {item.selected ? (
+                      <Check aria-hidden="true" className={dropdownIconClass} />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
         {triggerButton}
         {menuPanel}

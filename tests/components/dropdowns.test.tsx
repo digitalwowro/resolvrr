@@ -65,23 +65,27 @@ describe("DropdownSelect", () => {
     const trigger = screen.getByRole("combobox", { name: "Queue" });
     await user.click(trigger);
 
-    expect(trigger.parentElement).toHaveClass("w-max", "min-w-full", "max-w-sm");
+    expect(trigger.parentElement).toHaveClass("w-max", "max-w-sm");
+    expect(trigger.parentElement).not.toHaveClass("min-w-full");
     expect(trigger).toHaveClass("w-full", "col-start-1", "row-start-1");
     expect(trigger).not.toHaveClass("min-w-40");
     expect(screen.getByRole("listbox")).toHaveClass(
-      "w-max",
-      "min-w-full",
+      "box-border",
       "max-w-sm",
       "w-full",
       "text-sm",
       "shadow-lg",
     );
+    expect(screen.getByRole("listbox")).not.toHaveClass("w-max", "min-w-full");
     expect(screen.getByRole("option", { name: "Alpha" })).toHaveClass(
       "h-8",
-      "min-w-full",
+      "w-full",
       "px-2",
       "rounded-md",
       "text-slate-800",
+    );
+    expect(screen.getByRole("option", { name: "Alpha" })).not.toHaveClass(
+      "min-w-full",
     );
   });
 
@@ -93,7 +97,7 @@ describe("DropdownSelect", () => {
     await user.click(trigger);
     await user.keyboard("{ArrowDown}{Enter}");
 
-    expect(trigger).toHaveTextContent("Archive");
+    expect(trigger).toHaveTextContent("Alpha");
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
@@ -117,14 +121,15 @@ describe("MenuDropdown", () => {
     const trigger = screen.getByRole("button", { name: "Actions" });
     await user.click(trigger);
 
-    expect(trigger.parentElement).toHaveClass("w-max", "min-w-full", "max-w-sm");
+    expect(trigger.parentElement).toHaveClass("w-max", "max-w-sm");
+    expect(trigger.parentElement).not.toHaveClass("min-w-full");
     expect(trigger).toHaveClass("w-full", "col-start-1", "row-start-1");
     expect(screen.getByRole("menu")).toHaveClass(
-      "w-max",
-      "min-w-full",
+      "box-border",
       "max-w-sm",
       "w-full",
     );
+    expect(screen.getByRole("menu")).not.toHaveClass("w-max", "min-w-full");
   });
 });
 
@@ -139,9 +144,9 @@ describe("SearchableDropdown", () => {
     const placeholderTrigger = searchInput.parentElement?.previousElementSibling;
     expect(placeholderTrigger?.parentElement).toHaveClass(
       "w-max",
-      "min-w-full",
       "max-w-sm",
     );
+    expect(placeholderTrigger?.parentElement).not.toHaveClass("min-w-full");
     expect(placeholderTrigger).toHaveClass(
       "pointer-events-none",
       "w-full",
@@ -149,11 +154,12 @@ describe("SearchableDropdown", () => {
     );
     expect(searchInput).toHaveClass("min-w-0");
     expect(screen.getByRole("listbox")).toHaveClass(
-      "w-max",
-      "min-w-full",
+      "box-border",
       "max-w-sm",
+      "w-full",
       "top-full",
     );
+    expect(screen.getByRole("listbox")).not.toHaveClass("w-max", "min-w-full");
     expect(screen.getByPlaceholderText("Search")).toHaveClass("w-0", "min-w-0");
   });
 
@@ -190,7 +196,7 @@ describe("SearchableDropdown", () => {
     await user.keyboard("{ArrowDown}{Enter}");
 
     expect(screen.getByRole("combobox", { name: "Assignee" })).toHaveTextContent(
-      "Archive",
+      "Alpha",
     );
 
     await user.click(screen.getByRole("combobox", { name: "Assignee" }));

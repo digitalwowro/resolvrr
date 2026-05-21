@@ -15,6 +15,10 @@ import { firstEnabledIndex, nextEnabledIndex } from "./dropdown-navigation";
 import {
   dropdownMenuClass,
   dropdownIconClass,
+  dropdownMeasureMenuClass,
+  dropdownMeasureMenuFrameClass,
+  dropdownMeasureOptionClass,
+  dropdownMeasureRootClass,
   dropdownOptionClass,
   dropdownOptionStateClass,
   dropdownTriggerClass,
@@ -55,14 +59,8 @@ function visibleOptionsFor(
     );
 }
 
-function initialHighlightIndex(
-  options: VisibleOption[],
-  value: string | undefined,
-): number {
-  const selectedIndex = options.findIndex(
-    (option) => option.value === value && !option.disabled,
-  );
-  return selectedIndex >= 0 ? selectedIndex : firstEnabledIndex(options);
+function initialHighlightIndex(options: VisibleOption[]): number {
+  return firstEnabledIndex(options);
 }
 
 export function SearchableDropdown({
@@ -97,7 +95,7 @@ export function SearchableDropdown({
 
   function openMenu() {
     setQuery("");
-    setHighlightedIndex(initialHighlightIndex(visibleOptionsFor(options, ""), value));
+    setHighlightedIndex(-1);
     setOpen(true);
   }
 
@@ -157,13 +155,10 @@ export function SearchableDropdown({
           {label}
         </span>
       ) : null}
-      <div className="relative grid w-max min-w-full max-w-sm">
+      <div className="relative grid w-max max-w-sm">
         <div
           aria-hidden="true"
-          className={cn(
-            "pointer-events-none invisible col-start-1 row-start-1 grid text-sm",
-            menuClassName,
-          )}
+          className={cn(dropdownMeasureRootClass, menuClassName)}
         >
           <div
             className={cn(
@@ -172,24 +167,27 @@ export function SearchableDropdown({
               "col-start-1 row-start-1",
             )}
           >
-            <span className="flex min-w-0 items-center gap-2 truncate">
+            <span className="flex items-center gap-2 whitespace-nowrap">
               {selected?.icon}
-              <span className={selected ? "truncate" : "truncate text-slate-500"}>
+              <span className={selected ? undefined : "text-slate-500"}>
                 {selected?.label ?? placeholder}
               </span>
             </span>
             <ChevronDown aria-hidden="true" className={dropdownIconClass} />
           </div>
-          {options.map((option) => (
-            <div
-              className="col-start-1 row-start-1 flex h-0 min-w-full items-center gap-2 overflow-hidden rounded-md px-2 text-left outline-none"
-              key={option.value}
-            >
-              {option.icon}
-              <span className="min-w-0 flex-1 truncate">{option.label}</span>
-              <Check aria-hidden="true" className={dropdownIconClass} />
+          <div className={dropdownMeasureMenuFrameClass}>
+            <div className={dropdownMeasureMenuClass}>
+              {options.map((option) => (
+                <div className={dropdownMeasureOptionClass} key={option.value}>
+                  {option.icon}
+                  <span>{option.label}</span>
+                  {option.value === value ? (
+                    <Check aria-hidden="true" className={dropdownIconClass} />
+                  ) : null}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
         <button
           aria-hidden={open || undefined}
@@ -245,7 +243,7 @@ export function SearchableDropdown({
                   const nextQuery = event.currentTarget.value;
                   const nextOptions = visibleOptionsFor(options, nextQuery);
                   setQuery(nextQuery);
-                  setHighlightedIndex(initialHighlightIndex(nextOptions, value));
+                  setHighlightedIndex(initialHighlightIndex(nextOptions));
                 }}
                 onKeyDown={handleInputKeyDown}
                 placeholder={searchPlaceholder}
@@ -286,7 +284,7 @@ export function SearchableDropdown({
                       type="button"
                     >
                       {option.icon}
-                      <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                      <span className="min-w-0 truncate">{option.label}</span>
                       {selectedOption ? (
                         <Check aria-hidden="true" className={dropdownIconClass} />
                       ) : null}

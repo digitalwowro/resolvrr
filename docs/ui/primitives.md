@@ -59,10 +59,17 @@ match the toolbar trigger.
 Dropdown icons use the shared dropdown icon class so they scale with the current
 dropdown font size instead of a fixed spacing token.
 
-Width is content-driven by default. Triggers do not set a default minimum width.
-Menus use natural content width, stay at least as wide as the trigger, and use a
-standard Tailwind maximum width only as an overflow guard. The searchable input
-fills the open menu but does not set menu width.
+Width is content-driven by default. The dropdown wrapper is measured by an
+invisible sizing layer that includes the closed trigger and every full option
+row. Hidden measurement rows do not truncate and do not use flexible text
+growth. Visible triggers, search inputs, menus, and option rows fill the
+measured width. A standard Tailwind maximum width is used only as an overflow
+guard, and visible row text truncates only after that guard is reached.
+
+Selected and keyboard-active states are separate. Opening a dropdown shows the
+selected row with accent text and a check icon, but it does not receive the
+active/hover background until the user moves through the menu or filters a
+searchable list.
 
 Dense product toolbars may tighten trigger height and padding while preserving
 the shared dropdown behavior and menu rhythm.

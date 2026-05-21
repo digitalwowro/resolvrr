@@ -10,7 +10,6 @@ import {
 } from "react";
 import { cn } from "./classnames";
 import {
-  firstEnabledIndex,
   nextEnabledIndex,
   selectedOptionIndex,
   typeaheadIndex,
@@ -18,6 +17,10 @@ import {
 import {
   dropdownMenuClass,
   dropdownIconClass,
+  dropdownMeasureMenuClass,
+  dropdownMeasureMenuFrameClass,
+  dropdownMeasureOptionClass,
+  dropdownMeasureRootClass,
   dropdownOptionClass,
   dropdownOptionStateClass,
   dropdownTriggerClass,
@@ -61,8 +64,7 @@ export function DropdownSelect({
   const close = useCallback(() => setOpen(false), []);
   useOutsideClick(rootRef, close, open);
 
-  function openMenu() {
-    const nextIndex = selectedIndex >= 0 ? selectedIndex : firstEnabledIndex(options);
+  function openMenu(nextIndex = -1) {
     setHighlightedIndex(nextIndex);
     setOpen(true);
   }
@@ -84,7 +86,13 @@ export function DropdownSelect({
 
     if (!open && ["Enter", " ", "ArrowDown", "ArrowUp"].includes(event.key)) {
       event.preventDefault();
-      openMenu();
+      openMenu(
+        event.key === "ArrowDown"
+          ? nextEnabledIndex(options, -1, 1)
+          : event.key === "ArrowUp"
+            ? nextEnabledIndex(options, -1, -1)
+            : -1,
+      );
       return;
     }
 
@@ -131,13 +139,10 @@ export function DropdownSelect({
           {label}
         </span>
       ) : null}
-      <div className="relative grid w-max min-w-full max-w-sm">
+      <div className="relative grid w-max max-w-sm">
         <div
           aria-hidden="true"
-          className={cn(
-            "pointer-events-none invisible col-start-1 row-start-1 grid text-sm",
-            menuClassName,
-          )}
+          className={cn(dropdownMeasureRootClass, menuClassName)}
         >
           <div
             className={cn(
@@ -146,24 +151,27 @@ export function DropdownSelect({
               "col-start-1 row-start-1",
             )}
           >
-            <span className="flex min-w-0 items-center gap-2 truncate">
+            <span className="flex items-center gap-2 whitespace-nowrap">
               {selected?.icon}
-              <span className={selected ? "truncate" : "truncate text-slate-500"}>
+              <span className={selected ? undefined : "text-slate-500"}>
                 {selected?.label ?? placeholder}
               </span>
             </span>
             <ChevronDown aria-hidden="true" className={dropdownIconClass} />
           </div>
-          {options.map((option) => (
-            <div
-              className="col-start-1 row-start-1 flex h-0 min-w-full items-center gap-2 overflow-hidden rounded-md px-2 text-left outline-none"
-              key={option.value}
-            >
-              {option.icon}
-              <span className="min-w-0 flex-1 truncate">{option.label}</span>
-              <Check aria-hidden="true" className={dropdownIconClass} />
+          <div className={dropdownMeasureMenuFrameClass}>
+            <div className={dropdownMeasureMenuClass}>
+              {options.map((option) => (
+                <div className={dropdownMeasureOptionClass} key={option.value}>
+                  {option.icon}
+                  <span>{option.label}</span>
+                  {option.value === value ? (
+                    <Check aria-hidden="true" className={dropdownIconClass} />
+                  ) : null}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
         <button
           aria-activedescendant={
@@ -223,7 +231,7 @@ export function DropdownSelect({
                   type="button"
                 >
                   {option.icon}
-                  <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                  <span className="min-w-0 truncate">{option.label}</span>
                   {selectedOption ? (
                     <Check aria-hidden="true" className={dropdownIconClass} />
                   ) : null}

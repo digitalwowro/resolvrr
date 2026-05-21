@@ -114,8 +114,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   helpers.
 - `src/components/ui/dropdown-select.tsx`: non-searchable single-select
   dropdown primitive.
-- `src/components/ui/dropdown-styles.ts`: shared dropdown trigger, menu, and
-  row class contracts.
+- `src/components/ui/dropdown-styles.ts`: shared dropdown trigger, menu,
+  measurement-layer, and row class contracts.
 - `src/components/ui/dropdown-types.ts`: shared dropdown option type.
 - `src/components/ui/loading-state.tsx`: labeled compact loading state.
 - `src/components/ui/menu-dropdown.tsx`: generic action menu primitive.

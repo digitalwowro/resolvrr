@@ -16,17 +16,21 @@ describe("MenuDropdown and ProfileMenu", () => {
     await user.click(screen.getByRole("button", { name: "Actions" }));
 
     expect(screen.getByRole("menu")).toHaveClass(
-      "w-max",
-      "min-w-full",
+      "box-border",
+      "w-full",
       "max-w-sm",
       "text-sm",
     );
+    expect(screen.getByRole("menu")).not.toHaveClass("w-max", "min-w-full");
     expect(screen.getByRole("menuitem", { name: "First" })).toHaveClass(
       "h-8",
-      "min-w-full",
+      "w-full",
       "px-2",
       "rounded-md",
       "text-slate-800",
+    );
+    expect(screen.getByRole("menuitem", { name: "First" })).not.toHaveClass(
+      "min-w-full",
     );
   });
 
@@ -63,13 +67,13 @@ describe("MenuDropdown and ProfileMenu", () => {
 
   it("opens from the keyboard, navigates items, and activates with Enter", async () => {
     const user = userEvent.setup();
-    const onSecond = vi.fn();
+    const onFirst = vi.fn();
     render(
       <MenuDropdown
         items={[
           { type: "heading", id: "main", label: "Main" },
-          { id: "first", label: "First", onSelect: vi.fn() },
-          { id: "second", label: "Second", onSelect: onSecond },
+          { id: "first", label: "First", onSelect: onFirst },
+          { id: "second", label: "Second", onSelect: vi.fn() },
         ]}
         triggerLabel="Actions"
       />,
@@ -78,7 +82,7 @@ describe("MenuDropdown and ProfileMenu", () => {
     screen.getByRole("button", { name: "Actions" }).focus();
     await user.keyboard("{Enter}{ArrowDown}{Enter}");
 
-    expect(onSecond).toHaveBeenCalledTimes(1);
+    expect(onFirst).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
@@ -98,15 +102,15 @@ describe("MenuDropdown and ProfileMenu", () => {
     expect(screen.getAllByText("Demo User").length).toBeGreaterThan(0);
     expect(screen.getByRole("menu")).toHaveClass(
       "top-full",
-      "w-max",
-      "min-w-full",
+      "w-full",
       "max-w-sm",
       "text-sm",
     );
+    expect(screen.getByRole("menu")).not.toHaveClass("w-max", "min-w-full");
     expect(screen.getByRole("menuitem", { name: "Profile" })).toHaveClass(
       "h-8",
       "px-2",
-      "text-indigo-700",
+      "text-slate-800",
     );
     expect(screen.getByRole("menuitem", { name: "Profile" })).toBeInTheDocument();
   });
