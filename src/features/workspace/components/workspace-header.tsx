@@ -61,7 +61,7 @@ export function WorkspaceHeader({
   ];
 
   return (
-    <header className="flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-5">
+    <header className="flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-4">
       <div className="flex shrink-0 items-center">
         {logoAvailable ? (
           /* eslint-disable-next-line @next/next/no-img-element -- Static brand assets render as supplied from public/brand. */

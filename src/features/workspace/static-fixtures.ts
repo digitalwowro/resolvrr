@@ -29,7 +29,7 @@ export const staticProfileActions: StaticProfileAction[] = [
   { id: "manage-workspaces", label: "Manage workspaces" },
 ];
 
-export const staticTicketTabs: StaticTicketTab[] = [
+const baseTicketTabs: StaticTicketTab[] = [
   {
     id: "48291",
     label: "#48291 Billing follow-up",
@@ -254,6 +254,22 @@ const generatedRows: StaticTicketRow[] = Array.from({ length: 93 }, (_, index) =
 export const staticTicketRows: StaticTicketRow[] = [
   ...baseTicketRows,
   ...generatedRows,
+];
+
+const generatedTicketTabs: StaticTicketTab[] = staticTicketRows
+  .filter((row) => !baseTicketTabs.some((tab) => tab.id === row.id))
+  .slice(0, 45)
+  .map((row) => ({
+    id: row.id,
+    label: `${row.number} ${row.title}`,
+    title: row.title,
+    customer: row.customer,
+    state: row.state,
+  }));
+
+export const staticTicketTabs: StaticTicketTab[] = [
+  ...baseTicketTabs,
+  ...generatedTicketTabs,
 ];
 
 export const staticColumns: StaticColumn[] = [

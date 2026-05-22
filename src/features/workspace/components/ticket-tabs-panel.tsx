@@ -53,8 +53,8 @@ function VerticalTicketTab({
       aria-selected={active}
       className={
         active
-          ? "flex w-full items-start gap-2 border-l-2 border-indigo-500 bg-white px-3 py-2 text-left"
-          : "flex w-full items-start gap-2 border-l-2 border-transparent px-3 py-2 text-left hover:bg-white"
+          ? "flex w-full items-start gap-2 border-b border-l-2 border-b-slate-200 border-l-indigo-500 bg-white px-3 py-2 text-left"
+          : "flex w-full items-start gap-2 border-b border-l-2 border-b-slate-200 border-l-transparent px-3 py-2 text-left hover:bg-white"
       }
       onClick={onSelect}
       role="tab"
@@ -62,19 +62,19 @@ function VerticalTicketTab({
     >
       <Icon
         aria-hidden="true"
-        className={`mt-1 size-3.5 shrink-0 ${stateColor[tab.state]}`}
+        className={`self-center size-3.5 shrink-0 ${stateColor[tab.state]}`}
       />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-semibold">
           {tab.title}
         </span>
-        <span className="mt-0.5 block truncate">
+        <span className="mt-0.5 block truncate text-xs">
           {tab.label.split(" ")[0]} · {tab.customer}
         </span>
       </span>
       <span
         aria-label={`Close ${tab.label}`}
-        className="grid size-5 shrink-0 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+        className="grid size-5 shrink-0 place-items-center self-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
       >
         <X aria-hidden="true" className="size-3" />
       </span>
@@ -90,10 +90,7 @@ export function TicketTabsPanel({
 }: TicketTabsPanelProps) {
   if (orientation === "vertical") {
     return (
-      <aside className="flex w-72 shrink-0 flex-col border-r border-slate-200 bg-slate-50">
-        <div className="flex h-10 shrink-0 items-center border-b border-slate-200">
-          Open tickets
-        </div>
+      <aside className="flex min-w-64 max-w-xs basis-1/6 shrink-0 flex-col border-r border-slate-200 bg-slate-50">
         <div
           aria-label="Open tickets"
           className="flex min-h-0 flex-1 flex-col overflow-y-auto"

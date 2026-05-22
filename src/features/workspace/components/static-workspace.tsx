@@ -182,9 +182,9 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
         workspaces={staticProfileWorkspaces}
       />
       {tabOrientation === "vertical" ? (
-        <section className="flex min-h-0 flex-1 overflow-hidden px-5 pb-5">
+        <section className="flex min-h-0 flex-1 overflow-hidden">
           {tabs}
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden px-4 pb-5">
             {controls}
             {table}
           </div>
@@ -192,7 +192,7 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
       ) : (
         <>
           {controls}
-          <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 pb-5">
+          <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-5">
             {tabs}
             {table}
           </section>

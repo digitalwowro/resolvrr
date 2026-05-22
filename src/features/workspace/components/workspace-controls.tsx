@@ -79,7 +79,7 @@ export function WorkspaceControls({
     : savedViewOptions;
 
   return (
-    <section className="flex h-10 shrink-0 items-center justify-between gap-2 bg-slate-50 px-5">
+    <section className="flex h-12 shrink-0 items-center justify-between gap-2 bg-slate-50">
       <div className="flex flex-wrap items-center gap-2 pl-2">
         <Checkbox
           checked={allSelected}
