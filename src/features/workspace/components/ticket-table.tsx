@@ -22,6 +22,7 @@ import {
   TableRoot,
   TableRow,
 } from "@/components/ui";
+import { cn } from "@/components/ui/classnames";
 import type { SortDirection } from "@/components/ui";
 import type {
   StaticColumnKey,
@@ -103,8 +104,8 @@ export function TicketTable({
   onToggleRow,
 }: TicketTableProps) {
   return (
-    <TableRoot className="rounded-t-none border-t">
-      <Table className="min-w-6xl">
+    <TableRoot className="rounded-b-none border-b-0">
+      <Table>
         <colgroup>
           <col className="w-9" />
           <col className="w-24" />
@@ -179,16 +180,25 @@ export function TicketTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row) => {
+          {rows.map((row, index) => {
             const active = row.id === activeTicketId;
+            const cellBorderClass = index === rows.length - 1 ? "border-b-0" : "";
 
             return (
               <TableRow
                 aria-selected={active}
-                className={active ? "bg-slate-50" : "bg-white hover:bg-slate-50"}
+                className={
+                  active
+                    ? "cursor-pointer bg-slate-50"
+                    : "cursor-pointer bg-white hover:bg-slate-50"
+                }
                 key={row.id}
+                onClick={() => onRowSelect(row.id)}
               >
-                <TableCell className="align-middle">
+                <TableCell
+                  className={cn("align-middle", cellBorderClass)}
+                  onClick={(event) => event.stopPropagation()}
+                >
                   <Checkbox
                     checked={selectedRowIds.has(row.id)}
                     className="items-center"
@@ -198,10 +208,10 @@ export function TicketTable({
                     onChange={() => onToggleRow(row.id)}
                   />
                 </TableCell>
-                <TableCell className="whitespace-nowrap">
+                <TableCell className={cn("whitespace-nowrap", cellBorderClass)}>
                   {row.number}
                 </TableCell>
-                <TableCell className="min-w-0">
+                <TableCell className={cn("min-w-0", cellBorderClass)}>
                   <button
                     className="block w-full rounded-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                     onClick={() => onRowSelect(row.id)}
@@ -213,32 +223,32 @@ export function TicketTable({
                   </button>
                 </TableCell>
                 {visibleColumns.has("customer") ? (
-                  <TableCell className="min-w-0 truncate">
+                  <TableCell className={cn("min-w-0 truncate", cellBorderClass)}>
                     {row.customer}
                   </TableCell>
                 ) : null}
                 {visibleColumns.has("owner") ? (
-                  <TableCell className="min-w-0 truncate">
+                  <TableCell className={cn("min-w-0 truncate", cellBorderClass)}>
                     {row.owner}
                   </TableCell>
                 ) : null}
                 {visibleColumns.has("state") ? (
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell className={cn("whitespace-nowrap", cellBorderClass)}>
                     <StateCell state={row.state} />
                   </TableCell>
                 ) : null}
                 {visibleColumns.has("priority") ? (
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell className={cn("whitespace-nowrap", cellBorderClass)}>
                     <PriorityCell priority={row.priority} />
                   </TableCell>
                 ) : null}
                 {visibleColumns.has("pendingTill") ? (
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell className={cn("whitespace-nowrap", cellBorderClass)}>
                     {row.pendingTill}
                   </TableCell>
                 ) : null}
                 {visibleColumns.has("updatedAt") ? (
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell className={cn("whitespace-nowrap", cellBorderClass)}>
                     {row.updatedAt}
                   </TableCell>
                 ) : null}

@@ -27,9 +27,26 @@ describe("StaticWorkspace", () => {
 
     expect(screen.getByLabelText("Open tickets")).toHaveClass("flex-col");
     expect(screen.getByLabelText("Open tickets")).toHaveClass("overflow-y-auto");
+    const listTab = screen.getByRole("tab", { name: "Return to list: My work" });
+    expect(listTab).toHaveTextContent("List");
+    expect(listTab).toHaveTextContent("My work");
   });
 
-  it("keeps tabs visible and changes active ticket locally", async () => {
+  it("renders a pinned horizontal List tab before ticket tabs", () => {
+    renderWorkspace();
+
+    const tabs = screen.getAllByRole("tab");
+
+    expect(tabs[0]).toHaveAccessibleName("Return to list: My work");
+    expect(tabs[0]).toHaveTextContent("List");
+    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+    expect(tabs[1]).toHaveAccessibleName(/#48291/i);
+    expect(
+      screen.queryByRole("button", { name: /Close List/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens a ticket context and returns to the table through List", async () => {
     const user = userEvent.setup();
     renderWorkspace();
 
@@ -38,15 +55,32 @@ describe("StaticWorkspace", () => {
 
     expect(tab).toHaveAttribute("aria-selected", "true");
     expect(screen.getByLabelText("Open tickets")).toBeInTheDocument();
+    expect(screen.getByLabelText("Ticket detail #48288")).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "Title" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "Return to list: My work" }));
+
+    expect(screen.getByRole("columnheader", { name: "Title" })).toBeInTheDocument();
+  });
+
+  it("clicking a ticket row switches away from the List context", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    expect(
+      screen.getByRole("tab", { name: "Return to list: My work" }),
+    ).toHaveAttribute("aria-selected", "true");
 
     await user.click(
-      screen.getByRole("button", {
+      screen.getByRole("row", {
         name: /Webhook delivery failed overnight/i,
       }),
     );
+
+    expect(screen.getByLabelText("Ticket detail #48277")).toBeInTheDocument();
     expect(
-      screen.getByRole("row", { name: /Webhook delivery failed overnight/i }),
-    ).toHaveAttribute("aria-selected", "true");
+      screen.getByRole("tab", { name: "Return to list: My work" }),
+    ).toHaveAttribute("aria-selected", "false");
   });
 
   it("collapses crowded horizontal tabs to icon-only with tab details", async () => {
@@ -54,10 +88,10 @@ describe("StaticWorkspace", () => {
       bottom: 0,
       height: 0,
       left: 0,
-      right: 400,
+      right: 100,
       toJSON: () => ({}),
       top: 0,
-      width: 400,
+      width: 100,
       x: 0,
       y: 0,
     });

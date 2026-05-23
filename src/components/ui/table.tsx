@@ -8,7 +8,7 @@ export function TableRoot({
   return (
     <div
       className={cn(
-        "min-h-0 flex-1 overflow-auto rounded-md border-x border-slate-200 bg-white",
+        "min-h-0 flex-1 overflow-auto rounded-md border border-slate-200 bg-white",
         className,
       )}
       {...props}

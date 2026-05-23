@@ -35,6 +35,7 @@ describe("table primitives", () => {
     expect(screen.getByTestId("root")).toHaveClass(
       "overflow-auto",
       "rounded-md",
+      "border",
       "bg-white",
     );
     expect(screen.getByTestId("table")).toHaveClass(

@@ -31,6 +31,10 @@ type StaticWorkspaceProps = {
   userEmail: string;
 };
 
+type ActiveContext =
+  | { type: "list" }
+  | { type: "ticket"; ticketId: string };
+
 const priorityRank: Record<StaticTicketPriority, number> = {
   High: 3,
   Medium: 2,
@@ -73,6 +77,39 @@ function sortRows(
   });
 }
 
+function TicketDetailPlaceholder({ ticket }: { ticket: StaticTicketRow }) {
+  return (
+    <section
+      aria-label={`Ticket detail ${ticket.number}`}
+      className="min-h-0 flex-1 overflow-hidden rounded-t-md border-x border-t border-slate-200 bg-white"
+    >
+      <div className="border-b border-slate-200 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="shrink-0">{ticket.number}</span>
+          <h2 className="min-w-0 flex-1 truncate font-semibold">{ticket.title}</h2>
+          <span className="shrink-0 text-xs">{ticket.customer}</span>
+        </div>
+      </div>
+      <div className="flex h-full min-h-0 flex-col">
+        <div className="min-h-0 flex-1 space-y-3 overflow-auto px-4 py-4">
+          <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+            {ticket.preview}
+          </div>
+          <div className="rounded-md border border-slate-200 px-3 py-2">
+            Static ticket detail placeholder for layout review.
+          </div>
+        </div>
+        <div className="flex h-11 shrink-0 items-center gap-4 border-t border-slate-200 px-4 text-sm">
+          <span>Owner {ticket.owner}</span>
+          <span>State {ticket.state}</span>
+          <span>Priority {ticket.priority}</span>
+          <span>Group Support</span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(
     staticProfileWorkspaces[0].id,
@@ -82,7 +119,9 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
   );
   const [tabOrientation, setTabOrientation] =
     useState<StaticTabOrientation>("horizontal");
-  const [activeTicketId, setActiveTicketId] = useState(staticTicketTabs[0].id);
+  const [activeContext, setActiveContext] = useState<ActiveContext>({
+    type: "list",
+  });
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   const [visibleColumns, setVisibleColumns] = useState(defaultVisibleColumns);
   const { sortDirection, sortDirectionFor, sortKey, toggleSort } =
@@ -96,9 +135,16 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
     [sortDirection, sortKey],
   );
   const savedViewOptions = dropdownOptions(staticSavedViews);
+  const selectedSavedView =
+    staticSavedViews.find((view) => view.id === selectedSavedViewId) ??
+    staticSavedViews[0];
   const orientationOptions = dropdownOptions(staticTabOrientations);
   const allSelected = rows.length > 0 && selectedRowIds.size === rows.length;
   const partiallySelected = selectedRowIds.size > 0 && !allSelected;
+  const activeTicket =
+    activeContext.type === "ticket"
+      ? rows.find((row) => row.id === activeContext.ticketId) ?? staticTicketRows[0]
+      : staticTicketRows[0];
 
   function toggleSelectAll() {
     setSelectedRowIds(allSelected ? new Set() : new Set(rows.map((row) => row.id)));
@@ -132,6 +178,15 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
     setSelectedRowIds(new Set());
   }
 
+  function handleSavedViewChange(savedViewId: string) {
+    setSelectedSavedViewId(savedViewId);
+    setActiveContext({ type: "list" });
+  }
+
+  function showTicket(ticketId: string) {
+    setActiveContext({ type: "ticket", ticketId });
+  }
+
   function controls(className?: string) {
     return (
     <WorkspaceControls
@@ -140,7 +195,7 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
       columns={staticColumns}
       onColumnToggle={toggleColumn}
       onRefresh={handleRefresh}
-      onSavedViewChange={setSelectedSavedViewId}
+      onSavedViewChange={handleSavedViewChange}
       onSelectAll={toggleSelectAll}
       onTabOrientationChange={setTabOrientation}
       orientationOptions={orientationOptions}
@@ -155,17 +210,24 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
 
   const tabs = (
     <TicketTabsPanel
-      activeTicketId={activeTicketId}
-      onSelect={setActiveTicketId}
+      activeTicketId={
+        activeContext.type === "ticket" ? activeContext.ticketId : undefined
+      }
+      listActive={activeContext.type === "list"}
+      onSelect={showTicket}
+      onSelectList={() => setActiveContext({ type: "list" })}
       orientation={tabOrientation}
+      savedViewLabel={selectedSavedView.label}
       tabs={staticTicketTabs}
     />
   );
 
   const table = (
     <TicketTable
-      activeTicketId={activeTicketId}
-      onRowSelect={setActiveTicketId}
+      activeTicketId={
+        activeContext.type === "ticket" ? activeContext.ticketId : ""
+      }
+      onRowSelect={showTicket}
       onSort={toggleSort}
       onToggleRow={toggleRow}
       rows={rows}
@@ -174,6 +236,13 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
       visibleColumns={visibleColumns}
     />
   );
+
+  const workArea =
+    activeContext.type === "list" ? (
+      table
+    ) : (
+      <TicketDetailPlaceholder ticket={activeTicket} />
+    );
 
   return (
     <main className="flex h-screen min-h-screen flex-col overflow-hidden">
@@ -187,17 +256,17 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
       {tabOrientation === "vertical" ? (
         <section className="flex min-h-0 flex-1 overflow-hidden">
           {tabs}
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden px-4 pb-5">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden px-4">
             {controls()}
-            {table}
+            {workArea}
           </div>
         </section>
       ) : (
         <>
           {controls("px-4")}
-          <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-5">
+          <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-4">
             {tabs}
-            {table}
+            {workArea}
           </section>
         </>
       )}

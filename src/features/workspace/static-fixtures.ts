@@ -268,7 +268,7 @@ export const staticTicketRows: StaticTicketRow[] = [
 
 const generatedTicketTabs: StaticTicketTab[] = staticTicketRows
   .filter((row) => !baseTicketTabs.some((tab) => tab.id === row.id))
-  .slice(0, 55)
+  .slice(0, 0)
   .map((row) => ({
     id: row.id,
     label: `${row.number} ${row.title}`,

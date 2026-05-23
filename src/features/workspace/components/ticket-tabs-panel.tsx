@@ -1,10 +1,12 @@
 "use client";
 
 import {
+  BriefcaseBusiness,
   CheckCircle2,
   Circle,
   CirclePlus,
   Clock3,
+  List,
   PauseCircle,
   TriangleAlert,
   X,
@@ -20,8 +22,11 @@ import type {
 
 type TicketTabsPanelProps = {
   tabs: StaticTicketTab[];
-  activeTicketId: string;
+  activeTicketId?: string;
+  listActive: boolean;
   orientation: StaticTabOrientation;
+  savedViewLabel: string;
+  onSelectList(): void;
   onSelect(ticketId: string): void;
 };
 
@@ -138,13 +143,84 @@ function VerticalTicketTab({
   );
 }
 
+function HorizontalListTab({
+  active,
+  savedViewLabel,
+  onSelect,
+}: {
+  active: boolean;
+  savedViewLabel: string;
+  onSelect(): void;
+}) {
+  return (
+    <Tooltip content={`Return to list: ${savedViewLabel}`} side="bottom">
+      <button
+        aria-label={`Return to list: ${savedViewLabel}`}
+        aria-selected={active}
+        className={
+          active
+            ? "inline-flex h-9 min-w-16 items-center gap-2 rounded-t-md border border-b-0 border-indigo-200 bg-indigo-50 px-3 text-indigo-700"
+            : "inline-flex h-9 min-w-16 items-center gap-2 rounded-t-md border border-b-0 border-slate-200 bg-white px-3 hover:bg-indigo-50"
+        }
+        onClick={onSelect}
+        role="tab"
+        type="button"
+      >
+        <BriefcaseBusiness aria-hidden="true" className="size-3.5 shrink-0" />
+        <span>List</span>
+      </button>
+    </Tooltip>
+  );
+}
+
+function VerticalListTab({
+  active,
+  savedViewLabel,
+  onSelect,
+}: {
+  active: boolean;
+  savedViewLabel: string;
+  onSelect(): void;
+}) {
+  return (
+    <div className="shrink-0">
+      <button
+        aria-label={`Return to list: ${savedViewLabel}`}
+        aria-selected={active}
+        className={
+          active
+            ? "flex h-12 w-full items-center gap-2 bg-indigo-50 px-3 text-left text-indigo-700"
+            : "flex h-12 w-full items-center gap-2 bg-slate-50 px-3 text-left hover:bg-indigo-50"
+        }
+        onClick={onSelect}
+        role="tab"
+        type="button"
+      >
+        <List aria-hidden="true" className="size-3.5 shrink-0" />
+        <span className="min-w-0 flex-1 truncate font-semibold">List</span>
+        <span className="inline-flex min-w-0 max-w-32 items-center gap-1 truncate rounded-md border border-current px-1.5 py-0.5 text-xs">
+          <BriefcaseBusiness aria-hidden="true" className="size-3 shrink-0" />
+          {savedViewLabel}
+        </span>
+      </button>
+      <div className="h-px bg-slate-200" />
+    </div>
+  );
+}
+
 function HorizontalTicketTabs({
   tabs,
   activeTicketId,
+  listActive,
+  savedViewLabel,
+  onSelectList,
   onSelect,
 }: {
   tabs: StaticTicketTab[];
-  activeTicketId: string;
+  activeTicketId?: string;
+  listActive: boolean;
+  savedViewLabel: string;
+  onSelectList(): void;
   onSelect(ticketId: string): void;
 }) {
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -189,52 +265,61 @@ function HorizontalTicketTabs({
   return (
     <div
       aria-label="Open tickets"
-      className={
-        density === "icon"
-          ? "flex min-w-0 shrink-0 gap-0 bg-slate-50"
-          : "flex min-w-0 shrink-0 gap-1 bg-slate-50"
-      }
-      ref={listRef}
+      className="flex min-w-0 shrink-0 gap-1 bg-slate-50"
       role="tablist"
     >
-      {visibleTabs.map((tab) => {
-        const Icon = stateIcon[tab.state];
+      <HorizontalListTab
+        active={listActive}
+        onSelect={onSelectList}
+        savedViewLabel={savedViewLabel}
+      />
+      <div
+        className={
+          density === "icon"
+            ? "flex min-w-0 flex-1 gap-0"
+            : "flex min-w-0 flex-1 gap-1"
+        }
+        ref={listRef}
+      >
+        {visibleTabs.map((tab) => {
+          const Icon = stateIcon[tab.state];
 
-        return (
-          <TicketTab
-            active={tab.id === activeTicketId}
-            density={density}
-            dirty={tab.dirty}
-            icon={
-              <Icon
-                aria-hidden="true"
-                className={`size-3.5 shrink-0 ${stateColor[tab.state]}`}
-              />
-            }
-            key={tab.id}
-            label={tab.label.split(" ")[0]}
-            loading={tab.loading}
-            onClose={() => undefined}
-            onSelect={() => onSelect(tab.id)}
-            title={tab.title}
-            tooltip={density === "icon" ? ticketTooltip(tab) : undefined}
-            unread={tab.unread}
-          />
-        );
-      })}
-      {hiddenCount > 0 ? (
-        <Tooltip
-          content={`${hiddenCount} more tabs are open. Close tabs to show more, or switch to vertical tabs.`}
-          side="bottom"
-        >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-t-md border border-b-0 border-rose-200 bg-rose-50 hover:bg-rose-100">
-            <TriangleAlert
-              aria-label={`${hiddenCount} more tabs`}
-              className="size-3.5 text-rose-600"
+          return (
+            <TicketTab
+              active={tab.id === activeTicketId}
+              density={density}
+              dirty={tab.dirty}
+              icon={
+                <Icon
+                  aria-hidden="true"
+                  className={`size-3.5 shrink-0 ${stateColor[tab.state]}`}
+                />
+              }
+              key={tab.id}
+              label={tab.label.split(" ")[0]}
+              loading={tab.loading}
+              onClose={() => undefined}
+              onSelect={() => onSelect(tab.id)}
+              title={tab.title}
+              tooltip={density === "icon" ? ticketTooltip(tab) : undefined}
+              unread={tab.unread}
             />
-          </div>
-        </Tooltip>
-      ) : null}
+          );
+        })}
+        {hiddenCount > 0 ? (
+          <Tooltip
+            content={`${hiddenCount} more tabs are open. Close tabs to show more, or switch to vertical tabs.`}
+            side="bottom"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-t-md border border-b-0 border-rose-200 bg-rose-50 hover:bg-rose-100">
+              <TriangleAlert
+                aria-label={`${hiddenCount} more tabs`}
+                className="size-3.5 text-rose-600"
+              />
+            </div>
+          </Tooltip>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -242,7 +327,10 @@ function HorizontalTicketTabs({
 export function TicketTabsPanel({
   tabs,
   activeTicketId,
+  listActive,
   orientation,
+  savedViewLabel,
+  onSelectList,
   onSelect,
 }: TicketTabsPanelProps) {
   if (orientation === "vertical") {
@@ -253,6 +341,11 @@ export function TicketTabsPanel({
           className="flex min-h-0 flex-1 flex-col overflow-y-auto"
           role="tablist"
         >
+          <VerticalListTab
+            active={listActive}
+            onSelect={onSelectList}
+            savedViewLabel={savedViewLabel}
+          />
           {tabs.map((tab) => (
             <VerticalTicketTab
               active={tab.id === activeTicketId}
@@ -269,7 +362,10 @@ export function TicketTabsPanel({
   return (
     <HorizontalTicketTabs
       activeTicketId={activeTicketId}
+      listActive={listActive}
       onSelect={onSelect}
+      onSelectList={onSelectList}
+      savedViewLabel={savedViewLabel}
       tabs={tabs}
     />
   );
