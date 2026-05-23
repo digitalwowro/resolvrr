@@ -1,6 +1,6 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { StaticWorkspace } from "@/features/workspace";
 
 function renderWorkspace() {
@@ -8,17 +8,14 @@ function renderWorkspace() {
 }
 
 describe("StaticWorkspace", () => {
-  it("changes saved view selection with the searchable selector", async () => {
+  it("keeps saved view selection in the searchable selector", async () => {
     const user = userEvent.setup();
     renderWorkspace();
 
     await user.click(screen.getByRole("combobox", { name: "Saved view" }));
-    await user.type(screen.getByPlaceholderText("Find view"), "pending");
-    await user.click(screen.getByRole("option", { name: "Pending reminders" }));
 
-    expect(screen.getByRole("combobox", { name: "Saved view" })).toHaveTextContent(
-      "Pending reminders",
-    );
+    expect(screen.getByRole("option", { name: "My work" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Pending reminders" })).not.toBeInTheDocument();
   });
 
   it("switches ticket tab orientation without persistence", async () => {
@@ -50,6 +47,41 @@ describe("StaticWorkspace", () => {
     expect(
       screen.getByRole("row", { name: /Webhook delivery failed overnight/i }),
     ).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("collapses crowded horizontal tabs to icon-only with tab details", async () => {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+      bottom: 0,
+      height: 0,
+      left: 0,
+      right: 400,
+      toJSON: () => ({}),
+      top: 0,
+      width: 400,
+      x: 0,
+      y: 0,
+    });
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/more tabs$/)).toBeInTheDocument();
+    });
+
+    await user.hover(screen.getByLabelText(/more tabs$/));
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "more tabs are open. Close tabs to show more, or switch to vertical tabs.",
+    );
+
+    await user.hover(screen.getByRole("tab", { name: "#48291" }));
+
+    const ticketTooltip = await screen.findByRole("tooltip");
+    expect(ticketTooltip).toHaveTextContent(
+      "#48291 · Billing follow-up for annual renewal · Maya Patel",
+    );
+    expect(ticketTooltip).toHaveTextContent(
+      "R. Rosca · Open · High",
+    );
   });
 
   it("supports local row selection and column visibility", async () => {

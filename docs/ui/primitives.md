@@ -9,7 +9,7 @@ inline.
 - `Button`: compact command button with primary, secondary, and ghost variants.
 - `Checkbox`: native checkbox with label, help text, error, disabled, and
   indeterminate support.
-- `Tooltip`: non-interactive hover/focus help text.
+- `Tooltip`: non-interactive hover/focus help content.
 - `DropdownSelect`: single-select dropdown for fixed option lists.
 - `SearchableDropdown`: single-select combobox with local filtering.
 - `MenuDropdown`: action menu with optional headings and separators.
@@ -122,6 +122,7 @@ keyboard behavior, or outside-click behavior.
 - Opens on hover or keyboard focus after a short delay.
 - Closes on blur, pointer leave, or Escape.
 - Uses `aria-describedby` while visible.
+- Accepts plain text or short rich content through `content`.
 - Does not contain interactive controls.
 
 ## Table Contract

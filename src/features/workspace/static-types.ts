@@ -47,6 +47,8 @@ export type StaticTicketTab = {
   label: string;
   title: string;
   customer: string;
+  owner: string;
+  priority: StaticTicketPriority;
   state: StaticTicketState;
   unread?: boolean;
   dirty?: boolean;

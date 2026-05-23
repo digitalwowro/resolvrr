@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { MenuDropdown, ProfileMenu, Tooltip } from "@/components/ui";
@@ -172,5 +172,77 @@ describe("Tooltip", () => {
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("supports rich non-interactive content", async () => {
+    render(
+      <Tooltip
+        content={
+          <span>
+            Plain <strong>important</strong>
+          </span>
+        }
+        delayMs={0}
+      >
+        <button type="button">Details</button>
+      </Tooltip>,
+    );
+
+    screen.getByRole("button", { name: "Details" }).focus();
+
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("Plain important");
+    expect(tooltip.querySelector("strong")).toHaveTextContent("important");
+  });
+
+  it("right-aligns bottom tooltips when left alignment would overflow", async () => {
+    const originalWidth = window.innerWidth;
+    const getBoundingClientRect = vi.spyOn(
+      HTMLElement.prototype,
+      "getBoundingClientRect",
+    );
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: 320,
+    });
+    getBoundingClientRect.mockImplementation(function (
+      this: HTMLElement,
+    ): DOMRect {
+      const box =
+        this.getAttribute("role") === "tooltip"
+          ? { x: 0, y: 0, width: 180, height: 24 }
+          : { x: 280, y: 40, width: 28, height: 20 };
+
+      return {
+        bottom: box.y + box.height,
+        height: box.height,
+        left: box.x,
+        right: box.x + box.width,
+        toJSON: () => ({}),
+        top: box.y,
+        width: box.width,
+        x: box.x,
+        y: box.y,
+      } as DOMRect;
+    });
+
+    render(
+      <Tooltip content="Right edge details" delayMs={0} side="bottom">
+        <button type="button">Edge</button>
+      </Tooltip>,
+    );
+
+    screen.getByRole("button", { name: "Edge" }).focus();
+
+    await waitFor(() => {
+      expect(screen.getByRole("tooltip")).toHaveClass("right-0");
+    });
+    expect(screen.getByRole("tooltip")).not.toHaveClass("left-0");
+
+    getBoundingClientRect.mockRestore();
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: originalWidth,
+    });
   });
 });

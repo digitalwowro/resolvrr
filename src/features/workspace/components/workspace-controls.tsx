@@ -23,6 +23,7 @@ import {
   type DropdownOption,
   type MenuDropdownItem,
 } from "@/components/ui";
+import { cn } from "@/components/ui/classnames";
 import type {
   StaticColumn,
   StaticColumnKey,
@@ -43,6 +44,7 @@ type WorkspaceControlsProps = {
   partiallySelected: boolean;
   onSelectAll(): void;
   onRefresh(): void;
+  className?: string;
 };
 
 export function WorkspaceControls({
@@ -59,6 +61,7 @@ export function WorkspaceControls({
   partiallySelected,
   onSelectAll,
   onRefresh,
+  className,
 }: WorkspaceControlsProps) {
   const columnItems: MenuDropdownItem[] = columns.map((column) => ({
     id: `column-${column.key}`,
@@ -79,7 +82,12 @@ export function WorkspaceControls({
     : savedViewOptions;
 
   return (
-    <section className="flex h-12 shrink-0 items-center justify-between gap-2 bg-slate-50">
+    <section
+      className={cn(
+        "flex h-12 shrink-0 items-center justify-between gap-2 bg-slate-50",
+        className,
+      )}
+    >
       <div className="flex flex-wrap items-center gap-2 pl-2">
         <Checkbox
           checked={allSelected}

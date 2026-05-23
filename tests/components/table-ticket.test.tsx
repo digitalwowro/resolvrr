@@ -25,6 +25,62 @@ describe("TicketTab", () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it("keeps icon-only ticket tabs closeable from keyboard", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(
+      <TicketTab
+        density="icon"
+        label="Ticket 102"
+        onClose={onClose}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    screen.getByRole("tab", { name: "Ticket 102" }).focus();
+    await user.keyboard("{Delete}");
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps inactive icon-only tabs selectable without showing close", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <TicketTab
+        density="icon"
+        label="Ticket 103"
+        onClose={onClose}
+        onSelect={onSelect}
+      />,
+    );
+
+    await user.click(screen.getByRole("tab", { name: "Ticket 103" }));
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("button", { name: "Close Ticket 103" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the close affordance for active icon-only tabs", () => {
+    render(
+      <TicketTab
+        active
+        density="icon"
+        label="Ticket 104"
+        onClose={vi.fn()}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Close Ticket 104" }),
+    ).toBeInTheDocument();
+  });
 });
 
 describe("TableHeaderCell", () => {

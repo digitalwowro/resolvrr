@@ -35,6 +35,8 @@ const baseTicketTabs: StaticTicketTab[] = [
     label: "#48291 Billing follow-up",
     title: "Billing follow-up for annual renewal",
     customer: "Maya Patel",
+    owner: "R. Rosca",
+    priority: "High",
     state: "Open",
     unread: true,
   },
@@ -43,6 +45,8 @@ const baseTicketTabs: StaticTicketTab[] = [
     label: "#48288 Login loop",
     title: "Login loop after password reset",
     customer: "Daniel Cho",
+    owner: "N. Ionescu",
+    priority: "High",
     state: "Pending Reminder",
     dirty: true,
   },
@@ -51,6 +55,8 @@ const baseTicketTabs: StaticTicketTab[] = [
     label: "#48277 Webhook delivery",
     title: "Webhook delivery failed overnight",
     customer: "Owen Brooks",
+    owner: "A. Pop",
+    priority: "High",
     state: "Open",
   },
   {
@@ -58,6 +64,8 @@ const baseTicketTabs: StaticTicketTab[] = [
     label: "#48271 Plan change",
     title: "Plan change for regional team",
     customer: "Elena Vasquez",
+    owner: "M. Stan",
+    priority: "Medium",
     state: "Pending Close",
   },
   {
@@ -65,6 +73,8 @@ const baseTicketTabs: StaticTicketTab[] = [
     label: "#48255 Invoice copy",
     title: "Invoice copy requested",
     customer: "Initech Service Desk",
+    owner: "Unassigned",
+    priority: "Medium",
     state: "New",
     loading: true,
   },
@@ -258,12 +268,14 @@ export const staticTicketRows: StaticTicketRow[] = [
 
 const generatedTicketTabs: StaticTicketTab[] = staticTicketRows
   .filter((row) => !baseTicketTabs.some((tab) => tab.id === row.id))
-  .slice(0, 45)
+  .slice(0, 55)
   .map((row) => ({
     id: row.id,
     label: `${row.number} ${row.title}`,
     title: row.title,
     customer: row.customer,
+    owner: row.owner,
+    priority: row.priority,
     state: row.state,
   }));
 

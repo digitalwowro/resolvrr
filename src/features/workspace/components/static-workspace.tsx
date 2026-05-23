@@ -132,9 +132,11 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
     setSelectedRowIds(new Set());
   }
 
-  const controls = (
+  function controls(className?: string) {
+    return (
     <WorkspaceControls
       allSelected={allSelected}
+      className={className}
       columns={staticColumns}
       onColumnToggle={toggleColumn}
       onRefresh={handleRefresh}
@@ -148,7 +150,8 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
       tabOrientation={tabOrientation}
       visibleColumns={visibleColumns}
     />
-  );
+    );
+  }
 
   const tabs = (
     <TicketTabsPanel
@@ -185,13 +188,13 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
         <section className="flex min-h-0 flex-1 overflow-hidden">
           {tabs}
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden px-4 pb-5">
-            {controls}
+            {controls()}
             {table}
           </div>
         </section>
       ) : (
         <>
-          {controls}
+          {controls("px-4")}
           <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-5">
             {tabs}
             {table}
