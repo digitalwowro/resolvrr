@@ -81,6 +81,42 @@ describe("TicketTab", () => {
       screen.getByRole("button", { name: "Close Ticket 104" }),
     ).toBeInTheDocument();
   });
+
+  it("renders an optional accent line without changing the tab label color", () => {
+    render(
+      <TicketTab
+        active
+        accentClassName="text-indigo-600"
+        icon={<span aria-hidden="true" />}
+        label="Ticket 105"
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("tab", { name: "Ticket 105" }).parentElement).toContainHTML(
+      "background-color: currentcolor",
+    );
+    expect(screen.getByRole("tab", { name: "Ticket 105" }).parentElement).toContainHTML(
+      "text-indigo-600",
+    );
+    expect(screen.getByRole("tab", { name: "Ticket 105" }).parentElement).toContainHTML(
+      "opacity-100",
+    );
+  });
+
+  it("tones down inactive accent lines", () => {
+    render(
+      <TicketTab
+        accentClassName="text-rose-600"
+        label="Ticket 106"
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("tab", { name: "Ticket 106" }).parentElement).toContainHTML(
+      "opacity-40",
+    );
+  });
 });
 
 describe("TableHeaderCell", () => {

@@ -9,6 +9,7 @@ type TicketTabProps = {
   label: string;
   title?: string;
   icon?: ReactNode;
+  accentClassName?: string;
   density?: "full" | "compact" | "icon";
   tooltip?: ReactNode;
   active?: boolean;
@@ -23,6 +24,7 @@ export function TicketTab({
   label,
   title,
   icon,
+  accentClassName,
   density = "full",
   tooltip,
   active = false,
@@ -51,16 +53,27 @@ export function TicketTab({
   const tab = (
     <div
       className={cn(
-        "group inline-flex h-9 min-w-0 items-center gap-1.5 rounded-t-md border border-b-0 border-slate-200",
+        "group relative inline-flex h-9 min-w-0 items-center gap-1.5 overflow-hidden rounded-t-md border border-t-transparent border-b-0 border-slate-200",
         density === "full" && "flex-1 px-3",
         density === "compact" && "min-w-14 max-w-24 flex-1 px-2",
         density === "icon" &&
           "min-w-7 flex-1 justify-center px-1 hover:bg-white",
         active
-          ? "bg-white"
+          ? "z-10 -mb-px translate-y-px bg-white"
           : "border-slate-200 bg-slate-50 hover:bg-white",
       )}
     >
+      {accentClassName ? (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "absolute inset-x-0 top-0 h-0.5",
+            active ? "opacity-100" : "opacity-40",
+            accentClassName,
+          )}
+          style={{ backgroundColor: "currentColor" }}
+        />
+      ) : null}
       <button
         aria-selected={active}
         aria-label={density === "icon" ? label : undefined}

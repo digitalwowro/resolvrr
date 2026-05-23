@@ -22,8 +22,8 @@ import type {
   StaticTicketState,
 } from "../static-types";
 import {
-  gridTableClass,
   ticketGridTemplate,
+  ticketGridTableClass,
   TicketGridCell,
   TicketGridHeaderCell,
   TicketGridStaticHeaderCell,
@@ -38,6 +38,7 @@ type TicketTableProps = {
   onSort(key: StaticSortKey): void;
   onRowSelect(ticketId: string): void;
   onToggleRow(ticketId: string): void;
+  roundedTop?: boolean;
 };
 
 const stateClass: Record<StaticTicketState, string> = {
@@ -99,11 +100,16 @@ export function TicketTable({
   onSort,
   onRowSelect,
   onToggleRow,
+  roundedTop = true,
 }: TicketTableProps) {
   const templateStyle = ticketGridTemplate(visibleColumns);
 
   return (
-    <div aria-label="Tickets" className={gridTableClass} role="table">
+    <div
+      aria-label="Tickets"
+      className={ticketGridTableClass({ roundedTop })}
+      role="table"
+    >
       <div className="grid w-full min-w-0" style={templateStyle}>
         <div className="contents" role="rowgroup">
           <div className="contents" role="row">

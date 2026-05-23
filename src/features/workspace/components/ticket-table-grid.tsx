@@ -6,8 +6,12 @@ import { cn } from "@/components/ui/classnames";
 import type { SortDirection } from "@/components/ui";
 import type { StaticColumnKey } from "../static-types";
 
-export const gridTableClass =
-  "min-h-0 flex-1 overflow-auto rounded-md rounded-b-none border border-b-0 border-slate-200 bg-white";
+export function ticketGridTableClass({ roundedTop }: { roundedTop: boolean }) {
+  return cn(
+    "min-h-0 flex-1 overflow-auto rounded-b-none border border-b-0 border-slate-200 bg-white",
+    roundedTop && "rounded-t-md",
+  );
+}
 
 const headerCellClass =
   "sticky top-0 z-10 flex h-10 items-center border-b border-slate-200 bg-white px-3 text-left text-xs font-semibold";

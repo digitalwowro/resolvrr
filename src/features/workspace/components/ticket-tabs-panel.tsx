@@ -159,8 +159,8 @@ function HorizontalListTab({
         aria-selected={active}
         className={
           active
-            ? "inline-flex h-9 min-w-16 items-center gap-2 rounded-t-md border border-b-0 border-indigo-200 bg-indigo-50 px-3 text-indigo-700"
-            : "inline-flex h-9 min-w-16 items-center gap-2 rounded-t-md border border-b-0 border-slate-200 bg-white px-3 hover:bg-indigo-50"
+            ? "relative z-10 inline-flex h-9 min-w-16 translate-y-px items-center justify-center gap-2 rounded-t-md border border-b-0 border-slate-200 bg-white px-3 text-indigo-700"
+            : "inline-flex h-9 min-w-16 items-center justify-center gap-2 rounded-t-md border border-b-0 border-slate-200 bg-indigo-50 px-3 text-indigo-700 hover:bg-white"
         }
         onClick={onSelect}
         role="tab"
@@ -286,6 +286,7 @@ function HorizontalTicketTabs({
 
           return (
             <TicketTab
+              accentClassName={stateColor[tab.state]}
               active={tab.id === activeTicketId}
               density={density}
               dirty={tab.dirty}

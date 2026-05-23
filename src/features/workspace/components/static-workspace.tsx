@@ -6,6 +6,7 @@ import {
   type DropdownOption,
   type SortDirection,
 } from "@/components/ui";
+import { cn } from "@/components/ui/classnames";
 import {
   staticColumns,
   staticProfileActions,
@@ -77,11 +78,20 @@ function sortRows(
   });
 }
 
-function TicketDetailPlaceholder({ ticket }: { ticket: StaticTicketRow }) {
+function TicketDetailPlaceholder({
+  roundedTop,
+  ticket,
+}: {
+  roundedTop: boolean;
+  ticket: StaticTicketRow;
+}) {
   return (
     <section
       aria-label={`Ticket detail ${ticket.number}`}
-      className="min-h-0 flex-1 overflow-hidden rounded-t-md border-x border-t border-slate-200 bg-white"
+      className={cn(
+        "min-h-0 flex-1 overflow-hidden border-x border-t border-slate-200 bg-white",
+        roundedTop && "rounded-t-md",
+      )}
     >
       <div className="border-b border-slate-200 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -230,6 +240,7 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
       onRowSelect={showTicket}
       onSort={toggleSort}
       onToggleRow={toggleRow}
+      roundedTop={tabOrientation === "vertical"}
       rows={rows}
       selectedRowIds={selectedRowIds}
       sortDirectionFor={sortDirectionFor}
@@ -241,7 +252,10 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
     activeContext.type === "list" ? (
       table
     ) : (
-      <TicketDetailPlaceholder ticket={activeTicket} />
+      <TicketDetailPlaceholder
+        roundedTop={tabOrientation === "vertical"}
+        ticket={activeTicket}
+      />
     );
 
   return (
