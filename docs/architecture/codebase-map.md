@@ -105,7 +105,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   vertical open-ticket tab presentation, including the fixed vertical tab rail
   for synthetic tickets.
 - `src/features/workspace/components/ticket-table.tsx`: dense synthetic ticket
-  table using shared checkbox and header primitives.
+  table with feature-local intrinsic grid layout for the main workspace list.
+- `src/features/workspace/components/ticket-table-grid.tsx`: feature-local grid
+  table layout helpers for the workspace ticket list; not a shared primitive.
 - `src/components/ui`: reusable UI primitives.
 - `src/components/ui/button.tsx`: compact button primitive.
 - `src/components/ui/checkbox.tsx`: labeled checkbox primitive.

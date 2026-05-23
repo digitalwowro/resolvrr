@@ -83,6 +83,30 @@ describe("StaticWorkspace", () => {
     ).toHaveAttribute("aria-selected", "false");
   });
 
+  it("keeps workspace ticket table columns aligned through one grid template", () => {
+    renderWorkspace();
+
+    const table = screen.getByRole("table", { name: "Tickets" });
+    const grid = table.firstElementChild;
+
+    expect(grid).toHaveStyle({
+      gridTemplateColumns:
+        "max-content max-content minmax(0, 1fr) fit-content(14rem) max-content max-content max-content max-content max-content",
+    });
+  });
+
+  it("keeps checkbox clicks from opening the ticket context", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    await user.click(screen.getByRole("checkbox", { name: "Select #48277" }));
+
+    expect(screen.queryByLabelText("Ticket detail #48277")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: "Return to list: My work" }),
+    ).toHaveAttribute("aria-selected", "true");
+  });
+
   it("collapses crowded horizontal tabs to icon-only with tab details", async () => {
     vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
       bottom: 0,
