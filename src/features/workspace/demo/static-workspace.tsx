@@ -10,22 +10,22 @@ import {
   staticTabOrientations,
   staticTicketRows,
   staticTicketTabs,
-} from "../static-fixtures";
+} from "./static-fixtures";
 import type {
   StaticColumnKey,
   StaticSortKey,
   StaticTabOrientation,
   StaticTicketGroupKey,
-} from "../static-types";
-import { TicketTable } from "./ticket-table";
+} from "./static-types";
+import { TicketTable } from "./components/ticket-table";
 import {
   groupTicketRows,
   ticketGroupOptions,
-} from "./ticket-table-grouping";
-import { TicketDetailPlaceholder } from "./ticket-detail-placeholder";
-import { TicketTabsPanel } from "./ticket-tabs-panel";
-import { WorkspaceControls } from "./workspace-controls";
-import { WorkspaceHeader } from "./workspace-header";
+} from "./components/ticket-table-grouping";
+import { TicketDetailPlaceholder } from "./components/ticket-detail-placeholder";
+import { TicketTabsPanel } from "./components/ticket-tabs-panel";
+import { WorkspaceControls } from "./components/workspace-controls";
+import { WorkspaceHeader } from "./components/workspace-header";
 
 type StaticWorkspaceProps = {
   userEmail: string;

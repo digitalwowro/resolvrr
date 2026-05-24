@@ -12,6 +12,7 @@ import {
 } from "./credentials";
 import { classifyZammadResponse } from "./errors";
 import { safeProviderFetch } from "@/security/provider-http";
+import { getZammadTicketDetail, listZammadTickets } from "./tickets";
 
 const defaultValidationTimeoutMs = 5000;
 const zammadValidationUserAgent = "Resolvrr/1.0";
@@ -75,17 +76,10 @@ async function validateBasicAuth(input: ProviderConnectionInput): Promise<void> 
   }
 }
 
-function unsupported(operation: string): never {
-  throw new ProviderError(
-    "unsupported-capability",
-    `${operation} is not implemented in the foundation provider scaffold.`,
-  );
-}
-
 export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   key: zammadProviderKey,
   label: "Zammad",
-  capabilities: [],
+  capabilities: ["ticket:list", "ticket:detail"],
   credentialSchemes: [
     {
       key: zammadBasicAuthScheme,
@@ -102,8 +96,6 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     },
   ],
   validateConnection: validateBasicAuth,
-  listTickets: async () => unsupported("Ticket list"),
-  countTickets: async () => unsupported("Ticket count"),
-  getTicketDetail: async () => unsupported("Ticket detail"),
-  updateTicketFields: async () => unsupported("Ticket update"),
+  listTickets: listZammadTickets,
+  getTicketDetail: getZammadTicketDetail,
 };

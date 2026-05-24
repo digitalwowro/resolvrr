@@ -79,8 +79,17 @@ features. Raw provider article bodies are not part of the contract.
 - `ticket`: canonical `Ticket`.
 - `thread`: canonical `TicketThread`.
 - `links`: provider-neutral parent, child, or related ticket links.
-- `subscription`: optional follow state when supported.
+- `subscription`: provider-neutral follow state.
 - `measuredAt`: server time when the provider read was measured.
+
+Unsupported optional provider features still use one stable detail shape:
+
+- If `ticket:links` is unsupported, `links` is always `[]`.
+- If `ticket:subscription` is unsupported, `subscription` is always
+  `{ supported: false, following: false }`.
+
+UI code must not infer capability support by checking for missing fields.
+Capability checks remain explicit through the provider contract.
 
 ## Provider Capabilities
 
@@ -100,6 +109,14 @@ presence before calling optional provider read methods. Mutation capabilities
 remain named for future slices, but this contract does not approve or implement
 mutation workflows.
 
+Provider read calls receive a provider-neutral request security context:
+
+- `requestSecurity.validatedAddresses`: the public address set produced by
+  server-side base URL validation and reused by provider-safe request helpers.
+
+This is documented as SSRF revalidation output. It is not a Zammad shape and it
+does not expose HTTP implementation details to core ticket types.
+
 ## Query And Pagination
 
 Ticket list reads use `TicketListQuery`:
@@ -118,4 +135,4 @@ format, pagination compilation, and raw response mapping.
   subscription mutations.
 - Attachment downloads or previews.
 - Provider-backed ticket caching policy.
-- Zammad read implementation.
+- Saved-view management, background sync, or AI workflows.

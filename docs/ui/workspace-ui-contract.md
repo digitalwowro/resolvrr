@@ -8,8 +8,8 @@ operational, calm, and keyboard-accessible.
 - Header: compact product identity, global search, and avatar/profile trigger.
 - Controls and tabs: ticket actions, saved view selector, tab presentation
   selector, column visibility, and open-ticket tabs.
-- Work area: ticket table first, with selected-ticket detail added when that
-  workflow is implemented.
+- Work area: ticket table first, with selected-ticket detail/thread rendered
+  read-only when the active provider supports ticket reads.
 - Initial table columns: select, `#`, `Title`, `Customer`, `Owner`, `State`,
   `Priority`, `Pending till`, and `Updated at`.
 
@@ -37,11 +37,21 @@ communicate unavailable or not configured state.
 
 ## Static Workspace Slice
 
-The first composed workspace is static and synthetic. It validates layout,
-primitive usage, density, local interaction states, horizontal and vertical
-ticket tabs, and a dense ticket table. Static state gallery controls are omitted
-from the operational toolbar.
+The static synthetic workspace now lives at `/workspace/demo`. It validates
+layout, primitive usage, density, local interaction states, horizontal and
+vertical ticket tabs, and a dense ticket table. Static state gallery controls
+are omitted from the operational toolbar.
 
 Static workspace data is feature-local fixture data. It does not represent a
 core domain model, provider contract, saved-view backend, helpdesk connection,
 ticket cache, or persisted user preference.
+
+The real `/workspace` route must not mix synthetic tickets with provider-backed
+tickets. Without an active helpdesk connection, it renders a disconnected state
+with a path to connection management.
+
+Mockup-only code for the static preview lives under
+`src/features/workspace/demo`. Production workspace components live under
+`src/features/workspace/components` and must not import synthetic fixtures,
+demo modules, provider services, repositories, server actions, or provider
+plugin internals.

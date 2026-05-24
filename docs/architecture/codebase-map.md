@@ -33,7 +33,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/app/register/page.tsx`: minimal registration form wired to a server
   action.
 - `src/app/workspace/page.tsx`: protected authenticated workspace route that
-  keeps auth guarding and route composition thin.
+  composes the active helpdesk connection ticket read path into the real
+  read-only workspace.
+- `src/app/workspace/demo/page.tsx`: protected static workspace preview route
+  for local UI review; this keeps synthetic tickets out of the real
+  `/workspace` runtime path.
 - `src/app/workspace/connections/page.tsx`: protected helpdesk workspace
   connection list route.
 - `src/app/workspace/connections/new/page.tsx`: protected add-connection form
@@ -75,7 +79,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   validation for user-provided helpdesk base URLs.
 - `src/security/provider-http.ts`: SSRF-safe provider HTTPS request helper that
   binds requests to the revalidated address set and falls back only across
-  validated public addresses.
+  validated public addresses; also exposes a size-limited JSON reader for
+  provider ticket reads.
 - `src/security/sanitize-html.ts`: provider HTML sanitization.
 - `src/security/safe-log.ts`: helper for safe metadata-only logs.
 - `src/providers`: provider registry and provider plugin implementations.
@@ -88,11 +93,16 @@ architecture folders or important files are added, moved, renamed, or removed.
   details stay in this folder and provider-specific tests.
 - `src/providers/zammad/credentials.ts`: provider-specific Basic Auth credential
   parsing and header construction.
+- `src/providers/zammad/client.ts`: Zammad read client wrapper around the
+  provider-safe JSON request helper.
 - `src/providers/zammad/errors.ts`: provider HTTP status classification.
 - `src/providers/zammad/mapping.ts`: provider raw value to canonical value
   mapping.
 - `src/providers/zammad/plugin.ts`: provider plugin object and connection
   validation boundary.
+- `src/providers/zammad/schemas.ts`: Zammad raw ticket and article DTO schemas.
+- `src/providers/zammad/tickets.ts`: Zammad ticket list/detail endpoint reads
+  and canonical response assembly.
 - `src/providers/zammad/index.ts`: provider plugin export.
 - `src/features`: product feature boundaries that compose core contracts into
   workflows.
@@ -131,39 +141,38 @@ architecture folders or important files are added, moved, renamed, or removed.
   form that never echoes stored credentials to the browser.
 - `src/features/saved-views/index.ts`: saved view feature boundary.
 - `src/features/tickets/index.ts`: ticket workflow feature boundary.
+- `src/features/tickets/connection-context.ts`: active connection lookup,
+  credential decryption, provider lookup, and base URL revalidation for ticket
+  reads.
+- `src/features/tickets/provider-dispatch.ts`: capability-gated ticket read
+  dispatch and provider error to unavailable-state mapping.
+- `src/features/tickets/read-model.ts`: provider-neutral ticket read result,
+  unavailable-state, and default list query types.
+- `src/features/tickets/service.ts`: thin ticket read orchestration entrypoints
+  used by workspace routes.
+- `src/features/tickets/workspace-adapter.ts`: canonical ticket/detail to
+  workspace render model adapter.
 - `src/features/settings/index.ts`: settings feature boundary.
 - `src/features/workspace/index.ts`: workspace feature boundary. UI copy may say
-  workspace, but persisted domain concepts remain helpdesk connections.
-- `src/features/workspace/static-types.ts`: feature-local synthetic workspace
-  UI fixture types, not core/provider/data models.
-- `src/features/workspace/static-fixtures.ts`: synthetic saved views, profile
-  menu rows, ticket tabs, ticket rows, and columns for static workspace review.
-- `src/features/workspace/components/static-workspace.tsx`: client-side static
-  workspace shell with local-only interaction state.
-- `src/features/workspace/components/workspace-header.tsx`: compact workspace
-  header with brand image hook, local search input, and compact profile menu.
-- `src/features/workspace/components/workspace-controls.tsx`: static workspace
-  controls for local saved view search, tab orientation, bulk action, refresh,
-  select-all, and column visibility behavior.
-- `src/features/workspace/components/ticket-tabs-panel.tsx`: horizontal or
-  vertical open-ticket tab presentation, including the fixed vertical tab rail
-  for synthetic tickets.
-- `src/features/workspace/components/ticket-detail-placeholder.tsx`: static
-  ticket detail composition for the title, thread, and sidebar visual review.
-- `src/features/workspace/components/ticket-detail-sidebar.tsx`: static
-  local-only ticket action sidebar controls for visual review.
-- `src/features/workspace/components/ticket-reply-composer.tsx`: local-only
-  inline reply composer for static ticket thread review.
-- `src/features/workspace/components/ticket-thread.tsx`: static synthetic reply
-  thread cards and local reply-mode state for ticket detail visual review.
-- `src/features/workspace/components/ticket-table-cells.tsx`: feature-local
-  state and priority cell renderers shared by ticket rows and group headers.
-- `src/features/workspace/components/ticket-table-grouping.ts`: feature-local
-  static grouping and row sorting helpers for the workspace ticket list.
-- `src/features/workspace/components/ticket-table.tsx`: dense synthetic ticket
-  table with optional feature-local group headers for the main workspace list.
-- `src/features/workspace/components/ticket-table-grid.tsx`: feature-local grid
-  table layout helpers for the workspace ticket list; not a shared primitive.
+  workspace, but persisted domain concepts remain helpdesk connections. This
+  barrel exports production workspace UI only.
+- `src/features/workspace/components/ticket-workspace.tsx`: read-only
+  provider-backed workspace presentation for the real `/workspace` route. It
+  accepts provider-neutral read models and does not import provider services,
+  repositories, Zammad code, or demo fixtures.
+- `src/features/workspace/demo`: mockup-only static workspace area used by the
+  protected `/workspace/demo` route. This folder is deletable without breaking
+  the real provider-backed `/workspace` route.
+- `src/features/workspace/demo/static-types.ts`: feature-local synthetic
+  workspace UI fixture types, not core/provider/data models.
+- `src/features/workspace/demo/static-fixtures.ts`: synthetic saved views,
+  profile menu rows, ticket tabs, ticket rows, and columns for static workspace
+  review.
+- `src/features/workspace/demo/static-workspace.tsx`: client-side static
+  workspace shell with local-only interaction state for `/workspace/demo`.
+- `src/features/workspace/demo/components`: mockup-only components for the
+  static workspace preview, including synthetic ticket tabs, table, thread,
+  sidebar, toolbar, and header behavior.
 - `src/components/ui`: reusable UI primitives.
 - `src/components/ui/button.tsx`: compact button primitive.
 - `src/components/ui/checkbox.tsx`: labeled checkbox primitive.

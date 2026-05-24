@@ -41,3 +41,31 @@ credentials. Validation requests must bind provider HTTPS requests to the
 revalidated address set and reject private or changed DNS results at request
 time. Validation requests must avoid automatic redirects so credentials are not
 sent to an unvalidated redirect target.
+
+## Ticket Read Security
+
+Provider-backed ticket reads must use the provider-safe JSON request helper in
+`src/security/provider-http.ts`. Reads must keep the same SSRF properties as
+connection validation:
+
+- HTTPS only.
+- DNS resolution checked against the validated public address set.
+- Request lookup pinned to the selected validated address.
+- Fallback only across validated public addresses.
+- No automatic redirects.
+- Abort-signal timeout support.
+- Explicit response-size limits before JSON parsing.
+
+Provider read errors, logs, and UI messages must not include provider response
+bodies, credentials, URLs with embedded secrets, or raw customer ticket content.
+Non-success responses are classified by status code while their bodies are
+discarded.
+
+## Zammad Boundary
+
+Zammad ticket list, detail, thread DTO validation, endpoint construction, and
+raw state/priority normalization live under `src/providers/zammad`. Core,
+feature, UI, and provider-neutral tests consume only canonical ticket values and
+provider capabilities. Zammad currently advertises only `ticket:list` and
+`ticket:detail`; unsupported links and subscription data are returned as the
+required empty canonical shapes documented in the ticket read contract.

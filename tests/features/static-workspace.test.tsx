@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { StaticWorkspace } from "@/features/workspace";
+import { StaticWorkspace } from "@/features/workspace/demo/static-workspace";
 
 function renderWorkspace() {
   render(<StaticWorkspace userEmail="agent@example.com" />);

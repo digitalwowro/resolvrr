@@ -151,7 +151,7 @@ export type TicketDetail = {
   ticket: Ticket;
   thread: TicketThread;
   links: TicketLink[];
-  subscription?: TicketSubscription;
+  subscription: TicketSubscription;
   measuredAt: Date;
 };
 

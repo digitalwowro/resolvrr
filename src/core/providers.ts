@@ -78,6 +78,9 @@ export type ProviderContext = {
   connection: HelpdeskConnection;
   credentialScheme: string;
   credentialPayload: unknown;
+  requestSecurity: {
+    validatedAddresses: string[];
+  };
 };
 
 export type TicketListQuery = {

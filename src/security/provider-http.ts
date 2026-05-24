@@ -10,6 +10,29 @@ type SafeProviderFetchOptions = {
   signal?: AbortSignal;
 };
 
+type SafeProviderJsonOptions = SafeProviderFetchOptions & {
+  maxResponseBytes: number;
+};
+
+export type SafeProviderJsonResult = {
+  status: number;
+  statusText?: string;
+  headers: Headers;
+  data?: unknown;
+};
+
+export type ProviderJsonBodyErrorReason = "invalid-json" | "size-limit";
+
+export class ProviderJsonBodyError extends Error {
+  readonly reason: ProviderJsonBodyErrorReason;
+
+  constructor(reason: ProviderJsonBodyErrorReason, message: string) {
+    super(message);
+    this.name = "ProviderJsonBodyError";
+    this.reason = reason;
+  }
+}
+
 function requestHost(url: URL): string {
   return url.hostname.replace(/^\[|\]$/gu, "");
 }
@@ -124,6 +147,81 @@ function requestPinnedAddress(
   });
 }
 
+function requestPinnedJsonAddress(
+  url: URL,
+  host: string,
+  address: string,
+  options: SafeProviderJsonOptions,
+): Promise<SafeProviderJsonResult> {
+  return new Promise((resolve, reject) => {
+    const request = httpsRequest(
+      {
+        protocol: "https:",
+        hostname: host,
+        port: url.port || 443,
+        path: `${url.pathname}${url.search}`,
+        method: "GET",
+        headers: options.headers,
+        lookup: pinnedLookup(address),
+        agent: false,
+        servername: isIP(host) === 0 ? host : undefined,
+        signal: options.signal,
+      },
+      (response) => {
+        const status = response.statusCode ?? 0;
+        const headers = headersFromIncoming(response.headers);
+        if (status < 200 || status >= 300) {
+          response.resume();
+          response.on("end", () => {
+            resolve({ status, statusText: response.statusMessage, headers });
+          });
+          response.on("error", reject);
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        let receivedBytes = 0;
+        response.on("data", (chunk: Buffer | string) => {
+          const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+          receivedBytes += buffer.byteLength;
+          if (receivedBytes > options.maxResponseBytes) {
+            response.destroy(
+              new ProviderJsonBodyError(
+                "size-limit",
+                "Provider response exceeded the configured size limit.",
+              ),
+            );
+            return;
+          }
+          chunks.push(buffer);
+        });
+        response.on("end", () => {
+          try {
+            const body = Buffer.concat(chunks).toString("utf8");
+            resolve({
+              status,
+              statusText: response.statusMessage,
+              headers,
+              data: JSON.parse(body),
+            });
+          } catch {
+            reject(
+              new ProviderJsonBodyError(
+                "invalid-json",
+                "Provider returned invalid JSON.",
+              ),
+            );
+          }
+        });
+        response.on("error", reject);
+      },
+    );
+
+    request.on("error", reject);
+    request.end();
+  });
+}
+
 // Provider requests must use the already validated address set so DNS rebinding
 // cannot swap a public validation result for an internal request target.
 export async function safeProviderFetch(
@@ -149,6 +247,39 @@ export async function safeProviderFetch(
     } catch (error) {
       lastError = error;
       if (options.signal?.aborted) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Provider URL could not be reached.");
+}
+
+export async function safeProviderJson(
+  input: string,
+  options: SafeProviderJsonOptions,
+): Promise<SafeProviderJsonResult> {
+  const url = new URL(input);
+  if (url.protocol !== "https:") {
+    throw new Error("Provider requests must use HTTPS.");
+  }
+
+  const host = requestHost(url);
+  const resolvedAddresses = await resolveRequestAddresses(host);
+  const addresses = orderedPinnedAddresses(
+    resolvedAddresses,
+    options.allowedAddresses,
+  );
+  let lastError: unknown;
+
+  for (const address of addresses) {
+    try {
+      return await requestPinnedJsonAddress(url, host, address, options);
+    } catch (error) {
+      lastError = error;
+      if (options.signal?.aborted || error instanceof ProviderJsonBodyError) {
         throw error;
       }
     }

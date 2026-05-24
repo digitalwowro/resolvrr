@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  type TicketDetail,
   ticketPriorities,
   ticketPriorityDefinitions,
   ticketStateDefinitions,
@@ -33,6 +34,28 @@ describe("ticket contract", () => {
       low: { label: "Low", rank: 10 },
       medium: { label: "Medium", rank: 20 },
       high: { label: "High", rank: 30 },
+    });
+  });
+
+  it("uses consistent empty shapes for unsupported optional detail features", () => {
+    const detail = {
+      ticket: {
+        externalId: "ticket-1",
+        number: "1",
+        title: "Read-only ticket",
+        updatedAt: new Date("2026-05-24T00:00:00Z"),
+        tags: [],
+      },
+      thread: { ticketExternalId: "ticket-1", articles: [] },
+      links: [],
+      subscription: { supported: false, following: false },
+      measuredAt: new Date("2026-05-24T00:00:00Z"),
+    } satisfies TicketDetail;
+
+    expect(detail.links).toEqual([]);
+    expect(detail.subscription).toEqual({
+      supported: false,
+      following: false,
     });
   });
 });

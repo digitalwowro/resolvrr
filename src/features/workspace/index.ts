@@ -1,1 +1,1 @@
-export { StaticWorkspace } from "./components/static-workspace";
+export { TicketWorkspace } from "./components/ticket-workspace";
