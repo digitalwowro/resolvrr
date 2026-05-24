@@ -4,6 +4,7 @@ import type {
   StaticProfileWorkspace,
   StaticSavedView,
   StaticTabOrientation,
+  StaticTicketReply,
   StaticTicketRow,
   StaticTicketTab,
 } from "./static-types";
@@ -284,6 +285,58 @@ export const staticTicketRows: StaticTicketRow[] = [
   ...baseTicketRows,
   ...generatedRows,
 ];
+
+const replyBodies = [
+  "Thanks, I checked the latest account activity and the issue is still reproducible from our side.",
+  "We reviewed the request and queued the next verification step for the support team.",
+  "Internal context: keep the customer-facing answer short and confirm the exact next action before closing.",
+];
+
+export function staticTicketReplies(ticket: StaticTicketRow): StaticTicketReply[] {
+  const customerSlug = ticket.customer
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ".")
+    .replace(/^\.+|\.+$/g, "");
+  const customerEmail = `${customerSlug || "customer"}@example.com`;
+  const ticketOwner =
+    ticket.owner === "Unassigned" ? "Razvan Rosca" : ticket.owner;
+
+  return [
+    {
+      id: `${ticket.id}-reply-customer`,
+      ticketId: ticket.id,
+      type: "customer",
+      authorName: ticket.customer,
+      authorEmail: customerEmail,
+      recipients: [
+        { name: ticketOwner, email: "razvan.rosca@resolvrr.test" },
+        { name: "Support Team", email: "support@resolvrr.test" },
+      ],
+      createdAt: "May 24, 08:18",
+      body: ticket.preview,
+    },
+    {
+      id: `${ticket.id}-reply-employee`,
+      ticketId: ticket.id,
+      type: "employee",
+      authorName: ticketOwner,
+      authorEmail: "razvan.rosca@resolvrr.test",
+      recipients: [{ name: ticket.customer, email: customerEmail }],
+      createdAt: "May 24, 08:04",
+      body: replyBodies[1],
+    },
+    {
+      id: `${ticket.id}-reply-note`,
+      ticketId: ticket.id,
+      type: "internal-note",
+      authorName: "Razvan Rosca",
+      authorEmail: "razvan.rosca@resolvrr.test",
+      recipients: [{ name: "Support Team", email: "support@resolvrr.test" }],
+      createdAt: "May 23, 16:30",
+      body: replyBodies[2],
+    },
+  ];
+}
 
 const generatedTicketTabs: StaticTicketTab[] = staticTicketRows
   .filter((row) => !baseTicketTabs.some((tab) => tab.id === row.id))

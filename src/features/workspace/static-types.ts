@@ -69,6 +69,24 @@ export type StaticTicketRow = {
   preview: string;
 };
 
+export type StaticTicketReplyType = "customer" | "employee" | "internal-note";
+
+export type StaticTicketReplyContact = {
+  name: string;
+  email: string;
+};
+
+export type StaticTicketReply = {
+  id: string;
+  ticketId: string;
+  type: StaticTicketReplyType;
+  authorName: string;
+  authorEmail: string;
+  recipients: StaticTicketReplyContact[];
+  createdAt: string;
+  body: string;
+};
+
 export type StaticColumn = {
   key: StaticColumnKey;
   label: string;
