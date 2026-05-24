@@ -140,6 +140,9 @@ describe("ticket read service", () => {
   });
 
   it("passes decrypted credentials and validated addresses to provider reads", async () => {
+    const consoleInfo = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
     const listTickets = vi.fn(provider().listTickets);
 
     const result = await loadWorkspaceTicketList(
@@ -162,6 +165,42 @@ describe("ticket read service", () => {
         requestSecurity: { validatedAddresses: ["93.184.216.34"] },
       }),
       expect.objectContaining({ limit: 25 }),
+    );
+    expect(consoleInfo).toHaveBeenCalledWith(
+      "Ticket read timing",
+      expect.objectContaining({
+        operation: "list",
+        phase: "active-connection-lookup",
+        providerKey: "test-provider",
+        status: "ok",
+      }),
+    );
+    expect(consoleInfo).toHaveBeenCalledWith(
+      "Ticket read timing",
+      expect.objectContaining({
+        operation: "list",
+        phase: "base-url-security-revalidation",
+        providerKey: "test-provider",
+        status: "ok",
+      }),
+    );
+    expect(consoleInfo).toHaveBeenCalledWith(
+      "Ticket read timing",
+      expect.objectContaining({
+        operation: "list",
+        phase: "credential-decrypt",
+        providerKey: "test-provider",
+        status: "ok",
+      }),
+    );
+    expect(consoleInfo).toHaveBeenCalledWith(
+      "Ticket read timing",
+      expect.objectContaining({
+        operation: "list",
+        phase: "total-list-load",
+        providerKey: "test-provider",
+        status: "ok",
+      }),
     );
   });
 

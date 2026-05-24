@@ -66,11 +66,16 @@ Article fields include:
 - `recipients`: provider-neutral participant references with `to`, `cc`, or
   `bcc` channel.
 - `createdAt`: provider article timestamp.
-- `sanitizedHtml`: server-sanitized article body.
+- `sanitizedHtml`: server-sanitized article body. Safe rich-text structure such
+  as links, lists, headings, tables, and inline emphasis may be preserved by the
+  sanitizer; scripts, unsafe attributes, and unsafe URL schemes are not part of
+  the contract.
 - `attachments`: metadata only. Attachment download is outside this slice.
 
 Provider plugins must sanitize provider HTML before returning articles to core
-features. Raw provider article bodies are not part of the contract.
+features. Raw provider article bodies are not part of the contract. UI code
+renders `sanitizedHtml` as read-only rich text and must not reintroduce raw
+provider HTML.
 
 ## Detail Shape
 
@@ -128,6 +133,34 @@ Ticket list reads use `TicketListQuery`:
 
 `TicketListResult.nextCursor` is opaque to core code. Providers own cursor
 format, pagination compilation, and raw response mapping.
+
+## Read Coordination And Timing
+
+Provider-backed reads stay coordinated at the service/provider boundary:
+
+- Ticket list loading is one provider read path.
+- Selected ticket detail/thread loading is one provider read path.
+- UI components do not fetch provider data directly.
+- Detail metadata, thread articles, tags, links, subscription, and lookup data
+  must not be added as independent component-level fetches.
+
+The read path logs sanitized timing metadata for these phases:
+
+- active connection lookup;
+- credential decrypt;
+- base URL security revalidation;
+- provider list request;
+- provider detail metadata request;
+- provider article/thread request;
+- provider user lookup request;
+- provider mapping/parsing;
+- total list load;
+- total selected-ticket detail load.
+
+Future secondary data such as tags, links, subscription, and lookup lists must
+be added as explicit measured phases when they become part of the coordinated
+read path. This contract does not introduce Redis, database caches,
+stale-while-revalidate, background sync, or cache abstractions.
 
 ## Non-Goals
 

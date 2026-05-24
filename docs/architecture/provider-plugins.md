@@ -61,6 +61,17 @@ bodies, credentials, URLs with embedded secrets, or raw customer ticket content.
 Non-success responses are classified by status code while their bodies are
 discarded.
 
+## Ticket Read Observability
+
+Provider read implementations should measure their own upstream request and
+mapping phases through sanitized ticket-read timing events. Zammad currently
+measures list request, detail metadata request, article/thread request,
+user-lookup request, and mapping/parsing phases. If a provider requires
+additional upstream calls for future secondary data such as tags, links,
+subscription, or lookup lists, those calls must be orchestrated in the
+provider/read service layer and added as explicit measured phases. UI
+components must not introduce provider fetch fan-out.
+
 ## Zammad Boundary
 
 Zammad ticket list, detail, thread DTO validation, endpoint construction, and
@@ -69,3 +80,9 @@ feature, UI, and provider-neutral tests consume only canonical ticket values and
 provider capabilities. Zammad currently advertises only `ticket:list` and
 `ticket:detail`; unsupported links and subscription data are returned as the
 required empty canonical shapes documented in the ticket read contract.
+
+Zammad reads request expanded/full payloads when available so provider-specific
+user assets can be mapped to canonical participants. Display names such as
+`firstname`/`lastname`, `fullname`, or `name` are preferred over email labels;
+email remains secondary metadata or a fallback when no usable display name is
+available.

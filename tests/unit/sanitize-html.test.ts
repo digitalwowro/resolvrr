@@ -17,4 +17,15 @@ describe("provider HTML sanitization", () => {
     expect(sanitized).toContain('rel="noreferrer noopener"');
     expect(sanitized).toContain('target="_blank"');
   });
+
+  it("keeps rich text structure used by provider ticket articles", () => {
+    const sanitized = sanitizeProviderHtml(
+      '<p>Explore:</p><ul><li><a href="https://example.com/docs">Docs</a></li></ul><table><tr><th>A</th></tr><tr><td>B</td></tr></table>',
+    );
+
+    expect(sanitized).toContain("<p>Explore:</p>");
+    expect(sanitized).toContain("<ul><li>");
+    expect(sanitized).toContain('href="https://example.com/docs"');
+    expect(sanitized).toContain("<table><tr><th>A</th></tr><tr><td>B</td></tr></table>");
+  });
 });

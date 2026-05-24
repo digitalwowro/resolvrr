@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { ProviderContext } from "@/core/providers";
 import { zammadProviderPlugin } from "@/providers/zammad";
 import { safeProviderJson } from "@/security/provider-http";
+import { providerContext, rawArticle, rawTicket } from "./read-helpers";
 
 vi.mock("@/security/provider-http", () => ({
   safeProviderJson: vi.fn(),
@@ -18,51 +18,6 @@ vi.mock("@/security/provider-http", () => ({
 
 const mockedSafeProviderJson = vi.mocked(safeProviderJson);
 
-function providerContext(): ProviderContext {
-  return {
-    connection: {
-      id: "connection-1",
-      providerKey: "zammad",
-      displayName: "Support",
-      baseUrl: "https://helpdesk.example.com",
-      status: "active",
-    },
-    credentialScheme: "basic-auth",
-    credentialPayload: { username: "agent", password: "secret" },
-    requestSecurity: { validatedAddresses: ["93.184.216.34"] },
-  };
-}
-
-const rawTicket = {
-  id: 42,
-  number: "42042",
-  title: "Cannot log in",
-  customer: "Maya Patel",
-  owner: "Agent Smith",
-  group: "Users",
-  state: "open",
-  priority: "3 high",
-  created_at: "2026-05-22T10:00:00Z",
-  updated_at: "2026-05-24T08:30:00Z",
-  pending_time: null,
-};
-
-const rawArticle = {
-  id: 500,
-  ticket_id: 42,
-  type: "email",
-  sender: "Customer",
-  internal: false,
-  created_by: "Maya Patel",
-  from: "maya@example.com",
-  to: "support@example.com",
-  cc: null,
-  subject: "Cannot log in",
-  body: "<p>Hello <script>alert(1)</script>there</p>",
-  created_at: "2026-05-24T08:31:00Z",
-  attachments: [],
-};
-
 describe("Zammad ticket reads", () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -76,6 +31,9 @@ describe("Zammad ticket reads", () => {
   });
 
   it("maps Zammad list tickets to canonical list items", async () => {
+    const consoleInfo = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
     mockedSafeProviderJson.mockResolvedValue({
       status: 200,
       headers: new Headers(),
@@ -89,7 +47,7 @@ describe("Zammad ticket reads", () => {
     });
 
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
-      "https://helpdesk.example.com/api/v1/tickets?page=1&per_page=10&expand=true",
+      "https://helpdesk.example.com/api/v1/tickets?page=1&per_page=10&expand=true&full=true",
       expect.objectContaining({
         allowedAddresses: ["93.184.216.34"],
         headers: expect.objectContaining({
@@ -113,9 +71,30 @@ describe("Zammad ticket reads", () => {
       tags: [],
       providerUrl: "https://helpdesk.example.com/#ticket/zoom/42",
     });
+    expect(consoleInfo).toHaveBeenCalledWith(
+      "Ticket read timing",
+      expect.objectContaining({
+        operation: "list",
+        phase: "provider-list-request",
+        providerKey: "zammad",
+        status: "ok",
+      }),
+    );
+    expect(consoleInfo).toHaveBeenCalledWith(
+      "Ticket read timing",
+      expect.objectContaining({
+        operation: "list",
+        phase: "provider-mapping-parsing",
+        providerKey: "zammad",
+        status: "ok",
+      }),
+    );
   });
 
   it("maps Zammad detail and thread without optional feature leakage", async () => {
+    const consoleInfo = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
     mockedSafeProviderJson
       .mockResolvedValueOnce({
         status: 200,
@@ -135,12 +114,12 @@ describe("Zammad ticket reads", () => {
 
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
       1,
-      "https://helpdesk.example.com/api/v1/tickets/42?expand=true",
+      "https://helpdesk.example.com/api/v1/tickets/42?expand=true&full=true",
       expect.any(Object),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
       2,
-      "https://helpdesk.example.com/api/v1/ticket_articles/by_ticket/42?expand=true",
+      "https://helpdesk.example.com/api/v1/ticket_articles/by_ticket/42?expand=true&full=true",
       expect.any(Object),
     );
     expect(result).toMatchObject({
@@ -161,6 +140,33 @@ describe("Zammad ticket reads", () => {
       subscription: { supported: false, following: false },
     });
     expect(result?.thread.articles[0]?.sanitizedHtml).not.toContain("<script>");
+    expect(consoleInfo).toHaveBeenCalledWith(
+      "Ticket read timing",
+      expect.objectContaining({
+        operation: "detail",
+        phase: "provider-detail-metadata-request",
+        providerKey: "zammad",
+        status: "ok",
+      }),
+    );
+    expect(consoleInfo).toHaveBeenCalledWith(
+      "Ticket read timing",
+      expect.objectContaining({
+        operation: "detail",
+        phase: "provider-article-thread-request",
+        providerKey: "zammad",
+        status: "ok",
+      }),
+    );
+    expect(consoleInfo).toHaveBeenCalledWith(
+      "Ticket read timing",
+      expect.objectContaining({
+        operation: "detail",
+        phase: "provider-mapping-parsing",
+        providerKey: "zammad",
+        status: "ok",
+      }),
+    );
   });
 
   it("classifies malformed provider read data as provider mismatch", async () => {

@@ -10,6 +10,7 @@ type TicketTabProps = {
   title?: string;
   icon?: ReactNode;
   accentClassName?: string;
+  className?: string;
   density?: "full" | "compact" | "icon";
   tooltip?: ReactNode;
   active?: boolean;
@@ -25,6 +26,7 @@ export function TicketTab({
   title,
   icon,
   accentClassName,
+  className,
   density = "full",
   tooltip,
   active = false,
@@ -58,6 +60,7 @@ export function TicketTab({
         density === "compact" && "min-w-14 max-w-24 flex-1 px-2",
         density === "icon" &&
           "min-w-7 flex-1 justify-center px-1 hover:bg-white",
+        className,
         active
           ? "z-10 -mb-px translate-y-px bg-white"
           : "border-slate-200 bg-slate-50 hover:bg-white",

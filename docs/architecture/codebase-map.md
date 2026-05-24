@@ -81,8 +81,13 @@ architecture folders or important files are added, moved, renamed, or removed.
   binds requests to the revalidated address set and falls back only across
   validated public addresses; also exposes a size-limited JSON reader for
   provider ticket reads.
-- `src/security/sanitize-html.ts`: provider HTML sanitization.
+- `src/security/sanitize-html.ts`: provider HTML sanitization that preserves
+  safe rich-text article structure such as links, lists, headings, tables, and
+  inline emphasis while dropping scripts and unsafe attributes.
 - `src/security/safe-log.ts`: helper for safe metadata-only logs.
+- `src/telemetry/ticket-read-timing.ts`: sanitized ticket read timing logger
+  used by provider-backed list/detail orchestration and provider request/mapping
+  phases.
 - `src/providers`: provider registry and provider plugin implementations.
 - `src/providers/available-providers.ts`: single documented provider assembly
   file allowed to import installed provider plugins directly before exporting
@@ -96,13 +101,16 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/providers/zammad/client.ts`: Zammad read client wrapper around the
   provider-safe JSON request helper.
 - `src/providers/zammad/errors.ts`: provider HTTP status classification.
-- `src/providers/zammad/mapping.ts`: provider raw value to canonical value
-  mapping.
+- `src/providers/zammad/mapping.ts`: provider raw value to canonical ticket,
+  article, attachment, state, and priority mapping.
+- `src/providers/zammad/participants.ts`: Zammad user/participant display-name,
+  email fallback, recipient, and expanded asset mapping helpers.
 - `src/providers/zammad/plugin.ts`: provider plugin object and connection
   validation boundary.
-- `src/providers/zammad/schemas.ts`: Zammad raw ticket and article DTO schemas.
-- `src/providers/zammad/tickets.ts`: Zammad ticket list/detail endpoint reads
-  and canonical response assembly.
+- `src/providers/zammad/schemas.ts`: Zammad raw ticket, article, expanded asset,
+  and user DTO schemas.
+- `src/providers/zammad/tickets.ts`: Zammad ticket list/detail endpoint reads,
+  read-phase timing, and canonical response assembly.
 - `src/providers/zammad/index.ts`: provider plugin export.
 - `src/features`: product feature boundaries that compose core contracts into
   workflows.
@@ -142,14 +150,17 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/saved-views/index.ts`: saved view feature boundary.
 - `src/features/tickets/index.ts`: ticket workflow feature boundary.
 - `src/features/tickets/connection-context.ts`: active connection lookup,
-  credential decryption, provider lookup, and base URL revalidation for ticket
-  reads.
+  credential decryption, provider lookup, base URL revalidation, and setup
+  timing for ticket reads.
 - `src/features/tickets/provider-dispatch.ts`: capability-gated ticket read
   dispatch and provider error to unavailable-state mapping.
 - `src/features/tickets/read-model.ts`: provider-neutral ticket read result,
   unavailable-state, and default list query types.
 - `src/features/tickets/service.ts`: thin ticket read orchestration entrypoints
-  used by workspace routes.
+  and total read timing used by workspace routes.
+- `src/features/tickets/date-time-format.ts`: shared workspace date/time
+  formatter for provider-backed ticket table, detail, thread, and metadata
+  display strings.
 - `src/features/tickets/workspace-adapter.ts`: canonical ticket/detail to
   workspace render model adapter.
 - `src/features/settings/index.ts`: settings feature boundary.
@@ -157,9 +168,48 @@ architecture folders or important files are added, moved, renamed, or removed.
   workspace, but persisted domain concepts remain helpdesk connections. This
   barrel exports production workspace UI only.
 - `src/features/workspace/components/ticket-workspace.tsx`: read-only
-  provider-backed workspace presentation for the real `/workspace` route. It
-  accepts provider-neutral read models and does not import provider services,
-  repositories, Zammad code, or demo fixtures.
+  provider-backed workspace composition for the real `/workspace` route. It
+  wires provider-neutral read models into demo-derived, production-safe
+  presentational components.
+- `src/features/workspace/components/ticket-workspace-display.tsx`: client-side
+  production workspace display composition for controls, tabs, table, and
+  selected-ticket detail surfaces.
+- `src/features/workspace/components/ticket-workspace-state.ts`: client-side
+  workspace-only state for active pane, open ticket tabs, detail cache, tab
+  orientation, visible columns, row selection, grouping, sorting, and route
+  navigation.
+- `src/features/workspace/components/workspace-header.tsx`: production
+  workspace header presentation with brand, search, status icon, and an
+  avatar/profile menu fed by real connection/action props.
+- `src/features/workspace/components/workspace-controls.tsx`: read-safe
+  workspace toolbar presentation for row selection, refresh, saved-view display,
+  tab orientation, local grouping, and column visibility.
+- `src/features/workspace/components/workspace-states.tsx`: provider-neutral
+  unavailable, detail-unavailable, and empty-detail states.
+- `src/features/workspace/components/ticket-table-grid.tsx`: production
+  ticket grid layout, header, and cell helpers driven by workspace column
+  definitions.
+- `src/features/workspace/components/ticket-table-cells.tsx`: production
+  state and priority display cells driven by canonical ticket labels and keys.
+- `src/features/workspace/components/ticket-table.tsx`: production ticket list
+  table shell and row/header presentation for workspace ticket rows.
+- `src/features/workspace/components/ticket-table-grouping.ts`: provider-neutral
+  local presentation grouping and sorting helpers for loaded workspace rows.
+- `src/features/workspace/components/ticket-detail.tsx`: production read-only
+  selected-ticket detail header and layout.
+- `src/features/workspace/components/ticket-detail-sidebar.tsx`: production
+  read-only metadata sidebar for selected tickets.
+- `src/features/workspace/components/ticket-thread.tsx`: production read-only
+  ticket article thread presentation.
+- `src/features/workspace/components/ticket-tabs-panel.tsx`: production
+  list/open-ticket tab panel composition.
+- `src/features/workspace/components/ticket-tabs`: split production ticket-tab
+  presentation helpers for horizontal tabs, vertical tabs, density calculation,
+  and shared tab link rendering.
+- `src/features/workspace/components/**`: production-safe presentational
+  components extracted from the approved static workspace implementation
+  decisions. They must not import demo fixtures, provider services,
+  repositories, server actions, Zammad code, or demo modules.
 - `src/features/workspace/demo`: mockup-only static workspace area used by the
   protected `/workspace/demo` route. This folder is deletable without breaking
   the real provider-backed `/workspace` route.
@@ -173,6 +223,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/demo/components`: mockup-only components for the
   static workspace preview, including synthetic ticket tabs, table, thread,
   sidebar, toolbar, and header behavior.
+- `src/features/workspace/demo/components/ticket-tabs`: split demo-only
+  horizontal tab, vertical tab, list tab, and density/style helpers used by the
+  static workspace preview.
 - `src/components/ui`: reusable UI primitives.
 - `src/components/ui/button.tsx`: compact button primitive.
 - `src/components/ui/checkbox.tsx`: labeled checkbox primitive.
@@ -228,8 +281,16 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/unit/base-url-validation.test.ts`: verifies helpdesk base URL and SSRF
   validation rules.
 - `tests/unit/encryption.test.ts`: verifies secret envelope encryption.
-- `tests/unit/helpdesk-connections-service.test.ts`: verifies connection
-  ownership, credential encryption, active preference, and validation behavior.
+- `tests/unit/helpdesk-connections-service-helpers.ts`: in-memory repository,
+  provider registry, and form helpers shared by helpdesk connection service
+  tests.
+- `tests/unit/helpdesk-connections-service-create-update.test.ts`: verifies
+  connection creation, credential preservation, encryption, and metadata
+  trimming behavior.
+- `tests/unit/helpdesk-connections-service-lifecycle.test.ts`: verifies active
+  connection clearing for disable/delete lifecycle operations.
+- `tests/unit/helpdesk-connections-service-validation.test.ts`: verifies
+  existing-connection provider validation error handling and safe diagnostics.
 - `tests/unit/helpdesk-connections-security.test.ts`: verifies connection
   tamper resistance and active/enable security rules.
 - `tests/unit/provider-http.test.ts`: verifies provider requests reject DNS
@@ -242,6 +303,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/unit/session-cookie.test.ts`: verifies secure session cookie options.
 - `tests/unit/ticket-contract.test.ts`: verifies canonical ticket state and
   priority keys, labels, categories, and ranks.
+- `tests/unit/workspace-date-time-format.test.ts`: verifies shared workspace
+  date/time formatting omits the current year and uses 24-hour time.
 - `tests/components`: component interaction tests for shared UI primitives.
 - `tests/components/dropdowns.test.tsx`: verifies searchable and non-searchable
   dropdown keyboard and close behavior.
@@ -255,13 +318,36 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features`: feature-level component tests.
 - `tests/features/connection-message-query.test.tsx`: verifies transient
   connection action query parameters are removed after message rendering.
-- `tests/features/static-workspace.test.tsx`: verifies local-only static
-  workspace interactions and render states.
+- `tests/features/static-workspace-test-utils.tsx`: shared render helper for
+  local-only static workspace tests.
+- `tests/features/static-workspace-navigation.test.tsx`: verifies static
+  workspace saved-view, tabs, profile menu, and navigation interactions.
+- `tests/features/static-workspace-detail.test.tsx`: verifies static
+  ticket-detail sidebar, thread, and inert composer behavior.
+- `tests/features/static-workspace-table.test.tsx`: verifies static ticket table
+  grid, grouping, sorting, selection, and column behavior.
+- `tests/features/ticket-workspace-test-utils.tsx`: shared provider-backed
+  workspace fixtures and render helpers for feature tests.
+- `tests/features/ticket-workspace.test.tsx`: verifies provider-backed
+  workspace unavailable, table, profile menu, detail, and grouping behavior.
+- `tests/features/workspace-adapter.test.ts`: verifies ticket-to-workspace
+  adapter display formatting for table/detail/thread date strings.
+- `tests/features/ticket-workspace-horizontal-tabs.test.tsx`: verifies local
+  horizontal ticket tab sizing, open/close/activation behavior, and route
+  navigation without persistence.
+- `tests/features/ticket-workspace-vertical-tabs.test.tsx`: verifies local
+  vertical ticket tab orientation, open/activation behavior, and route
+  navigation without persistence.
 - `tests/providers`: provider-specific tests.
 - `tests/providers/zammad/credentials.test.ts`: verifies provider-specific Basic
   Auth credential helpers.
 - `tests/providers/zammad/mapping.test.ts`: verifies provider-specific raw state
   and priority mapping to canonical ticket keys.
+- `tests/providers/zammad/read-helpers.ts`: shared Zammad read test fixtures.
+- `tests/providers/zammad/read.test.ts`: verifies Zammad ticket list/detail
+  endpoint calls, canonical mapping, optional feature defaults, and read timing.
+- `tests/providers/zammad/read-assets.test.ts`: verifies Zammad attachment
+  metadata and expanded user display-name asset mapping.
 - `tests/providers/zammad/validation.test.ts`: verifies provider-specific Basic
   Auth validation request behavior.
 - `tests/setup.ts`: component test cleanup and DOM matcher setup.

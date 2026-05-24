@@ -11,7 +11,15 @@ import type {
   TicketState,
 } from "@/core/tickets";
 import { sanitizeProviderHtml } from "@/security/sanitize-html";
-import type { ZammadArticle, ZammadTicket } from "./schemas";
+import {
+  articleAuthor,
+  namedAssetValue,
+  namedReferenceValue,
+  participantFromReference,
+  recipientParticipant,
+  relationId,
+} from "./participants";
+import type { ZammadArticle, ZammadAssets, ZammadTicket } from "./schemas";
 
 const stateMap = new Map<string, TicketState>([
   ["new", "new"],
@@ -115,10 +123,19 @@ function recipientValues(value: string | string[] | null | undefined): string[] 
   return value ? [value] : [];
 }
 
-function recipients(article: ZammadArticle): TicketArticleRecipient[] {
+function recipients(
+  article: ZammadArticle,
+  assets?: ZammadAssets,
+): TicketArticleRecipient[] {
   return [
-    ...recipientValues(article.to).map((name) => ({ channel: "to" as const, name })),
-    ...recipientValues(article.cc).map((name) => ({ channel: "cc" as const, name })),
+    ...recipientValues(article.to).map((value) => ({
+      channel: "to" as const,
+      ...recipientParticipant(value, assets),
+    })),
+    ...recipientValues(article.cc).map((value) => ({
+      channel: "cc" as const,
+      ...recipientParticipant(value, assets),
+    })),
   ];
 }
 
@@ -126,9 +143,31 @@ function attachments(article: ZammadArticle): TicketAttachment[] {
   return article.attachments.map((attachment) => ({
     externalId: String(attachment.id),
     fileName: attachment.filename ?? attachment.name ?? "attachment",
-    contentType: attachment.preferences?.["Content-Type"],
-    byteSize: attachment.size ?? undefined,
+    contentType: attachmentContentType(attachment.preferences),
+    byteSize: attachmentByteSize(attachment.size),
   }));
+}
+
+function attachmentContentType(
+  preferences: ZammadArticle["attachments"][number]["preferences"],
+): string | undefined {
+  const value = preferences?.["Content-Type"] ?? preferences?.["Mime-Type"];
+  return typeof value === "string" ? value : undefined;
+}
+
+function attachmentByteSize(
+  size: ZammadArticle["attachments"][number]["size"],
+): number | undefined {
+  if (typeof size === "number") {
+    return size;
+  }
+
+  if (typeof size !== "string") {
+    return undefined;
+  }
+
+  const parsed = Number(size);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 function textPreview(html: string): string | undefined {
@@ -136,16 +175,41 @@ function textPreview(html: string): string | undefined {
   return preview ? preview.slice(0, 180) : undefined;
 }
 
-export function mapTicket(ticket: ZammadTicket, baseUrl: string): Ticket {
+export function mapTicket(
+  ticket: ZammadTicket,
+  baseUrl: string,
+  assets?: ZammadAssets,
+): Ticket {
+  const state =
+    namedReferenceValue(ticket.state) ??
+    namedAssetValue(assets?.State, ticket.state_id);
+  const priority =
+    namedReferenceValue(ticket.priority) ??
+    namedAssetValue(assets?.TicketPriority, ticket.priority_id) ??
+    namedAssetValue(assets?.Priority, ticket.priority_id);
+  const group =
+    namedReferenceValue(ticket.group) ??
+    namedAssetValue(assets?.Group, ticket.group_id);
+
   return {
     externalId: String(ticket.id),
     number: ticket.number,
     title: ticket.title,
-    customer: ticket.customer ? { name: ticket.customer, role: "customer" } : undefined,
-    owner: ticket.owner ? { name: ticket.owner, role: "agent" } : undefined,
-    group: ticket.group ? { name: ticket.group } : undefined,
-    state: mapState(ticket.state ?? undefined),
-    priority: mapPriority(ticket.priority ?? undefined),
+    customer: participantFromReference({
+      assets,
+      fallback: ticket.customer,
+      id: ticket.customer_id,
+      role: "customer",
+    }),
+    owner: participantFromReference({
+      assets,
+      fallback: ticket.owner,
+      id: ticket.owner_id,
+      role: "agent",
+    }),
+    group: group ? { externalId: relationId(ticket.group_id), name: group } : undefined,
+    state: mapState(state),
+    priority: mapPriority(priority),
     createdAt: dateValue(ticket.created_at),
     updatedAt: requiredDate(ticket.updated_at),
     pendingUntil: dateValue(ticket.pending_time),
@@ -157,24 +221,26 @@ export function mapTicket(ticket: ZammadTicket, baseUrl: string): Ticket {
 export function mapTicketListItem(
   ticket: ZammadTicket,
   baseUrl: string,
+  assets?: ZammadAssets,
 ): TicketListItem {
-  return mapTicket(ticket, baseUrl);
+  return mapTicket(ticket, baseUrl, assets);
 }
 
-export function mapArticle(article: ZammadArticle): TicketArticle {
+export function mapArticle(
+  article: ZammadArticle,
+  assets?: ZammadAssets,
+): TicketArticle {
   const direction = articleDirection(article);
   const sanitizedHtml = sanitizeProviderHtml(article.body ?? "");
+  const role = participantRole(direction);
 
   return {
     externalId: String(article.id),
     kind: articleKind(article),
     visibility: article.internal ? "internal" : "public",
     direction,
-    author: {
-      name: article.created_by ?? article.from ?? article.sender ?? "Unknown",
-      role: participantRole(direction),
-    },
-    recipients: recipients(article),
+    author: articleAuthor(article, assets, role),
+    recipients: recipients(article, assets),
     createdAt: requiredDate(article.created_at),
     subject: article.subject ?? undefined,
     sanitizedHtml,
