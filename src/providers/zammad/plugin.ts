@@ -11,6 +11,9 @@ import {
   zammadProviderKey,
 } from "./credentials";
 import { classifyZammadResponse } from "./errors";
+import { safeProviderFetch } from "@/security/provider-http";
+
+const defaultValidationTimeoutMs = 5000;
 
 async function validateBasicAuth(input: ProviderConnectionInput): Promise<void> {
   if (input.credentialScheme !== zammadBasicAuthScheme) {
@@ -20,16 +23,35 @@ async function validateBasicAuth(input: ProviderConnectionInput): Promise<void> 
     );
   }
 
-  const credentials = zammadBasicAuthCredentialsSchema.parse(
+  const credentialsResult = zammadBasicAuthCredentialsSchema.safeParse(
     input.credentialPayload,
   );
+  if (!credentialsResult.success) {
+    throw new ProviderError(
+      "validation-failure",
+      "The helpdesk credentials are incomplete.",
+    );
+  }
+
   const baseUrl = normalizeZammadBaseUrl(input.baseUrl);
-  const response = await fetch(`${baseUrl}/api/v1/users/me`, {
-    headers: {
-      Authorization: buildBasicAuthHeader(credentials),
-      Accept: "application/json",
-    },
-  });
+  let response: Response;
+
+  try {
+    response = await safeProviderFetch(`${baseUrl}/api/v1/users/me`, {
+      allowedAddresses: input.validatedAddresses,
+      headers: {
+        Authorization: buildBasicAuthHeader(credentialsResult.data),
+        Accept: "application/json",
+      },
+      signal: AbortSignal.timeout(input.timeoutMs ?? defaultValidationTimeoutMs),
+    });
+  } catch {
+    throw new ProviderError(
+      "temporary-provider-failure",
+      "The helpdesk provider could not be reached.",
+      true,
+    );
+  }
 
   if (!response.ok) {
     throw classifyZammadResponse(response.status);
