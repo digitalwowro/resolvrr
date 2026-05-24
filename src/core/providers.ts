@@ -55,6 +55,7 @@ export type ProviderConnectionInput = {
   baseUrl: string;
   credentialScheme: string;
   credentialPayload: unknown;
+  timeoutMs?: number;
 };
 
 export type ProviderContext = {

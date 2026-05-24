@@ -34,6 +34,12 @@ architecture folders or important files are added, moved, renamed, or removed.
   action.
 - `src/app/workspace/page.tsx`: protected authenticated workspace route that
   keeps auth guarding and route composition thin.
+- `src/app/workspace/connections/page.tsx`: protected helpdesk workspace
+  connection list route.
+- `src/app/workspace/connections/new/page.tsx`: protected add-connection form
+  route.
+- `src/app/workspace/connections/[connectionId]/edit/page.tsx`: protected
+  edit-connection form route that never receives stored credential payloads.
 - `src/app/globals.css`: global Tailwind import and base document styles.
 - `src/core`: provider-neutral domain contracts and canonical values.
 - `src/core/tickets.ts`: canonical ticket states, priorities, list, detail,
@@ -59,12 +65,19 @@ architecture folders or important files are added, moved, renamed, or removed.
   session, and dev-origin variables.
 - `src/data`: server-only database access boundaries.
 - `src/data/auth-repository.ts`: Prisma-backed auth repository.
+- `src/data/helpdesk-connections-repository.ts`: Prisma-backed helpdesk
+  connection repository and active connection preference persistence.
 - `src/data/prisma.ts`: Prisma Client singleton with PostgreSQL driver adapter.
 - `src/security`: security-sensitive helpers shared by server-side code.
 - `src/security/encryption.ts`: AES-256-GCM secret envelope encryption.
+- `src/security/base-url-validation.ts`: provider-neutral HTTPS and SSRF
+  validation for user-provided helpdesk base URLs.
 - `src/security/sanitize-html.ts`: provider HTML sanitization.
 - `src/security/safe-log.ts`: helper for safe metadata-only logs.
 - `src/providers`: provider registry and provider plugin implementations.
+- `src/providers/available-providers.ts`: single documented provider assembly
+  file allowed to import installed provider plugins directly before exporting
+  the provider-neutral registry.
 - `src/providers/registry.ts`: provider-neutral registry factory.
 - `src/providers/index.ts`: registry exports.
 - `src/providers/zammad`: first provider plugin implementation; provider-specific
@@ -83,8 +96,31 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/auth/actions.ts`: login, register, and logout server actions.
 - `src/features/auth/messages.ts`: auth form error message helpers.
 - `src/features/auth/index.ts`: auth feature exports.
+- `src/features/helpdesk-connections`: provider-neutral connection management
+  feature.
+- `src/features/helpdesk-connections/actions.ts`: server actions for connection
+  create, update, validate, enable/disable, active selection, and local delete.
+- `src/features/helpdesk-connections/repository.ts`: persistence interface and
+  active-connection preference key for connection workflows.
+- `src/features/helpdesk-connections/service.ts`: connection use cases for
+  ownership, encrypted credential handling, SSRF validation, and provider
+  validation.
+- `src/features/helpdesk-connections/form-parsing.ts`: provider-neutral
+  connection form parsing and blank credential preservation rules.
+- `src/features/helpdesk-connections/provider-validation.ts`: connection
+  validation helper that combines SSRF validation with provider validation.
+- `src/features/helpdesk-connections/messages.ts`: user-safe connection action
+  messages.
 - `src/features/helpdesk-connections/index.ts`: helpdesk connection feature
-  boundary.
+  exports.
+- `src/features/helpdesk-connections/components`: server-rendered connection
+  list and form components.
+- `src/features/helpdesk-connections/components/connection-page-shell.tsx`:
+  shared page shell for protected connection management routes.
+- `src/features/helpdesk-connections/components/connection-list.tsx`: local
+  connection list with active, validate, enable/disable, edit, and delete forms.
+- `src/features/helpdesk-connections/components/connection-form.tsx`: add/edit
+  form that never echoes stored credentials to the browser.
 - `src/features/saved-views/index.ts`: saved view feature boundary.
 - `src/features/tickets/index.ts`: ticket workflow feature boundary.
 - `src/features/settings/index.ts`: settings feature boundary.
@@ -172,7 +208,13 @@ architecture folders or important files are added, moved, renamed, or removed.
   logout, and expired-session cleanup use cases.
 - `tests/unit/auth-validation.test.ts`: verifies email normalization and
   password input validation.
+- `tests/unit/base-url-validation.test.ts`: verifies helpdesk base URL and SSRF
+  validation rules.
 - `tests/unit/encryption.test.ts`: verifies secret envelope encryption.
+- `tests/unit/helpdesk-connections-service.test.ts`: verifies connection
+  ownership, credential encryption, active preference, and validation behavior.
+- `tests/unit/provider-boundary.test.ts`: verifies direct provider-specific
+  imports stay out of core, UI, and feature code.
 - `tests/unit/provider-registry.test.ts`: verifies provider registry lookup and
   duplicate-key protection.
 - `tests/unit/sanitize-html.test.ts`: verifies provider HTML sanitization.
@@ -193,6 +235,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/providers`: provider-specific tests.
 - `tests/providers/zammad/credentials.test.ts`: verifies provider-specific Basic
   Auth credential helpers.
+- `tests/providers/zammad/validation.test.ts`: verifies provider-specific Basic
+  Auth validation request behavior.
 - `tests/setup.ts`: component test cleanup and DOM matcher setup.
 - `docs/architecture`: public architecture and boundary docs.
 - `docs/architecture/overview.md`: core product and architecture boundaries.
