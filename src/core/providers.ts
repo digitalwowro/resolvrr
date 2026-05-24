@@ -1,18 +1,23 @@
 import type { HelpdeskConnection } from "./helpdesk-connections";
 import type { SavedViewFilter } from "./saved-views";
-import type { TicketDetail, TicketListItem, TicketUpdateInput } from "./tickets";
+import type {
+  TicketDetail,
+  TicketExternalId,
+  TicketListItem,
+  TicketUpdateInput,
+} from "./tickets";
 
 export type ProviderCapability =
   | "ticket:list"
   | "ticket:count"
   | "ticket:detail"
+  | "ticket:links"
+  | "ticket:subscription"
   | "ticket:update-owner"
   | "ticket:update-state"
   | "ticket:update-priority"
   | "ticket:update-group"
   | "ticket:tags"
-  | "ticket:links"
-  | "ticket:subscription"
   | "lookup:assignable-users"
   | "lookup:groups"
   | "search:full-text";
@@ -69,12 +74,28 @@ export type TicketListQuery = {
   filter: SavedViewFilter;
   cursor?: string;
   limit: number;
+  sort?: TicketSort;
 };
 
 export type TicketListResult = {
   tickets: TicketListItem[];
   nextCursor?: string;
   measuredAt: Date;
+};
+
+export type TicketSortKey =
+  | "number"
+  | "created_at"
+  | "updated_at"
+  | "pending_until"
+  | "state"
+  | "priority";
+
+export type TicketSortDirection = "ascending" | "descending";
+
+export type TicketSort = {
+  key: TicketSortKey;
+  direction: TicketSortDirection;
 };
 
 export type ProviderLookupOption = {
@@ -88,7 +109,7 @@ export type HelpdeskProviderPlugin = {
   capabilities: ProviderCapability[];
   credentialSchemes: ProviderCredentialScheme[];
   validateConnection(input: ProviderConnectionInput): Promise<void>;
-  listTickets(
+  listTickets?(
     context: ProviderContext,
     query: TicketListQuery,
   ): Promise<TicketListResult>;
@@ -96,13 +117,13 @@ export type HelpdeskProviderPlugin = {
     context: ProviderContext,
     filter: SavedViewFilter,
   ): Promise<number>;
-  getTicketDetail(
+  getTicketDetail?(
     context: ProviderContext,
-    ticketExternalId: string,
+    ticketExternalId: TicketExternalId,
   ): Promise<TicketDetail>;
-  updateTicketFields(
+  updateTicketFields?(
     context: ProviderContext,
-    ticketExternalId: string,
+    ticketExternalId: TicketExternalId,
     input: TicketUpdateInput,
   ): Promise<TicketDetail>;
   listAssignableUsers?(context: ProviderContext): Promise<ProviderLookupOption[]>;

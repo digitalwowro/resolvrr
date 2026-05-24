@@ -1,1 +1,9 @@
-export type { TicketDetail, TicketListItem } from "@/core/tickets";
+export type {
+  Ticket,
+  TicketArticle,
+  TicketDetail,
+  TicketListItem,
+  TicketPriority,
+  TicketState,
+  TicketThread,
+} from "@/core/tickets";

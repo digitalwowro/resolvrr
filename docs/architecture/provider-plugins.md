@@ -7,6 +7,8 @@ credential details.
 ## Core Owns
 
 - Provider-neutral ticket, saved view, connection, and error contracts.
+- Canonical ticket read shapes and capabilities documented in
+  `docs/architecture/ticket-read-contract.md`.
 - Provider registry lookup and capability-aware rendering.
 - Credential storage and encryption policy.
 - Cache scope, retention, and invalidation rules.

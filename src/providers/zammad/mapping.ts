@@ -1,17 +1,17 @@
 import type { TicketPriority, TicketState } from "@/core/tickets";
 
 const stateMap = new Map<string, TicketState>([
-  ["new", "New"],
-  ["open", "Open"],
-  ["pending reminder", "Pending Reminder"],
-  ["pending close", "Pending Close"],
-  ["closed", "Closed"],
+  ["new", "new"],
+  ["open", "open"],
+  ["pending reminder", "pending_reminder"],
+  ["pending close", "pending_close"],
+  ["closed", "closed"],
 ]);
 
 const priorityMap = new Map<string, TicketPriority>([
-  ["1 low", "Low"],
-  ["2 normal", "Medium"],
-  ["3 high", "High"],
+  ["1 low", "low"],
+  ["2 normal", "medium"],
+  ["3 high", "high"],
 ]);
 
 export function mapState(rawState: string | undefined): TicketState | undefined {

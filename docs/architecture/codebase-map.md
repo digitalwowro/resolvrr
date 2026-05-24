@@ -42,8 +42,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   edit-connection form route that never receives stored credential payloads.
 - `src/app/globals.css`: global Tailwind import and base document styles.
 - `src/core`: provider-neutral domain contracts and canonical values.
-- `src/core/tickets.ts`: canonical ticket states, priorities, list, detail,
-  thread, link, subscription, and update types.
+- `src/core/tickets.ts`: canonical ticket state and priority definitions plus
+  provider-neutral ticket, thread, article, link, subscription, and update
+  types.
 - `src/core/saved-views.ts`: provider-neutral saved view filters and metadata.
 - `src/core/helpdesk-connections.ts`: explicit helpdesk connection domain types.
 - `src/core/providers.ts`: provider plugin contract, capability names, provider
@@ -225,6 +226,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   duplicate-key protection.
 - `tests/unit/sanitize-html.test.ts`: verifies provider HTML sanitization.
 - `tests/unit/session-cookie.test.ts`: verifies secure session cookie options.
+- `tests/unit/ticket-contract.test.ts`: verifies canonical ticket state and
+  priority keys, labels, categories, and ranks.
 - `tests/components`: component interaction tests for shared UI primitives.
 - `tests/components/dropdowns.test.tsx`: verifies searchable and non-searchable
   dropdown keyboard and close behavior.
@@ -241,6 +244,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/providers`: provider-specific tests.
 - `tests/providers/zammad/credentials.test.ts`: verifies provider-specific Basic
   Auth credential helpers.
+- `tests/providers/zammad/mapping.test.ts`: verifies provider-specific raw state
+  and priority mapping to canonical ticket keys.
 - `tests/providers/zammad/validation.test.ts`: verifies provider-specific Basic
   Auth validation request behavior.
 - `tests/setup.ts`: component test cleanup and DOM matcher setup.
@@ -248,6 +253,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `docs/architecture/overview.md`: core product and architecture boundaries.
 - `docs/architecture/provider-plugins.md`: provider plugin ownership and
   registration rules.
+- `docs/architecture/ticket-read-contract.md`: canonical provider-neutral
+  ticket read model, thread article shape, capabilities, and non-goals.
 - `docs/architecture/codebase-map.md`: this file-role map.
 - `docs/deploy`: environment and deployment docs, including `.env.example`.
 - `docs/deploy/.env.example`: committed environment template.
