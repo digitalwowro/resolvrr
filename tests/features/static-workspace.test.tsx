@@ -83,6 +83,61 @@ describe("StaticWorkspace", () => {
     ).toHaveAttribute("aria-selected", "false");
   });
 
+  it("shows local-only ticket sidebar controls after opening a ticket", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    expect(
+      screen.queryByRole("combobox", { name: "Ticket state" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: /#48288/i }));
+
+    expect(screen.getByRole("combobox", { name: "Ticket state" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Ticket priority" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Ticket group" })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "Subscribed" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByRole("textbox", { name: "Ticket tags" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add link" })).toBeInTheDocument();
+  });
+
+  it("keeps ticket sidebar controls synthetic and local", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    await user.click(screen.getByRole("tab", { name: /#48288/i }));
+
+    await user.click(screen.getByRole("combobox", { name: "Ticket state" }));
+    expect(screen.getByRole("option", { name: "New" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Open" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Pending Reminder" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Pending Close" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Closed" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+
+    await user.click(screen.getByRole("combobox", { name: "Ticket priority" }));
+    expect(screen.getByRole("option", { name: "Low" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Medium" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "High" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+
+    await user.click(screen.getByRole("combobox", { name: "Ticket group" }));
+    expect(screen.getByRole("option", { name: "Users" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Channel" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Direct Sales" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+
+    const subscribed = screen.getByRole("switch", { name: "Subscribed" });
+    await user.click(subscribed);
+    expect(subscribed).toHaveAttribute("aria-checked", "false");
+
+    await user.type(screen.getByRole("textbox", { name: "Ticket tags" }), "billing");
+    expect(screen.getByRole("textbox", { name: "Ticket tags" })).toHaveValue("billing");
+  });
+
   it("keeps workspace ticket table columns aligned through one grid template", () => {
     renderWorkspace();
 

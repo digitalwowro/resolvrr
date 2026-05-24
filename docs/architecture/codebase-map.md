@@ -104,6 +104,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/ticket-tabs-panel.tsx`: horizontal or
   vertical open-ticket tab presentation, including the fixed vertical tab rail
   for synthetic tickets.
+- `src/features/workspace/components/ticket-detail-placeholder.tsx`: static
+  ticket detail preview and local-only right sidebar controls for visual review.
 - `src/features/workspace/components/ticket-table.tsx`: dense synthetic ticket
   table with feature-local intrinsic grid layout for the main workspace list.
 - `src/features/workspace/components/ticket-table-grid.tsx`: feature-local grid
