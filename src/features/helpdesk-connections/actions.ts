@@ -12,8 +12,8 @@ import {
 import {
   createConnection,
   deleteConnection,
+  disableConnection,
   setActiveConnection,
-  setConnectionEnabled,
   updateConnection,
   validateConnection,
 } from "./service";
@@ -87,25 +87,12 @@ export async function setActiveHelpdeskConnectionAction(formData: FormData) {
   redirectForResult(listPath, result);
 }
 
-export async function enableHelpdeskConnectionAction(formData: FormData) {
-  const user = await requireCurrentUser();
-  const result = await setConnectionEnabled(
-    prismaHelpdeskConnectionsRepository,
-    user.id,
-    textValue(formData, "connectionId"),
-    true,
-  );
-
-  redirectForResult(listPath, result);
-}
-
 export async function disableHelpdeskConnectionAction(formData: FormData) {
   const user = await requireCurrentUser();
-  const result = await setConnectionEnabled(
+  const result = await disableConnection(
     prismaHelpdeskConnectionsRepository,
     user.id,
     textValue(formData, "connectionId"),
-    false,
   );
 
   redirectForResult(listPath, result);

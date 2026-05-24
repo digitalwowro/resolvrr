@@ -3,7 +3,6 @@ export {
   createHelpdeskConnectionAction,
   deleteHelpdeskConnectionAction,
   disableHelpdeskConnectionAction,
-  enableHelpdeskConnectionAction,
   setActiveHelpdeskConnectionAction,
   updateHelpdeskConnectionAction,
   validateHelpdeskConnectionAction,

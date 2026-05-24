@@ -101,19 +101,17 @@ export async function safeProviderFetch(
         signal: options.signal,
       },
       (response) => {
-        const chunks: Buffer[] = [];
-        response.on("data", (chunk: Buffer | string) => {
-          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-        });
+        response.resume();
         response.on("end", () => {
           resolve(
-            new Response(Buffer.concat(chunks), {
+            new Response(null, {
               status: response.statusCode ?? 0,
               statusText: response.statusMessage,
               headers: headersFromIncoming(response.headers),
             }),
           );
         });
+        response.on("error", reject);
       },
     );
 

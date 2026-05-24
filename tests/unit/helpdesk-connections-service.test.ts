@@ -9,7 +9,7 @@ import type {
 import {
   createConnection,
   deleteConnection,
-  setConnectionEnabled,
+  disableConnection,
   updateConnection,
   validateConnection,
 } from "@/features/helpdesk-connections/service";
@@ -245,7 +245,7 @@ describe("helpdesk connection service", () => {
     await store.repo.setActiveConnectionId("user_1", existing.id);
 
     await expect(
-      setConnectionEnabled(store.repo, "user_1", existing.id, false),
+      disableConnection(store.repo, "user_1", existing.id),
     ).resolves.toMatchObject({ ok: true, code: "disabled" });
     expect(store.activeConnectionId).toBeNull();
 

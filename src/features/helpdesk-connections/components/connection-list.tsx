@@ -11,7 +11,6 @@ import type { ConnectionListItem } from "../service";
 import {
   deleteHelpdeskConnectionAction,
   disableHelpdeskConnectionAction,
-  enableHelpdeskConnectionAction,
   setActiveHelpdeskConnectionAction,
   validateHelpdeskConnectionAction,
 } from "../actions";
@@ -111,11 +110,11 @@ export function ConnectionList({ connections }: ConnectionListProps) {
                   action={setActiveHelpdeskConnectionAction}
                   connectionId={connection.id}
                 >
-	                  <button
-	                    className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm hover:bg-slate-50 disabled:opacity-50"
-	                    disabled={connection.active || connection.status !== "active"}
-	                    type="submit"
-	                  >
+                  <button
+                    className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm hover:bg-slate-50 disabled:opacity-50"
+                    disabled={connection.active || connection.status !== "active"}
+                    type="submit"
+                  >
                     Set active
                   </button>
                 </ConnectionActionForm>
@@ -130,21 +129,19 @@ export function ConnectionList({ connections }: ConnectionListProps) {
                     Validate
                   </button>
                 </ConnectionActionForm>
-                <ConnectionActionForm
-                  action={
-                    connection.status === "disconnected"
-                      ? enableHelpdeskConnectionAction
-                      : disableHelpdeskConnectionAction
-                  }
-                  connectionId={connection.id}
-                >
-                  <button
-                    className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm hover:bg-slate-50"
-                    type="submit"
+                {connection.status === "active" ? (
+                  <ConnectionActionForm
+                    action={disableHelpdeskConnectionAction}
+                    connectionId={connection.id}
                   >
-                    {connection.status === "disconnected" ? "Enable" : "Disable"}
-                  </button>
-                </ConnectionActionForm>
+                    <button
+                      className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm hover:bg-slate-50"
+                      type="submit"
+                    >
+                      Disable
+                    </button>
+                  </ConnectionActionForm>
+                ) : null}
                 <Link
                   className="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-2 text-sm hover:bg-slate-50"
                   href={`/workspace/connections/${connection.id}/edit`}

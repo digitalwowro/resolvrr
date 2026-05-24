@@ -8,7 +8,6 @@ import type {
 } from "@/features/helpdesk-connections/repository";
 import {
   setActiveConnection,
-  setConnectionEnabled,
   updateConnection,
 } from "@/features/helpdesk-connections/service";
 
@@ -174,16 +173,4 @@ describe("helpdesk connection security rules", () => {
     expect(store.activeConnectionId).toBeNull();
   });
 
-  it("does not mark unvalidated connections active when enabling", async () => {
-    const existing = connection({ status: "disconnected" });
-    const store = repository([existing]);
-
-    await expect(
-      setConnectionEnabled(store.repo, "user_1", existing.id, true),
-    ).resolves.toMatchObject({ ok: true, code: "enabled" });
-
-    const updated = await store.repo.findForUser("user_1", existing.id);
-    expect(updated?.status).toBe("disconnected");
-    expect(store.activeConnectionId).toBeNull();
-  });
 });

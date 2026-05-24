@@ -2,7 +2,6 @@ export type HelpdeskConnectionMessageCode =
   | "created"
   | "updated"
   | "validated"
-  | "enabled"
   | "disabled"
   | "active-set"
   | "deleted"
@@ -20,7 +19,6 @@ const messages: Record<HelpdeskConnectionMessageCode, string> = {
   created: "Workspace connected.",
   updated: "Workspace updated.",
   validated: "Workspace connection validated.",
-  enabled: "Workspace enabled.",
   disabled: "Workspace disabled.",
   "active-set": "Active workspace updated.",
   deleted: "Workspace deleted.",

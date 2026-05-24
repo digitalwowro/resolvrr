@@ -254,11 +254,10 @@ export async function setActiveConnection(
   return { ok: true, code: "active-set", connectionId };
 }
 
-export async function setConnectionEnabled(
+export async function disableConnection(
   repository: HelpdeskConnectionsRepository,
   userId: string,
   connectionId: string,
-  enabled: boolean,
 ): Promise<ConnectionMutationResult> {
   const updated = await repository.updateStatus(
     userId,
@@ -273,7 +272,7 @@ export async function setConnectionEnabled(
     await repository.clearActiveConnectionId(userId);
   }
 
-  return { ok: true, code: enabled ? "enabled" : "disabled", connectionId };
+  return { ok: true, code: "disabled", connectionId };
 }
 
 export async function deleteConnection(
