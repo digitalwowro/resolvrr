@@ -90,6 +90,7 @@ const baseTicketRows: StaticTicketRow[] = [
     state: "Open",
     priority: "High",
     pendingTill: "Today 15:40",
+    createdAt: "May 20, 09:12",
     updatedAt: "4m ago",
     preview: "Customer replied with purchase order details and asks for confirmation.",
   },
@@ -102,6 +103,7 @@ const baseTicketRows: StaticTicketRow[] = [
     state: "Pending Reminder",
     priority: "High",
     pendingTill: "Today 16:05",
+    createdAt: "May 21, 13:48",
     updatedAt: "12m ago",
     preview: "Session appears to restart after MFA challenge on Chrome.",
   },
@@ -114,6 +116,7 @@ const baseTicketRows: StaticTicketRow[] = [
     state: "New",
     priority: "Medium",
     pendingTill: "Today 17:10",
+    createdAt: "May 22, 10:35",
     updatedAt: "19m ago",
     preview: "Customer needs updated billing profile before accounting close.",
   },
@@ -126,6 +129,7 @@ const baseTicketRows: StaticTicketRow[] = [
     state: "Open",
     priority: "High",
     pendingTill: "Today 15:31",
+    createdAt: "May 22, 14:08",
     updatedAt: "26m ago",
     preview: "Several webhook attempts returned 503 during a customer deployment.",
   },
@@ -138,6 +142,7 @@ const baseTicketRows: StaticTicketRow[] = [
     state: "Pending Close",
     priority: "Medium",
     pendingTill: "Tomorrow 09:00",
+    createdAt: "May 23, 08:24",
     updatedAt: "31m ago",
     preview: "Sales-approved plan change is waiting for customer billing contact.",
   },
@@ -150,6 +155,7 @@ const baseTicketRows: StaticTicketRow[] = [
     state: "Open",
     priority: "Medium",
     pendingTill: "Today 16:35",
+    createdAt: "May 23, 11:50",
     updatedAt: "44m ago",
     preview: "CSV export duplicates rows when date range crosses a month boundary.",
   },
@@ -162,6 +168,7 @@ const baseTicketRows: StaticTicketRow[] = [
     state: "Closed",
     priority: "Low",
     pendingTill: "-",
+    createdAt: "May 18, 15:20",
     updatedAt: "1h ago",
     preview: "Customer confirmed the onboarding checklist is complete.",
   },
@@ -239,6 +246,17 @@ const generatedUpdatedLabels = [
   "May 12, 11:10",
 ];
 
+const generatedCreatedLabels = [
+  "May 24, 08:40",
+  "May 23, 14:15",
+  "May 22, 09:30",
+  "May 21, 16:45",
+  "May 20, 11:05",
+  "May 19, 13:25",
+  "May 18, 10:10",
+  "May 17, 09:50",
+];
+
 const generatedRows: StaticTicketRow[] = Array.from({ length: 93 }, (_, index) => {
   const number = 48259 - index;
   const state = generatedStates[index % generatedStates.length];
@@ -256,6 +274,7 @@ const generatedRows: StaticTicketRow[] = Array.from({ length: 93 }, (_, index) =
       state === "Closed"
         ? "-"
         : generatedPendingLabels[index % generatedPendingLabels.length],
+    createdAt: generatedCreatedLabels[index % generatedCreatedLabels.length],
     updatedAt: generatedUpdatedLabels[index % generatedUpdatedLabels.length],
     preview: "Synthetic workspace review row for table density and scrolling.",
   };

@@ -108,17 +108,23 @@ export function TicketTab({
         {dirty ? <span className="sr-only">Unsaved changes</span> : null}
       </button>
       {showClose ? (
-        <button
-          aria-label={`Close ${label}`}
+        <Tooltip
           className={cn(
-            "grid size-5 shrink-0 place-items-center rounded-md text-slate-400 hover:bg-slate-200 hover:text-slate-700",
-            density === "icon" && "hidden group-hover:grid group-focus-within:grid",
+            "shrink-0",
+            density === "icon" &&
+              "hidden group-hover:inline-flex group-focus-within:inline-flex",
           )}
-          onClick={onClose}
-          type="button"
+          content={`Close ${label}`}
         >
-          <X aria-hidden="true" className="size-3" />
-        </button>
+          <button
+            aria-label={`Close ${label}`}
+            className="grid size-5 shrink-0 place-items-center rounded-md text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+            onClick={onClose}
+            type="button"
+          >
+            <X aria-hidden="true" className="size-3" />
+          </button>
+        </Tooltip>
       ) : null}
     </div>
   );

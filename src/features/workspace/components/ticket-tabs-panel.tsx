@@ -133,12 +133,14 @@ function VerticalTicketTab({
           {tab.label.split(" ")[0]} · {tab.customer}
         </span>
       </span>
-      <span
-        aria-label={`Close ${tab.label}`}
-        className="grid size-5 shrink-0 place-items-center self-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-      >
-        <X aria-hidden="true" className="size-3" />
-      </span>
+      <Tooltip className="self-center" content={`Close ${tab.label}`}>
+        <span
+          aria-label={`Close ${tab.label}`}
+          className="grid size-5 shrink-0 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+        >
+          <X aria-hidden="true" className="size-3" />
+        </span>
+      </Tooltip>
     </button>
   );
 }

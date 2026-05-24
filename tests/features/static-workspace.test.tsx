@@ -1,11 +1,15 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { StaticWorkspace } from "@/features/workspace";
 
 function renderWorkspace() {
   render(<StaticWorkspace userEmail="agent@example.com" />);
 }
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("StaticWorkspace", () => {
   it("keeps saved view selection in the searchable selector", async () => {
@@ -48,6 +52,11 @@ describe("StaticWorkspace", () => {
 
   it("opens a ticket context and returns to the table through List", async () => {
     const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      clipboard: { writeText },
+    });
     renderWorkspace();
 
     const tab = screen.getByRole("tab", { name: /#48288/i });
@@ -55,7 +64,34 @@ describe("StaticWorkspace", () => {
 
     expect(tab).toHaveAttribute("aria-selected", "true");
     expect(screen.getByLabelText("Open tickets")).toBeInTheDocument();
-    expect(screen.getByLabelText("Ticket detail #48288")).toBeInTheDocument();
+    const detail = screen.getByLabelText("Ticket detail #48288");
+    expect(detail).toBeInTheDocument();
+    expect(within(detail).getByText("#48288")).toBeInTheDocument();
+    expect(
+      within(detail).getByRole("heading", {
+        name: "Login loop after password reset",
+      }),
+    ).toBeInTheDocument();
+    expect(detail).toHaveTextContent(/Customer:\s*Daniel Cho/);
+    expect(detail).toHaveTextContent(/Owner:\s*N\. Ionescu/);
+    expect(detail).toHaveTextContent("Created: May 21, 13:48");
+    expect(detail).toHaveTextContent("Updated: 12m ago");
+    expect(
+      within(detail).getByRole("button", { name: "Open ticket in helpdesk" }),
+    ).toBeInTheDocument();
+    await user.click(within(detail).getByRole("button", { name: "Copy ticket summary" }));
+    expect(writeText).toHaveBeenCalledWith(
+      [
+        "#48288 Login loop after password reset",
+        "Customer: Daniel Cho",
+        "Owner: N. Ionescu",
+        "Created: May 21, 13:48",
+        "Updated: 12m ago",
+      ].join("\n"),
+    );
+    expect(
+      within(detail).queryByRole("link", { name: "Open ticket in helpdesk" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: "Title" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "Return to list: My work" }));

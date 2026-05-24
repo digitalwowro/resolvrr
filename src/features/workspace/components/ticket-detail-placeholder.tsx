@@ -5,6 +5,8 @@ import {
   Circle,
   CirclePlus,
   Clock3,
+  Copy,
+  ExternalLink,
   PauseCircle,
   Plus,
   SignalHigh,
@@ -13,7 +15,12 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { Button, DropdownSelect, type DropdownOption } from "@/components/ui";
+import {
+  Button,
+  DropdownSelect,
+  Tooltip,
+  type DropdownOption,
+} from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
   StaticTicketPriority,
@@ -166,14 +173,16 @@ function TicketDetailSidebar({ ticket }: { ticket: StaticTicketRow }) {
       <div className="space-y-1">
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs font-semibold">Links</span>
-          <Button
-            aria-label="Add link"
-            className="!h-auto !gap-0 !p-0.5 justify-center rounded"
-            icon={<Plus aria-hidden="true" className="size-[1em]" />}
-            onClick={() => undefined}
-            type="button"
-            variant="ghost"
-          />
+          <Tooltip content="Add link">
+            <Button
+              aria-label="Add link"
+              className="!h-auto !gap-0 !p-0.5 justify-center rounded"
+              icon={<Plus aria-hidden="true" className="size-[1em]" />}
+              onClick={() => undefined}
+              type="button"
+              variant="ghost"
+            />
+          </Tooltip>
         </div>
         <p className="text-xs">No links yet</p>
       </div>
@@ -181,10 +190,28 @@ function TicketDetailSidebar({ ticket }: { ticket: StaticTicketRow }) {
   );
 }
 
+function ticketSummaryText(ticket: StaticTicketRow) {
+  return [
+    `${ticket.number} ${ticket.title}`,
+    `Customer: ${ticket.customer}`,
+    `Owner: ${ticket.owner}`,
+    `Created: ${ticket.createdAt}`,
+    `Updated: ${ticket.updatedAt}`,
+  ].join("\n");
+}
+
 export function TicketDetailPlaceholder({
   roundedTop,
   ticket,
 }: TicketDetailPlaceholderProps) {
+  const StateIcon = stateIcon[ticket.state];
+  const [copied, setCopied] = useState(false);
+
+  async function copySummary() {
+    await navigator.clipboard.writeText(ticketSummaryText(ticket));
+    setCopied(true);
+  }
+
   return (
     <section
       aria-label={`Ticket detail ${ticket.number}`}
@@ -194,10 +221,70 @@ export function TicketDetailPlaceholder({
       )}
     >
       <div className="border-b border-slate-200 px-4 py-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="shrink-0">{ticket.number}</span>
-          <h2 className="min-w-0 flex-1 truncate font-semibold">{ticket.title}</h2>
-          <span className="shrink-0 text-xs">{ticket.customer}</span>
+        <div className="space-y-2">
+          <div className="flex min-w-0 items-center gap-3">
+            <StateIcon
+              aria-hidden="true"
+              className={cn("size-4 shrink-0", stateClass[ticket.state])}
+            />
+            <span className="shrink-0 text-xl text-black">{ticket.number}</span>
+            <div className="flex min-w-0 flex-1 items-center gap-1.5">
+              <h2 className="min-w-0 truncate text-xl font-semibold text-black">
+                {ticket.title}
+              </h2>
+              <Tooltip content={copied ? "Copied" : "Copy ticket summary"}>
+                <Button
+                  aria-label="Copy ticket summary"
+                  className="!size-6 !gap-0 shrink-0 justify-center !p-0"
+                  icon={<Copy aria-hidden="true" className="size-3.5" />}
+                  onClick={() => void copySummary()}
+                  type="button"
+                  variant="ghost"
+                >
+                  {copied ? <span className="sr-only">Copied</span> : null}
+                </Button>
+              </Tooltip>
+              <Tooltip content="Open ticket in helpdesk">
+                <Button
+                  aria-label="Open ticket in helpdesk"
+                  className="!size-6 !gap-0 shrink-0 justify-center !p-0"
+                  icon={<ExternalLink aria-hidden="true" className="size-3.5" />}
+                  onClick={() => undefined}
+                  type="button"
+                  variant="ghost"
+                />
+              </Tooltip>
+            </div>
+          </div>
+          <div className="flex min-w-0 flex-wrap items-center gap-y-1 text-xs">
+            <span className="mr-1.5 inline-flex min-w-0 items-center gap-1">
+              <span>Customer:</span>
+              <span className="min-w-0 truncate font-semibold text-indigo-600">
+                {ticket.customer}
+              </span>
+            </span>
+            <span aria-hidden="true" className="mr-1.5">
+              ·
+            </span>
+            <span className="mr-1.5 inline-flex min-w-0 items-center gap-1">
+              <span>Owner:</span>
+              <span className="min-w-0 truncate font-semibold text-indigo-600">
+                {ticket.owner}
+              </span>
+            </span>
+            <span aria-hidden="true" className="mr-1.5">
+              ·
+            </span>
+            <span className="mr-1.5">
+              Created: <span className="font-semibold">{ticket.createdAt}</span>
+            </span>
+            <span aria-hidden="true" className="mr-1.5">
+              ·
+            </span>
+            <span>
+              Updated: <span className="font-semibold">{ticket.updatedAt}</span>
+            </span>
+          </div>
         </div>
       </div>
       <div className="flex h-full min-h-0">

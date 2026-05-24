@@ -64,6 +64,7 @@ export type StaticTicketRow = {
   state: StaticTicketState;
   priority: StaticTicketPriority;
   pendingTill: string;
+  createdAt: string;
   updatedAt: string;
   preview: string;
 };

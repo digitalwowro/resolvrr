@@ -195,7 +195,7 @@ describe("Tooltip", () => {
     expect(tooltip.querySelector("strong")).toHaveTextContent("important");
   });
 
-  it("right-aligns bottom tooltips when left alignment would overflow", async () => {
+  it("positions bottom tooltips from the viewport when left alignment would overflow", async () => {
     const originalWidth = window.innerWidth;
     const getBoundingClientRect = vi.spyOn(
       HTMLElement.prototype,
@@ -235,14 +235,33 @@ describe("Tooltip", () => {
     screen.getByRole("button", { name: "Edge" }).focus();
 
     await waitFor(() => {
-      expect(screen.getByRole("tooltip")).toHaveClass("right-0");
+      expect(screen.getByRole("tooltip")).toHaveStyle({
+        left: "128px",
+        top: "68px",
+      });
     });
-    expect(screen.getByRole("tooltip")).not.toHaveClass("left-0");
+    expect(screen.getByRole("tooltip")).toHaveClass("fixed", "z-50");
 
     getBoundingClientRect.mockRestore();
     Object.defineProperty(window, "innerWidth", {
       configurable: true,
       value: originalWidth,
     });
+  });
+
+  it("renders the tooltip outside clipping ancestors", async () => {
+    render(
+      <div data-testid="clipping-parent" className="overflow-hidden">
+        <Tooltip content="Escapes clipping" delayMs={0}>
+          <button type="button">Clipped trigger</button>
+        </Tooltip>
+      </div>,
+    );
+
+    screen.getByRole("button", { name: "Clipped trigger" }).focus();
+
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("Escapes clipping");
+    expect(tooltip.parentElement).toBe(document.body);
   });
 });

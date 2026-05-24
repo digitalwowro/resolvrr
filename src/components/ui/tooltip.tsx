@@ -5,8 +5,10 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "./classnames";
 
 type TooltipProps = {
@@ -17,7 +19,7 @@ type TooltipProps = {
   className?: string;
 };
 
-type TooltipAlign = "start" | "center" | "end";
+type TooltipPosition = Pick<CSSProperties, "left" | "top">;
 
 export function Tooltip({
   content,
@@ -28,9 +30,7 @@ export function Tooltip({
 }: TooltipProps) {
   const tooltipId = useId();
   const [open, setOpen] = useState(false);
-  const [align, setAlign] = useState<TooltipAlign>(
-    side === "bottom" ? "start" : "center",
-  );
+  const [position, setPosition] = useState<TooltipPosition | null>(null);
   const triggerRef = useRef<HTMLSpanElement | null>(null);
   const tooltipRef = useRef<HTMLSpanElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,12 +44,20 @@ export function Tooltip({
     const tooltipRect = tooltipRef.current.getBoundingClientRect();
     const viewportRight = window.innerWidth - 8;
     const viewportLeft = 8;
+    const gap = 8;
 
     if (side === "bottom") {
       const startWouldOverflow = triggerRect.left + tooltipRect.width > viewportRight;
       const endWouldFit = triggerRect.right - tooltipRect.width >= viewportLeft;
+      const nextAlign = startWouldOverflow && endWouldFit ? "end" : "start";
 
-      setAlign(startWouldOverflow && endWouldFit ? "end" : "start");
+      setPosition({
+        left:
+          nextAlign === "end"
+            ? triggerRect.right - tooltipRect.width
+            : Math.min(triggerRect.left, viewportRight - tooltipRect.width),
+        top: triggerRect.bottom + gap,
+      });
       return;
     }
 
@@ -58,16 +66,30 @@ export function Tooltip({
     const centeredRight = centeredLeft + tooltipRect.width;
 
     if (centeredRight > viewportRight) {
-      setAlign(triggerRect.right - tooltipRect.width >= viewportLeft ? "end" : "center");
+      const nextAlign =
+        triggerRect.right - tooltipRect.width >= viewportLeft ? "end" : "center";
+      setPosition({
+        left:
+          nextAlign === "end"
+            ? triggerRect.right - tooltipRect.width
+            : Math.max(viewportLeft, viewportRight - tooltipRect.width),
+        top: triggerRect.top - tooltipRect.height - gap,
+      });
       return;
     }
 
     if (centeredLeft < viewportLeft) {
-      setAlign("start");
+      setPosition({
+        left: triggerRect.left,
+        top: triggerRect.top - tooltipRect.height - gap,
+      });
       return;
     }
 
-    setAlign("center");
+    setPosition({
+      left: centeredLeft,
+      top: triggerRect.top - tooltipRect.height - gap,
+    });
   }, [open, side]);
 
   function clearTimer() {
@@ -79,14 +101,33 @@ export function Tooltip({
 
   function scheduleOpen() {
     clearTimer();
-    setAlign(side === "bottom" ? "start" : "center");
+    setPosition(null);
     timerRef.current = setTimeout(() => setOpen(true), delayMs);
   }
 
   function close() {
     clearTimer();
     setOpen(false);
+    setPosition(null);
   }
+
+  const tooltip = open
+    ? createPortal(
+        <span
+          className={cn(
+            "fixed z-50 w-max rounded-md bg-slate-950 px-2 py-1 text-xs text-white",
+            !position && "opacity-0",
+          )}
+          id={tooltipId}
+          ref={tooltipRef}
+          role="tooltip"
+          style={position ?? undefined}
+        >
+          {content}
+        </span>,
+        document.body,
+      )
+    : null;
 
   return (
     <span
@@ -104,24 +145,7 @@ export function Tooltip({
       ref={triggerRef}
     >
       {children}
-      {open ? (
-        <span
-          className={cn(
-            "absolute z-50 w-max rounded-md bg-slate-950 px-2 py-1 text-white",
-            side === "top" && align === "center" &&
-              "bottom-full left-1/2 mb-2 -translate-x-1/2",
-            side === "top" && align === "start" && "bottom-full left-0 mb-2",
-            side === "top" && align === "end" && "right-0 bottom-full mb-2",
-            side === "bottom" && align === "start" && "top-full left-0 mt-2",
-            side === "bottom" && align === "end" && "top-full right-0 mt-2",
-          )}
-          id={tooltipId}
-          ref={tooltipRef}
-          role="tooltip"
-        >
-          {content}
-        </span>
-      ) : null}
+      {tooltip}
     </span>
   );
 }
