@@ -62,8 +62,18 @@ describe("provider base URL validation", () => {
     expect(isBlockedProviderAddress("127.0.0.1")).toBe(true);
     expect(isBlockedProviderAddress("172.20.0.10")).toBe(true);
     expect(isBlockedProviderAddress("203.0.113.1")).toBe(true);
+    expect(isBlockedProviderAddress("::ffff:7f00:1")).toBe(true);
+    expect(isBlockedProviderAddress("64:ff9b::5db8:d822")).toBe(true);
+    expect(isBlockedProviderAddress("100::1")).toBe(true);
     expect(isBlockedProviderAddress("fc00::1")).toBe(true);
+    expect(isBlockedProviderAddress("fe80::1")).toBe(true);
     expect(isBlockedProviderAddress("2001:db8::1")).toBe(true);
     expect(isBlockedProviderAddress("93.184.216.34")).toBe(false);
+  });
+
+  it("rejects IPv4-mapped IPv6 URLs", async () => {
+    await expect(
+      validateProviderBaseUrl("https://[::ffff:7f00:1]"),
+    ).rejects.toThrow("blocked");
   });
 });

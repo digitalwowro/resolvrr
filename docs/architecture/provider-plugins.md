@@ -35,5 +35,7 @@ data files must not import provider plugin internals.
 Core connection management validates and normalizes user-provided base URLs
 before storing them and again immediately before provider validation. Provider
 plugins receive only the revalidated canonical base URL and server-side
-credentials. Validation requests must avoid automatic redirects so credentials
-are not sent to an unvalidated redirect target.
+credentials. Validation requests must bind provider HTTPS requests to the
+revalidated address set and reject private or changed DNS results at request
+time. Validation requests must avoid automatic redirects so credentials are not
+sent to an unvalidated redirect target.

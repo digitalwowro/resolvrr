@@ -60,14 +60,20 @@ export function parseConnectionForm(
   formData: FormData,
   registry: ProviderRegistry,
   mode: "create" | "update",
+  expectedProviderKey?: string,
 ): ParsedConnectionForm | HelpdeskConnectionMessageCode {
   const displayName = textValue(formData, "displayName");
-  const providerKey = textValue(formData, "providerKey");
+  const submittedProviderKey = textValue(formData, "providerKey");
+  const providerKey = expectedProviderKey ?? submittedProviderKey;
   const baseUrl = textValue(formData, "baseUrl");
   const credentialScheme = textValue(formData, "credentialScheme");
 
   if (!displayName || !providerKey || !baseUrl || !credentialScheme) {
     return "invalid-input";
+  }
+
+  if (expectedProviderKey && submittedProviderKey !== expectedProviderKey) {
+    return "provider-mismatch";
   }
 
   const plugin = pluginFor(registry, providerKey);

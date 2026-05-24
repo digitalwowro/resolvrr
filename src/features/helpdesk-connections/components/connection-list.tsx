@@ -111,11 +111,11 @@ export function ConnectionList({ connections }: ConnectionListProps) {
                   action={setActiveHelpdeskConnectionAction}
                   connectionId={connection.id}
                 >
-                  <button
-                    className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm hover:bg-slate-50 disabled:opacity-50"
-                    disabled={connection.active}
-                    type="submit"
-                  >
+	                  <button
+	                    className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm hover:bg-slate-50 disabled:opacity-50"
+	                    disabled={connection.active || connection.status !== "active"}
+	                    type="submit"
+	                  >
                     Set active
                   </button>
                 </ConnectionActionForm>

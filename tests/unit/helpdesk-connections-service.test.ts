@@ -201,6 +201,7 @@ describe("helpdesk connection service", () => {
     expect(providers.validateConnection).toHaveBeenCalledWith(
       expect.objectContaining({
         baseUrl: "https://93.184.216.34/helpdesk",
+        validatedAddresses: ["93.184.216.34"],
         credentialPayload: { username: "agent", password: "secret" },
       }),
     );
@@ -277,7 +278,10 @@ describe("helpdesk connection service", () => {
       code: "provider-validation-failed",
     });
     expect(providers.validateConnection).toHaveBeenCalledWith(
-      expect.objectContaining({ baseUrl: "https://93.184.216.34" }),
+      expect.objectContaining({
+        baseUrl: "https://93.184.216.34",
+        validatedAddresses: ["93.184.216.34"],
+      }),
     );
     expect((await store.repo.findForUser("user_1", existing.id))?.status).toBe(
       "auth_failed",

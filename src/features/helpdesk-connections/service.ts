@@ -142,7 +142,7 @@ export async function updateConnection(
     return { ok: false, code: "connection-not-found" };
   }
 
-  const parsed = parseConnectionForm(formData, registry, "update");
+  const parsed = parseConnectionForm(formData, registry, "update", existing.providerKey);
   if (typeof parsed === "string") {
     return { ok: false, code: parsed };
   }
@@ -166,7 +166,6 @@ export async function updateConnection(
 
   const metadataChanged =
     existing.baseUrl !== canonicalBaseUrl ||
-    existing.providerKey !== parsed.providerKey ||
     Boolean(parsed.credentialPayload);
 
   const updated = await repository.update({
@@ -177,6 +176,13 @@ export async function updateConnection(
     status: metadataChanged ? "disconnected" : undefined,
     ...credentialUpdate,
   });
+
+  if (
+    metadataChanged &&
+    (await repository.getActiveConnectionId(userId)) === connectionId
+  ) {
+    await repository.clearActiveConnectionId(userId);
+  }
 
   return updated
     ? { ok: true, code: "updated", connectionId }
@@ -218,6 +224,9 @@ export async function validateConnection(
       connectionId,
       statusForProviderError(error),
     );
+    if ((await repository.getActiveConnectionId(userId)) === connectionId) {
+      await repository.clearActiveConnectionId(userId);
+    }
     return {
       ok: false,
       code:
@@ -237,6 +246,9 @@ export async function setActiveConnection(
   if (!connection) {
     return { ok: false, code: "connection-not-found" };
   }
+  if (connection.status !== "active") {
+    return { ok: false, code: "connection-not-active" };
+  }
 
   await repository.setActiveConnectionId(userId, connectionId);
   return { ok: true, code: "active-set", connectionId };
@@ -251,13 +263,13 @@ export async function setConnectionEnabled(
   const updated = await repository.updateStatus(
     userId,
     connectionId,
-    enabled ? "active" : "disconnected",
+    "disconnected",
   );
   if (!updated) {
     return { ok: false, code: "connection-not-found" };
   }
 
-  if (!enabled && (await repository.getActiveConnectionId(userId)) === connectionId) {
+  if ((await repository.getActiveConnectionId(userId)) === connectionId) {
     await repository.clearActiveConnectionId(userId);
   }
 

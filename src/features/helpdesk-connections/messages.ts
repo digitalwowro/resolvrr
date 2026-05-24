@@ -8,9 +8,11 @@ export type HelpdeskConnectionMessageCode =
   | "deleted"
   | "invalid-input"
   | "unknown-provider"
+  | "provider-mismatch"
   | "unknown-credential-scheme"
   | "credential-required"
   | "connection-not-found"
+  | "connection-not-active"
   | "invalid-base-url"
   | "provider-validation-failed";
 
@@ -24,9 +26,11 @@ const messages: Record<HelpdeskConnectionMessageCode, string> = {
   deleted: "Workspace deleted.",
   "invalid-input": "Check the form fields and try again.",
   "unknown-provider": "Choose a supported helpdesk provider.",
+  "provider-mismatch": "The submitted provider does not match this workspace.",
   "unknown-credential-scheme": "Choose a supported credential method.",
   "credential-required": "Enter all credential fields or leave them all blank.",
   "connection-not-found": "Workspace was not found.",
+  "connection-not-active": "Validate this workspace before setting it active.",
   "invalid-base-url": "Enter a public HTTPS helpdesk URL.",
   "provider-validation-failed": "The helpdesk provider could not validate this connection.",
 };

@@ -11,6 +11,7 @@ import {
   zammadProviderKey,
 } from "./credentials";
 import { classifyZammadResponse } from "./errors";
+import { safeProviderFetch } from "@/security/provider-http";
 
 const defaultValidationTimeoutMs = 5000;
 
@@ -36,12 +37,12 @@ async function validateBasicAuth(input: ProviderConnectionInput): Promise<void> 
   let response: Response;
 
   try {
-    response = await fetch(`${baseUrl}/api/v1/users/me`, {
+    response = await safeProviderFetch(`${baseUrl}/api/v1/users/me`, {
+      allowedAddresses: input.validatedAddresses,
       headers: {
         Authorization: buildBasicAuthHeader(credentialsResult.data),
         Accept: "application/json",
       },
-      redirect: "manual",
       signal: AbortSignal.timeout(input.timeoutMs ?? defaultValidationTimeoutMs),
     });
   } catch {

@@ -72,6 +72,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/security/encryption.ts`: AES-256-GCM secret envelope encryption.
 - `src/security/base-url-validation.ts`: provider-neutral HTTPS and SSRF
   validation for user-provided helpdesk base URLs.
+- `src/security/provider-http.ts`: SSRF-safe provider HTTPS request helper that
+  binds requests to the revalidated address set.
 - `src/security/sanitize-html.ts`: provider HTML sanitization.
 - `src/security/safe-log.ts`: helper for safe metadata-only logs.
 - `src/providers`: provider registry and provider plugin implementations.
@@ -213,6 +215,10 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/unit/encryption.test.ts`: verifies secret envelope encryption.
 - `tests/unit/helpdesk-connections-service.test.ts`: verifies connection
   ownership, credential encryption, active preference, and validation behavior.
+- `tests/unit/helpdesk-connections-security.test.ts`: verifies connection
+  tamper resistance and active/enable security rules.
+- `tests/unit/provider-http.test.ts`: verifies provider requests reject DNS
+  rebinding and use pinned validated addresses.
 - `tests/unit/provider-boundary.test.ts`: verifies direct provider-specific
   imports stay out of core, UI, and feature code.
 - `tests/unit/provider-registry.test.ts`: verifies provider registry lookup and

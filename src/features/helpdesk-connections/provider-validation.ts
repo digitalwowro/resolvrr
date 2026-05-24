@@ -25,6 +25,7 @@ export async function validateWithProvider(
     const validated = await validateProviderBaseUrl(input.baseUrl);
     await plugin.validateConnection({
       baseUrl: validated.canonicalUrl,
+      validatedAddresses: validated.addresses,
       credentialScheme: input.credentialScheme,
       credentialPayload: input.credentialPayload,
       timeoutMs: validationTimeoutMs,
@@ -49,6 +50,7 @@ export async function validateExistingProviderConnection(
   const validated = await validateProviderBaseUrl(input.baseUrl);
   await plugin.validateConnection({
     baseUrl: validated.canonicalUrl,
+    validatedAddresses: validated.addresses,
     credentialScheme: input.credentialScheme,
     credentialPayload: input.credentialPayload,
     timeoutMs: validationTimeoutMs,

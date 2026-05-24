@@ -53,6 +53,7 @@ export type ProviderCredentialScheme = {
 
 export type ProviderConnectionInput = {
   baseUrl: string;
+  validatedAddresses: string[];
   credentialScheme: string;
   credentialPayload: unknown;
   timeoutMs?: number;
