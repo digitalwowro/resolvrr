@@ -57,9 +57,10 @@ export function TicketGridHeaderCell({
 }: {
   label: string;
   sortDirection?: SortDirection;
-  onSort(): void;
+  onSort?: () => void;
   children?: ReactNode;
 }) {
+  const sortable = Boolean(onSort);
   const SortIcon =
     sortDirection === "ascending"
       ? ArrowUp
@@ -74,13 +75,19 @@ export function TicketGridHeaderCell({
       role="columnheader"
     >
       <button
-        className="flex min-w-0 flex-1 items-center gap-1 rounded-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        className={cn(
+          "flex min-w-0 flex-1 items-center gap-1 rounded-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
+          sortable ? null : "cursor-default",
+        )}
+        disabled={!sortable}
         onClick={onSort}
         type="button"
       >
         <GripVertical aria-hidden="true" className="size-3 shrink-0" />
         <span className="min-w-0 truncate">{children ?? label}</span>
-        <SortIcon aria-hidden="true" className="size-3 shrink-0" />
+        {sortable ? (
+          <SortIcon aria-hidden="true" className="size-3 shrink-0" />
+        ) : null}
       </button>
     </div>
   );

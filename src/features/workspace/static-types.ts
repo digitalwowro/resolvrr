@@ -27,6 +27,13 @@ export type StaticSortKey =
   | "pendingTill"
   | "updatedAt";
 
+export type StaticTicketGroupKey =
+  | "none"
+  | "priority"
+  | "state"
+  | "owner"
+  | "customer";
+
 export type StaticSavedView = {
   id: string;
   label: string;

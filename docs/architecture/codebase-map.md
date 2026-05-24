@@ -108,10 +108,16 @@ architecture folders or important files are added, moved, renamed, or removed.
   ticket detail composition for the title, thread, and sidebar visual review.
 - `src/features/workspace/components/ticket-detail-sidebar.tsx`: static
   local-only ticket action sidebar controls for visual review.
+- `src/features/workspace/components/ticket-reply-composer.tsx`: local-only
+  inline reply composer for static ticket thread review.
 - `src/features/workspace/components/ticket-thread.tsx`: static synthetic reply
-  thread and local-only reply composer for ticket detail visual review.
+  thread cards and local reply-mode state for ticket detail visual review.
+- `src/features/workspace/components/ticket-table-cells.tsx`: feature-local
+  state and priority cell renderers shared by ticket rows and group headers.
+- `src/features/workspace/components/ticket-table-grouping.ts`: feature-local
+  static grouping and row sorting helpers for the workspace ticket list.
 - `src/features/workspace/components/ticket-table.tsx`: dense synthetic ticket
-  table with feature-local intrinsic grid layout for the main workspace list.
+  table with optional feature-local group headers for the main workspace list.
 - `src/features/workspace/components/ticket-table-grid.tsx`: feature-local grid
   table layout helpers for the workspace ticket list; not a shared primitive.
 - `src/components/ui`: reusable UI primitives.

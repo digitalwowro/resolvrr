@@ -180,6 +180,11 @@ describe("StaticWorkspace", () => {
     expect(
       within(replies[0]).getByLabelText("Message actions for Daniel Cho"),
     ).toBeInTheDocument();
+    expect(
+      within(replies[2]).queryByLabelText("Message actions for Razvan Rosca"),
+    ).not.toBeInTheDocument();
+    expect(within(replies[2]).queryByRole("button", { name: "Reply" })).not.toBeInTheDocument();
+    expect(within(replies[2]).queryByRole("button", { name: "Reply all" })).not.toBeInTheDocument();
   });
 
   it("opens an inline static composer from Reply and keeps Send inert", async () => {
@@ -198,6 +203,13 @@ describe("StaticWorkspace", () => {
     const composer = within(customerReply).getByRole("region", {
       name: "Reply composer",
     });
+    expect(within(customerReply).getByRole("button", { name: "Reply" })).toHaveClass(
+      "bg-indigo-200",
+      "hover:bg-indigo-200",
+    );
+    expect(
+      within(customerReply).getByRole("button", { name: "Reply all" }),
+    ).not.toHaveClass("bg-indigo-200");
     expect(composer).not.toHaveTextContent(
       "Reply to Daniel Cho by Razvan Rosca · May 24, 08:22",
     );
@@ -228,6 +240,12 @@ describe("StaticWorkspace", () => {
       within(employeeReply).getByRole("button", { name: "Reply all" }),
     );
 
+    expect(
+      within(employeeReply).getByRole("button", { name: "Reply all" }),
+    ).toHaveClass("bg-slate-200", "hover:bg-slate-200");
+    expect(within(employeeReply).getByRole("button", { name: "Reply" })).not.toHaveClass(
+      "bg-slate-200",
+    );
     expect(
       within(employeeReply).getByRole("region", { name: "Reply composer" }),
     ).not.toHaveTextContent(
@@ -279,6 +297,67 @@ describe("StaticWorkspace", () => {
       gridTemplateColumns:
         "max-content max-content minmax(0, 1fr) fit-content(14rem) max-content max-content max-content max-content max-content",
     });
+  });
+
+  it("groups the ticket table by priority and disables priority sorting", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    const priorityHeaderBeforeGrouping = screen.getByRole("columnheader", {
+      name: "Priority",
+    });
+    await user.click(
+      within(priorityHeaderBeforeGrouping).getByRole("button", {
+        name: "Priority",
+      }),
+    );
+    expect(priorityHeaderBeforeGrouping).toHaveAttribute("aria-sort", "ascending");
+
+    await user.click(screen.getByRole("combobox", { name: "Group tickets by" }));
+
+    expect(screen.getByRole("option", { name: "No grouping" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Priority" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "State" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Owner" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Customer" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("option", { name: "Priority" }));
+
+    const highGroup = screen.getByRole("cell", { name: /^High \d+$/ });
+    expect(highGroup).toHaveStyle({ gridColumn: "1 / -1" });
+    expect(screen.getByRole("cell", { name: /^Medium \d+$/ })).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: /^Low \d+$/ })).toBeInTheDocument();
+
+    const priorityHeader = screen.getByRole("columnheader", { name: "Priority" });
+    expect(within(priorityHeader).getByRole("button", { name: "Priority" })).toBeDisabled();
+    expect(screen.getByRole("columnheader", { name: "Updated at" })).toHaveAttribute(
+      "aria-sort",
+      "descending",
+    );
+
+    const stateHeader = screen.getByRole("columnheader", { name: "State" });
+    await user.click(within(stateHeader).getByRole("button", { name: "State" }));
+    expect(stateHeader).toHaveAttribute("aria-sort", "ascending");
+    await user.click(highGroup);
+    expect(screen.queryByLabelText(/^Ticket detail/)).not.toBeInTheDocument();
+  });
+
+  it("restores flat ticket table sorting when grouping returns to none", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    await user.click(screen.getByRole("combobox", { name: "Group tickets by" }));
+    await user.click(screen.getByRole("option", { name: "Priority" }));
+    await user.click(screen.getByRole("combobox", { name: "Group tickets by" }));
+    await user.click(screen.getByRole("option", { name: "No grouping" }));
+
+    expect(screen.queryByRole("cell", { name: /^High \d+$/ })).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole("columnheader", { name: "Priority" })).getByRole(
+        "button",
+        { name: "Priority" },
+      ),
+    ).toBeEnabled();
   });
 
   it("keeps checkbox clicks from opening the ticket context", async () => {

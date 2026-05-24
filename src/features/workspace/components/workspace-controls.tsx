@@ -9,6 +9,7 @@ import {
   PanelLeft,
   PanelTop,
   RefreshCw,
+  Rows3,
   SignalHigh,
   Trash2,
   User,
@@ -28,6 +29,7 @@ import type {
   StaticColumn,
   StaticColumnKey,
   StaticTabOrientation,
+  StaticTicketGroupKey,
 } from "../static-types";
 
 type WorkspaceControlsProps = {
@@ -37,6 +39,9 @@ type WorkspaceControlsProps = {
   orientationOptions: DropdownOption[];
   tabOrientation: StaticTabOrientation;
   onTabOrientationChange(orientation: StaticTabOrientation): void;
+  groupOptions: DropdownOption[];
+  groupBy: StaticTicketGroupKey;
+  onGroupByChange(groupBy: StaticTicketGroupKey): void;
   columns: StaticColumn[];
   visibleColumns: Set<StaticColumnKey>;
   onColumnToggle(column: StaticColumnKey): void;
@@ -54,6 +59,9 @@ export function WorkspaceControls({
   orientationOptions,
   tabOrientation,
   onTabOrientationChange,
+  groupOptions,
+  groupBy,
+  onGroupByChange,
   columns,
   visibleColumns,
   onColumnToggle,
@@ -166,6 +174,28 @@ export function WorkspaceControls({
               ),
           }))}
           value={tabOrientation}
+        />
+        <ToolbarDropdownSelect
+          ariaLabel="Group tickets by"
+          onValueChange={(value) =>
+            onGroupByChange(value as StaticTicketGroupKey)
+          }
+          options={groupOptions.map((option) => ({
+            ...option,
+            icon:
+              option.value === "priority" ? (
+                <SignalHigh aria-hidden="true" className={dropdownIconClass} />
+              ) : option.value === "state" ? (
+                <CircleDot aria-hidden="true" className={dropdownIconClass} />
+              ) : option.value === "owner" ? (
+                <User aria-hidden="true" className={dropdownIconClass} />
+              ) : option.value === "customer" ? (
+                <BriefcaseBusiness aria-hidden="true" className={dropdownIconClass} />
+              ) : (
+                <Rows3 aria-hidden="true" className={dropdownIconClass} />
+              ),
+          }))}
+          value={groupBy}
         />
         <ToolbarMenuDropdown
           items={columnItems}

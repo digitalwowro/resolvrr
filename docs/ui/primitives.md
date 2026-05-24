@@ -140,8 +140,8 @@ Table primitives provide structure, surface, and rhythm only:
   callbacks.
 
 `useTableSort` owns only sort interaction state: active sort key, direction,
-same-key toggling, new-key direction, and `sortDirectionFor`. Row comparison and
-data sorting stay in the feature that owns the data shape.
+same-key toggling, explicit `setSort`, new-key direction, and `sortDirectionFor`.
+Row comparison and data sorting stay in the feature that owns the data shape.
 
 ## Table Keyboard Behavior
 

@@ -30,6 +30,11 @@ export function useTableSort<TKey extends string>({
     setSortDirection(newKeyDirection);
   }
 
+  function setSort(key: TKey, direction: SortDirection) {
+    setSortKey(key);
+    setSortDirection(direction);
+  }
+
   function sortDirectionFor(key: TKey) {
     return key === sortKey ? sortDirection : undefined;
   }
@@ -37,6 +42,7 @@ export function useTableSort<TKey extends string>({
   return {
     sortKey,
     sortDirection,
+    setSort,
     toggleSort,
     sortDirectionFor,
   };

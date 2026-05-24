@@ -1,20 +1,10 @@
 "use client";
 
-import {
-  Bold,
-  ChevronDown,
-  CornerUpLeft,
-  Italic,
-  Link,
-  List,
-  ListOrdered,
-  UsersRound,
-  Send,
-} from "lucide-react";
+import { ChevronDown, CornerUpLeft, UsersRound } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { Button } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type { StaticTicketReply } from "../static-types";
+import { TicketReplyComposer } from "./ticket-reply-composer";
 
 type ReplyMode = "reply" | "reply-all";
 
@@ -37,6 +27,24 @@ const replyActionBorderClass: Record<StaticTicketReply["type"], string> = {
   customer: "border-indigo-100",
   employee: "border-slate-200",
   "internal-note": "border-amber-200",
+};
+
+const replyAvatarClass: Record<StaticTicketReply["type"], string> = {
+  customer: "bg-indigo-600 text-white",
+  employee: "bg-black text-white",
+  "internal-note": "bg-amber-600 text-white",
+};
+
+const replyActionStateClass: Record<StaticTicketReply["type"], string> = {
+  customer: "hover:bg-indigo-100 active:bg-indigo-200",
+  employee: "hover:bg-slate-100 active:bg-slate-200",
+  "internal-note": "hover:bg-amber-100 active:bg-amber-200",
+};
+
+const replyActionSelectedClass: Record<StaticTicketReply["type"], string> = {
+  customer: "bg-indigo-200 hover:bg-indigo-200 active:bg-indigo-200",
+  employee: "bg-slate-200 hover:bg-slate-200 active:bg-slate-200",
+  "internal-note": "bg-amber-200 hover:bg-amber-200 active:bg-amber-200",
 };
 
 const replyTypeLabel: Record<StaticTicketReply["type"], string> = {
@@ -81,16 +89,25 @@ function ContactLine({
 
 function ReplyActionButton({
   children,
+  isSelected,
   icon,
   onClick,
+  replyType,
 }: {
   children: ReactNode;
+  isSelected: boolean;
   icon: ReactNode;
   onClick(): void;
+  replyType: StaticTicketReply["type"];
 }) {
   return (
     <button
-      className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-semibold hover:bg-slate-100"
+      className={cn(
+        "inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-semibold",
+        isSelected
+          ? replyActionSelectedClass[replyType]
+          : cn("bg-transparent", replyActionStateClass[replyType]),
+      )}
       onClick={onClick}
       type="button"
     >
@@ -121,35 +138,40 @@ function ReplyCard({
         replyTypeClass[reply.type],
       )}
     >
-      <div className="border-b border-slate-200">
+      <div>
         <button
           aria-expanded={isExpanded}
           aria-label={`Message details for ${reply.authorName}`}
-          className="flex w-full items-center gap-3 px-3 py-2 text-left"
+          className="flex w-full items-center gap-3 px-3 pt-3 text-left"
           onClick={() => setIsExpanded((current) => !current)}
           type="button"
         >
-          <div className="grid size-6 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-[10px] font-semibold">
+          <div
+            className={cn(
+              "grid size-6 shrink-0 place-items-center rounded-full text-[10px] font-semibold",
+              replyAvatarClass[reply.type],
+            )}
+          >
             {initials(reply.authorName)}
           </div>
           <div className="flex min-w-0 flex-1 items-baseline gap-2">
             <span className="truncate text-xs font-semibold">
               {reply.authorName}
             </span>
-            <span className="truncate text-xs">({reply.authorEmail})</span>
+            <span className="truncate text-xs">&lt;{reply.authorEmail}&gt;</span>
             <span className="shrink-0 text-xs">·</span>
             <time className="shrink-0 text-xs">{reply.createdAt}</time>
+            <ChevronDown
+              aria-hidden="true"
+              className={cn(
+                "size-4 shrink-0 self-center transition-transform",
+                isExpanded ? "rotate-180" : "",
+              )}
+            />
           </div>
-          <ChevronDown
-            aria-hidden="true"
-            className={cn(
-              "size-4 shrink-0 transition-transform",
-              isExpanded ? "rotate-180" : "",
-            )}
-          />
         </button>
         {isExpanded ? (
-          <div className="px-3 pb-2 pl-12">
+          <div className="px-3 pt-1 pl-12">
             <div className="min-w-0 leading-tight">
               <ContactLine
                 contacts={[
@@ -165,119 +187,39 @@ function ReplyCard({
       <div className="px-3 py-3">
         <p className="text-black">{reply.body}</p>
       </div>
-      <div
-        aria-label={`Message actions for ${reply.authorName}`}
-        className={cn(
-          "flex items-center gap-2 border-t bg-white/35 px-3 py-2",
-          replyActionBorderClass[reply.type],
-        )}
-      >
-        <ReplyActionButton
-          icon={<CornerUpLeft aria-hidden="true" className="size-3.5" />}
-          onClick={() => onReply(reply, "reply")}
+      {reply.type === "internal-note" ? null : (
+        <div
+          aria-label={`Message actions for ${reply.authorName}`}
+          className={cn(
+            "flex items-center gap-2 border-t bg-white/35 px-3 py-2",
+            replyActionBorderClass[reply.type],
+          )}
         >
-          Reply
-        </ReplyActionButton>
-        <ReplyActionButton
-          icon={<UsersRound aria-hidden="true" className="size-3.5" />}
-          onClick={() => onReply(reply, "reply-all")}
-        >
-          Reply all
-        </ReplyActionButton>
-      </div>
+          <ReplyActionButton
+            isSelected={activeMode === "reply"}
+            icon={<CornerUpLeft aria-hidden="true" className="size-3.5" />}
+            onClick={() => onReply(reply, "reply")}
+            replyType={reply.type}
+          >
+            Reply
+          </ReplyActionButton>
+          <ReplyActionButton
+            isSelected={activeMode === "reply-all"}
+            icon={<UsersRound aria-hidden="true" className="size-3.5" />}
+            onClick={() => onReply(reply, "reply-all")}
+            replyType={reply.type}
+          >
+            Reply all
+          </ReplyActionButton>
+        </div>
+      )}
       {activeMode ? (
-        <ReplyComposer onCancel={onCancelReply} replyType={reply.type} />
+        <TicketReplyComposer
+          className={replyTypeClass[reply.type]}
+          onCancel={onCancelReply}
+        />
       ) : null}
     </article>
-  );
-}
-
-function EditorButton({
-  children,
-  label,
-}: {
-  children: ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      aria-label={label}
-      className="grid size-7 place-items-center rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-      type="button"
-    >
-      {children}
-    </button>
-  );
-}
-
-function ReplyComposer({
-  onCancel,
-  replyType,
-}: {
-  onCancel(): void;
-  replyType: StaticTicketReply["type"];
-}) {
-  const [body, setBody] = useState("");
-
-  return (
-    <section
-      aria-label="Reply composer"
-      className={cn(
-        "shrink-0 border-t px-4 py-3",
-        replyTypeClass[replyType],
-      )}
-    >
-      <div className="rounded-md border border-indigo-200 bg-white">
-        <div
-          aria-label="Reply body"
-          className="min-h-24 px-3 py-2 outline-none empty:before:text-slate-400 empty:before:content-['Write_a_reply...']"
-          contentEditable
-          onInput={(event) => setBody(event.currentTarget.textContent ?? "")}
-          role="textbox"
-          suppressContentEditableWarning
-        >
-          {body}
-        </div>
-        <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-2 py-2">
-          <div className="flex items-center gap-1">
-            <EditorButton label="Bold">
-              <Bold aria-hidden="true" className="size-3.5" />
-            </EditorButton>
-            <EditorButton label="Italic">
-              <Italic aria-hidden="true" className="size-3.5" />
-            </EditorButton>
-            <EditorButton label="Insert link">
-              <Link aria-hidden="true" className="size-3.5" />
-            </EditorButton>
-            <EditorButton label="Bulleted list">
-              <List aria-hidden="true" className="size-3.5" />
-            </EditorButton>
-            <EditorButton label="Numbered list">
-              <ListOrdered aria-hidden="true" className="size-3.5" />
-            </EditorButton>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              className="!h-7 !px-2 !text-xs"
-              onClick={onCancel}
-              type="button"
-              variant="secondary"
-            >
-              Cancel
-            </Button>
-            <Button
-              className="!h-7 !px-2 !text-xs"
-              icon={<Send aria-hidden="true" className="size-3.5" />}
-              onClick={() => undefined}
-              type="button"
-              variant="primary"
-            >
-              Send
-            </Button>
-          </div>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -288,7 +230,7 @@ export function TicketThread({ replies }: TicketThreadProps) {
     <div className="flex min-h-0 flex-1 flex-col">
       <div
         aria-label="Ticket replies"
-        className="min-h-0 flex-1 space-y-3 overflow-auto px-4 py-4"
+        className="min-h-0 flex-1 space-y-4 overflow-auto px-4 py-4"
       >
         {replies.map((reply) => (
           <ReplyCard

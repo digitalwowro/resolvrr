@@ -1,26 +1,17 @@
 "use client";
 
-import {
-  CheckCircle2,
-  Circle,
-  CirclePlus,
-  Clock3,
-  PauseCircle,
-  SignalHigh,
-  SignalLow,
-  SignalMedium,
-  type LucideIcon,
-} from "lucide-react";
 import { Checkbox } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type { SortDirection } from "@/components/ui";
 import type {
   StaticColumnKey,
   StaticSortKey,
+  StaticTicketGroupKey,
   StaticTicketPriority,
   StaticTicketRow,
   StaticTicketState,
 } from "../static-types";
+import { PriorityCell, StateCell } from "./ticket-table-cells";
 import {
   ticketGridTemplate,
   ticketGridTableClass,
@@ -31,6 +22,8 @@ import {
 
 type TicketTableProps = {
   rows: StaticTicketRow[];
+  groupedRows?: TicketTableGroup[];
+  groupBy: StaticTicketGroupKey;
   visibleColumns: Set<StaticColumnKey>;
   selectedRowIds: Set<string>;
   activeTicketId: string;
@@ -41,58 +34,17 @@ type TicketTableProps = {
   roundedTop?: boolean;
 };
 
-const stateClass: Record<StaticTicketState, string> = {
-  New: "text-rose-600",
-  Open: "text-indigo-600",
-  "Pending Reminder": "text-amber-600",
-  "Pending Close": "text-violet-600",
-  Closed: "text-emerald-600",
+export type TicketTableGroup = {
+  id: string;
+  label: string;
+  value: string;
+  rows: StaticTicketRow[];
 };
-
-const stateIcon: Record<StaticTicketState, LucideIcon> = {
-  New: CirclePlus,
-  Open: Circle,
-  "Pending Reminder": Clock3,
-  "Pending Close": PauseCircle,
-  Closed: CheckCircle2,
-};
-
-const priorityClass: Record<StaticTicketPriority, string> = {
-  Low: "text-emerald-600",
-  Medium: "text-indigo-600",
-  High: "text-rose-600",
-};
-
-const priorityIcon: Record<StaticTicketPriority, LucideIcon> = {
-  Low: SignalLow,
-  Medium: SignalMedium,
-  High: SignalHigh,
-};
-
-function StateCell({ state }: { state: StaticTicketState }) {
-  const Icon = stateIcon[state];
-
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <Icon aria-hidden="true" className={`size-3.5 ${stateClass[state]}`} />
-      {state}
-    </span>
-  );
-}
-
-function PriorityCell({ priority }: { priority: StaticTicketPriority }) {
-  const Icon = priorityIcon[priority];
-
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <Icon aria-hidden="true" className={`size-3.5 ${priorityClass[priority]}`} />
-      {priority}
-    </span>
-  );
-}
 
 export function TicketTable({
   rows,
+  groupedRows,
+  groupBy,
   visibleColumns,
   selectedRowIds,
   activeTicketId,
@@ -103,6 +55,127 @@ export function TicketTable({
   roundedTop = true,
 }: TicketTableProps) {
   const templateStyle = ticketGridTemplate(visibleColumns);
+  const groups = groupedRows ?? [{ id: "all", label: "", value: "", rows }];
+  const rowCount = groups.reduce((total, group) => total + group.rows.length, 0);
+  let rowIndex = 0;
+
+  function sortHandler(key: StaticSortKey) {
+    return groupBy === key ? undefined : () => onSort(key);
+  }
+
+  function sortDirection(key: StaticSortKey) {
+    return groupBy === key ? undefined : sortDirectionFor(key);
+  }
+
+  function groupLabel(group: TicketTableGroup) {
+    if (groupBy === "priority") {
+      return (
+        <PriorityCell
+          monochrome
+          priority={group.value as StaticTicketPriority}
+        />
+      );
+    }
+
+    if (groupBy === "state") {
+      return <StateCell monochrome state={group.value as StaticTicketState} />;
+    }
+
+    return group.label;
+  }
+
+  function renderRow(row: StaticTicketRow, index: number) {
+    const active = row.id === activeTicketId;
+    const cellBorderClass = index === rowCount - 1 ? "border-b-0" : "";
+    const rowCellClass = active
+      ? "bg-slate-50"
+      : "bg-white group-hover:bg-slate-50";
+
+    return (
+      <div
+        aria-selected={active}
+        className="group contents cursor-pointer"
+        key={row.id}
+        onClick={() => onRowSelect(row.id)}
+        role="row"
+      >
+        <TicketGridCell
+          className={cn(rowCellClass, cellBorderClass)}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Checkbox
+            checked={selectedRowIds.has(row.id)}
+            className="items-center"
+            hideLabel
+            label={`Select ${row.number}`}
+            name={`select-${row.id}`}
+            onChange={() => onToggleRow(row.id)}
+          />
+        </TicketGridCell>
+        <TicketGridCell
+          className={cn("whitespace-nowrap", rowCellClass, cellBorderClass)}
+        >
+          {row.number}
+        </TicketGridCell>
+        <TicketGridCell className={cn("min-w-0", rowCellClass, cellBorderClass)}>
+          <button
+            className="block w-full rounded-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            onClick={(event) => {
+              event.stopPropagation();
+              onRowSelect(row.id);
+            }}
+            type="button"
+          >
+            <span className="block truncate font-semibold">{row.title}</span>
+          </button>
+        </TicketGridCell>
+        {visibleColumns.has("customer") ? (
+          <TicketGridCell
+            className={cn("min-w-0 max-w-56", rowCellClass, cellBorderClass)}
+          >
+            <span className="block min-w-0 truncate whitespace-nowrap">
+              {row.customer}
+            </span>
+          </TicketGridCell>
+        ) : null}
+        {visibleColumns.has("owner") ? (
+          <TicketGridCell
+            className={cn("whitespace-nowrap", rowCellClass, cellBorderClass)}
+          >
+            {row.owner}
+          </TicketGridCell>
+        ) : null}
+        {visibleColumns.has("state") ? (
+          <TicketGridCell
+            className={cn("whitespace-nowrap", rowCellClass, cellBorderClass)}
+          >
+            <StateCell state={row.state} />
+          </TicketGridCell>
+        ) : null}
+        {visibleColumns.has("priority") ? (
+          <TicketGridCell
+            className={cn("whitespace-nowrap", rowCellClass, cellBorderClass)}
+          >
+            <PriorityCell priority={row.priority} />
+          </TicketGridCell>
+        ) : null}
+        {visibleColumns.has("pendingTill") ? (
+          <TicketGridCell
+            className={cn("whitespace-nowrap", rowCellClass, cellBorderClass)}
+          >
+            {row.pendingTill}
+          </TicketGridCell>
+        ) : null}
+        {visibleColumns.has("updatedAt") ? (
+          <TicketGridCell
+            className={cn("whitespace-nowrap", rowCellClass, cellBorderClass)}
+          >
+            {row.updatedAt}
+          </TicketGridCell>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -116,156 +189,85 @@ export function TicketTable({
             <TicketGridStaticHeaderCell />
             <TicketGridHeaderCell
               label="#"
-              onSort={() => onSort("number")}
-              sortDirection={sortDirectionFor("number")}
+              onSort={sortHandler("number")}
+              sortDirection={sortDirection("number")}
             />
             <TicketGridHeaderCell
               label="Title"
-              onSort={() => onSort("title")}
-              sortDirection={sortDirectionFor("title")}
+              onSort={sortHandler("title")}
+              sortDirection={sortDirection("title")}
             />
             {visibleColumns.has("customer") ? (
               <TicketGridHeaderCell
                 label="Customer"
-                onSort={() => onSort("customer")}
-                sortDirection={sortDirectionFor("customer")}
+                onSort={sortHandler("customer")}
+                sortDirection={sortDirection("customer")}
               />
             ) : null}
             {visibleColumns.has("owner") ? (
               <TicketGridHeaderCell
                 label="Owner"
-                onSort={() => onSort("owner")}
-                sortDirection={sortDirectionFor("owner")}
+                onSort={sortHandler("owner")}
+                sortDirection={sortDirection("owner")}
               />
             ) : null}
             {visibleColumns.has("state") ? (
               <TicketGridHeaderCell
                 label="State"
-                onSort={() => onSort("state")}
-                sortDirection={sortDirectionFor("state")}
+                onSort={sortHandler("state")}
+                sortDirection={sortDirection("state")}
               />
             ) : null}
             {visibleColumns.has("priority") ? (
               <TicketGridHeaderCell
                 label="Priority"
-                onSort={() => onSort("priority")}
-                sortDirection={sortDirectionFor("priority")}
+                onSort={sortHandler("priority")}
+                sortDirection={sortDirection("priority")}
               />
             ) : null}
             {visibleColumns.has("pendingTill") ? (
               <TicketGridHeaderCell
                 label="Pending till"
-                onSort={() => onSort("pendingTill")}
-                sortDirection={sortDirectionFor("pendingTill")}
+                onSort={sortHandler("pendingTill")}
+                sortDirection={sortDirection("pendingTill")}
               />
             ) : null}
             {visibleColumns.has("updatedAt") ? (
               <TicketGridHeaderCell
                 label="Updated at"
-                onSort={() => onSort("updatedAt")}
-                sortDirection={sortDirectionFor("updatedAt")}
+                onSort={sortHandler("updatedAt")}
+                sortDirection={sortDirection("updatedAt")}
               />
             ) : null}
           </div>
         </div>
         <div className="contents" role="rowgroup">
-          {rows.map((row, index) => {
-            const active = row.id === activeTicketId;
-            const cellBorderClass = index === rows.length - 1 ? "border-b-0" : "";
-            const rowCellClass = active
-              ? "bg-slate-50"
-              : "bg-white group-hover:bg-slate-50";
-
-            return (
-              <div
-                aria-selected={active}
-                className="group contents cursor-pointer"
-                key={row.id}
-                onClick={() => onRowSelect(row.id)}
-                role="row"
-              >
-                <TicketGridCell
-                  className={cn(rowCellClass, cellBorderClass)}
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <Checkbox
-                    checked={selectedRowIds.has(row.id)}
-                    className="items-center"
-                    hideLabel
-                    label={`Select ${row.number}`}
-                    name={`select-${row.id}`}
-                    onChange={() => onToggleRow(row.id)}
-                  />
-                </TicketGridCell>
-                <TicketGridCell
-                  className={cn("whitespace-nowrap", rowCellClass, cellBorderClass)}
-                >
-                  {row.number}
-                </TicketGridCell>
-                <TicketGridCell className={cn("min-w-0", rowCellClass, cellBorderClass)}>
-                  <button
-                    className="block w-full rounded-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onRowSelect(row.id);
-                    }}
-                    type="button"
-                  >
-                    <span className="block truncate font-semibold">
-                      {row.title}
-                    </span>
-                  </button>
-                </TicketGridCell>
-                {visibleColumns.has("customer") ? (
-                  <TicketGridCell
+          {groups.flatMap((group) => {
+            const firstGroup = groups[0]?.id === group.id;
+            const groupHeader =
+              groupBy === "none" ? null : (
+                <div className="contents" key={`group-${group.id}`} role="row">
+                  <div
+                    aria-label={`${group.label} ${group.rows.length}`}
                     className={cn(
-                      "min-w-0 max-w-56",
-                      rowCellClass,
-                      cellBorderClass,
+                      "flex h-8 items-center gap-2 border-b border-slate-700 bg-slate-700 px-3 text-sm font-semibold text-white",
+                      firstGroup ? null : "border-t border-slate-700",
                     )}
+                    role="cell"
+                    style={{ gridColumn: "1 / -1" }}
                   >
-                    <span className="block min-w-0 truncate whitespace-nowrap">
-                      {row.customer}
+                    <span className="inline-flex items-center gap-1.5">
+                      {groupLabel(group)}
                     </span>
-                  </TicketGridCell>
-                ) : null}
-                {visibleColumns.has("owner") ? (
-                  <TicketGridCell
-                    className={cn("whitespace-nowrap", rowCellClass, cellBorderClass)}
-                  >
-                    {row.owner}
-                  </TicketGridCell>
-                ) : null}
-                {visibleColumns.has("state") ? (
-                  <TicketGridCell
-                    className={cn("whitespace-nowrap", rowCellClass, cellBorderClass)}
-                  >
-                    <StateCell state={row.state} />
-                  </TicketGridCell>
-                ) : null}
-                {visibleColumns.has("priority") ? (
-                  <TicketGridCell
-                    className={cn("whitespace-nowrap", rowCellClass, cellBorderClass)}
-                  >
-                    <PriorityCell priority={row.priority} />
-                  </TicketGridCell>
-                ) : null}
-                {visibleColumns.has("pendingTill") ? (
-                  <TicketGridCell
-                    className={cn("whitespace-nowrap", rowCellClass, cellBorderClass)}
-                  >
-                    {row.pendingTill}
-                  </TicketGridCell>
-                ) : null}
-                {visibleColumns.has("updatedAt") ? (
-                  <TicketGridCell
-                    className={cn("whitespace-nowrap", rowCellClass, cellBorderClass)}
-                  >
-                    {row.updatedAt}
-                  </TicketGridCell>
-                ) : null}
-              </div>
+                    <span className="text-white/75">{group.rows.length}</span>
+                  </div>
+                </div>
+              );
+            const renderedRows = group.rows.map((row) =>
+              renderRow(row, rowIndex++),
             );
+
+            return groupHeader ? [groupHeader, ...renderedRows] : renderedRows;
           })}
         </div>
       </div>

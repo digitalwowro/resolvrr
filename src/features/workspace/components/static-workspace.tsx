@@ -1,11 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  useTableSort,
-  type DropdownOption,
-  type SortDirection,
-} from "@/components/ui";
+import { useTableSort, type DropdownOption } from "@/components/ui";
 import {
   staticColumns,
   staticProfileActions,
@@ -19,10 +15,13 @@ import type {
   StaticColumnKey,
   StaticSortKey,
   StaticTabOrientation,
-  StaticTicketPriority,
-  StaticTicketRow,
+  StaticTicketGroupKey,
 } from "../static-types";
 import { TicketTable } from "./ticket-table";
+import {
+  groupTicketRows,
+  ticketGroupOptions,
+} from "./ticket-table-grouping";
 import { TicketDetailPlaceholder } from "./ticket-detail-placeholder";
 import { TicketTabsPanel } from "./ticket-tabs-panel";
 import { WorkspaceControls } from "./workspace-controls";
@@ -32,15 +31,7 @@ type StaticWorkspaceProps = {
   userEmail: string;
 };
 
-type ActiveContext =
-  | { type: "list" }
-  | { type: "ticket"; ticketId: string };
-
-const priorityRank: Record<StaticTicketPriority, number> = {
-  High: 3,
-  Medium: 2,
-  Low: 1,
-};
+type ActiveContext = { type: "list" } | { type: "ticket"; ticketId: string };
 
 const defaultVisibleColumns = new Set<StaticColumnKey>([
   "customer",
@@ -60,24 +51,6 @@ function dropdownOptions(
   }));
 }
 
-function sortRows(
-  rows: StaticTicketRow[],
-  sortKey: StaticSortKey,
-  direction: SortDirection,
-) {
-  const sign = direction === "ascending" ? 1 : -1;
-
-  return [...rows].sort((first, second) => {
-    if (sortKey === "priority") {
-      return (priorityRank[first.priority] - priorityRank[second.priority]) * sign;
-    }
-
-    const firstValue = first[sortKey];
-    const secondValue = second[sortKey];
-    return firstValue.localeCompare(secondValue) * sign;
-  });
-}
-
 export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(
     staticProfileWorkspaces[0].id,
@@ -92,15 +65,20 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
   });
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   const [visibleColumns, setVisibleColumns] = useState(defaultVisibleColumns);
-  const { sortDirection, sortDirectionFor, sortKey, toggleSort } =
+  const [groupBy, setGroupBy] = useState<StaticTicketGroupKey>("none");
+  const { setSort, sortDirection, sortDirectionFor, sortKey, toggleSort } =
     useTableSort<StaticSortKey>({
       initialSortKey: "updatedAt",
       initialSortDirection: "descending",
     });
 
+  const groupedRows = useMemo(
+    () => groupTicketRows(staticTicketRows, groupBy, sortKey, sortDirection),
+    [groupBy, sortDirection, sortKey],
+  );
   const rows = useMemo(
-    () => sortRows(staticTicketRows, sortKey, sortDirection),
-    [sortDirection, sortKey],
+    () => groupedRows.flatMap((group) => group.rows),
+    [groupedRows],
   );
   const savedViewOptions = dropdownOptions(staticSavedViews);
   const selectedSavedView =
@@ -151,28 +129,38 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
     setActiveContext({ type: "list" });
   }
 
+  function handleGroupByChange(nextGroupBy: StaticTicketGroupKey) {
+    setGroupBy(nextGroupBy);
+    if (nextGroupBy !== "none" && nextGroupBy === sortKey) {
+      setSort("updatedAt", "descending");
+    }
+  }
+
   function showTicket(ticketId: string) {
     setActiveContext({ type: "ticket", ticketId });
   }
 
   function controls(className?: string) {
     return (
-    <WorkspaceControls
-      allSelected={allSelected}
-      className={className}
-      columns={staticColumns}
-      onColumnToggle={toggleColumn}
-      onRefresh={handleRefresh}
-      onSavedViewChange={handleSavedViewChange}
-      onSelectAll={toggleSelectAll}
-      onTabOrientationChange={setTabOrientation}
-      orientationOptions={orientationOptions}
-      partiallySelected={partiallySelected}
-      savedViewOptions={savedViewOptions}
-      selectedSavedViewId={selectedSavedViewId}
-      tabOrientation={tabOrientation}
-      visibleColumns={visibleColumns}
-    />
+      <WorkspaceControls
+        allSelected={allSelected}
+        className={className}
+        columns={staticColumns}
+        groupBy={groupBy}
+        groupOptions={ticketGroupOptions}
+        onColumnToggle={toggleColumn}
+        onGroupByChange={handleGroupByChange}
+        onRefresh={handleRefresh}
+        onSavedViewChange={handleSavedViewChange}
+        onSelectAll={toggleSelectAll}
+        onTabOrientationChange={setTabOrientation}
+        orientationOptions={orientationOptions}
+        partiallySelected={partiallySelected}
+        savedViewOptions={savedViewOptions}
+        selectedSavedViewId={selectedSavedViewId}
+        tabOrientation={tabOrientation}
+        visibleColumns={visibleColumns}
+      />
     );
   }
 
@@ -198,6 +186,8 @@ export function StaticWorkspace({ userEmail }: StaticWorkspaceProps) {
       onRowSelect={showTicket}
       onSort={toggleSort}
       onToggleRow={toggleRow}
+      groupBy={groupBy}
+      groupedRows={groupBy === "none" ? undefined : groupedRows}
       roundedTop={tabOrientation === "vertical"}
       rows={rows}
       selectedRowIds={selectedRowIds}

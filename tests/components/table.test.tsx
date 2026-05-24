@@ -102,4 +102,19 @@ describe("useTableSort", () => {
     expect(result.current.sortKey).toBe("title");
     expect(result.current.sortDirection).toBe("descending");
   });
+
+  it("supports explicit sort assignment", () => {
+    const { result } = renderHook(() =>
+      useTableSort<TestSortKey>({
+        initialSortKey: "title",
+        initialSortDirection: "ascending",
+      }),
+    );
+
+    act(() => result.current.setSort("updatedAt", "descending"));
+
+    expect(result.current.sortKey).toBe("updatedAt");
+    expect(result.current.sortDirection).toBe("descending");
+    expect(result.current.sortDirectionFor("updatedAt")).toBe("descending");
+  });
 });
