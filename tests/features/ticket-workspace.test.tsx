@@ -167,6 +167,36 @@ describe("TicketWorkspace", () => {
     ).toBeNull();
   });
 
+  it("enables list controls only while the List pane is active", async () => {
+    const user = userEvent.setup();
+    const detailProps = selectedDetailProps();
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={detailProps.detail}
+        detailResult={detailProps.detailResult}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        selectedTicketId="ticket-1"
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Refresh list" })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Group tickets by" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Column visibility" })).toBeDisabled();
+
+    await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
+
+    expect(screen.getByRole("button", { name: "Refresh list" })).toBeEnabled();
+    expect(screen.getByRole("combobox", { name: "Group tickets by" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Column visibility" })).toBeEnabled();
+  });
+
   it("groups loaded tickets locally by provider-neutral values", async () => {
     const user = userEvent.setup();
     render(

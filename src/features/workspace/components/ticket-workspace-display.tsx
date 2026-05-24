@@ -115,6 +115,7 @@ export function TicketWorkspaceDisplay({
       columns={columns}
       groupBy={groupBy}
       groupOptions={ticketGroupOptions}
+      listControlsEnabled={listActive}
       onColumnToggle={toggleColumn}
       onGroupByChange={handleGroupByChange}
       onRefresh={refreshList}
@@ -158,6 +159,7 @@ export function TicketWorkspaceDisplay({
         columns={columns}
         groupBy={groupBy}
         groupOptions={ticketGroupOptions}
+        listControlsEnabled={listActive}
         onColumnToggle={toggleColumn}
         onGroupByChange={handleGroupByChange}
         onRefresh={refreshList}

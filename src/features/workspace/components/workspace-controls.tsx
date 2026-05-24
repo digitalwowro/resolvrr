@@ -35,6 +35,7 @@ type WorkspaceControlsProps = {
   columns: WorkspaceTicketColumn[];
   groupBy: WorkspaceTicketGroupKey;
   groupOptions: DropdownOption[];
+  listControlsEnabled: boolean;
   onColumnToggle(column: WorkspaceTicketColumnKey): void;
   onGroupByChange(groupBy: WorkspaceTicketGroupKey): void;
   onRefresh(): void;
@@ -54,6 +55,7 @@ export function WorkspaceControls({
   columns,
   groupBy,
   groupOptions,
+  listControlsEnabled,
   onColumnToggle,
   onGroupByChange,
   onRefresh,
@@ -104,6 +106,7 @@ export function WorkspaceControls({
           onChange={onSelectAll}
         />
         <ToolbarButton
+          disabled={!listControlsEnabled}
           icon={<RefreshCw aria-hidden="true" className="size-3.5" />}
           onClick={onRefresh}
           type="button"
@@ -138,6 +141,7 @@ export function WorkspaceControls({
         />
         <ToolbarDropdownSelect
           ariaLabel="Group tickets by"
+          disabled={!listControlsEnabled}
           onValueChange={(value) =>
             onGroupByChange(value as WorkspaceTicketGroupKey)
           }
@@ -159,6 +163,7 @@ export function WorkspaceControls({
           value={groupBy}
         />
         <ToolbarMenuDropdown
+          disabled={!listControlsEnabled}
           items={columnItems}
           triggerContent={
             <span className="flex items-center gap-1">
