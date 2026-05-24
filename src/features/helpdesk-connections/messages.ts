@@ -13,7 +13,12 @@ export type HelpdeskConnectionMessageCode =
   | "connection-not-found"
   | "connection-not-active"
   | "invalid-base-url"
-  | "provider-validation-failed";
+  | "provider-validation-failed"
+  | "provider-auth-failed"
+  | "provider-permission-denied"
+  | "provider-rate-limited"
+  | "provider-temporary-failure"
+  | "provider-unexpected-response";
 
 const messages: Record<HelpdeskConnectionMessageCode, string> = {
   created: "Workspace connected.",
@@ -31,6 +36,14 @@ const messages: Record<HelpdeskConnectionMessageCode, string> = {
   "connection-not-active": "Validate this workspace before setting it active.",
   "invalid-base-url": "Enter a public HTTPS helpdesk URL.",
   "provider-validation-failed": "The helpdesk provider could not validate this connection.",
+  "provider-auth-failed": "The helpdesk credentials were rejected.",
+  "provider-permission-denied":
+    "The helpdesk account does not have permission to validate this workspace.",
+  "provider-rate-limited": "The helpdesk provider is rate limiting validation.",
+  "provider-temporary-failure":
+    "The helpdesk provider could not be reached. Try again shortly.",
+  "provider-unexpected-response":
+    "The helpdesk provider returned an unexpected validation response.",
 };
 
 export function helpdeskConnectionMessage(

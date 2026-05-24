@@ -15,6 +15,11 @@ export function textValue(formData: FormData, name: string): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function rawTextValue(formData: FormData, name: string): string {
+  const value = formData.get(name);
+  return typeof value === "string" ? value : "";
+}
+
 function pluginFor(registry: ProviderRegistry, providerKey: string) {
   return registry.get(providerKey) ?? null;
 }
@@ -38,7 +43,10 @@ function credentialsFromForm(
   let filledCount = 0;
 
   for (const field of scheme.fields) {
-    const value = textValue(formData, field.name);
+    const value =
+      field.type === "password"
+        ? rawTextValue(formData, field.name)
+        : textValue(formData, field.name);
     if (value) {
       filledCount += 1;
       payload[field.name] = value;

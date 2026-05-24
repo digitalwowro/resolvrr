@@ -12,6 +12,15 @@ describe("Zammad Basic Auth credentials", () => {
     );
   });
 
+  it("normalizes API base URLs back to the instance root", () => {
+    expect(
+      normalizeZammadBaseUrl("https://helpdesk.example.com/api/v1/"),
+    ).toBe("https://helpdesk.example.com");
+    expect(
+      normalizeZammadBaseUrl("https://helpdesk.example.com/support/api/v1/"),
+    ).toBe("https://helpdesk.example.com/support");
+  });
+
   it("builds a Basic Auth header", () => {
     expect(
       buildBasicAuthHeader({ username: "agent", password: "secret" }),

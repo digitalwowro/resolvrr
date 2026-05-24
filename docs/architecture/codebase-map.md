@@ -74,7 +74,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/security/base-url-validation.ts`: provider-neutral HTTPS and SSRF
   validation for user-provided helpdesk base URLs.
 - `src/security/provider-http.ts`: SSRF-safe provider HTTPS request helper that
-  binds requests to the revalidated address set.
+  binds requests to the revalidated address set and falls back only across
+  validated public addresses.
 - `src/security/sanitize-html.ts`: provider HTML sanitization.
 - `src/security/safe-log.ts`: helper for safe metadata-only logs.
 - `src/providers`: provider registry and provider plugin implementations.
@@ -111,13 +112,17 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/helpdesk-connections/form-parsing.ts`: provider-neutral
   connection form parsing and blank credential preservation rules.
 - `src/features/helpdesk-connections/provider-validation.ts`: connection
-  validation helper that combines SSRF validation with provider validation.
+  validation helper that combines SSRF validation with provider validation,
+  safe failure messages, and metadata-only diagnostics.
 - `src/features/helpdesk-connections/messages.ts`: user-safe connection action
   messages.
 - `src/features/helpdesk-connections/index.ts`: helpdesk connection feature
   exports.
 - `src/features/helpdesk-connections/components`: server-rendered connection
   list and form components.
+- `src/features/helpdesk-connections/components/clear-connection-message-query.tsx`:
+  client-side helper that removes transient connection `success` and `error`
+  query parameters after rendering redirected action messages.
 - `src/features/helpdesk-connections/components/connection-page-shell.tsx`:
   shared page shell for protected connection management routes.
 - `src/features/helpdesk-connections/components/connection-list.tsx`: local
@@ -239,6 +244,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/components/table-ticket.test.tsx`: verifies ticket tab and table header
   callbacks.
 - `tests/features`: feature-level component tests.
+- `tests/features/connection-message-query.test.tsx`: verifies transient
+  connection action query parameters are removed after message rendering.
 - `tests/features/static-workspace.test.tsx`: verifies local-only static
   workspace interactions and render states.
 - `tests/providers`: provider-specific tests.

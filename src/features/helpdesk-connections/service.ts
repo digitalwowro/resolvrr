@@ -9,6 +9,8 @@ import type {
 import type { HelpdeskConnectionMessageCode } from "./messages";
 import { parseConnectionForm } from "./form-parsing";
 import {
+  logProviderValidationFailure,
+  messageCodeForProviderError,
   statusForProviderError,
   validateExistingProviderConnection,
   validateWithProvider,
@@ -28,6 +30,22 @@ export type ConnectionListItem = StoredHelpdeskConnection & {
 export type ConnectionMutationResult =
   | { ok: true; connectionId?: string; code: HelpdeskConnectionMessageCode }
   | { ok: false; code: HelpdeskConnectionMessageCode };
+
+const validationFailureCodes = new Set<HelpdeskConnectionMessageCode>([
+  "invalid-base-url",
+  "provider-validation-failed",
+  "provider-auth-failed",
+  "provider-permission-denied",
+  "provider-rate-limited",
+  "provider-temporary-failure",
+  "provider-unexpected-response",
+]);
+
+function isValidationFailureCode(
+  value: string,
+): value is HelpdeskConnectionMessageCode {
+  return validationFailureCodes.has(value as HelpdeskConnectionMessageCode);
+}
 
 function providerOptions(registry: ProviderRegistry): ConnectionProviderOption[] {
   return registry.list().map((provider) => ({
@@ -105,7 +123,7 @@ export async function createConnection(
     credentialScheme: parsed.credentialScheme,
     credentialPayload: parsed.credentialPayload,
   });
-  if (validation === "invalid-base-url" || validation === "provider-validation-failed") {
+  if (isValidationFailureCode(validation)) {
     return { ok: false, code: validation };
   }
 
@@ -227,11 +245,17 @@ export async function validateConnection(
     if ((await repository.getActiveConnectionId(userId)) === connectionId) {
       await repository.clearActiveConnectionId(userId);
     }
+    if (error instanceof ProviderError) {
+      logProviderValidationFailure(plugin, error, {
+        baseUrl: connection.baseUrl,
+        phase: "validate-existing-connection",
+      });
+    }
     return {
       ok: false,
       code:
         error instanceof ProviderError
-          ? "provider-validation-failed"
+          ? messageCodeForProviderError(error)
           : "invalid-base-url",
     };
   }

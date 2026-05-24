@@ -5,6 +5,8 @@ export function classifyZammadResponse(status: number): ProviderError {
     return new ProviderError(
       "credential-auth-failure",
       "The helpdesk credentials were rejected.",
+      false,
+      status,
     );
   }
 
@@ -12,6 +14,8 @@ export function classifyZammadResponse(status: number): ProviderError {
     return new ProviderError(
       "permission-denied",
       "The helpdesk account does not have permission for this action.",
+      false,
+      status,
     );
   }
 
@@ -20,6 +24,7 @@ export function classifyZammadResponse(status: number): ProviderError {
       "rate-limited",
       "The helpdesk provider is rate limiting requests.",
       true,
+      status,
     );
   }
 
@@ -28,11 +33,14 @@ export function classifyZammadResponse(status: number): ProviderError {
       "temporary-provider-failure",
       "The helpdesk provider is temporarily unavailable.",
       true,
+      status,
     );
   }
 
   return new ProviderError(
     "provider-data-mismatch",
     "The helpdesk provider returned an unexpected response.",
+    false,
+    status,
   );
 }

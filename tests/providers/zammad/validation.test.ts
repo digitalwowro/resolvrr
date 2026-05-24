@@ -32,8 +32,26 @@ describe("Zammad connection validation", () => {
         headers: expect.objectContaining({
           Accept: "application/json",
           Authorization: "Basic YWdlbnQ6c2VjcmV0",
+          "User-Agent": "Resolvrr/1.0",
         }),
+        signal: expect.any(AbortSignal),
       }),
+    );
+  });
+
+  it("does not duplicate the API path when users enter a Zammad API URL", async () => {
+    mockedSafeProviderFetch.mockResolvedValue(new Response("{}", { status: 200 }));
+
+    await zammadProviderPlugin.validateConnection({
+      baseUrl: "https://helpdesk.example.com/api/v1",
+      validatedAddresses: ["93.184.216.34"],
+      credentialScheme: "basic-auth",
+      credentialPayload: { username: "agent", password: "secret" },
+    });
+
+    expect(mockedSafeProviderFetch).toHaveBeenCalledWith(
+      "https://helpdesk.example.com/api/v1/users/me",
+      expect.any(Object),
     );
   });
 
@@ -47,13 +65,39 @@ describe("Zammad connection validation", () => {
         credentialScheme: "basic-auth",
         credentialPayload: { username: "agent", password: "secret" },
       }),
-    ).rejects.toMatchObject({ kind: "provider-data-mismatch" });
+    ).rejects.toMatchObject({
+      kind: "provider-data-mismatch",
+      statusCode: 302,
+    });
 
     expect(mockedSafeProviderFetch).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    [401, "credential-auth-failure", false],
+    [403, "permission-denied", false],
+    [429, "rate-limited", true],
+    [503, "temporary-provider-failure", true],
+  ])(
+    "classifies Zammad validation status %i",
+    async (status, kind, retryable) => {
+      mockedSafeProviderFetch.mockResolvedValue(new Response(null, { status }));
+
+      await expect(
+        zammadProviderPlugin.validateConnection({
+          baseUrl: "https://helpdesk.example.com",
+          validatedAddresses: ["93.184.216.34"],
+          credentialScheme: "basic-auth",
+          credentialPayload: { username: "agent", password: "secret" },
+        }),
+      ).rejects.toMatchObject({ kind, retryable, statusCode: status });
+    },
+  );
+
   it("classifies unreachable provider validation as retryable temporary failure", async () => {
-    mockedSafeProviderFetch.mockRejectedValue(new Error("timeout"));
+    const error = new Error("network unreachable");
+    Object.defineProperty(error, "code", { value: "ENETUNREACH" });
+    mockedSafeProviderFetch.mockRejectedValue(error);
 
     await expect(
       zammadProviderPlugin.validateConnection({
@@ -65,6 +109,7 @@ describe("Zammad connection validation", () => {
     ).rejects.toMatchObject({
       kind: "temporary-provider-failure",
       retryable: true,
+      diagnosticCode: "ENETUNREACH",
     });
   });
 

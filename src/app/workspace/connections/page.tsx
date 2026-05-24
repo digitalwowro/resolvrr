@@ -1,6 +1,7 @@
 import { requireCurrentUser } from "@/auth/current-user";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import {
+  ClearConnectionMessageQuery,
   ConnectionList,
   ConnectionPageShell,
   helpdeskConnectionMessage,
@@ -30,6 +31,7 @@ export default async function ConnectionsPage({
       description="Manage the helpdesk workspaces available to your Resolvrr account."
       title="Workspaces"
     >
+      {success || error ? <ClearConnectionMessageQuery /> : null}
       {success ? (
         <p className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
           {success}

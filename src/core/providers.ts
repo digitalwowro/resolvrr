@@ -34,12 +34,22 @@ export type ProviderErrorKind =
 export class ProviderError extends Error {
   readonly kind: ProviderErrorKind;
   readonly retryable: boolean;
+  readonly statusCode?: number;
+  readonly diagnosticCode?: string;
 
-  constructor(kind: ProviderErrorKind, message: string, retryable = false) {
+  constructor(
+    kind: ProviderErrorKind,
+    message: string,
+    retryable = false,
+    statusCode?: number,
+    diagnosticCode?: string,
+  ) {
     super(message);
     this.name = "ProviderError";
     this.kind = kind;
     this.retryable = retryable;
+    this.statusCode = statusCode;
+    this.diagnosticCode = diagnosticCode;
   }
 }
 

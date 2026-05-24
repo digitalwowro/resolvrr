@@ -26,6 +26,13 @@ function dnsResult(address: string, family: 4 | 6) {
   >;
 }
 
+function dnsResults(entries: Array<[string, 4 | 6]>) {
+  return entries.map(([address, family]) => ({
+    address,
+    family,
+  })) as unknown as Awaited<ReturnType<typeof dns.lookup>>;
+}
+
 function mockSuccessfulRequest() {
   let pinnedAddress: string | undefined;
   mockedRequest.mockImplementation(((options: unknown, callback: unknown) => {
@@ -45,9 +52,16 @@ function mockSuccessfulRequest() {
         "lookup" in requestOptions &&
         typeof requestOptions.lookup === "function"
       ) {
-        requestOptions.lookup("helpdesk.example.com", {}, (_error, address) => {
-          pinnedAddress = typeof address === "string" ? address : undefined;
-        });
+        requestOptions.lookup(
+          "helpdesk.example.com",
+          { all: true },
+          (_error, address) => {
+            const addresses = address as Array<{ address: string }>;
+            pinnedAddress = Array.isArray(address)
+              ? addresses[0]?.address
+              : undefined;
+          },
+        );
       }
 
       const response = new PassThrough() as PassThrough & {
@@ -65,6 +79,63 @@ function mockSuccessfulRequest() {
   }) as never);
 
   return () => pinnedAddress;
+}
+
+function mockFailThenSuccessfulRequest() {
+  const pinnedAddresses: string[] = [];
+  let requestCount = 0;
+
+  mockedRequest.mockImplementation(((options: unknown, callback: unknown) => {
+    requestCount += 1;
+    const currentRequest = requestCount;
+    const requestOptions = options as {
+      lookup?: (
+        hostname: string,
+        options: object,
+        callback: (error: unknown, address: string | unknown[]) => void,
+      ) => void;
+    };
+    const responseCallback = callback as (response: PassThrough) => void;
+    const request = new EventEmitter() as EventEmitter & {
+      end: () => void;
+    };
+    request.end = () => {
+      if (
+        "lookup" in requestOptions &&
+        typeof requestOptions.lookup === "function"
+      ) {
+        requestOptions.lookup(
+          "helpdesk.example.com",
+          { all: true },
+          (_error, address) => {
+            const addresses = address as Array<{ address: string }>;
+            if (Array.isArray(address) && address[0]) {
+              pinnedAddresses.push(addresses[0].address);
+            }
+          },
+        );
+      }
+
+      if (currentRequest === 1) {
+        request.emit("error", new Error("network unreachable"));
+        return;
+      }
+
+      const response = new PassThrough() as PassThrough & {
+        statusCode: number;
+        statusMessage: string;
+        headers: Record<string, string>;
+      };
+      response.statusCode = 200;
+      response.statusMessage = "OK";
+      response.headers = { "content-type": "application/json" };
+      responseCallback(response);
+      response.end("{}");
+    };
+    return request;
+  }) as never);
+
+  return pinnedAddresses;
 }
 
 describe("safe provider fetch", () => {
@@ -116,5 +187,60 @@ describe("safe provider fetch", () => {
       expect.any(Function),
     );
     expect(mockedRequest).toHaveBeenCalledOnce();
+  });
+
+  it("prefers validated IPv4 addresses when both address families are available", async () => {
+    mockedLookup.mockResolvedValueOnce(
+      dnsResults([
+        ["2001:4860:4860::8888", 6],
+        ["93.184.216.34", 4],
+      ]),
+    );
+    const pinnedAddress = mockSuccessfulRequest();
+
+    const response = await safeProviderFetch(
+      "https://helpdesk.example.com/api/v1/users/me",
+      {
+        allowedAddresses: ["2001:4860:4860::8888", "93.184.216.34"],
+      },
+    );
+
+    expect(response.status).toBe(200);
+    expect(pinnedAddress()).toBe("93.184.216.34");
+  });
+
+  it("falls back to another validated public address after a network error", async () => {
+    mockedLookup.mockResolvedValueOnce(
+      dnsResults([
+        ["93.184.216.34", 4],
+        ["93.184.216.35", 4],
+      ]),
+    );
+    const pinnedAddresses = mockFailThenSuccessfulRequest();
+
+    const response = await safeProviderFetch(
+      "https://helpdesk.example.com/api/v1/users/me",
+      {
+        allowedAddresses: ["93.184.216.34", "93.184.216.35"],
+      },
+    );
+
+    expect(response.status).toBe(200);
+    expect(pinnedAddresses).toEqual(["93.184.216.34", "93.184.216.35"]);
+    expect(mockedRequest).toHaveBeenCalledTimes(2);
+  });
+
+  it("discards validation response bodies", async () => {
+    mockedLookup.mockResolvedValueOnce(dnsResult("93.184.216.34", 4));
+    mockSuccessfulRequest();
+
+    const response = await safeProviderFetch(
+      "https://helpdesk.example.com/api/v1/users/me",
+      {
+        allowedAddresses: ["93.184.216.34"],
+      },
+    );
+
+    await expect(response.text()).resolves.toBe("");
   });
 });

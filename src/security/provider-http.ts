@@ -28,10 +28,10 @@ async function resolveRequestAddresses(host: string): Promise<string[]> {
   );
 }
 
-function choosePinnedAddress(
+function orderedPinnedAddresses(
   resolvedAddresses: string[],
   allowedAddresses: string[],
-): string {
+): string[] {
   if (resolvedAddresses.length === 0 || allowedAddresses.length === 0) {
     throw new Error("Provider URL host could not be safely resolved.");
   }
@@ -41,19 +41,32 @@ function choosePinnedAddress(
   }
 
   const allowed = new Set(allowedAddresses.map(comparableAddress));
-  const selected = resolvedAddresses.find((address) =>
+  const selected = resolvedAddresses.filter((address) =>
     allowed.has(comparableAddress(address)),
   );
-  if (!selected) {
+  if (selected.length === 0) {
     throw new Error("Provider URL resolved outside the validated address set.");
   }
 
-  return selected;
+  return selected.sort((left, right) => {
+    const leftVersion = isIP(left);
+    const rightVersion = isIP(right);
+    if (leftVersion === rightVersion) {
+      return 0;
+    }
+    return leftVersion === 4 ? -1 : 1;
+  });
 }
 
 function pinnedLookup(address: string): LookupFunction {
-  return (_hostname, _options, callback) => {
-    callback(null, address, isIP(address));
+  return (_hostname, options, callback) => {
+    const family = isIP(address);
+    if (typeof options === "object" && options !== null && "all" in options && options.all) {
+      callback(null, [{ address, family }] as never, family);
+      return;
+    }
+
+    callback(null, address, family);
   };
 }
 
@@ -71,21 +84,12 @@ function headersFromIncoming(headers: IncomingHttpHeaders): Headers {
   return result;
 }
 
-// Provider requests must use the already validated address set so DNS rebinding
-// cannot swap a public validation result for an internal request target.
-export async function safeProviderFetch(
-  input: string,
+function requestPinnedAddress(
+  url: URL,
+  host: string,
+  address: string,
   options: SafeProviderFetchOptions,
 ): Promise<Response> {
-  const url = new URL(input);
-  if (url.protocol !== "https:") {
-    throw new Error("Provider requests must use HTTPS.");
-  }
-
-  const host = requestHost(url);
-  const resolvedAddresses = await resolveRequestAddresses(host);
-  const address = choosePinnedAddress(resolvedAddresses, options.allowedAddresses);
-
   return new Promise((resolve, reject) => {
     const request = httpsRequest(
       {
@@ -118,4 +122,39 @@ export async function safeProviderFetch(
     request.on("error", reject);
     request.end();
   });
+}
+
+// Provider requests must use the already validated address set so DNS rebinding
+// cannot swap a public validation result for an internal request target.
+export async function safeProviderFetch(
+  input: string,
+  options: SafeProviderFetchOptions,
+): Promise<Response> {
+  const url = new URL(input);
+  if (url.protocol !== "https:") {
+    throw new Error("Provider requests must use HTTPS.");
+  }
+
+  const host = requestHost(url);
+  const resolvedAddresses = await resolveRequestAddresses(host);
+  const addresses = orderedPinnedAddresses(
+    resolvedAddresses,
+    options.allowedAddresses,
+  );
+  let lastError: unknown;
+
+  for (const address of addresses) {
+    try {
+      return await requestPinnedAddress(url, host, address, options);
+    } catch (error) {
+      lastError = error;
+      if (options.signal?.aborted) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Provider URL could not be reached.");
 }

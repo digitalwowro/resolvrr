@@ -14,6 +14,20 @@ import { classifyZammadResponse } from "./errors";
 import { safeProviderFetch } from "@/security/provider-http";
 
 const defaultValidationTimeoutMs = 5000;
+const zammadValidationUserAgent = "Resolvrr/1.0";
+
+function diagnosticCode(error: unknown): string | undefined {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
+  ) {
+    return error.code;
+  }
+
+  return error instanceof Error ? error.name : undefined;
+}
 
 async function validateBasicAuth(input: ProviderConnectionInput): Promise<void> {
   if (input.credentialScheme !== zammadBasicAuthScheme) {
@@ -42,14 +56,17 @@ async function validateBasicAuth(input: ProviderConnectionInput): Promise<void> 
       headers: {
         Authorization: buildBasicAuthHeader(credentialsResult.data),
         Accept: "application/json",
+        "User-Agent": zammadValidationUserAgent,
       },
       signal: AbortSignal.timeout(input.timeoutMs ?? defaultValidationTimeoutMs),
     });
-  } catch {
+  } catch (error) {
     throw new ProviderError(
       "temporary-provider-failure",
       "The helpdesk provider could not be reached.",
       true,
+      undefined,
+      diagnosticCode(error),
     );
   }
 
