@@ -14,6 +14,7 @@ type TicketDetailProps = {
   detail: WorkspaceTicketDetail;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
+  onMetadataSavedDetailRefresh(ticketId: string): void;
   onReturnToListAfterUpdate(): void;
   roundedTop?: boolean;
   updateTicketMetadataAction(
@@ -25,6 +26,7 @@ export function TicketDetail({
   detail,
   metadataMutationCapabilities,
   onMetadataSaved,
+  onMetadataSavedDetailRefresh,
   onReturnToListAfterUpdate,
   roundedTop = true,
   updateTicketMetadataAction,
@@ -109,6 +111,7 @@ export function TicketDetail({
           metadataMutationCapabilities ?? { state: false, priority: false }
         }
         onMetadataSaved={onMetadataSaved}
+        onMetadataSavedDetailRefresh={onMetadataSavedDetailRefresh}
         onReturnToListAfterUpdate={onReturnToListAfterUpdate}
         updateTicketMetadataAction={updateTicketMetadataAction}
       />

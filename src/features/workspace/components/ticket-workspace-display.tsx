@@ -30,6 +30,7 @@ type TicketWorkspaceDisplayProps = {
   detailResult?: WorkspaceTicketDetailLoadResult;
   loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
+  refreshTicketDetailAfterMetadataSave: boolean;
   rows: WorkspaceTicketRow[];
   selectedTicketId?: string;
   tabs: WorkspaceTicketTab[];
@@ -48,6 +49,7 @@ export function TicketWorkspaceDisplay({
   detailResult,
   loadTicketDetailAction,
   metadataMutationCapabilities,
+  refreshTicketDetailAfterMetadataSave,
   rows,
   selectedTicketId,
   tabs: ticketTabs,
@@ -65,6 +67,7 @@ export function TicketWorkspaceDisplay({
     openTicketTabs,
     partiallySelected,
     refreshList,
+    refreshSavedTicketDetail,
     returnActiveTicketToList,
     selectedRowIds,
     setTabOrientation,
@@ -85,6 +88,7 @@ export function TicketWorkspaceDisplay({
     detail,
     detailResult,
     loadTicketDetailAction,
+    refreshTicketDetailAfterMetadataSave,
     rows,
     selectedTicketId,
     ticketTabs,
@@ -115,6 +119,7 @@ export function TicketWorkspaceDisplay({
         detail={activeDetail.detail}
         metadataMutationCapabilities={metadataMutationCapabilities}
         onMetadataSaved={updateOpenTicketTabMetadata}
+        onMetadataSavedDetailRefresh={refreshSavedTicketDetail}
         onReturnToListAfterUpdate={returnActiveTicketToList}
         roundedTop={tabOrientation === "vertical"}
         updateTicketMetadataAction={updateTicketMetadataAction}

@@ -30,6 +30,7 @@ type TicketWorkspaceStateProps = {
   detail?: WorkspaceTicketDetail;
   detailResult?: WorkspaceTicketDetailLoadResult;
   loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
+  refreshTicketDetailAfterMetadataSave: boolean;
   rows: WorkspaceTicketRow[];
   selectedTicketId?: string;
   ticketTabs: WorkspaceTicketTab[];
@@ -40,16 +41,20 @@ export function useTicketWorkspaceDisplayState({
   detail,
   detailResult,
   loadTicketDetailAction,
+  refreshTicketDetailAfterMetadataSave,
   rows,
   selectedTicketId,
   ticketTabs,
 }: TicketWorkspaceStateProps) {
-  const initialDetailResult =
-    detail ? { status: "available" as const, detail } : detailResult;
+  const initialDetailResult = useMemo(
+    () => (detail ? { status: "available" as const, detail } : detailResult),
+    [detail, detailResult],
+  );
   const {
     cacheSelectedDetail,
     detailFor,
     ensureTicketDetail,
+    refreshTicketDetail,
   } = useTicketDetailLoader({
     initialDetailResult,
     loadTicketDetailAction,
@@ -144,6 +149,14 @@ export function useTicketWorkspaceDisplayState({
     setOpenTicketTabs((current) =>
       patchTicketTabMetadata(current, { priority, state, ticketExternalId }),
     );
+  }
+
+  function refreshSavedTicketDetail(ticketId: string) {
+    if (!refreshTicketDetailAfterMetadataSave) {
+      return;
+    }
+
+    refreshTicketDetail(ticketId);
   }
 
   function handleGroupByChange(nextGroupBy: WorkspaceTicketGroupKey) {
@@ -245,6 +258,7 @@ export function useTicketWorkspaceDisplayState({
     toggleSelectAll,
     toggleSort,
     updateOpenTicketTabMetadata,
+    refreshSavedTicketDetail,
     visibleColumnSet,
   };
 }

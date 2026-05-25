@@ -56,6 +56,8 @@ const priorityOptions: DropdownOption[] = ticketPriorities.map((priority) => ({
 const changedControlClass =
   "border-amber-500 bg-amber-50 focus-visible:outline-amber-500";
 
+function noopMetadataSavedDetailRefresh() {}
+
 function mutationStatusText(
   saving: boolean,
   result: TicketMetadataMutationActionState,
@@ -80,12 +82,14 @@ export function TicketMetadataEditor({
   detail,
   metadataMutationCapabilities,
   onMetadataSaved,
+  onMetadataSavedDetailRefresh,
   onReturnToListAfterUpdate,
   updateTicketMetadataAction,
 }: {
   detail: WorkspaceTicketDetail;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
+  onMetadataSavedDetailRefresh?(ticketId: string): void;
   onReturnToListAfterUpdate(): void;
   updateTicketMetadataAction(
     formData: FormData,
@@ -100,6 +104,7 @@ export function TicketMetadataEditor({
       loadedBaseline={loadedBaseline}
       metadataMutationCapabilities={metadataMutationCapabilities}
       onMetadataSaved={onMetadataSaved}
+      onMetadataSavedDetailRefresh={onMetadataSavedDetailRefresh}
       onReturnToListAfterUpdate={onReturnToListAfterUpdate}
       updateTicketMetadataAction={updateTicketMetadataAction}
     />
@@ -111,6 +116,7 @@ function TicketMetadataEditorState({
   loadedBaseline,
   metadataMutationCapabilities,
   onMetadataSaved,
+  onMetadataSavedDetailRefresh,
   onReturnToListAfterUpdate,
   updateTicketMetadataAction,
 }: {
@@ -118,12 +124,15 @@ function TicketMetadataEditorState({
   loadedBaseline: TicketMetadataDraft;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
+  onMetadataSavedDetailRefresh?: (ticketId: string) => void;
   onReturnToListAfterUpdate(): void;
   updateTicketMetadataAction(
     formData: FormData,
   ): Promise<TicketMetadataMutationActionState>;
 }) {
   const router = useRouter();
+  const refreshSavedDetail =
+    onMetadataSavedDetailRefresh ?? noopMetadataSavedDetailRefresh;
   const [baseline, setBaseline] = useState<TicketMetadataDraft>(loadedBaseline);
   const [draft, setDraft] = useState<TicketMetadataDraft>(
     metadataDraftFromBaseline(loadedBaseline),
@@ -177,6 +186,9 @@ function TicketMetadataEditorState({
               : undefined,
             ticketExternalId: submittedBaseline.ticketExternalId,
           });
+          if (result.status === "saved") {
+            refreshSavedDetail(submittedBaseline.ticketExternalId);
+          }
           setBaseline(submittedBaseline);
           setDraft(metadataDraftFromBaseline(submittedBaseline));
           if (
