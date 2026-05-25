@@ -12,6 +12,8 @@ const unavailableMessages: Record<TicketReadUnavailableReason, string> = {
   "provider-rate-limited": "The helpdesk workspace is rate limiting ticket reads.",
   "provider-temporary-failure": "The helpdesk workspace could not be reached.",
   "provider-unexpected-response": "The helpdesk workspace returned an unexpected response.",
+  "unsupported-query": "The active helpdesk workspace cannot run this ticket query.",
+  "query-too-expensive": "This ticket query is too expensive for the active helpdesk workspace.",
   "invalid-connection": "The active helpdesk workspace URL is no longer valid.",
 };
 

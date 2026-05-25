@@ -1,7 +1,12 @@
-import { ProviderError, type TicketListQuery } from "@/core/providers";
+import {
+  ProviderError,
+  type ProviderCapability,
+  type TicketListQuery,
+} from "@/core/providers";
 import type { TicketExternalId, TicketMetadataMutationInput } from "@/core/tickets";
 import type { TicketProviderContext } from "./connection-context";
 import { readUnavailableForProviderError } from "./connection-context";
+import { ticketListQueryCapabilities } from "./list-query-guardrails";
 import {
   hasTicketMetadataMutationInput,
   invalidTicketMetadataMutationInput,
@@ -16,11 +21,7 @@ import {
 
 function hasCapability(
   providerContext: TicketProviderContext,
-  capability:
-    | "ticket:list"
-    | "ticket:detail"
-    | "ticket:update-state"
-    | "ticket:update-priority",
+  capability: ProviderCapability,
 ): boolean {
   return providerContext.plugin.capabilities.includes(capability);
 }
@@ -56,6 +57,9 @@ export async function dispatchTicketListRead(
       status: "available",
       connectionName: providerContext.context.connection.displayName,
       metadataMutationCapabilities: ticketMetadataMutationCapabilities(
+        providerContext.plugin.capabilities,
+      ),
+      queryCapabilities: ticketListQueryCapabilities(
         providerContext.plugin.capabilities,
       ),
       tickets: result.tickets,

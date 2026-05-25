@@ -26,6 +26,29 @@ export type TicketListCountRequest = {
   includeTotal: boolean;
 };
 
+export type TicketListQueryUnsupportedCombination = "grouped-total-count";
+
+export type TicketListQueryCapabilities = {
+  totalCount: boolean;
+  providerSort: boolean;
+  providerGrouping: boolean;
+  groupedTotalCount: boolean;
+  fullTextSearch: boolean;
+  maxPageSize: number;
+  unsupportedCombinations: TicketListQueryUnsupportedCombination[];
+};
+
+export type TicketListQueryRejectionKind =
+  | "count-unsupported"
+  | "sort-unsupported"
+  | "grouping-unsupported"
+  | "full-text-search-unsupported"
+  | "grouped-total-count-too-expensive";
+
+export type TicketListQueryRejection = {
+  kind: TicketListQueryRejectionKind;
+};
+
 export type TicketListGroupKey =
   | "state"
   | "priority"
@@ -73,11 +96,39 @@ export type TicketListResult = {
   measuredAt: Date;
 };
 
+export const ticketListPageSizeLimits = {
+  min: 1,
+  default: 25,
+  max: 50,
+} as const;
+
+export const defaultTicketListQueryCapabilities: TicketListQueryCapabilities = {
+  totalCount: false,
+  providerSort: false,
+  providerGrouping: false,
+  groupedTotalCount: false,
+  fullTextSearch: false,
+  maxPageSize: ticketListPageSizeLimits.max,
+  unsupportedCombinations: ["grouped-total-count"],
+};
+
 export const defaultTicketListQuery: TicketListQuery = {
   filter: {},
-  pageSize: 25,
+  pageSize: ticketListPageSizeLimits.default,
   sort: { key: "updatedAt", direction: "descending" },
 };
+
+export function constrainTicketListPageSize(value: number): number {
+  if (!Number.isFinite(value)) {
+    return ticketListPageSizeLimits.default;
+  }
+
+  const integerValue = Math.trunc(value);
+  return Math.min(
+    Math.max(integerValue, ticketListPageSizeLimits.min),
+    ticketListPageSizeLimits.max,
+  );
+}
 
 export function normalizeTicketListQuery(
   query: TicketListQueryInput = {},
@@ -88,6 +139,8 @@ export function normalizeTicketListQuery(
     ...defaultTicketListQuery,
     ...canonicalQuery,
     filter: query.filter ?? defaultTicketListQuery.filter,
-    pageSize: query.pageSize ?? limit ?? defaultTicketListQuery.pageSize,
+    pageSize: constrainTicketListPageSize(
+      query.pageSize ?? limit ?? defaultTicketListQuery.pageSize,
+    ),
   };
 }

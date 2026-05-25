@@ -14,12 +14,14 @@ import {
   dispatchTicketListRead,
   dispatchTicketMetadataMutation,
 } from "./provider-dispatch";
+import { guardTicketListQuery } from "./list-query-guardrails";
 import {
   hasTicketMetadataMutationInput,
   type TicketMetadataMutationResult,
 } from "./mutation-model";
 import {
   defaultTicketListQuery,
+  unavailableTicketRead,
   type TicketDetailReadResult,
   type TicketListReadResult,
   type TicketReadUnavailable,
@@ -62,10 +64,32 @@ export async function loadWorkspaceTicketList(
     return providerContext;
   }
 
-  const result = await dispatchTicketListRead(
-    providerContext.value,
-    normalizeTicketListQuery(query),
+  const listQuery = normalizeTicketListQuery(query);
+  const guardrail = guardTicketListQuery(
+    providerContext.value.plugin.capabilities,
+    listQuery,
+    query,
   );
+  if (guardrail.status === "unsupported") {
+    const result = unavailableTicketRead(
+      guardrail.reason,
+      false,
+      guardrail.rejection,
+    );
+    recordTicketReadTiming({
+      connectionId: providerContext.value.context.connection.id,
+      durationMs: ticketReadTimingDuration(totalStart),
+      operation: "list",
+      phase: "total-list-load",
+      providerKey: providerContext.value.context.connection.providerKey,
+      reason: result.reason,
+      retryable: result.retryable,
+      status: "unavailable",
+    });
+    return result;
+  }
+
+  const result = await dispatchTicketListRead(providerContext.value, listQuery);
   recordTicketReadTiming({
     connectionId: providerContext.value.context.connection.id,
     durationMs: ticketReadTimingDuration(totalStart),

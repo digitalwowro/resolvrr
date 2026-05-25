@@ -13,6 +13,9 @@ export type {
   TicketListBucket,
   TicketListCountRequest,
   TicketListFilter,
+  TicketListQueryCapabilities,
+  TicketListQueryRejection,
+  TicketListQueryRejectionKind,
   TicketListGroupKey,
   TicketListGroupRequest,
   TicketListQuery,
@@ -26,6 +29,9 @@ export type {
 export type ProviderCapability =
   | "ticket:list"
   | "ticket:count"
+  | "ticket:sort"
+  | "ticket:group"
+  | "ticket:group-count"
   | "ticket:detail"
   | "ticket:links"
   | "ticket:subscription"

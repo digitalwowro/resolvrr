@@ -232,7 +232,19 @@ describe("ticket read service", () => {
         activeConnectionId: "connection-1",
         connection: connection(),
       }),
-      createProviderRegistry([provider({ listTickets })]),
+      createProviderRegistry([
+        provider({
+          capabilities: [
+            "ticket:list",
+            "ticket:detail",
+            "ticket:count",
+            "ticket:sort",
+            "ticket:group",
+            "ticket:group-count",
+          ],
+          listTickets,
+        }),
+      ]),
       encryptionKey,
       "user-1",
       {
@@ -258,10 +270,61 @@ describe("ticket read service", () => {
     );
     expect(result).toMatchObject({
       status: "available",
+      queryCapabilities: {
+        totalCount: true,
+        providerSort: true,
+        providerGrouping: true,
+        groupedTotalCount: true,
+        fullTextSearch: false,
+        maxPageSize: 50,
+        unsupportedCombinations: [],
+      },
       loadedCount: 0,
       totalCount: 12,
       buckets: [{ key: "state", value: "open", totalCount: 12 }],
     });
+  });
+
+  it("returns an unsupported query state before calling providers without query capabilities", async () => {
+    const listTickets = vi.fn(provider().listTickets);
+
+    const result = await loadWorkspaceTicketList(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([provider({ listTickets })]),
+      encryptionKey,
+      "user-1",
+      { count: { includeTotal: true } },
+    );
+
+    expect(result).toMatchObject({
+      status: "unavailable",
+      reason: "unsupported-query",
+      queryRejection: { kind: "count-unsupported" },
+    });
+    expect(listTickets).not.toHaveBeenCalled();
+  });
+
+  it("constrains oversized page requests before provider dispatch", async () => {
+    const listTickets = vi.fn(provider().listTickets);
+
+    await loadWorkspaceTicketList(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([provider({ listTickets })]),
+      encryptionKey,
+      "user-1",
+      { pageSize: 500 },
+    );
+
+    expect(listTickets).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ pageSize: 50 }),
+    );
   });
 
   it("maps unsupported capabilities to an unavailable state", async () => {
