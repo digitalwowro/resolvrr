@@ -25,8 +25,12 @@ export function stateOptionsFor(detail: WorkspaceTicketDetail): DropdownOption[]
 
 export function stateRequiresPendingDate(
   detail: WorkspaceTicketDetail,
-  state: TicketState,
+  state: TicketState | undefined,
 ): boolean {
+  if (!state) {
+    return false;
+  }
+
   return Boolean(
     detail.metadataMutationConstraints?.pendingDateRequiredStates?.[state],
   );
@@ -41,6 +45,6 @@ export function selectedStateDisplay(state: TicketState | undefined) {
     : undefined;
 }
 
-export function stateMutationLabel(state: TicketState): string {
-  return ticketStateDefinitions[state].label;
+export function stateMutationLabel(state: TicketState | undefined): string {
+  return state ? ticketStateDefinitions[state].label : "Pending";
 }

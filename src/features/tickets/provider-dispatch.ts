@@ -4,6 +4,7 @@ import type { TicketProviderContext } from "./connection-context";
 import { readUnavailableForProviderError } from "./connection-context";
 import {
   hasTicketMetadataMutationInput,
+  invalidTicketMetadataMutationInput,
   ticketMetadataMutationCapabilities,
   type TicketMetadataMutationResult,
 } from "./mutation-model";
@@ -99,6 +100,13 @@ export async function dispatchTicketMetadataMutation(
     return {
       status: "failed",
       reason: "unsupported-capability",
+      retryable: false,
+    };
+  }
+  if (invalidTicketMetadataMutationInput(input)) {
+    return {
+      status: "failed",
+      reason: "invalid-input",
       retryable: false,
     };
   }

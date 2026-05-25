@@ -186,7 +186,8 @@ Provider-backed reads stay coordinated at the service/provider boundary:
 - Selected ticket detail/thread loading is one provider read path.
 - UI components do not fetch provider data directly.
 - UI components do not call provider code directly for mutations.
-- State and priority mutations go through the ticket service/action layer.
+- Staged single-ticket state and priority mutations go through the ticket
+  service/action layer after one explicit `Update` submit.
 - Detail metadata, thread articles, tags, links, subscription, and lookup data
   must not be added as independent component-level fetches.
 

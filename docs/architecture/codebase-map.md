@@ -158,8 +158,10 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/tickets/index.ts`: ticket workflow feature boundary. It does
   not export server actions so component/test imports do not pull in env or
   database modules.
-- `src/features/tickets/actions.ts`: server action for controlled ticket
+- `src/features/tickets/actions.ts`: server action for staged selected-ticket
   state/priority metadata mutations from `/workspace`.
+- `src/features/tickets/metadata-action-input.ts`: server-side FormData parser
+  and validation for staged single-ticket metadata update payloads.
 - `src/features/tickets/connection-context.ts`: active connection lookup,
   credential decryption, provider lookup, base URL revalidation, and setup
   timing for ticket reads and metadata mutations.
@@ -167,7 +169,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   state/priority metadata mutation dispatch plus provider error to
   unavailable-state mapping.
 - `src/features/tickets/mutation-model.ts`: provider-neutral state/priority
-  metadata mutation capabilities, result/error model, and action state types.
+  metadata mutation capabilities, pending-date validation, result/error model,
+  and action state types.
 - `src/features/tickets/read-model.ts`: provider-neutral ticket read result,
   unavailable-state, metadata mutation capability exposure, and default list
   query types.
@@ -178,7 +181,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   formatter for provider-backed ticket table, detail, thread, and metadata
   display strings.
 - `src/features/tickets/workspace-adapter.ts`: canonical ticket/detail to
-  workspace render model adapter.
+  workspace render model adapter, including formatted and ISO pending-time
+  values for selected-ticket metadata drafts.
 - `src/features/settings/index.ts`: settings feature boundary.
 - `src/features/workspace/index.ts`: workspace feature boundary. UI copy may say
   workspace, but persisted domain concepts remain helpdesk connections. This
@@ -216,12 +220,28 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/ticket-detail.tsx`: production selected-
   ticket detail header and layout.
 - `src/features/workspace/components/ticket-detail-sidebar.tsx`: production
-  metadata sidebar for selected tickets. State and priority render as editable
-  dropdowns only when provider capabilities allow them; provider-supplied hidden
-  state options and pending-date requirements are reflected in the state
-  control, and other metadata remains read-only.
+  metadata sidebar shell for selected tickets.
+- `src/features/workspace/components/ticket-metadata-editor.tsx`: staged
+  single-ticket metadata editor for state, priority, pending date/time,
+  Update, Discard changes, pending/error states, and changed-field treatment.
+- `src/features/workspace/components/ticket-metadata-action-bar.tsx`: sticky
+  full-width selected-ticket metadata action row with Discard changes and
+  Update controls plus post-update navigation selection.
+- `src/features/workspace/components/post-update-navigation.ts`: provider-
+  neutral post-Update navigation values, localStorage helpers, and final-state
+  navigation decision helper.
+- `src/features/workspace/components/post-update-navigation-selector.tsx`:
+  compact workspace selector for the persisted post-Update navigation
+  preference.
+- `src/features/workspace/components/metadata-draft.ts`: selected-ticket
+  metadata draft diffing, validation, dirty-field detection, reset, and
+  FormData construction helpers.
+- `src/features/workspace/components/ticket-sidebar-field.tsx`: shared
+  sidebar read-only and editable field wrappers.
+- `src/features/workspace/components/ticket-pending-date-time.ts`: pending
+  date/time parsing, formatting, default, and future-date helpers.
 - `src/features/workspace/components/ticket-pending-state-form.tsx`: compact
-  pending date/time input and helpers used by pending state transitions.
+  pending date/time input used by staged pending state transitions.
 - `src/features/workspace/components/ticket-state-mutation-options.tsx`: state
   dropdown option helpers for provider-supplied hidden states and selected-value
   display.
@@ -362,12 +382,18 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-workspace.test.tsx`: verifies provider-backed
   workspace unavailable, table, profile menu, detail, read-only metadata, and
   grouping behavior.
+- `tests/features/ticket-metadata-action-input.test.ts`: verifies staged
+  selected-ticket metadata update payload parsing and pending date validation.
 - `tests/features/ticket-metadata-mutation-service.test.ts`: verifies
   provider-neutral metadata mutation service dispatch, capability failures,
-  unavailable-transition handling, and refresh-after-write results.
+  pending-date validation, unavailable-transition handling, and
+  refresh-after-write results.
 - `tests/features/ticket-metadata-mutation-workspace.test.tsx`: verifies
   workspace metadata mutation submit, hidden state options, pending date/time
-  input, error, and non-optimistic UI behavior.
+  input, error, and staged non-optimistic UI behavior.
+- `tests/features/ticket-staged-metadata-workspace.test.tsx`: verifies staged
+  single-ticket metadata update behavior, changed-field treatment, discard,
+  selected-ticket rebasing, and saved-refresh-failed UI handling.
 - `tests/features/workspace-adapter.test.ts`: verifies ticket-to-workspace
   adapter display formatting for table/detail/thread date strings.
 - `tests/features/ticket-workspace-horizontal-tabs.test.tsx`: verifies local
@@ -387,7 +413,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/providers/zammad/read.test.ts`: verifies Zammad ticket list/detail
   endpoint calls, canonical mapping, optional feature defaults, and read timing.
 - `tests/providers/zammad/mutations.test.ts`: verifies Zammad state/priority
-  metadata write payload mapping and provider-safe request usage.
+  metadata write payload mapping, orphan pending-time rejection, and
+  provider-safe request usage.
 - `tests/providers/zammad/read-assets.test.ts`: verifies Zammad attachment
   metadata and expanded user display-name asset mapping.
 - `tests/providers/zammad/validation.test.ts`: verifies provider-specific Basic

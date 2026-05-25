@@ -121,6 +121,19 @@ describe("Zammad ticket metadata mutations", () => {
     );
   });
 
+  it("rejects orphan pending times before the write", async () => {
+    await expect(
+      zammadProviderPlugin.updateTicketMetadata?.(providerContext(), "42", {
+        priority: "high",
+        pendingUntil: new Date("2099-01-02T03:04:00.000Z"),
+      }),
+    ).rejects.toMatchObject({
+      kind: "validation-failure",
+    });
+
+    expect(mockedSafeProviderJson).not.toHaveBeenCalled();
+  });
+
   it("rejects returning non-new Zammad tickets to new before the write", async () => {
     mockedSafeProviderJson.mockResolvedValueOnce({
       status: 200,

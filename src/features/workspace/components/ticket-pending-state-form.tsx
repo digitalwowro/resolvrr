@@ -1,76 +1,28 @@
 "use client";
 
-export type PendingDateTimeParts = {
-  date: string;
-  time: string;
-};
+import { cn } from "@/components/ui/classnames";
+import {
+  minimumPendingDateValue,
+  type PendingDateTimeParts,
+} from "./ticket-pending-date-time";
 
 type TicketPendingStateFormProps = {
+  dateChanged?: boolean;
   disabled?: boolean;
   stateLabel: string;
+  timeChanged?: boolean;
   value: PendingDateTimeParts;
   onChange(value: PendingDateTimeParts): void;
 };
 
-function pad(value: number): string {
-  return String(value).padStart(2, "0");
-}
-
-function localDateValue(date: Date): string {
-  return [
-    date.getFullYear(),
-    "-",
-    pad(date.getMonth() + 1),
-    "-",
-    pad(date.getDate()),
-  ].join("");
-}
-
-export function defaultPendingDateTimeParts(
-  now = new Date(),
-): PendingDateTimeParts {
-  const defaultDate = new Date(now);
-  defaultDate.setHours(8, 0, 0, 0);
-  if (defaultDate.getTime() <= now.getTime()) {
-    defaultDate.setDate(defaultDate.getDate() + 1);
-  }
-
-  return {
-    date: localDateValue(defaultDate),
-    time: "08:00",
-  };
-}
-
-export function minimumPendingDateValue(now = new Date()): string {
-  return localDateValue(now);
-}
-
-export function pendingDateTimeIso(
-  value: PendingDateTimeParts,
-): string | undefined {
-  if (!value.date || !value.time) {
-    return undefined;
-  }
-
-  const date = new Date(`${value.date}T${value.time}`);
-  return Number.isFinite(date.getTime()) ? date.toISOString() : undefined;
-}
-
-export function isFuturePendingDateTime(
-  value: PendingDateTimeParts,
-  now = new Date(),
-): boolean {
-  const iso = pendingDateTimeIso(value);
-  if (!iso) {
-    return false;
-  }
-
-  return new Date(iso).getTime() > now.getTime();
-}
+const changedInputClass =
+  "border-amber-500 bg-amber-50 focus-visible:outline-amber-500";
 
 export function TicketPendingStateForm({
+  dateChanged = false,
   disabled = false,
   stateLabel,
+  timeChanged = false,
   value,
   onChange,
 }: TicketPendingStateFormProps) {
@@ -81,7 +33,10 @@ export function TicketPendingStateForm({
           <span className="sr-only">Pending date for {stateLabel}</span>
           <input
             aria-label={`Pending date for ${stateLabel}`}
-            className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className={cn(
+              "h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50",
+              dateChanged && changedInputClass,
+            )}
             disabled={disabled}
             min={minimumPendingDateValue()}
             onChange={(event) =>
@@ -96,7 +51,10 @@ export function TicketPendingStateForm({
           <span className="sr-only">Pending time for {stateLabel}</span>
           <input
             aria-label={`Pending time for ${stateLabel}`}
-            className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className={cn(
+              "h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50",
+              timeChanged && changedInputClass,
+            )}
             disabled={disabled}
             onChange={(event) =>
               onChange({ ...value, time: event.currentTarget.value })

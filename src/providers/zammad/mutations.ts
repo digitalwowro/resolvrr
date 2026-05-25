@@ -45,6 +45,18 @@ function mutationPayload(input: TicketMetadataMutationInput) {
   };
 }
 
+function assertNoOrphanPendingDate(input: TicketMetadataMutationInput) {
+  if (
+    input.pendingUntil &&
+    (!input.state || !zammadStateRequiresPendingDate(input.state))
+  ) {
+    throw new ProviderError(
+      "validation-failure",
+      "Pending date and time can only be saved with a pending state.",
+    );
+  }
+}
+
 function providerDataMismatch(): ProviderError {
   return new ProviderError(
     "provider-data-mismatch",
@@ -140,6 +152,7 @@ export async function updateZammadTicketMetadata(
       "No supported ticket metadata changes were provided.",
     );
   }
+  assertNoOrphanPendingDate(input);
   await assertZammadStateMutationAllowed(context, ticketExternalId, input);
 
   await measureTicketReadPhase(

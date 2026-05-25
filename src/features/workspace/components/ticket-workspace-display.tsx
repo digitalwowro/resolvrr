@@ -1,6 +1,7 @@
 "use client";
 
 import type { DropdownOption } from "@/components/ui";
+import { cn } from "@/components/ui/classnames";
 import type {
   TicketDetailReadResult,
   TicketMetadataMutationActionState,
@@ -61,6 +62,7 @@ export function TicketWorkspaceDisplay({
     openTicketTabs,
     partiallySelected,
     refreshList,
+    returnActiveTicketToList,
     selectedRowIds,
     setTabOrientation,
     showList,
@@ -86,6 +88,7 @@ export function TicketWorkspaceDisplay({
   const workArea =
     listActive ? (
       <TicketTable
+        key="work-area"
         activeTicketId={activeTicketId}
         columns={columns}
         groupedRows={groupBy === "none" ? undefined : groupedRows}
@@ -100,22 +103,25 @@ export function TicketWorkspaceDisplay({
         visibleColumns={visibleColumnSet}
       />
     ) : activeDetail?.result?.status === "unavailable" ? (
-      <DetailUnavailableState reason={activeDetail.result.reason} />
+      <DetailUnavailableState key="work-area" reason={activeDetail.result.reason} />
     ) : activeDetail?.detail ? (
       <TicketDetail
+        key="work-area"
         detail={activeDetail.detail}
         metadataMutationCapabilities={metadataMutationCapabilities}
+        onReturnToListAfterUpdate={returnActiveTicketToList}
         roundedTop={tabOrientation === "vertical"}
         updateTicketMetadataAction={updateTicketMetadataAction}
       />
     ) : activeTicketId ? (
-      <DetailLoadingState />
+      <DetailLoadingState key="work-area" />
     ) : (
-      <EmptyDetailState />
+      <EmptyDetailState key="work-area" />
     );
 
   const controls = (
     <WorkspaceControls
+      key="controls"
       allSelected={allSelected}
       columns={columns}
       groupBy={groupBy}
@@ -136,6 +142,7 @@ export function TicketWorkspaceDisplay({
 
   const tabsPanel = (
     <TicketTabsPanel
+      key="tabs"
       activeTicketId={activeTicketId}
       listActive={listActive}
       onCloseTicket={closeTicket}
@@ -147,38 +154,22 @@ export function TicketWorkspaceDisplay({
     />
   );
 
-  return tabOrientation === "vertical" ? (
-    <section className="flex min-h-0 flex-1 overflow-hidden">
-      {tabsPanel}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden px-4">
+  return (
+    <section
+      className={cn(
+        "flex min-h-0 flex-1 overflow-hidden",
+        tabOrientation === "horizontal" && "flex-col",
+      )}
+    >
+      {tabOrientation === "vertical" ? tabsPanel : null}
+      <div
+        key="workspace-content"
+        className="flex min-w-0 flex-1 flex-col overflow-hidden px-4"
+      >
         {controls}
+        {tabOrientation === "horizontal" ? tabsPanel : null}
         {workArea}
       </div>
     </section>
-  ) : (
-    <>
-      <WorkspaceControls
-        allSelected={allSelected}
-        className="px-4"
-        columns={columns}
-        groupBy={groupBy}
-        groupOptions={ticketGroupOptions}
-        listControlsEnabled={listActive}
-        onColumnToggle={toggleColumn}
-        onGroupByChange={handleGroupByChange}
-        onRefresh={refreshList}
-        onSelectAll={toggleSelectAll}
-        onTabOrientationChange={setTabOrientation}
-        partiallySelected={partiallySelected}
-        savedViewOptions={savedViewOptions}
-        selectedSavedViewId="all-tickets"
-        tabOrientation={tabOrientation}
-        visibleColumns={visibleColumnSet}
-      />
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-4">
-        {tabsPanel}
-        {workArea}
-      </section>
-    </>
   );
 }

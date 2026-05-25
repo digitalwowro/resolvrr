@@ -3,15 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
-import {
-  ticketPriorities,
-  ticketStates,
-  type TicketMetadataMutationInput,
-  type TicketPriority,
-  type TicketState,
-} from "@/core/tickets";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { providerRegistry } from "@/providers";
+import { ticketMetadataMutationActionInput } from "./metadata-action-input";
 import { updateWorkspaceTicketMetadata } from "./service";
 import type {
   TicketMetadataMutationActionState,
@@ -19,28 +13,6 @@ import type {
   TicketMetadataMutationField,
   TicketMetadataMutationResult,
 } from "./mutation-model";
-
-function textValue(formData: FormData, name: string): string {
-  const value = formData.get(name);
-  return typeof value === "string" ? value : "";
-}
-
-function isTicketState(value: string): value is TicketState {
-  return ticketStates.includes(value as TicketState);
-}
-
-function isTicketPriority(value: string): value is TicketPriority {
-  return ticketPriorities.includes(value as TicketPriority);
-}
-
-function pendingUntilValue(value: string): Date | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  const date = new Date(value);
-  return Number.isFinite(date.getTime()) ? date : undefined;
-}
 
 function errorMessage(reason: TicketMetadataMutationErrorReason): string {
   if (reason === "invalid-input") {
@@ -105,26 +77,11 @@ function actionStateForResult(
 export async function updateTicketMetadataAction(
   formData: FormData,
 ): Promise<TicketMetadataMutationActionState> {
-  const ticketExternalId = textValue(formData, "ticketExternalId");
-  const field = textValue(formData, "field");
-  const value = textValue(formData, "value");
-  const pendingUntil = pendingUntilValue(textValue(formData, "pendingUntil"));
-
-  let input: TicketMetadataMutationInput | undefined;
-  let mutationField: TicketMetadataMutationField | undefined;
-  if (field === "state" && isTicketState(value)) {
-    input = { state: value, ...(pendingUntil ? { pendingUntil } : {}) };
-    mutationField = "state";
-  }
-  if (field === "priority" && isTicketPriority(value)) {
-    input = { priority: value };
-    mutationField = "priority";
-  }
-
-  if (!ticketExternalId || !input || !mutationField) {
+  const actionInput = ticketMetadataMutationActionInput(formData);
+  if (actionInput.status === "invalid") {
     return {
       status: "failed",
-      field: field === "priority" ? "priority" : "state",
+      field: actionInput.field,
       message: errorMessage("invalid-input"),
     };
   }
@@ -135,13 +92,13 @@ export async function updateTicketMetadataAction(
     providerRegistry,
     env.APP_ENCRYPTION_KEY,
     user.id,
-    ticketExternalId,
-    input,
+    actionInput.ticketExternalId,
+    actionInput.input,
   );
 
   if (result.status === "saved") {
     revalidatePath("/workspace");
   }
 
-  return actionStateForResult(mutationField, result);
+  return actionStateForResult(actionInput.field, result);
 }

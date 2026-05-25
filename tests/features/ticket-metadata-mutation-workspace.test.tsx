@@ -29,7 +29,7 @@ describe("TicketWorkspace metadata mutations", () => {
     routerRefresh.mockClear();
   });
 
-  it("submits state mutations and refreshes the workspace after save", async () => {
+  it("stages state mutations and refreshes the workspace after Update", async () => {
     const user = userEvent.setup();
     const detailProps = selectedDetailProps();
     const action = vi.fn(async (formData: FormData) => {
@@ -63,12 +63,15 @@ describe("TicketWorkspace metadata mutations", () => {
 
     await user.click(screen.getByRole("combobox", { name: "Ticket state" }));
     await user.click(screen.getByRole("option", { name: "Closed" }));
+    expect(action).not.toHaveBeenCalled();
+    expect(routerRefresh).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
     const formData = action.mock.calls[0]?.[0] as FormData;
     expect(formData.get("ticketExternalId")).toBe("ticket-1");
-    expect(formData.get("field")).toBe("state");
-    expect(formData.get("value")).toBe("closed");
+    expect(formData.get("state")).toBe("closed");
+    expect(formData.get("priority")).toBeNull();
   });
 
   it("hides provider-supplied unavailable state options", async () => {
@@ -153,7 +156,7 @@ describe("TicketWorkspace metadata mutations", () => {
     expect(screen.getByRole("option", { name: "Pending Reminder" })).toBeEnabled();
   });
 
-  it("submits pending state mutations with a future pending date", async () => {
+  it("stages pending state mutations with a future pending date", async () => {
     const user = userEvent.setup();
     const detailProps = selectedDetailProps();
     detailProps.detail.metadataMutationConstraints = {
@@ -209,17 +212,18 @@ describe("TicketWorkspace metadata mutations", () => {
     expect(pendingTimeInput).toHaveValue("08:00");
     expect(action).not.toHaveBeenCalled();
     fireEvent.change(pendingDateInput, { target: { value: "2099-01-02" } });
+    expect(action).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
     const formData = action.mock.calls[0]?.[0] as FormData;
-    expect(formData.get("field")).toBe("state");
-    expect(formData.get("value")).toBe("pending_reminder");
+    expect(formData.get("state")).toBe("pending_reminder");
     expect(new Date(String(formData.get("pendingUntil"))).toISOString()).toBe(
       new Date("2099-01-02T08:00").toISOString(),
     );
   });
 
-  it("shows mutation errors without optimistic metadata changes", async () => {
+  it("shows mutation errors while keeping the staged draft editable", async () => {
     const user = userEvent.setup();
     const detailProps = selectedDetailProps();
     const action = vi.fn(async (formData: FormData) => {
@@ -254,6 +258,7 @@ describe("TicketWorkspace metadata mutations", () => {
 
     await user.click(screen.getByRole("combobox", { name: "Ticket priority" }));
     await user.click(screen.getByRole("option", { name: "High" }));
+    await user.click(screen.getByRole("button", { name: "Update" }));
 
     expect(
       await screen.findByText(
@@ -262,7 +267,8 @@ describe("TicketWorkspace metadata mutations", () => {
     ).toBeInTheDocument();
     expect(routerRefresh).not.toHaveBeenCalled();
     expect(screen.getByRole("combobox", { name: "Ticket priority" })).toHaveTextContent(
-      "Medium",
+      "High",
     );
+    expect(screen.getByRole("button", { name: "Update" })).toBeEnabled();
   });
 });

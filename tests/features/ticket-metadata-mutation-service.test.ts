@@ -180,6 +180,34 @@ describe("ticket metadata mutation service", () => {
     expect(updateTicketMetadata).not.toHaveBeenCalled();
   });
 
+  it("rejects pending state mutations without a future pending time before provider writes", async () => {
+    const updateTicketMetadata = vi.fn().mockResolvedValue(undefined);
+
+    const result = await updateWorkspaceTicketMetadata(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([
+        provider({
+          capabilities: ["ticket:list", "ticket:detail", "ticket:update-state"],
+          updateTicketMetadata,
+        }),
+      ]),
+      encryptionKey,
+      "user-1",
+      "ticket-1",
+      { state: "pending_reminder" },
+    );
+
+    expect(result).toEqual({
+      status: "failed",
+      reason: "invalid-input",
+      retryable: false,
+    });
+    expect(updateTicketMetadata).not.toHaveBeenCalled();
+  });
+
   it("reports unavailable-transition for provider validation failures", async () => {
     const result = await updateWorkspaceTicketMetadata(
       repository({

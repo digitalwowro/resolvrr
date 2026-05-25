@@ -49,6 +49,7 @@ export type WorkspaceTicketRow = {
   priorityKey?: TicketPriority;
   createdAt?: string;
   pendingTill: string;
+  pendingUntilIso?: string;
   updatedAt: string;
   preview?: string;
   providerUrl?: string;
@@ -98,6 +99,7 @@ export type WorkspaceTicketDetail = {
   priorityKey?: TicketPriority;
   createdAt?: string;
   pendingTill: string;
+  pendingUntilIso?: string;
   updatedAt: string;
   providerUrl?: string;
   tags: string[];
@@ -179,6 +181,7 @@ export function workspaceTicketRow(ticket: TicketListItem): WorkspaceTicketRow {
     priorityKey: ticket.priority,
     createdAt: labelDate(ticket.createdAt),
     pendingTill: ticket.pendingUntil ? labelDate(ticket.pendingUntil) : "-",
+    pendingUntilIso: ticket.pendingUntil?.toISOString(),
     updatedAt: labelDate(ticket.updatedAt),
     preview: ticket.textPreview,
     providerUrl: ticket.providerUrl,

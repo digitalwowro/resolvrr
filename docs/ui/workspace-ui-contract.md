@@ -45,13 +45,16 @@ available, and only shows the expand/collapse affordance when recipient details
 exist.
 
 The metadata sidebar remains read-only except for state and priority when the
-active provider advertises the matching mutation capability. Editable state and
-priority controls use the approved dropdown primitive, show pending/error
-states, do not optimistic-update values, and refresh the workspace after a
-successful checked save. Provider-supplied hidden state options are omitted from
-the state dropdown. Provider-supplied pending-date requirements reveal a compact
-date/time input before saving that state transition. If a provider lacks the
-capability, the field renders as ordinary read-only metadata.
+active provider advertises the matching mutation capability. Editable state,
+priority, and provider-required pending date/time controls use local staged
+draft state: changing a value does not call the provider until the agent clicks
+`Update`. Changed controls are visually marked, `Discard changes` resets only
+unsaved UI edits to the loaded ticket values, and successful saves refresh the
+workspace after one checked mutation. The action row includes a persisted local
+browser post-Update navigation preference: keep the ticket open, return to list,
+or return to list when the final canonical state is closed. Provider-supplied
+hidden state options are omitted from the state dropdown. If a provider lacks
+the capability, the field renders as ordinary read-only metadata.
 
 ## AI Status
 

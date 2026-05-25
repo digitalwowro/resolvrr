@@ -213,6 +213,17 @@ export function useTicketWorkspaceDisplayState({
     setActiveWorkspacePane("list");
   }
 
+  function returnActiveTicketToList() {
+    cacheSelectedDetail();
+    if (activeTicketId) {
+      setOpenTicketTabs((current) =>
+        current.filter((tab) => tab.id !== activeTicketId),
+      );
+    }
+    setActiveWorkspacePane("list");
+    router.push(ticketPath());
+  }
+
   function showOpenTicket(ticketId: string) {
     cacheSelectedDetail();
     setActiveWorkspacePane({ ticketId });
@@ -256,6 +267,7 @@ export function useTicketWorkspaceDisplayState({
     openTicketTabs,
     partiallySelected,
     refreshList,
+    returnActiveTicketToList,
     selectedRowIds,
     setTabOrientation,
     showList,
