@@ -1,8 +1,8 @@
-# Ticket Read Contract
+# Ticket Contract
 
-This is the provider-neutral contract for the first provider-backed ticket read
-path. It defines the data shape core features may consume and the provider
-capabilities core features may call. It does not introduce ticket mutations.
+This is the provider-neutral contract for provider-backed ticket reads and the
+first controlled metadata mutation slice. It defines the data shape core
+features may consume and the provider capabilities core features may call.
 
 ## Canonical Values
 
@@ -77,6 +77,38 @@ features. Raw provider article bodies are not part of the contract. UI code
 renders `sanitizedHtml` as read-only rich text and must not reintroduce raw
 provider HTML.
 
+## Controlled Metadata Mutations
+
+The approved mutation contract is limited to state and priority. Core, service,
+and UI code use canonical Resolvrr keys:
+
+- `TicketMetadataMutationInput.state?: TicketState`
+- `TicketMetadataMutationInput.priority?: TicketPriority`
+
+Provider plugins own mapping from those keys to provider-specific raw values.
+Zammad raw values such as `pending reminder` or `2 normal` must not escape
+`src/providers/zammad/**`.
+
+The provider-neutral mutation capabilities are:
+
+- `ticket:update-state`
+- `ticket:update-priority`
+
+No owner, group, tag, reply, link, or subscription mutation capability is
+approved in this slice.
+
+Mutation results distinguish write failure from refresh failure:
+
+- `saved`: provider write succeeded and the affected list/detail refresh check
+  succeeded.
+- `failed`: provider write did not complete or was not allowed.
+- `saved-refresh-failed`: provider write succeeded, but the post-write
+  list/detail refresh check failed. UI must present this as non-destructive and
+  must not pretend the write failed.
+
+The UI does not optimistic-update metadata. It submits the mutation, shows a
+pending state, and refreshes the workspace after a successful checked write.
+
 ## Detail Shape
 
 `TicketDetail` contains:
@@ -109,10 +141,13 @@ Read-path capabilities:
 - `lookup:groups`: provider can list assignment groups.
 - `search:full-text`: provider can compile saved-view full-text search.
 
+Mutation capabilities:
+
+- `ticket:update-state`: provider can update the canonical ticket state.
+- `ticket:update-priority`: provider can update the canonical ticket priority.
+
 Provider methods are capability-gated. Core features must check capability
-presence before calling optional provider read methods. Mutation capabilities
-remain named for future slices, but this contract does not approve or implement
-mutation workflows.
+presence before calling optional provider methods.
 
 Provider read calls receive a provider-neutral request security context:
 
@@ -134,13 +169,15 @@ Ticket list reads use `TicketListQuery`:
 `TicketListResult.nextCursor` is opaque to core code. Providers own cursor
 format, pagination compilation, and raw response mapping.
 
-## Read Coordination And Timing
+## Read And Mutation Coordination
 
 Provider-backed reads stay coordinated at the service/provider boundary:
 
 - Ticket list loading is one provider read path.
 - Selected ticket detail/thread loading is one provider read path.
 - UI components do not fetch provider data directly.
+- UI components do not call provider code directly for mutations.
+- State and priority mutations go through the ticket service/action layer.
 - Detail metadata, thread articles, tags, links, subscription, and lookup data
   must not be added as independent component-level fetches.
 
@@ -156,6 +193,8 @@ The read path logs sanitized timing metadata for these phases:
 - provider mapping/parsing;
 - total list load;
 - total selected-ticket detail load.
+- provider metadata mutation request;
+- total metadata mutation.
 
 Future secondary data such as tags, links, subscription, and lookup lists must
 be added as explicit measured phases when they become part of the coordinated
@@ -164,8 +203,8 @@ stale-while-revalidate, background sync, or cache abstractions.
 
 ## Non-Goals
 
-- Ticket create, update, merge, split, reply, note, assignment, tagging, and
-  subscription mutations.
+- Ticket create, merge, split, reply, note, owner/group assignment, tagging,
+  link, and subscription mutations.
 - Attachment downloads or previews.
 - Provider-backed ticket caching policy.
 - Saved-view management, background sync, or AI workflows.

@@ -1,10 +1,10 @@
 import type { HelpdeskConnection } from "./helpdesk-connections";
 import type { SavedViewFilter } from "./saved-views";
 import type {
+  TicketMetadataMutationInput,
   TicketDetail,
   TicketExternalId,
   TicketListItem,
-  TicketUpdateInput,
 } from "./tickets";
 
 export type ProviderCapability =
@@ -13,11 +13,8 @@ export type ProviderCapability =
   | "ticket:detail"
   | "ticket:links"
   | "ticket:subscription"
-  | "ticket:update-owner"
   | "ticket:update-state"
   | "ticket:update-priority"
-  | "ticket:update-group"
-  | "ticket:tags"
   | "lookup:assignable-users"
   | "lookup:groups"
   | "search:full-text";
@@ -134,11 +131,11 @@ export type HelpdeskProviderPlugin = {
     context: ProviderContext,
     ticketExternalId: TicketExternalId,
   ): Promise<TicketDetail>;
-  updateTicketFields?(
+  updateTicketMetadata?(
     context: ProviderContext,
     ticketExternalId: TicketExternalId,
-    input: TicketUpdateInput,
-  ): Promise<TicketDetail>;
+    input: TicketMetadataMutationInput,
+  ): Promise<void>;
   listAssignableUsers?(context: ProviderContext): Promise<ProviderLookupOption[]>;
   listGroups?(context: ProviderContext): Promise<ProviderLookupOption[]>;
 };

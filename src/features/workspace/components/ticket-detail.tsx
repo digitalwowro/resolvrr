@@ -1,17 +1,30 @@
 import { ExternalLink } from "lucide-react";
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
-import type { WorkspaceTicketDetail } from "@/features/tickets";
+import type {
+  TicketMetadataMutationActionState,
+  TicketMetadataMutationCapabilities,
+  WorkspaceTicketDetail,
+} from "@/features/tickets";
 import { StateCell } from "./ticket-table-cells";
 import { TicketDetailSidebar } from "./ticket-detail-sidebar";
 import { TicketThread } from "./ticket-thread";
 
 type TicketDetailProps = {
   detail: WorkspaceTicketDetail;
+  metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   roundedTop?: boolean;
+  updateTicketMetadataAction(
+    formData: FormData,
+  ): Promise<TicketMetadataMutationActionState>;
 };
 
-export function TicketDetail({ detail, roundedTop = true }: TicketDetailProps) {
+export function TicketDetail({
+  detail,
+  metadataMutationCapabilities,
+  roundedTop = true,
+  updateTicketMetadataAction,
+}: TicketDetailProps) {
   return (
     <section
       aria-label={`Ticket detail ${detail.number}`}
@@ -83,7 +96,11 @@ export function TicketDetail({ detail, roundedTop = true }: TicketDetailProps) {
         <div className="flex min-w-0 flex-1 flex-col">
           <TicketThread articles={detail.articles} />
         </div>
-        <TicketDetailSidebar detail={detail} />
+        <TicketDetailSidebar
+          detail={detail}
+          metadataMutationCapabilities={metadataMutationCapabilities}
+          updateTicketMetadataAction={updateTicketMetadataAction}
+        />
       </div>
     </section>
   );

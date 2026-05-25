@@ -33,8 +33,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/app/register/page.tsx`: minimal registration form wired to a server
   action.
 - `src/app/workspace/page.tsx`: protected authenticated workspace route that
-  composes the active helpdesk connection ticket read path into the real
-  read-only workspace.
+  composes the active helpdesk connection ticket read path and controlled
+  state/priority mutation action into the real workspace.
 - `src/app/workspace/demo/page.tsx`: protected static workspace preview route
   for local UI review; this keeps synthetic tickets out of the real
   `/workspace` runtime path.
@@ -48,8 +48,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   default plain-anchor color.
 - `src/core`: provider-neutral domain contracts and canonical values.
 - `src/core/tickets.ts`: canonical ticket state and priority definitions plus
-  provider-neutral ticket, thread, article, link, subscription, and update
-  types.
+  provider-neutral ticket, thread, article, link, subscription, and
+  state/priority metadata mutation types.
 - `src/core/saved-views.ts`: provider-neutral saved view filters and metadata.
 - `src/core/helpdesk-connections.ts`: explicit helpdesk connection domain types.
 - `src/core/providers.ts`: provider plugin contract, capability names, provider
@@ -80,15 +80,15 @@ architecture folders or important files are added, moved, renamed, or removed.
   validation for user-provided helpdesk base URLs.
 - `src/security/provider-http.ts`: SSRF-safe provider HTTPS request helper that
   binds requests to the revalidated address set and falls back only across
-  validated public addresses; also exposes a size-limited JSON reader for
-  provider ticket reads.
+  validated public addresses; also exposes size-limited JSON request handling
+  for provider ticket reads and controlled metadata writes.
 - `src/security/sanitize-html.ts`: provider HTML sanitization that preserves
   safe rich-text article structure such as links, lists, headings, tables, and
   inline emphasis while dropping scripts and unsafe attributes.
 - `src/security/safe-log.ts`: helper for safe metadata-only logs.
-- `src/telemetry/ticket-read-timing.ts`: sanitized ticket read timing logger
-  used by provider-backed list/detail orchestration and provider request/mapping
-  phases.
+- `src/telemetry/ticket-read-timing.ts`: sanitized ticket timing logger used by
+  provider-backed list/detail orchestration, controlled metadata mutations, and
+  provider request/mapping phases.
 - `src/providers`: provider registry and provider plugin implementations.
 - `src/providers/available-providers.ts`: single documented provider assembly
   file allowed to import installed provider plugins directly before exporting
@@ -99,15 +99,17 @@ architecture folders or important files are added, moved, renamed, or removed.
   details stay in this folder and provider-specific tests.
 - `src/providers/zammad/credentials.ts`: provider-specific Basic Auth credential
   parsing and header construction.
-- `src/providers/zammad/client.ts`: Zammad read client wrapper around the
+- `src/providers/zammad/client.ts`: Zammad read/write client wrapper around the
   provider-safe JSON request helper.
 - `src/providers/zammad/errors.ts`: provider HTTP status classification.
 - `src/providers/zammad/mapping.ts`: provider raw value to canonical ticket,
   article, attachment, state, and priority mapping.
+- `src/providers/zammad/mutations.ts`: Zammad-only state/priority metadata
+  write payload mapping and endpoint call implementation.
 - `src/providers/zammad/participants.ts`: Zammad user/participant display-name,
   email fallback, recipient, and expanded asset mapping helpers.
-- `src/providers/zammad/plugin.ts`: provider plugin object and connection
-  validation boundary.
+- `src/providers/zammad/plugin.ts`: provider plugin object, capabilities, and
+  connection validation boundary.
 - `src/providers/zammad/schemas.ts`: Zammad raw ticket, article, expanded asset,
   and user DTO schemas.
 - `src/providers/zammad/tickets.ts`: Zammad ticket list/detail endpoint reads,
@@ -149,16 +151,25 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/helpdesk-connections/components/connection-form.tsx`: add/edit
   form that never echoes stored credentials to the browser.
 - `src/features/saved-views/index.ts`: saved view feature boundary.
-- `src/features/tickets/index.ts`: ticket workflow feature boundary.
+- `src/features/tickets/index.ts`: ticket workflow feature boundary. It does
+  not export server actions so component/test imports do not pull in env or
+  database modules.
+- `src/features/tickets/actions.ts`: server action for controlled ticket
+  state/priority metadata mutations from `/workspace`.
 - `src/features/tickets/connection-context.ts`: active connection lookup,
   credential decryption, provider lookup, base URL revalidation, and setup
-  timing for ticket reads.
-- `src/features/tickets/provider-dispatch.ts`: capability-gated ticket read
-  dispatch and provider error to unavailable-state mapping.
+  timing for ticket reads and metadata mutations.
+- `src/features/tickets/provider-dispatch.ts`: capability-gated ticket read and
+  state/priority metadata mutation dispatch plus provider error to
+  unavailable-state mapping.
+- `src/features/tickets/mutation-model.ts`: provider-neutral state/priority
+  metadata mutation capabilities, result/error model, and action state types.
 - `src/features/tickets/read-model.ts`: provider-neutral ticket read result,
-  unavailable-state, and default list query types.
-- `src/features/tickets/service.ts`: thin ticket read orchestration entrypoints
-  and total read timing used by workspace routes.
+  unavailable-state, metadata mutation capability exposure, and default list
+  query types.
+- `src/features/tickets/service.ts`: thin ticket read orchestration and
+  controlled state/priority metadata mutation entrypoints with refresh-after-
+  write checks.
 - `src/features/tickets/date-time-format.ts`: shared workspace date/time
   formatter for provider-backed ticket table, detail, thread, and metadata
   display strings.
@@ -168,10 +179,10 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/index.ts`: workspace feature boundary. UI copy may say
   workspace, but persisted domain concepts remain helpdesk connections. This
   barrel exports production workspace UI only.
-- `src/features/workspace/components/ticket-workspace.tsx`: read-only
-  provider-backed workspace composition for the real `/workspace` route. It
-  wires provider-neutral read models into demo-derived, production-safe
-  presentational components.
+- `src/features/workspace/components/ticket-workspace.tsx`: provider-backed
+  workspace composition for the real `/workspace` route. It wires
+  provider-neutral read models and state/priority mutation capabilities into
+  demo-derived, production-safe components.
 - `src/features/workspace/components/ticket-workspace-display.tsx`: client-side
   production workspace display composition for controls, tabs, table, and
   selected-ticket detail surfaces.
@@ -198,10 +209,12 @@ architecture folders or important files are added, moved, renamed, or removed.
   table shell and row/header presentation for workspace ticket rows.
 - `src/features/workspace/components/ticket-table-grouping.ts`: provider-neutral
   local presentation grouping and sorting helpers for loaded workspace rows.
-- `src/features/workspace/components/ticket-detail.tsx`: production read-only
-  selected-ticket detail header and layout.
+- `src/features/workspace/components/ticket-detail.tsx`: production selected-
+  ticket detail header and layout.
 - `src/features/workspace/components/ticket-detail-sidebar.tsx`: production
-  read-only metadata sidebar for selected tickets.
+  metadata sidebar for selected tickets. State and priority render as editable
+  dropdowns only when provider capabilities allow them; other metadata remains
+  read-only.
 - `src/features/workspace/components/ticket-thread.tsx`: production read-only
   ticket article thread presentation with sanitized rich-text rendering,
   display-name-first From/To/Cc/Bcc metadata, and no reply/composer controls.
@@ -300,6 +313,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   tamper resistance and active/enable security rules.
 - `tests/unit/provider-http.test.ts`: verifies provider requests reject DNS
   rebinding and use pinned validated addresses.
+- `tests/unit/provider-http-json.test.ts`: verifies provider JSON requests use
+  pinned validated addresses, bounded response parsing, and safe JSON write
+  request handling.
 - `tests/unit/provider-boundary.test.ts`: verifies direct provider-specific
   imports stay out of core, UI, and feature code.
 - `tests/unit/provider-registry.test.ts`: verifies provider registry lookup and
@@ -334,7 +350,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-workspace-test-utils.tsx`: shared provider-backed
   workspace fixtures and render helpers for feature tests.
 - `tests/features/ticket-workspace.test.tsx`: verifies provider-backed
-  workspace unavailable, table, profile menu, detail, and grouping behavior.
+  workspace unavailable, table, profile menu, detail, metadata mutation UI, and
+  grouping behavior.
 - `tests/features/workspace-adapter.test.ts`: verifies ticket-to-workspace
   adapter display formatting for table/detail/thread date strings.
 - `tests/features/ticket-workspace-horizontal-tabs.test.tsx`: verifies local
@@ -351,6 +368,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/providers/zammad/read-helpers.ts`: shared Zammad read test fixtures.
 - `tests/providers/zammad/read.test.ts`: verifies Zammad ticket list/detail
   endpoint calls, canonical mapping, optional feature defaults, and read timing.
+- `tests/providers/zammad/mutations.test.ts`: verifies Zammad state/priority
+  metadata write payload mapping and provider-safe request usage.
 - `tests/providers/zammad/read-assets.test.ts`: verifies Zammad attachment
   metadata and expanded user display-name asset mapping.
 - `tests/providers/zammad/validation.test.ts`: verifies provider-specific Basic
@@ -361,7 +380,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `docs/architecture/provider-plugins.md`: provider plugin ownership and
   registration rules.
 - `docs/architecture/ticket-read-contract.md`: canonical provider-neutral
-  ticket read model, thread article shape, capabilities, and non-goals.
+  ticket read model, controlled state/priority metadata mutation contract,
+  thread article shape, capabilities, and non-goals.
 - `docs/architecture/codebase-map.md`: this file-role map.
 - `docs/deploy`: environment and deployment docs, including `.env.example`.
 - `docs/deploy/.env.example`: committed environment template.

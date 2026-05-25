@@ -6,7 +6,9 @@ import { isBlockedProviderAddress } from "./base-url-validation";
 
 type SafeProviderFetchOptions = {
   allowedAddresses: string[];
+  body?: string | Uint8Array;
   headers?: Record<string, string>;
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   signal?: AbortSignal;
 };
 
@@ -107,6 +109,29 @@ function headersFromIncoming(headers: IncomingHttpHeaders): Headers {
   return result;
 }
 
+function requestBodyBuffer(
+  body: SafeProviderFetchOptions["body"],
+): Buffer | undefined {
+  if (body === undefined) {
+    return undefined;
+  }
+  return typeof body === "string" ? Buffer.from(body) : Buffer.from(body);
+}
+
+function requestHeaders(
+  options: SafeProviderFetchOptions,
+  body: Buffer | undefined,
+): Record<string, string> | undefined {
+  if (!body) {
+    return options.headers;
+  }
+
+  return {
+    ...options.headers,
+    "Content-Length": String(body.byteLength),
+  };
+}
+
 function requestPinnedAddress(
   url: URL,
   host: string,
@@ -114,14 +139,15 @@ function requestPinnedAddress(
   options: SafeProviderFetchOptions,
 ): Promise<Response> {
   return new Promise((resolve, reject) => {
+    const body = requestBodyBuffer(options.body);
     const request = httpsRequest(
       {
         protocol: "https:",
         hostname: host,
         port: url.port || 443,
         path: `${url.pathname}${url.search}`,
-        method: "GET",
-        headers: options.headers,
+        method: options.method ?? "GET",
+        headers: requestHeaders(options, body),
         lookup: pinnedLookup(address),
         agent: false,
         servername: isIP(host) === 0 ? host : undefined,
@@ -143,6 +169,9 @@ function requestPinnedAddress(
     );
 
     request.on("error", reject);
+    if (body) {
+      request.write(body);
+    }
     request.end();
   });
 }
@@ -154,14 +183,15 @@ function requestPinnedJsonAddress(
   options: SafeProviderJsonOptions,
 ): Promise<SafeProviderJsonResult> {
   return new Promise((resolve, reject) => {
+    const body = requestBodyBuffer(options.body);
     const request = httpsRequest(
       {
         protocol: "https:",
         hostname: host,
         port: url.port || 443,
         path: `${url.pathname}${url.search}`,
-        method: "GET",
-        headers: options.headers,
+        method: options.method ?? "GET",
+        headers: requestHeaders(options, body),
         lookup: pinnedLookup(address),
         agent: false,
         servername: isIP(host) === 0 ? host : undefined,
@@ -202,7 +232,7 @@ function requestPinnedJsonAddress(
               status,
               statusText: response.statusMessage,
               headers,
-              data: JSON.parse(body),
+              data: body.length > 0 ? JSON.parse(body) : undefined,
             });
           } catch {
             reject(
@@ -218,6 +248,9 @@ function requestPinnedJsonAddress(
     );
 
     request.on("error", reject);
+    if (body) {
+      request.write(body);
+    }
     request.end();
   });
 }

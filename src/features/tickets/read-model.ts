@@ -1,5 +1,6 @@
 import type { TicketDetail, TicketExternalId, TicketListItem } from "@/core/tickets";
 import type { TicketListQuery } from "@/core/providers";
+import type { TicketMetadataMutationCapabilities } from "./mutation-model";
 
 export type TicketReadUnavailableReason =
   | "no-active-connection"
@@ -23,6 +24,7 @@ export type TicketReadUnavailable = {
 export type TicketListAvailable = {
   status: "available";
   connectionName: string;
+  metadataMutationCapabilities: TicketMetadataMutationCapabilities;
   tickets: TicketListItem[];
   nextCursor?: string;
   measuredAt: Date;

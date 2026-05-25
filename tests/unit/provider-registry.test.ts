@@ -18,7 +18,7 @@ const plugin: HelpdeskProviderPlugin = {
   getTicketDetail: async () => {
     throw new ProviderError("unsupported-capability", "Not implemented");
   },
-  updateTicketFields: async () => {
+  updateTicketMetadata: async () => {
     throw new ProviderError("unsupported-capability", "Not implemented");
   },
 };

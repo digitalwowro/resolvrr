@@ -12,7 +12,9 @@ import {
 import { classifyZammadResponse } from "./errors";
 
 const defaultReadTimeoutMs = 8000;
+const defaultWriteTimeoutMs = 8000;
 const maxReadResponseBytes = 2 * 1024 * 1024;
+const maxWriteResponseBytes = 512 * 1024;
 const zammadUserAgent = "Resolvrr/1.0";
 
 function diagnosticCode(error: unknown): string | undefined {
@@ -70,6 +72,56 @@ export async function zammadGetJson(
       },
       signal: AbortSignal.timeout(defaultReadTimeoutMs),
       maxResponseBytes: maxReadResponseBytes,
+    });
+  } catch (error) {
+    if (error instanceof ProviderJsonBodyError) {
+      throw new ProviderError(
+        "provider-data-mismatch",
+        "The helpdesk provider returned an unexpected response.",
+        false,
+        undefined,
+        error.reason,
+      );
+    }
+
+    throw new ProviderError(
+      "temporary-provider-failure",
+      "The helpdesk provider could not be reached.",
+      true,
+      undefined,
+      diagnosticCode(error),
+    );
+  }
+
+  if (response.status < 200 || response.status >= 300) {
+    throw classifyZammadResponse(response.status);
+  }
+
+  return response.data;
+}
+
+export async function zammadSendJson(
+  context: ProviderContext,
+  path: string,
+  method: "POST" | "PUT" | "PATCH" | "DELETE",
+  body: unknown,
+): Promise<unknown> {
+  const baseUrl = zammadBaseUrl(context);
+  let response;
+
+  try {
+    response = await safeProviderJson(`${baseUrl}${path}`, {
+      allowedAddresses: context.requestSecurity.validatedAddresses,
+      body: JSON.stringify(body),
+      headers: {
+        Authorization: authHeader(context),
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": zammadUserAgent,
+      },
+      method,
+      signal: AbortSignal.timeout(defaultWriteTimeoutMs),
+      maxResponseBytes: maxWriteResponseBytes,
     });
   } catch (error) {
     if (error instanceof ProviderJsonBodyError) {

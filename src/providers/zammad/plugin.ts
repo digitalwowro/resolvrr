@@ -13,6 +13,7 @@ import {
 import { classifyZammadResponse } from "./errors";
 import { safeProviderFetch } from "@/security/provider-http";
 import { getZammadTicketDetail, listZammadTickets } from "./tickets";
+import { updateZammadTicketMetadata } from "./mutations";
 
 const defaultValidationTimeoutMs = 5000;
 const zammadValidationUserAgent = "Resolvrr/1.0";
@@ -79,7 +80,12 @@ async function validateBasicAuth(input: ProviderConnectionInput): Promise<void> 
 export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   key: zammadProviderKey,
   label: "Zammad",
-  capabilities: ["ticket:list", "ticket:detail"],
+  capabilities: [
+    "ticket:list",
+    "ticket:detail",
+    "ticket:update-state",
+    "ticket:update-priority",
+  ],
   credentialSchemes: [
     {
       key: zammadBasicAuthScheme,
@@ -98,4 +104,5 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   validateConnection: validateBasicAuth,
   listTickets: listZammadTickets,
   getTicketDetail: getZammadTicketDetail,
+  updateTicketMetadata: updateZammadTicketMetadata,
 };

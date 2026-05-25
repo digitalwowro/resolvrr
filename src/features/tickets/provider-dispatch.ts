@@ -1,7 +1,11 @@
-import type { TicketExternalId } from "@/core/tickets";
+import type { TicketExternalId, TicketMetadataMutationInput } from "@/core/tickets";
 import type { TicketListQuery } from "@/core/providers";
 import type { TicketProviderContext } from "./connection-context";
 import { readUnavailableForProviderError } from "./connection-context";
+import {
+  hasTicketMetadataMutationInput,
+  ticketMetadataMutationCapabilities,
+} from "./mutation-model";
 import {
   unavailableTicketRead,
   type TicketDetailReadResult,
@@ -10,9 +14,23 @@ import {
 
 function hasCapability(
   providerContext: TicketProviderContext,
-  capability: "ticket:list" | "ticket:detail",
+  capability:
+    | "ticket:list"
+    | "ticket:detail"
+    | "ticket:update-state"
+    | "ticket:update-priority",
 ): boolean {
   return providerContext.plugin.capabilities.includes(capability);
+}
+
+function canUpdateTicketMetadata(
+  providerContext: TicketProviderContext,
+  input: TicketMetadataMutationInput,
+): boolean {
+  return (
+    (!input.state || hasCapability(providerContext, "ticket:update-state")) &&
+    (!input.priority || hasCapability(providerContext, "ticket:update-priority"))
+  );
 }
 
 export async function dispatchTicketListRead(
@@ -35,6 +53,9 @@ export async function dispatchTicketListRead(
     return {
       status: "available",
       connectionName: providerContext.context.connection.displayName,
+      metadataMutationCapabilities: ticketMetadataMutationCapabilities(
+        providerContext.plugin.capabilities,
+      ),
       tickets: result.tickets,
       nextCursor: result.nextCursor,
       measuredAt: result.measuredAt,
@@ -63,6 +84,33 @@ export async function dispatchTicketDetailRead(
         ticketExternalId,
       ),
     };
+  } catch (error) {
+    return readUnavailableForProviderError(error);
+  }
+}
+
+export async function dispatchTicketMetadataMutation(
+  providerContext: TicketProviderContext,
+  ticketExternalId: TicketExternalId,
+  input: TicketMetadataMutationInput,
+) {
+  if (!hasTicketMetadataMutationInput(input)) {
+    return unavailableTicketRead("unsupported-capability");
+  }
+  if (!canUpdateTicketMetadata(providerContext, input)) {
+    return unavailableTicketRead("unsupported-capability");
+  }
+  if (!providerContext.plugin.updateTicketMetadata) {
+    return unavailableTicketRead("unsupported-capability");
+  }
+
+  try {
+    await providerContext.plugin.updateTicketMetadata(
+      providerContext.context,
+      ticketExternalId,
+      input,
+    );
+    return { status: "saved" as const };
   } catch (error) {
     return readUnavailableForProviderError(error);
   }

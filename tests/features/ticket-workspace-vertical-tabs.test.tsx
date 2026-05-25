@@ -8,6 +8,7 @@ import {
   detailPropsFor,
   highRow,
   noopAction,
+  noopMutationAction,
   row,
   selectedDetailProps,
 } from "./ticket-workspace-test-utils";
@@ -17,6 +18,7 @@ const routerPush = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: routerPush,
+    refresh: vi.fn(),
   }),
 }));
 
@@ -40,6 +42,7 @@ describe("TicketWorkspace vertical tabs", () => {
         selectedTicketId="ticket-1"
         setActiveConnectionAction={noopAction}
         tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
         userEmail="agent@example.com"
       />,
     );
@@ -74,6 +77,7 @@ describe("TicketWorkspace vertical tabs", () => {
         selectedTicketId="ticket-1"
         setActiveConnectionAction={noopAction}
         tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
         userEmail="agent@example.com"
       />,
     );
@@ -105,6 +109,7 @@ describe("TicketWorkspace vertical tabs", () => {
         selectedTicketId="ticket-1"
         setActiveConnectionAction={noopAction}
         tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
         userEmail="agent@example.com"
       />,
     );
@@ -124,6 +129,7 @@ describe("TicketWorkspace vertical tabs", () => {
         selectedTicketId="ticket-2"
         setActiveConnectionAction={noopAction}
         tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
         userEmail="agent@example.com"
       />,
     );

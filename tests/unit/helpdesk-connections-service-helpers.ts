@@ -164,7 +164,7 @@ export function registry(validateConnection = vi.fn().mockResolvedValue(undefine
     getTicketDetail: async () => {
       throw new ProviderError("unsupported-capability", "Not implemented");
     },
-    updateTicketFields: async () => {
+    updateTicketMetadata: async () => {
       throw new ProviderError("unsupported-capability", "Not implemented");
     },
   };

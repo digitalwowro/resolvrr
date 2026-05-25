@@ -8,6 +8,7 @@ import {
   detailPropsFor,
   highRow,
   noopAction,
+  noopMutationAction,
   row,
   selectedDetailProps,
 } from "./ticket-workspace-test-utils";
@@ -17,6 +18,7 @@ const routerPush = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: routerPush,
+    refresh: vi.fn(),
   }),
 }));
 
@@ -40,6 +42,7 @@ describe("TicketWorkspace horizontal tabs", () => {
         selectedTicketId="ticket-1"
         setActiveConnectionAction={noopAction}
         tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
         userEmail="agent@example.com"
       />,
     );
@@ -79,6 +82,7 @@ describe("TicketWorkspace horizontal tabs", () => {
               "Cannot log in after password reset from the customer portal with a very long browser session title",
           },
         ]}
+        updateTicketMetadataAction={noopMutationAction}
         userEmail="agent@example.com"
       />,
     );
@@ -108,6 +112,7 @@ describe("TicketWorkspace horizontal tabs", () => {
         selectedTicketId="ticket-1"
         setActiveConnectionAction={noopAction}
         tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
         userEmail="agent@example.com"
       />,
     );
@@ -144,6 +149,7 @@ describe("TicketWorkspace horizontal tabs", () => {
         selectedTicketId="ticket-1"
         setActiveConnectionAction={noopAction}
         tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
         userEmail="agent@example.com"
       />,
     );
@@ -166,6 +172,7 @@ describe("TicketWorkspace horizontal tabs", () => {
         selectedTicketId="ticket-2"
         setActiveConnectionAction={noopAction}
         tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
         userEmail="agent@example.com"
       />,
     );

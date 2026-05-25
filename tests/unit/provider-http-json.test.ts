@@ -27,6 +27,7 @@ function dnsResult(address: string, family: 4 | 6) {
 }
 
 function mockJsonRequest(input: { status?: number; body: string }) {
+  let writtenBody = "";
   mockedRequest.mockImplementation(((options: unknown, callback: unknown) => {
     const requestOptions = options as {
       lookup?: (
@@ -38,6 +39,10 @@ function mockJsonRequest(input: { status?: number; body: string }) {
     const responseCallback = callback as (response: PassThrough) => void;
     const request = new EventEmitter() as EventEmitter & {
       end: () => void;
+      write: (chunk: Buffer | string | Uint8Array) => void;
+    };
+    request.write = (chunk) => {
+      writtenBody += Buffer.from(chunk).toString("utf8");
     };
     request.end = () => {
       requestOptions.lookup?.(
@@ -59,6 +64,8 @@ function mockJsonRequest(input: { status?: number; body: string }) {
     };
     return request;
   }) as never);
+
+  return () => writtenBody;
 }
 
 describe("safe provider JSON reads", () => {
@@ -89,6 +96,18 @@ describe("safe provider JSON reads", () => {
     );
   });
 
+  it("rejects DNS rebinding before making a JSON request", async () => {
+    mockedLookup.mockResolvedValueOnce(dnsResult("10.0.0.10", 4));
+
+    await expect(
+      safeProviderJson("https://helpdesk.example.com/api/v1/tickets", {
+        allowedAddresses: ["93.184.216.34"],
+        maxResponseBytes: 64,
+      }),
+    ).rejects.toThrow("blocked");
+    expect(mockedRequest).not.toHaveBeenCalled();
+  });
+
   it("does not parse non-success provider JSON response bodies", async () => {
     mockedLookup.mockResolvedValueOnce(dnsResult("93.184.216.34", 4));
     mockJsonRequest({ status: 401, body: "{\"secret\":\"body\"}" });
@@ -103,6 +122,38 @@ describe("safe provider JSON reads", () => {
 
     expect(response.status).toBe(401);
     expect(response).not.toHaveProperty("data");
+  });
+
+  it("sends bounded JSON writes through the pinned address helper", async () => {
+    mockedLookup.mockResolvedValueOnce(dnsResult("93.184.216.34", 4));
+    const writtenBody = mockJsonRequest({ body: "{\"id\":42}" });
+
+    const response = await safeProviderJson(
+      "https://helpdesk.example.com/api/v1/tickets/42",
+      {
+        allowedAddresses: ["93.184.216.34"],
+        body: "{\"state\":\"open\"}",
+        headers: { "Content-Type": "application/json" },
+        maxResponseBytes: 64,
+        method: "PUT",
+      },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.data).toEqual({ id: 42 });
+    expect(writtenBody()).toBe("{\"state\":\"open\"}");
+    expect(mockedRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agent: false,
+        headers: expect.objectContaining({
+          "Content-Length": "16",
+          "Content-Type": "application/json",
+        }),
+        method: "PUT",
+        path: "/api/v1/tickets/42",
+      }),
+      expect.any(Function),
+    );
   });
 
   it("rejects oversized provider JSON response bodies safely", async () => {

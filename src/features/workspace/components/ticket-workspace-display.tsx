@@ -3,6 +3,8 @@
 import type { DropdownOption } from "@/components/ui";
 import type {
   TicketDetailReadResult,
+  TicketMetadataMutationActionState,
+  TicketMetadataMutationCapabilities,
   WorkspaceTicketColumn,
   WorkspaceTicketDetail,
   WorkspaceTicketRow,
@@ -24,9 +26,13 @@ type TicketWorkspaceDisplayProps = {
   columns: WorkspaceTicketColumn[];
   detail?: WorkspaceTicketDetail;
   detailResult?: TicketDetailReadResult;
+  metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   rows: WorkspaceTicketRow[];
   selectedTicketId?: string;
   tabs: WorkspaceTicketTab[];
+  updateTicketMetadataAction(
+    formData: FormData,
+  ): Promise<TicketMetadataMutationActionState>;
 };
 
 const savedViewOptions: DropdownOption[] = [
@@ -37,9 +43,11 @@ export function TicketWorkspaceDisplay({
   columns,
   detail,
   detailResult,
+  metadataMutationCapabilities,
   rows,
   selectedTicketId,
   tabs: ticketTabs,
+  updateTicketMetadataAction,
 }: TicketWorkspaceDisplayProps) {
   const {
     activeDetail,
@@ -96,7 +104,9 @@ export function TicketWorkspaceDisplay({
     ) : activeDetail?.detail ? (
       <TicketDetail
         detail={activeDetail.detail}
+        metadataMutationCapabilities={metadataMutationCapabilities}
         roundedTop={tabOrientation === "vertical"}
+        updateTicketMetadataAction={updateTicketMetadataAction}
       />
     ) : activeTicketId ? (
       <DetailLoadingState />

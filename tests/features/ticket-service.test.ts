@@ -5,7 +5,11 @@ import type {
   HelpdeskConnectionWithCredential,
   HelpdeskConnectionsRepository,
 } from "@/features/helpdesk-connections/repository";
-import { loadWorkspaceTicketDetail, loadWorkspaceTicketList } from "@/features/tickets";
+import {
+  loadWorkspaceTicketDetail,
+  loadWorkspaceTicketList,
+  updateWorkspaceTicketMetadata,
+} from "@/features/tickets";
 import { encryptSecret } from "@/security/encryption";
 import { validateProviderBaseUrl } from "@/security/base-url-validation";
 
@@ -158,6 +162,7 @@ describe("ticket read service", () => {
     expect(result).toMatchObject({
       status: "available",
       connectionName: "Support",
+      metadataMutationCapabilities: { state: false, priority: false },
     });
     expect(listTickets).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -258,5 +263,106 @@ describe("ticket read service", () => {
     );
 
     expect(result).toMatchObject({ status: "unavailable", reason });
+  });
+
+  it("updates canonical ticket metadata and refreshes affected list and detail", async () => {
+    const updateTicketMetadata = vi.fn().mockResolvedValue(undefined);
+    const listTickets = vi.fn(provider().listTickets);
+    const getTicketDetail = vi.fn(provider().getTicketDetail);
+
+    const result = await updateWorkspaceTicketMetadata(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([
+        provider({
+          capabilities: [
+            "ticket:list",
+            "ticket:detail",
+            "ticket:update-state",
+            "ticket:update-priority",
+          ],
+          getTicketDetail,
+          listTickets,
+          updateTicketMetadata,
+        }),
+      ]),
+      encryptionKey,
+      "user-1",
+      "ticket-1",
+      { state: "closed", priority: "high" },
+    );
+
+    expect(result).toEqual({ status: "saved" });
+    expect(updateTicketMetadata).toHaveBeenCalledWith(
+      expect.objectContaining({
+        credentialPayload: { username: "agent", password: "secret" },
+        requestSecurity: { validatedAddresses: ["93.184.216.34"] },
+      }),
+      "ticket-1",
+      { state: "closed", priority: "high" },
+    );
+    expect(getTicketDetail).toHaveBeenCalledWith(expect.any(Object), "ticket-1");
+    expect(listTickets).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ limit: 25 }),
+    );
+  });
+
+  it("rejects ticket metadata mutation when provider capability is unavailable", async () => {
+    const updateTicketMetadata = vi.fn().mockResolvedValue(undefined);
+
+    const result = await updateWorkspaceTicketMetadata(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([
+        provider({
+          capabilities: ["ticket:list", "ticket:detail"],
+          updateTicketMetadata,
+        }),
+      ]),
+      encryptionKey,
+      "user-1",
+      "ticket-1",
+      { state: "closed" },
+    );
+
+    expect(result).toEqual({
+      status: "failed",
+      reason: "unsupported-capability",
+      retryable: false,
+    });
+    expect(updateTicketMetadata).not.toHaveBeenCalled();
+  });
+
+  it("reports saved-refresh-failed when post-write provider refresh fails", async () => {
+    const result = await updateWorkspaceTicketMetadata(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([
+        provider({
+          capabilities: ["ticket:list", "ticket:detail", "ticket:update-state"],
+          getTicketDetail: async () => {
+            throw new ProviderError("temporary-provider-failure", "network", true);
+          },
+          updateTicketMetadata: async () => undefined,
+        }),
+      ]),
+      encryptionKey,
+      "user-1",
+      "ticket-1",
+      { state: "closed" },
+    );
+
+    expect(result).toEqual({
+      status: "saved-refresh-failed",
+      reason: "provider-temporary-failure",
+      retryable: true,
+    });
   });
 });

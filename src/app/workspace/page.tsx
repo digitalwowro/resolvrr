@@ -15,6 +15,7 @@ import {
   workspaceTicketRows,
   workspaceTicketTabs,
 } from "@/features/tickets";
+import { updateTicketMetadataAction } from "@/features/tickets/actions";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import { providerRegistry } from "@/providers";
 
@@ -71,10 +72,16 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       detailResult={detailResult}
       listResult={listResult}
       logoutAction={logoutAction}
+      metadataMutationCapabilities={
+        listResult.status === "available"
+          ? listResult.metadataMutationCapabilities
+          : undefined
+      }
       rows={rows}
       selectedTicketId={selectedTicketId}
       setActiveConnectionAction={setActiveHelpdeskConnectionAction}
       tabs={workspaceTicketTabs(rows)}
+      updateTicketMetadataAction={updateTicketMetadataAction}
       userEmail={user.email}
     />
   );
