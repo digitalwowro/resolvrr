@@ -75,6 +75,7 @@ export function TicketWorkspaceDisplay({
     toggleRow,
     toggleSelectAll,
     toggleSort,
+    updateOpenTicketTabMetadata,
     visibleColumnSet,
   } = useTicketWorkspaceDisplayState({
     columns,
@@ -109,6 +110,7 @@ export function TicketWorkspaceDisplay({
         key="work-area"
         detail={activeDetail.detail}
         metadataMutationCapabilities={metadataMutationCapabilities}
+        onMetadataSaved={updateOpenTicketTabMetadata}
         onReturnToListAfterUpdate={returnActiveTicketToList}
         roundedTop={tabOrientation === "vertical"}
         updateTicketMetadataAction={updateTicketMetadataAction}

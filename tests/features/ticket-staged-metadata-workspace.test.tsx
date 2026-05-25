@@ -201,6 +201,7 @@ describe("TicketWorkspace staged metadata updates", () => {
       <TicketMetadataEditor
         detail={detailProps.detail}
         metadataMutationCapabilities={{ state: true, priority: true }}
+        onMetadataSaved={vi.fn()}
         onReturnToListAfterUpdate={vi.fn()}
         updateTicketMetadataAction={noopMutationAction}
       />,
@@ -215,6 +216,7 @@ describe("TicketWorkspace staged metadata updates", () => {
       <TicketMetadataEditor
         detail={nextDetailProps.detail}
         metadataMutationCapabilities={{ state: true, priority: true }}
+        onMetadataSaved={vi.fn()}
         onReturnToListAfterUpdate={vi.fn()}
         updateTicketMetadataAction={noopMutationAction}
       />,

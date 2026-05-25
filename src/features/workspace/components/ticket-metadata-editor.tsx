@@ -24,6 +24,7 @@ import {
   metadataDraftSubmittedBaseline,
   validateMetadataDraft,
   type TicketMetadataDraft,
+  type TicketMetadataSavedPatch,
 } from "./metadata-draft";
 import {
   shouldReturnToListAfterUpdate,
@@ -62,10 +63,7 @@ function mutationStatusText(
   if (saving) {
     return "Saving metadata...";
   }
-  if (
-    result.status === "failed" ||
-    result.status === "saved-refresh-failed"
-  ) {
+  if (result.status === "failed" || result.status === "saved-refresh-failed") {
     return result.message;
   }
   return undefined;
@@ -81,11 +79,13 @@ function actionErrorState(): TicketMetadataMutationActionState {
 export function TicketMetadataEditor({
   detail,
   metadataMutationCapabilities,
+  onMetadataSaved,
   onReturnToListAfterUpdate,
   updateTicketMetadataAction,
 }: {
   detail: WorkspaceTicketDetail;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
+  onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
   onReturnToListAfterUpdate(): void;
   updateTicketMetadataAction(
     formData: FormData,
@@ -99,6 +99,7 @@ export function TicketMetadataEditor({
       key={metadataDraftKey(loadedBaseline)}
       loadedBaseline={loadedBaseline}
       metadataMutationCapabilities={metadataMutationCapabilities}
+      onMetadataSaved={onMetadataSaved}
       onReturnToListAfterUpdate={onReturnToListAfterUpdate}
       updateTicketMetadataAction={updateTicketMetadataAction}
     />
@@ -109,20 +110,21 @@ function TicketMetadataEditorState({
   detail,
   loadedBaseline,
   metadataMutationCapabilities,
+  onMetadataSaved,
   onReturnToListAfterUpdate,
   updateTicketMetadataAction,
 }: {
   detail: WorkspaceTicketDetail;
   loadedBaseline: TicketMetadataDraft;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
+  onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
   onReturnToListAfterUpdate(): void;
   updateTicketMetadataAction(
     formData: FormData,
   ): Promise<TicketMetadataMutationActionState>;
 }) {
   const router = useRouter();
-  const [baseline, setBaseline] =
-    useState<TicketMetadataDraft>(loadedBaseline);
+  const [baseline, setBaseline] = useState<TicketMetadataDraft>(loadedBaseline);
   const [draft, setDraft] = useState<TicketMetadataDraft>(
     metadataDraftFromBaseline(loadedBaseline),
   );
@@ -137,7 +139,6 @@ function TicketMetadataEditorState({
   const stateDisplay = selectedStateDisplay(draft.state);
   const showPendingDate = stateRequiresPendingDate(detail, draft.state);
   const canUpdate = hasChanges && validation.valid && !saving;
-
   function changeDraft(nextDraft: TicketMetadataDraft) {
     setDraft(nextDraft);
     setMutationResult({ status: "idle" });
@@ -169,6 +170,13 @@ function TicketMetadataEditorState({
           result.status === "saved-refresh-failed"
         ) {
           const submittedBaseline = metadataDraftSubmittedBaseline(draft);
+          onMetadataSaved({
+            priority: dirtyFields.priority ? submittedBaseline.priority : undefined,
+            state: dirtyFields.state || dirtyFields.pendingUntil
+              ? submittedBaseline.state
+              : undefined,
+            ticketExternalId: submittedBaseline.ticketExternalId,
+          });
           setBaseline(submittedBaseline);
           setDraft(metadataDraftFromBaseline(submittedBaseline));
           if (
@@ -268,16 +276,6 @@ function TicketMetadataEditorState({
     </>
   );
 
-  const actionBar = (
-    <TicketMetadataActionBar
-      canDiscard={hasChanges}
-      canUpdate={canUpdate}
-      onDiscard={discardChanges}
-      onUpdate={submitChanges}
-      saving={saving}
-    />
-  );
-
   return (
     <>
       <div className="flex min-h-0 flex-1">
@@ -286,7 +284,13 @@ function TicketMetadataEditorState({
         </div>
         <TicketDetailSidebar detail={detail}>{fields}</TicketDetailSidebar>
       </div>
-      {actionBar}
+      <TicketMetadataActionBar
+        canDiscard={hasChanges}
+        canUpdate={canUpdate}
+        onDiscard={discardChanges}
+        onUpdate={submitChanges}
+        saving={saving}
+      />
     </>
   );
 }

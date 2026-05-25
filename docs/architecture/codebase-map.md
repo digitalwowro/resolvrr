@@ -35,9 +35,6 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/app/workspace/page.tsx`: protected authenticated workspace route that
   composes the active helpdesk connection ticket read path and controlled
   state/priority mutation action into the real workspace.
-- `src/app/workspace/demo/page.tsx`: protected static workspace preview route
-  for local UI review; this keeps synthetic tickets out of the real
-  `/workspace` runtime path.
 - `src/app/workspace/connections/page.tsx`: protected helpdesk workspace
   connection list route.
 - `src/app/workspace/connections/new/page.tsx`: protected add-connection form
@@ -190,14 +187,14 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/ticket-workspace.tsx`: provider-backed
   workspace composition for the real `/workspace` route. It wires
   provider-neutral read models and state/priority mutation capabilities into
-  demo-derived, production-safe components.
+  approved production workspace components.
 - `src/features/workspace/components/ticket-workspace-display.tsx`: client-side
   production workspace display composition for controls, tabs, table, and
   selected-ticket detail surfaces.
 - `src/features/workspace/components/ticket-workspace-state.ts`: client-side
   workspace-only state for active pane, open ticket tabs, detail cache, tab
-  orientation, visible columns, row selection, grouping, sorting, and route
-  navigation.
+  metadata patches after successful staged updates, tab orientation, visible
+  columns, row selection, grouping, sorting, and route navigation.
 - `src/features/workspace/components/workspace-header.tsx`: production
   workspace header presentation with brand, search, status icon, and an
   avatar/profile menu fed by real connection/action props.
@@ -227,6 +224,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/ticket-metadata-action-bar.tsx`: sticky
   full-width selected-ticket metadata action row with Discard changes and
   Update controls plus post-update navigation selection.
+- `src/features/workspace/components/ticket-tab-metadata.ts`: small helper for
+  patching open ticket tab display metadata after successful staged updates.
 - `src/features/workspace/components/post-update-navigation.ts`: provider-
   neutral post-Update navigation values, localStorage helpers, and final-state
   navigation decision helper.
@@ -254,25 +253,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   presentation helpers for horizontal tabs, vertical tabs, density calculation,
   and shared tab link rendering.
 - `src/features/workspace/components/**`: production-safe presentational
-  components extracted from the approved static workspace implementation
-  decisions. They must not import demo fixtures, provider services,
-  repositories, server actions, Zammad code, or demo modules.
-- `src/features/workspace/demo`: mockup-only static workspace area used by the
-  protected `/workspace/demo` route. This folder is deletable without breaking
-  the real provider-backed `/workspace` route.
-- `src/features/workspace/demo/static-types.ts`: feature-local synthetic
-  workspace UI fixture types, not core/provider/data models.
-- `src/features/workspace/demo/static-fixtures.ts`: synthetic saved views,
-  profile menu rows, ticket tabs, ticket rows, and columns for static workspace
-  review.
-- `src/features/workspace/demo/static-workspace.tsx`: client-side static
-  workspace shell with local-only interaction state for `/workspace/demo`.
-- `src/features/workspace/demo/components`: mockup-only components for the
-  static workspace preview, including synthetic ticket tabs, table, thread,
-  sidebar, toolbar, and header behavior.
-- `src/features/workspace/demo/components/ticket-tabs`: split demo-only
-  horizontal tab, vertical tab, list tab, and density/style helpers used by the
-  static workspace preview.
+  components extracted from approved workspace implementation decisions. They
+  must not import provider services, repositories, server actions, or Zammad
+  code.
 - `src/components/ui`: reusable UI primitives.
 - `src/components/ui/button.tsx`: compact button primitive.
 - `src/components/ui/checkbox.tsx`: labeled checkbox primitive.
@@ -392,6 +375,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-staged-metadata-workspace.test.tsx`: verifies staged
   single-ticket metadata update behavior, changed-field treatment, discard,
   selected-ticket rebasing, and saved-refresh-failed UI handling.
+- `tests/features/ticket-tab-metadata-sync.test.tsx`: verifies a successful
+  staged state update immediately updates the active tab top-border state color
+  before server refresh rehydrates the workspace.
 - `tests/features/workspace-adapter.test.ts`: verifies ticket-to-workspace
   adapter display formatting for table/detail/thread date strings.
 - `tests/features/ticket-workspace-horizontal-tabs.test.tsx`: verifies local

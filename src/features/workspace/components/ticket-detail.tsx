@@ -6,12 +6,14 @@ import type {
   TicketMetadataMutationCapabilities,
   WorkspaceTicketDetail,
 } from "@/features/tickets";
+import type { TicketMetadataSavedPatch } from "./metadata-draft";
 import { StateCell } from "./ticket-table-cells";
 import { TicketMetadataEditor } from "./ticket-metadata-editor";
 
 type TicketDetailProps = {
   detail: WorkspaceTicketDetail;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
+  onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
   onReturnToListAfterUpdate(): void;
   roundedTop?: boolean;
   updateTicketMetadataAction(
@@ -22,6 +24,7 @@ type TicketDetailProps = {
 export function TicketDetail({
   detail,
   metadataMutationCapabilities,
+  onMetadataSaved,
   onReturnToListAfterUpdate,
   roundedTop = true,
   updateTicketMetadataAction,
@@ -98,6 +101,7 @@ export function TicketDetail({
         metadataMutationCapabilities={
           metadataMutationCapabilities ?? { state: false, priority: false }
         }
+        onMetadataSaved={onMetadataSaved}
         onReturnToListAfterUpdate={onReturnToListAfterUpdate}
         updateTicketMetadataAction={updateTicketMetadataAction}
       />

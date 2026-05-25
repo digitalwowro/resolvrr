@@ -27,6 +27,12 @@ export type TicketMetadataDraftValidation = {
   valid: boolean;
 };
 
+export type TicketMetadataSavedPatch = {
+  priority?: TicketPriority;
+  state?: TicketState;
+  ticketExternalId: string;
+};
+
 function isPendingState(state: TicketState | undefined): boolean {
   return state === "pending_reminder" || state === "pending_close";
 }

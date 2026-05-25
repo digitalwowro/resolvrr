@@ -62,23 +62,12 @@ AI features are deferred. The first workspace UI should omit AI status. If a
 future interim indicator is added before AI features are approved, it must only
 communicate unavailable or not configured state.
 
-## Static Workspace Slice
-
-The static synthetic workspace now lives at `/workspace/demo`. It validates
-layout, primitive usage, density, local interaction states, horizontal and
-vertical ticket tabs, and a dense ticket table. Static state gallery controls
-are omitted from the operational toolbar.
-
-Static workspace data is feature-local fixture data. It does not represent a
-core domain model, provider contract, saved-view backend, helpdesk connection,
-ticket cache, or persisted user preference.
+## Production Data Boundary
 
 The real `/workspace` route must not mix synthetic tickets with provider-backed
 tickets. Without an active helpdesk connection, it renders a disconnected state
 with a path to connection management.
 
-Mockup-only code for the static preview lives under
-`src/features/workspace/demo`. Production workspace components live under
-`src/features/workspace/components` and must not import synthetic fixtures,
-demo modules, provider services, repositories, server actions, or provider
+Production workspace components live under `src/features/workspace/components`
+and must not import provider services, repositories, server actions, or provider
 plugin internals.
