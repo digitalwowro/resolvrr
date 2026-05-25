@@ -20,6 +20,7 @@ import {
 } from "./ticket-table-grouping";
 import { patchTicketTabMetadata } from "./ticket-tab-metadata";
 import type { TicketTabOrientation } from "./ticket-tabs-panel";
+import { replaceWorkspaceUrl, ticketPath } from "./workspace-url";
 
 type ActiveWorkspacePane = "list" | { ticketId: string };
 
@@ -36,10 +37,6 @@ type TicketWorkspaceStateProps = {
   selectedTicketId?: string;
   ticketTabs: WorkspaceTicketTab[];
 };
-
-function ticketPath(ticketId?: string) {
-  return ticketId ? `/workspace?ticket=${encodeURIComponent(ticketId)}` : "/workspace";
-}
 
 function initialDetailCache({
   detail,
@@ -223,6 +220,7 @@ export function useTicketWorkspaceDisplayState({
   function showList() {
     cacheSelectedDetail();
     setActiveWorkspacePane("list");
+    replaceWorkspaceUrl();
   }
 
   function returnActiveTicketToList() {
@@ -239,9 +237,7 @@ export function useTicketWorkspaceDisplayState({
   function showOpenTicket(ticketId: string) {
     cacheSelectedDetail();
     setActiveWorkspacePane({ ticketId });
-    if (ticketId !== selectedTicketId) {
-      router.push(ticketPath(ticketId));
-    }
+    replaceWorkspaceUrl(ticketId);
   }
 
   function closeTicket(ticketId: string) {
@@ -258,11 +254,10 @@ export function useTicketWorkspaceDisplayState({
       const nextActive = next[closingIndex] ?? next[closingIndex - 1];
       if (nextActive) {
         setActiveWorkspacePane({ ticketId: nextActive.id });
-        if (nextActive.id !== selectedTicketId) {
-          router.push(ticketPath(nextActive.id));
-        }
+        replaceWorkspaceUrl(nextActive.id);
       } else {
         setActiveWorkspacePane("list");
+        replaceWorkspaceUrl();
       }
     }
   }

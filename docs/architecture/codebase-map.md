@@ -195,6 +195,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   workspace-only state for active pane, open ticket tabs, detail cache, tab
   metadata patches after successful staged updates, tab orientation, visible
   columns, row selection, grouping, sorting, and route navigation.
+- `src/features/workspace/components/workspace-url.ts`: workspace ticket/List
+  URL path and history replacement helpers for local tab navigation.
 - `src/features/workspace/components/workspace-header.tsx`: production
   workspace header presentation with brand, search, status icon, and an
   avatar/profile menu fed by real connection/action props.
@@ -386,6 +388,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-workspace-vertical-tabs.test.tsx`: verifies local
   vertical ticket tab orientation, open/activation behavior, and route
   navigation without persistence.
+- `tests/features/ticket-workspace-url-sync.test.tsx`: verifies local
+  ticket/List URL replacement for already-open tab activation and active-tab
+  close fallback behavior.
 - `tests/providers`: provider-specific tests.
 - `tests/providers/zammad/credentials.test.ts`: verifies provider-specific Basic
   Auth credential helpers.

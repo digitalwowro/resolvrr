@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import {
@@ -25,10 +25,16 @@ vi.mock("next/navigation", () => ({
 describe("TicketWorkspace horizontal tabs", () => {
   beforeEach(() => {
     routerPush.mockClear();
+    window.history.replaceState(null, "", "/workspace?ticket=ticket-1");
   });
 
-  it("keeps ticket tabs open when switching to List", async () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("keeps ticket tabs open when switching to List and updates the URL locally", async () => {
     const user = userEvent.setup();
+    const replaceState = vi.spyOn(window.history, "replaceState");
     const detailProps = selectedDetailProps();
     render(
       <TicketWorkspace
@@ -51,15 +57,23 @@ describe("TicketWorkspace horizontal tabs", () => {
 
     expect(screen.getByRole("table", { name: "Tickets" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /#1001/u })).toBeInTheDocument();
+    expect(replaceState).toHaveBeenLastCalledWith(null, "", "/workspace");
 
     await user.click(screen.getByRole("tab", { name: /#1001/u }));
 
     expect(screen.getByLabelText("Ticket detail #1001")).toBeInTheDocument();
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(replaceState).toHaveBeenLastCalledWith(
+      null,
+      "",
+      "/workspace?ticket=ticket-1",
+    );
 
     await user.click(screen.getByRole("button", { name: "Close #1001" }));
 
     expect(screen.queryByRole("tab", { name: /#1001/u })).not.toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Tickets" })).toBeInTheDocument();
+    expect(replaceState).toHaveBeenLastCalledWith(null, "", "/workspace");
   });
 
   it("caps full ticket tab width and keeps the close button visible", () => {
@@ -133,7 +147,7 @@ describe("TicketWorkspace horizontal tabs", () => {
     expect(screen.getAllByRole("tab", { name: /#1002/u })).toHaveLength(1);
   });
 
-  it("reactivates older ticket tabs and shows their cached detail", async () => {
+  it("reactivates older ticket tabs with replaceState and shows their cached detail", async () => {
     const user = userEvent.setup();
     const detailA = detailPropsFor(row, "First ticket thread");
     const detailB = detailPropsFor(highRow, "Second ticket thread");
@@ -177,9 +191,19 @@ describe("TicketWorkspace horizontal tabs", () => {
       />,
     );
 
+    routerPush.mockClear();
+    const replaceState = vi.spyOn(window.history, "replaceState");
+    const historyLength = window.history.length;
+
     await user.click(screen.getByRole("tab", { name: /#1001/u }));
 
-    expect(routerPush).toHaveBeenCalledWith("/workspace?ticket=ticket-1");
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(replaceState).toHaveBeenLastCalledWith(
+      null,
+      "",
+      "/workspace?ticket=ticket-1",
+    );
+    expect(window.history.length).toBe(historyLength);
     expect(screen.getByLabelText("Ticket detail #1001")).toBeInTheDocument();
     expect(screen.getByText("First ticket thread")).toBeInTheDocument();
     expect(
@@ -188,6 +212,13 @@ describe("TicketWorkspace horizontal tabs", () => {
 
     await user.click(screen.getByRole("tab", { name: /#1002/u }));
 
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(replaceState).toHaveBeenLastCalledWith(
+      null,
+      "",
+      "/workspace?ticket=ticket-2",
+    );
+    expect(window.history.length).toBe(historyLength);
     expect(screen.getByLabelText("Ticket detail #1002")).toBeInTheDocument();
     expect(screen.getByText("Second ticket thread")).toBeInTheDocument();
   });

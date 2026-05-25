@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import {
@@ -25,6 +25,11 @@ vi.mock("next/navigation", () => ({
 describe("TicketWorkspace vertical tabs", () => {
   beforeEach(() => {
     routerPush.mockClear();
+    window.history.replaceState(null, "", "/workspace?ticket=ticket-1");
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("keeps ticket tabs open across List and orientation switches", async () => {
@@ -136,9 +141,17 @@ describe("TicketWorkspace vertical tabs", () => {
 
     await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
+    const replaceState = vi.spyOn(window.history, "replaceState");
+    routerPush.mockClear();
+
     await user.click(screen.getByRole("tab", { name: /Cannot log in/u }));
 
-    expect(routerPush).toHaveBeenCalledWith("/workspace?ticket=ticket-1");
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(replaceState).toHaveBeenLastCalledWith(
+      null,
+      "",
+      "/workspace?ticket=ticket-1",
+    );
     expect(screen.getByLabelText("Ticket detail #1001")).toBeInTheDocument();
     expect(screen.getByText("First vertical thread")).toBeInTheDocument();
     expect(
@@ -147,6 +160,12 @@ describe("TicketWorkspace vertical tabs", () => {
 
     await user.click(screen.getByRole("tab", { name: /Webhook failed/u }));
 
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(replaceState).toHaveBeenLastCalledWith(
+      null,
+      "",
+      "/workspace?ticket=ticket-2",
+    );
     expect(screen.getByLabelText("Ticket detail #1002")).toBeInTheDocument();
     expect(screen.getByText("Second vertical thread")).toBeInTheDocument();
   });
