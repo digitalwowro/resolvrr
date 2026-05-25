@@ -327,6 +327,35 @@ describe("ticket read service", () => {
     );
   });
 
+  it("dispatches only canonical list query fields to provider plugins", async () => {
+    const listTickets = vi.fn(provider().listTickets);
+
+    await loadWorkspaceTicketList(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([provider({ listTickets })]),
+      encryptionKey,
+      "user-1",
+      {
+        pageSize: 10,
+        zammadQuery: "state.name:open",
+        rawProviderParams: { state_id: 2 },
+      } as unknown as Parameters<typeof loadWorkspaceTicketList>[4],
+    );
+
+    const dispatchedQuery = listTickets.mock.calls[0]?.[1];
+
+    expect(dispatchedQuery).toEqual({
+      filter: {},
+      pageSize: 10,
+      sort: { key: "updatedAt", direction: "descending" },
+    });
+    expect("zammadQuery" in dispatchedQuery).toBe(false);
+    expect("rawProviderParams" in dispatchedQuery).toBe(false);
+  });
+
   it("maps unsupported capabilities to an unavailable state", async () => {
     const result = await loadWorkspaceTicketDetail(
       repository({

@@ -133,14 +133,23 @@ export function constrainTicketListPageSize(value: number): number {
 export function normalizeTicketListQuery(
   query: TicketListQueryInput = {},
 ): TicketListQuery {
-  const { limit, ...canonicalQuery } = query;
-
-  return {
-    ...defaultTicketListQuery,
-    ...canonicalQuery,
+  const normalized: TicketListQuery = {
     filter: query.filter ?? defaultTicketListQuery.filter,
     pageSize: constrainTicketListPageSize(
-      query.pageSize ?? limit ?? defaultTicketListQuery.pageSize,
+      query.pageSize ?? query.limit ?? defaultTicketListQuery.pageSize,
     ),
+    sort: query.sort ?? defaultTicketListQuery.sort,
   };
+
+  if (query.cursor) {
+    normalized.cursor = query.cursor;
+  }
+  if (query.count) {
+    normalized.count = query.count;
+  }
+  if (query.group) {
+    normalized.group = query.group;
+  }
+
+  return normalized;
 }

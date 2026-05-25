@@ -62,6 +62,19 @@ bodies, request bodies containing secrets, credentials, URLs with embedded
 secrets, or raw customer ticket content. Non-success responses are classified
 by status code while their bodies are discarded.
 
+## Ticket List Query Boundary
+
+Core and feature code pass only the provider-neutral `TicketListQuery` contract
+to provider plugins. The normalized query shape contains canonical filter,
+`pageSize`, opaque cursor, sort, count, and grouping fields only. Raw provider
+search strings, provider parameter names, endpoint paths, and provider-specific
+cursor formats must not be accepted or forwarded by core/feature code.
+
+Provider plugins own compilation from the provider-neutral query to upstream
+API syntax. If a query asks for a capability the provider has not advertised,
+or for a guarded expensive combination, the ticket service returns a
+provider-neutral unavailable state before provider code is called.
+
 ## Ticket Metadata Mutations
 
 The first approved mutation surface is state and priority only. Provider-neutral
@@ -97,6 +110,9 @@ consume only canonical ticket values and provider capabilities. Zammad currently
 advertises `ticket:list`, `ticket:detail`, `ticket:update-state`, and
 `ticket:update-priority`; unsupported links and subscription data are returned
 as the required empty canonical shapes documented in the ticket contract.
+Zammad also does not advertise provider-backed count, sort, grouping, grouped
+count, or full-text search yet, so those requests are rejected by the
+provider-neutral guardrail layer before Zammad list code is called.
 Zammad-specific state-transition behavior also stays inside this provider
 folder: the canonical `new` state is shown as the current value when applicable
 but is omitted from the selectable state menu, and pending-state transitions

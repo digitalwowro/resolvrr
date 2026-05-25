@@ -360,6 +360,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/unit/session-cookie.test.ts`: verifies secure session cookie options.
 - `tests/unit/ticket-contract.test.ts`: verifies canonical ticket state and
   priority keys, labels, categories, and ranks.
+- `tests/unit/ticket-list-query.test.ts`: verifies provider-neutral ticket list
+  query defaults, normalization, count/group shapes, page-size guardrails, and
+  unknown provider-specific field stripping.
 - `tests/unit/workspace-date-time-format.test.ts`: verifies shared workspace
   date/time formatting omits the current year and uses 24-hour time.
 - `tests/components`: component interaction tests for shared UI primitives.
@@ -389,6 +392,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   provider-neutral metadata mutation service dispatch, capability failures,
   pending-date validation, unavailable-transition handling, and
   refresh-after-write results.
+- `tests/features/ticket-list-query-guardrails.test.ts`: verifies
+  provider-neutral list query capability derivation and unsupported or
+  too-expensive query rejection before provider dispatch.
 - `tests/features/ticket-metadata-mutation-workspace.test.tsx`: verifies
   workspace metadata mutation submit, hidden state options, pending date/time
   input, error, and staged non-optimistic UI behavior.

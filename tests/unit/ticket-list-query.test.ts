@@ -67,6 +67,23 @@ describe("ticket list query contract", () => {
     expect("limit" in query).toBe(false);
   });
 
+  it("drops unknown provider-specific input fields during normalization", () => {
+    const query = normalizeTicketListQuery({
+      filter: { states: ["open"] },
+      pageSize: 10,
+      rawProviderQuery: "state.name:open",
+      zammadSearch: "state_id:2",
+    } as unknown as Parameters<typeof normalizeTicketListQuery>[0]);
+
+    expect(query).toEqual({
+      filter: { states: ["open"] },
+      pageSize: 10,
+      sort: { key: "updatedAt", direction: "descending" },
+    });
+    expect("rawProviderQuery" in query).toBe(false);
+    expect("zammadSearch" in query).toBe(false);
+  });
+
   it("constrains page size to the provider-neutral hard limits", () => {
     expect(ticketListPageSizeLimits).toEqual({ min: 1, default: 25, max: 50 });
     expect(constrainTicketListPageSize(0)).toBe(1);

@@ -202,7 +202,8 @@ range of 1 to 50 before provider dispatch. Unsupported count, explicit
 provider-backed sort, grouping, and full-text query requests return a
 provider-neutral `unsupported-query` unavailable state before provider code is
 called. Grouped total counts without `ticket:group-count` return
-`query-too-expensive`.
+`query-too-expensive`. Query normalization drops unknown fields so raw provider
+query syntax cannot be forwarded through the provider-neutral service boundary.
 
 `TicketListResult.loadedCount` is the number of list items returned in the
 current response. `TicketListResult.totalCount`, when present, is the provider's
