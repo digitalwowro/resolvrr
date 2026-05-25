@@ -5,6 +5,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 
 ## Root Files
 
+- `.github/workflows/ci.yml`: GitHub Actions workflow for normal verification
+  CI on pull requests and pushes to `main`.
 - `.gitignore`: keeps local secrets, dependencies, build output, generated
   clients, logs, private memory, and editor files out of the app repo.
 - `package.json`: npm scripts and pinned application dependencies.

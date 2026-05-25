@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      NODE_ENV: test
+      APP_BASE_URL: http://localhost:3005
+      HOSTNAME: localhost
+      PORT: "3005"
+      ALLOWED_DEV_ORIGINS: localhost,127.0.0.1
+      DATABASE_URL: postgresql://resolvrr:resolvrr@localhost:5432/resolvrr?schema=public
+      APP_ENCRYPTION_KEY: 00000000000000000000000000000000
+      SESSION_SECRET: 00000000000000000000000000000000
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Check docs
+        run: npm run docs:check
+
+      - name: Build
+        run: npm run build
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=moderate
