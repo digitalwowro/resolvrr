@@ -7,6 +7,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 
 - `.github/dependabot.yml`: Dependabot update configuration for npm packages
   and GitHub Actions.
+- `.github/workflows/codeql.yml`: GitHub CodeQL workflow for JavaScript and
+  TypeScript analysis on main, pull requests to main, and a weekly schedule.
 - `.gitignore`: keeps local secrets, dependencies, build output, generated
   clients, logs, private memory, and editor files out of the app repo.
 - `package.json`: npm scripts and pinned application dependencies.
