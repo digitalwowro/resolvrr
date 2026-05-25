@@ -143,6 +143,11 @@ Read-path capabilities:
 
 - `ticket:list`: provider can return paginated ticket list items.
 - `ticket:count`: provider can count tickets for a saved view filter.
+- `ticket:sort`: provider can apply provider-backed list sort requests.
+- `ticket:group`: provider can return provider-backed list grouping buckets.
+- `ticket:group-count`: provider can safely return total counts for grouped
+  buckets. This is separate from `ticket:group` because grouped count queries
+  can be materially more expensive than grouped row reads.
 - `ticket:detail`: provider can return ticket detail with thread articles.
 - `ticket:links`: detail includes provider-neutral related ticket links.
 - `ticket:subscription`: detail includes follow/subscription state.
@@ -179,6 +184,25 @@ Ticket list reads use `TicketListQuery`:
   limited to whether a total count is requested.
 - `group`: optional provider-neutral bucket request keyed by `state`,
   `priority`, `owner`, `customer`, or `group`.
+
+The provider-neutral list query guardrail model exposes these capabilities to
+features:
+
+- `totalCount`: backed by `ticket:count`.
+- `providerSort`: backed by `ticket:sort`.
+- `providerGrouping`: backed by `ticket:group`.
+- `groupedTotalCount`: backed by `ticket:group-count`.
+- `fullTextSearch`: backed by `search:full-text`.
+- `maxPageSize`: currently 50.
+- `unsupportedCombinations`: currently includes `grouped-total-count` unless
+  the provider explicitly advertises `ticket:group-count`.
+
+The ticket service constrains requested page size to the provider-neutral hard
+range of 1 to 50 before provider dispatch. Unsupported count, explicit
+provider-backed sort, grouping, and full-text query requests return a
+provider-neutral `unsupported-query` unavailable state before provider code is
+called. Grouped total counts without `ticket:group-count` return
+`query-too-expensive`.
 
 `TicketListResult.loadedCount` is the number of list items returned in the
 current response. `TicketListResult.totalCount`, when present, is the provider's

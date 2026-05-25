@@ -177,6 +177,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/tickets/mutation-model.ts`: provider-neutral state/priority
   metadata mutation capabilities, pending-date validation, result/error model,
   and action state types.
+- `src/features/tickets/list-query-guardrails.ts`: provider-neutral list query
+  capability derivation and guardrail checks for unsupported or expensive query
+  requests before provider dispatch.
 - `src/features/tickets/read-model.ts`: provider-neutral ticket read result,
   unavailable-state, metadata mutation capability exposure, and default list
   query types.

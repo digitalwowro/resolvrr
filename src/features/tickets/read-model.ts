@@ -1,5 +1,9 @@
 import type { TicketDetail, TicketExternalId, TicketListItem } from "@/core/tickets";
-import type { TicketListBucket } from "@/core/providers";
+import type {
+  TicketListBucket,
+  TicketListQueryCapabilities,
+  TicketListQueryRejection,
+} from "@/core/providers";
 import type { TicketMetadataMutationCapabilities } from "./mutation-model";
 export { defaultTicketListQuery } from "@/core/ticket-list-query";
 
@@ -14,18 +18,22 @@ export type TicketReadUnavailableReason =
   | "provider-rate-limited"
   | "provider-temporary-failure"
   | "provider-unexpected-response"
+  | "unsupported-query"
+  | "query-too-expensive"
   | "invalid-connection";
 
 export type TicketReadUnavailable = {
   status: "unavailable";
   reason: TicketReadUnavailableReason;
   retryable: boolean;
+  queryRejection?: TicketListQueryRejection;
 };
 
 export type TicketListAvailable = {
   status: "available";
   connectionName: string;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
+  queryCapabilities?: TicketListQueryCapabilities;
   tickets: TicketListItem[];
   loadedCount: number;
   totalCount?: number;
@@ -45,8 +53,9 @@ export type TicketDetailReadResult = TicketDetailAvailable | TicketReadUnavailab
 export function unavailableTicketRead(
   reason: TicketReadUnavailableReason,
   retryable = false,
+  queryRejection?: TicketListQueryRejection,
 ): TicketReadUnavailable {
-  return { status: "unavailable", reason, retryable };
+  return { status: "unavailable", reason, retryable, queryRejection };
 }
 
 export function selectedTicketExternalId(
