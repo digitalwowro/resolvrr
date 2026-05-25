@@ -147,13 +147,16 @@ describe("TicketWorkspace post-update navigation", () => {
 
   it("returns to list after a successful update when selected", async () => {
     const user = userEvent.setup();
+    const replaceState = vi.spyOn(window.history, "replaceState");
     renderWorkspace();
 
     await stagePriorityChange(user);
     await chooseNavigation(user, "Close tab & go to List");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
-    await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/workspace"));
+    await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(replaceState).toHaveBeenLastCalledWith(null, "", "/workspace");
     expect(screen.queryByLabelText("Ticket detail #1001")).not.toBeInTheDocument();
     expect(
       screen.getByRole("tab", { name: "Return to list: All tickets" }),
@@ -162,6 +165,7 @@ describe("TicketWorkspace post-update navigation", () => {
 
   it("returns to list when the final submitted state is closed", async () => {
     const user = userEvent.setup();
+    const replaceState = vi.spyOn(window.history, "replaceState");
     renderWorkspace();
 
     await user.click(screen.getByRole("combobox", { name: "Ticket state" }));
@@ -169,7 +173,9 @@ describe("TicketWorkspace post-update navigation", () => {
     await chooseNavigation(user, "Close tab if state is Closed");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
-    await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/workspace"));
+    await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(replaceState).toHaveBeenLastCalledWith(null, "", "/workspace");
     expect(screen.queryByLabelText("Ticket detail #1001")).not.toBeInTheDocument();
   });
 
@@ -188,6 +194,7 @@ describe("TicketWorkspace post-update navigation", () => {
 
   it("returns to list for priority-only updates when the final state is already closed", async () => {
     const user = userEvent.setup();
+    const replaceState = vi.spyOn(window.history, "replaceState");
     renderWorkspace({
       ticket: { ...row, state: "Closed", stateKey: "closed" },
     });
@@ -196,7 +203,9 @@ describe("TicketWorkspace post-update navigation", () => {
     await chooseNavigation(user, "Close tab if state is Closed");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
-    await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/workspace"));
+    await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(replaceState).toHaveBeenLastCalledWith(null, "", "/workspace");
   });
 
   it("does not navigate after failed saves and keeps the draft dirty", async () => {
@@ -221,6 +230,7 @@ describe("TicketWorkspace post-update navigation", () => {
 
   it("applies navigation after saved-refresh-failed without presenting save failure", async () => {
     const user = userEvent.setup();
+    const replaceState = vi.spyOn(window.history, "replaceState");
     const action = vi.fn<MutationAction>(async () => ({
       status: "saved-refresh-failed" as const,
       message:
@@ -232,7 +242,11 @@ describe("TicketWorkspace post-update navigation", () => {
     await chooseNavigation(user, "Close tab & go to List");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
-    await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/workspace"));
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Ticket detail #1001")).not.toBeInTheDocument(),
+    );
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(replaceState).toHaveBeenLastCalledWith(null, "", "/workspace");
     expect(action).toHaveBeenCalledOnce();
     expect(routerRefresh).not.toHaveBeenCalled();
     expect(screen.queryByText("Save failed.")).not.toBeInTheDocument();

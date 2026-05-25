@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useTableSort } from "@/components/ui";
 import type {
   LoadWorkspaceTicketDetailAction,
@@ -22,7 +21,7 @@ import {
 import { patchTicketTabMetadata } from "./ticket-tab-metadata";
 import type { TicketTabOrientation } from "./ticket-tabs-panel";
 import { useTicketDetailLoader } from "./use-ticket-detail-loader";
-import { replaceWorkspaceUrl, ticketPath } from "./workspace-url";
+import { replaceWorkspaceUrl } from "./workspace-url";
 
 type ActiveWorkspacePane = "list" | { ticketId: string };
 
@@ -45,7 +44,6 @@ export function useTicketWorkspaceDisplayState({
   selectedTicketId,
   ticketTabs,
 }: TicketWorkspaceStateProps) {
-  const router = useRouter();
   const initialDetailResult =
     detail ? { status: "available" as const, detail } : detailResult;
   const {
@@ -190,7 +188,7 @@ export function useTicketWorkspaceDisplayState({
       );
     }
     setActiveWorkspacePane("list");
-    router.push(ticketPath());
+    replaceWorkspaceUrl();
   }
 
   function showOpenTicket(ticketId: string) {
