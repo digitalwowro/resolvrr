@@ -96,6 +96,18 @@ describe("safe provider JSON reads", () => {
     );
   });
 
+  it("rejects DNS rebinding before making a JSON request", async () => {
+    mockedLookup.mockResolvedValueOnce(dnsResult("10.0.0.10", 4));
+
+    await expect(
+      safeProviderJson("https://helpdesk.example.com/api/v1/tickets", {
+        allowedAddresses: ["93.184.216.34"],
+        maxResponseBytes: 64,
+      }),
+    ).rejects.toThrow("blocked");
+    expect(mockedRequest).not.toHaveBeenCalled();
+  });
+
   it("does not parse non-success provider JSON response bodies", async () => {
     mockedLookup.mockResolvedValueOnce(dnsResult("93.184.216.34", 4));
     mockJsonRequest({ status: 401, body: "{\"secret\":\"body\"}" });
