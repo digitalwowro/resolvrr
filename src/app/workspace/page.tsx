@@ -16,6 +16,7 @@ import {
   workspaceTicketTabs,
 } from "@/features/tickets";
 import { updateTicketMetadataAction } from "@/features/tickets/actions";
+import { loadWorkspaceTicketDetailAction } from "@/features/tickets/detail-actions";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import { providerRegistry } from "@/providers";
 
@@ -55,9 +56,16 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           selectedTicketId,
         )
       : undefined;
-  const detail =
+  const workspaceDetailResult =
     detailResult?.status === "available"
-      ? workspaceTicketDetail(detailResult.detail)
+      ? {
+          status: "available" as const,
+          detail: workspaceTicketDetail(detailResult.detail),
+        }
+      : detailResult;
+  const detail =
+    workspaceDetailResult?.status === "available"
+      ? workspaceDetailResult.detail
       : undefined;
 
   return (
@@ -69,8 +77,9 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
         active: connection.active,
       }))}
       detail={detail}
-      detailResult={detailResult}
+      detailResult={workspaceDetailResult}
       listResult={listResult}
+      loadTicketDetailAction={loadWorkspaceTicketDetailAction}
       logoutAction={logoutAction}
       metadataMutationCapabilities={
         listResult.status === "available"

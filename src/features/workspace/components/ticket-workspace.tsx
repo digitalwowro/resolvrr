@@ -1,10 +1,11 @@
 import type {
-  TicketDetailReadResult,
+  LoadWorkspaceTicketDetailAction,
   TicketListReadResult,
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
   WorkspaceTicketColumn,
   WorkspaceTicketDetail,
+  WorkspaceTicketDetailLoadResult,
   WorkspaceTicketRow,
   WorkspaceTicketTab,
 } from "@/features/tickets";
@@ -20,8 +21,9 @@ type TicketWorkspaceProps = {
   columns: WorkspaceTicketColumn[];
   connections: WorkspaceMenuConnection[];
   detail?: WorkspaceTicketDetail;
-  detailResult?: TicketDetailReadResult;
+  detailResult?: WorkspaceTicketDetailLoadResult;
   listResult: TicketListReadResult;
+  loadTicketDetailAction?: LoadWorkspaceTicketDetailAction;
   logoutAction(formData: FormData): void | Promise<void>;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   rows: WorkspaceTicketRow[];
@@ -33,6 +35,12 @@ type TicketWorkspaceProps = {
   ): Promise<TicketMetadataMutationActionState>;
   userEmail: string;
 };
+
+const unavailableTicketDetailAction: LoadWorkspaceTicketDetailAction = async () => ({
+  status: "unavailable",
+  reason: "provider-temporary-failure",
+  retryable: true,
+});
 
 const profileActions: WorkspaceProfileAction[] = [
   {
@@ -48,6 +56,7 @@ export function TicketWorkspace({
   detail,
   detailResult,
   listResult,
+  loadTicketDetailAction = unavailableTicketDetailAction,
   logoutAction,
   metadataMutationCapabilities,
   rows,
@@ -79,6 +88,7 @@ export function TicketWorkspace({
           columns={columns}
           detail={detail}
           detailResult={detailResult}
+          loadTicketDetailAction={loadTicketDetailAction}
           metadataMutationCapabilities={effectiveMetadataMutationCapabilities}
           rows={rows}
           selectedTicketId={selectedTicketId}

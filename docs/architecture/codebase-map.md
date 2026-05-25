@@ -177,6 +177,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/tickets/read-model.ts`: provider-neutral ticket read result,
   unavailable-state, metadata mutation capability exposure, and default list
   query types.
+- `src/features/tickets/detail-action-result.ts`: client-safe workspace ticket
+  detail action result and loader action function types.
+- `src/features/tickets/detail-actions.ts`: authenticated server action for
+  post-hydration workspace detail loads. It returns adapted workspace detail or
+  provider-neutral unavailable state only.
 - `src/features/tickets/service.ts`: thin ticket read orchestration and
   controlled state/priority metadata mutation entrypoints with refresh-after-
   write checks.
@@ -198,9 +203,12 @@ architecture folders or important files are added, moved, renamed, or removed.
   production workspace display composition for controls, tabs, table, and
   selected-ticket detail surfaces.
 - `src/features/workspace/components/ticket-workspace-state.ts`: client-side
-  workspace-only state for active pane, open ticket tabs, detail cache, tab
-  metadata patches after successful staged updates, tab orientation, visible
-  columns, row selection, grouping, sorting, and route navigation.
+  workspace-only state for active pane, open ticket tabs, tab metadata patches
+  after successful staged updates, tab orientation, visible columns, row
+  selection, grouping, sorting, and route navigation.
+- `src/features/workspace/components/use-ticket-detail-loader.ts`: in-memory
+  per-workspace-session selected-ticket detail cache and client detail loader
+  for post-hydration row opens.
 - `src/features/workspace/components/workspace-url.ts`: workspace ticket/List
   URL path and history replacement helpers for local tab navigation.
 - `src/features/workspace/components/workspace-header.tsx`: production

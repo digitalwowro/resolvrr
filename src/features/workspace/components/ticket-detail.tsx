@@ -7,7 +7,7 @@ import type {
   WorkspaceTicketDetail,
 } from "@/features/tickets";
 import type { TicketMetadataSavedPatch } from "./metadata-draft";
-import { StateCell } from "./ticket-table-cells";
+import { StateIcon } from "./ticket-table-cells";
 import { TicketMetadataEditor } from "./ticket-metadata-editor";
 
 type TicketDetailProps = {
@@ -40,7 +40,14 @@ export function TicketDetail({
       <div className="border-b border-slate-200 px-4 py-3">
         <div className="space-y-2">
           <div className="flex min-w-0 items-center gap-3">
-            <StateCell label={detail.state} state={detail.stateKey} />
+            <Tooltip content={`State: ${detail.state}`} side="bottom">
+              <span
+                aria-label={`Ticket state: ${detail.state}`}
+                className="inline-grid size-5 shrink-0 place-items-center"
+              >
+                <StateIcon state={detail.stateKey} />
+              </span>
+            </Tooltip>
             <span className="shrink-0 text-xl text-black">{detail.number}</span>
             <div className="flex min-w-0 flex-1 items-center gap-1.5">
               <h2 className="min-w-0 truncate text-xl font-semibold text-black">

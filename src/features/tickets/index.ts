@@ -17,6 +17,10 @@ export {
   updateWorkspaceTicketMetadata,
 } from "./service";
 export {
+  type LoadWorkspaceTicketDetailAction,
+  type WorkspaceTicketDetailLoadResult,
+} from "./detail-action-result";
+export {
   noTicketMetadataMutationCapabilities,
   ticketMetadataMutationCapabilities,
   type TicketMetadataMutationActionState,

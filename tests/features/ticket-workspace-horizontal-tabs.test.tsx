@@ -1,7 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { defaultWorkspaceTicketColumns } from "@/features/tickets";
+import {
+  defaultWorkspaceTicketColumns,
+  type WorkspaceTicketDetailLoadResult,
+} from "@/features/tickets";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import {
   availableList,
@@ -114,6 +117,10 @@ describe("TicketWorkspace horizontal tabs", () => {
   it("appends ticket tabs when opening another ticket from List", async () => {
     const user = userEvent.setup();
     const detailProps = selectedDetailProps();
+    const loadTicketDetailAction = vi.fn(
+      () => new Promise<WorkspaceTicketDetailLoadResult>(() => undefined),
+    );
+    const replaceState = vi.spyOn(window.history, "replaceState");
     render(
       <TicketWorkspace
         columns={defaultWorkspaceTicketColumns}
@@ -121,6 +128,7 @@ describe("TicketWorkspace horizontal tabs", () => {
         detail={detailProps.detail}
         detailResult={detailProps.detailResult}
         listResult={availableList}
+        loadTicketDetailAction={loadTicketDetailAction}
         logoutAction={noopAction}
         rows={[row, highRow]}
         selectedTicketId="ticket-1"
@@ -139,25 +147,35 @@ describe("TicketWorkspace horizontal tabs", () => {
       "aria-selected",
       "true",
     );
-    expect(routerPush).toHaveBeenCalledWith("/workspace?ticket=ticket-2");
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(replaceState).toHaveBeenLastCalledWith(
+      null,
+      "",
+      "/workspace?ticket=ticket-2",
+    );
+    expect(screen.getByText("Loading ticket thread...")).toBeInTheDocument();
+    expect(loadTicketDetailAction).toHaveBeenCalledWith("ticket-2");
 
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
     await user.click(screen.getByRole("row", { name: /Webhook failed/u }));
 
     expect(screen.getAllByRole("tab", { name: /#1002/u })).toHaveLength(1);
+    expect(loadTicketDetailAction).toHaveBeenCalledOnce();
   });
 
   it("reactivates older ticket tabs with replaceState and shows their cached detail", async () => {
     const user = userEvent.setup();
     const detailA = detailPropsFor(row, "First ticket thread");
     const detailB = detailPropsFor(highRow, "Second ticket thread");
-    const { rerender } = render(
+    const loadTicketDetailAction = vi.fn(async () => detailB.detailResult);
+    render(
       <TicketWorkspace
         columns={defaultWorkspaceTicketColumns}
         connections={[{ id: "connection-1", label: "Support", active: true }]}
         detail={detailA.detail}
         detailResult={detailA.detailResult}
         listResult={availableList}
+        loadTicketDetailAction={loadTicketDetailAction}
         logoutAction={noopAction}
         rows={[row, highRow]}
         selectedTicketId="ticket-1"
@@ -171,25 +189,8 @@ describe("TicketWorkspace horizontal tabs", () => {
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
     await user.click(screen.getByRole("row", { name: /Webhook failed/u }));
 
-    expect(routerPush).toHaveBeenCalledWith("/workspace?ticket=ticket-2");
-    expect(screen.getByText("Loading ticket thread...")).toBeInTheDocument();
-
-    rerender(
-      <TicketWorkspace
-        columns={defaultWorkspaceTicketColumns}
-        connections={[{ id: "connection-1", label: "Support", active: true }]}
-        detail={detailB.detail}
-        detailResult={detailB.detailResult}
-        listResult={availableList}
-        logoutAction={noopAction}
-        rows={[row, highRow]}
-        selectedTicketId="ticket-2"
-        setActiveConnectionAction={noopAction}
-        tabs={[{ ...row }, { ...highRow }]}
-        updateTicketMetadataAction={noopMutationAction}
-        userEmail="agent@example.com"
-      />,
-    );
+    expect(routerPush).not.toHaveBeenCalled();
+    await screen.findByText("Second ticket thread");
 
     routerPush.mockClear();
     const replaceState = vi.spyOn(window.history, "replaceState");
@@ -221,5 +222,6 @@ describe("TicketWorkspace horizontal tabs", () => {
     expect(window.history.length).toBe(historyLength);
     expect(screen.getByLabelText("Ticket detail #1002")).toBeInTheDocument();
     expect(screen.getByText("Second ticket thread")).toBeInTheDocument();
+    await waitFor(() => expect(loadTicketDetailAction).toHaveBeenCalledOnce());
   });
 });
