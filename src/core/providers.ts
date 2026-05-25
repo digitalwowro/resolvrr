@@ -1,11 +1,27 @@
 import type { HelpdeskConnection } from "./helpdesk-connections";
-import type { SavedViewFilter } from "./saved-views";
 import type {
   TicketMetadataMutationInput,
   TicketDetail,
   TicketExternalId,
-  TicketListItem,
 } from "./tickets";
+import type {
+  TicketListFilter,
+  TicketListQuery,
+  TicketListResult,
+} from "./ticket-list-query";
+export type {
+  TicketListBucket,
+  TicketListCountRequest,
+  TicketListFilter,
+  TicketListGroupKey,
+  TicketListGroupRequest,
+  TicketListQuery,
+  TicketListQueryInput,
+  TicketListResult,
+  TicketSort,
+  TicketSortDirection,
+  TicketSortKey,
+} from "./ticket-list-query";
 
 export type ProviderCapability =
   | "ticket:list"
@@ -80,34 +96,6 @@ export type ProviderContext = {
   };
 };
 
-export type TicketListQuery = {
-  filter: SavedViewFilter;
-  cursor?: string;
-  limit: number;
-  sort?: TicketSort;
-};
-
-export type TicketListResult = {
-  tickets: TicketListItem[];
-  nextCursor?: string;
-  measuredAt: Date;
-};
-
-export type TicketSortKey =
-  | "number"
-  | "created_at"
-  | "updated_at"
-  | "pending_until"
-  | "state"
-  | "priority";
-
-export type TicketSortDirection = "ascending" | "descending";
-
-export type TicketSort = {
-  key: TicketSortKey;
-  direction: TicketSortDirection;
-};
-
 export type ProviderLookupOption = {
   externalId: string;
   label: string;
@@ -125,7 +113,7 @@ export type HelpdeskProviderPlugin = {
   ): Promise<TicketListResult>;
   countTickets?(
     context: ProviderContext,
-    filter: SavedViewFilter,
+    filter: TicketListFilter,
   ): Promise<number>;
   getTicketDetail?(
     context: ProviderContext,

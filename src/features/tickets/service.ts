@@ -1,5 +1,6 @@
 import type { TicketExternalId, TicketMetadataMutationInput } from "@/core/tickets";
-import type { TicketListQuery } from "@/core/providers";
+import type { TicketListQueryInput } from "@/core/providers";
+import { normalizeTicketListQuery } from "@/core/ticket-list-query";
 import type { ProviderRegistry } from "@/providers";
 import type { HelpdeskConnectionsRepository } from "@/features/helpdesk-connections/repository";
 import {
@@ -39,7 +40,7 @@ export async function loadWorkspaceTicketList(
   registry: ProviderRegistry,
   encryptionKey: string,
   userId: string,
-  query: Partial<TicketListQuery> = {},
+  query: TicketListQueryInput = {},
 ): Promise<TicketListReadResult> {
   const totalStart = ticketReadTimingStart();
   const providerContext = await loadActiveTicketProviderContext(
@@ -61,11 +62,10 @@ export async function loadWorkspaceTicketList(
     return providerContext;
   }
 
-  const result = await dispatchTicketListRead(providerContext.value, {
-    ...defaultTicketListQuery,
-    ...query,
-    filter: query.filter ?? defaultTicketListQuery.filter,
-  });
+  const result = await dispatchTicketListRead(
+    providerContext.value,
+    normalizeTicketListQuery(query),
+  );
   recordTicketReadTiming({
     connectionId: providerContext.value.context.connection.id,
     durationMs: ticketReadTimingDuration(totalStart),

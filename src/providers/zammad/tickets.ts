@@ -174,7 +174,7 @@ export async function listZammadTickets(
   query: TicketListQuery,
 ) {
   const page = pageFromCursor(query.cursor);
-  const limit = Math.min(Math.max(query.limit, 1), 50);
+  const limit = Math.min(Math.max(query.pageSize, 1), 50);
   const params = new URLSearchParams({
     page: String(page),
     per_page: String(limit),
@@ -208,6 +208,7 @@ export async function listZammadTickets(
         tickets: payload.tickets.map((ticket) =>
           mapTicketListItem(ticket, zammadBaseUrl(context), assets),
         ),
+        loadedCount: payload.tickets.length,
         nextCursor:
           payload.tickets.length === limit ? String(page + 1) : undefined,
         measuredAt: new Date(),

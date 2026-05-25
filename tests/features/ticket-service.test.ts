@@ -82,6 +82,7 @@ function provider(
           tags: [],
         },
       ],
+      loadedCount: 1,
       measuredAt: new Date("2026-05-24T00:00:00Z"),
     }),
     getTicketDetail: async (_context, ticketExternalId) => ({
@@ -168,7 +169,7 @@ describe("ticket read service", () => {
         credentialPayload: { username: "agent", password: "secret" },
         requestSecurity: { validatedAddresses: ["93.184.216.34"] },
       }),
-      expect.objectContaining({ limit: 25 }),
+      expect.objectContaining({ pageSize: 25 }),
     );
     expect(consoleInfo).toHaveBeenCalledWith(
       "Ticket read timing",
@@ -206,6 +207,61 @@ describe("ticket read service", () => {
         status: "ok",
       }),
     );
+  });
+
+  it("normalizes canonical list query and returns count and bucket metadata", async () => {
+    const listTickets = vi.fn(async () => ({
+      tickets: [],
+      loadedCount: 0,
+      totalCount: 12,
+      buckets: [
+        {
+          key: "state" as const,
+          value: "open",
+          label: "Open",
+          tickets: [],
+          loadedCount: 0,
+          totalCount: 12,
+        },
+      ],
+      measuredAt: new Date("2026-05-24T00:00:00Z"),
+    }));
+
+    const result = await loadWorkspaceTicketList(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([provider({ listTickets })]),
+      encryptionKey,
+      "user-1",
+      {
+        filter: { states: ["open"] },
+        pageSize: 5,
+        cursor: "cursor-1",
+        sort: { key: "priority", direction: "ascending" },
+        count: { includeTotal: true },
+        group: { key: "state" },
+      },
+    );
+
+    expect(listTickets).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        filter: { states: ["open"] },
+        pageSize: 5,
+        cursor: "cursor-1",
+        sort: { key: "priority", direction: "ascending" },
+        count: { includeTotal: true },
+        group: { key: "state" },
+      }),
+    );
+    expect(result).toMatchObject({
+      status: "available",
+      loadedCount: 0,
+      totalCount: 12,
+      buckets: [{ key: "state", value: "open", totalCount: 12 }],
+    });
   });
 
   it("maps unsupported capabilities to an unavailable state", async () => {

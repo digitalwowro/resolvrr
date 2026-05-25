@@ -53,6 +53,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/core/tickets.ts`: canonical ticket state and priority definitions plus
   provider-neutral ticket, thread, article, link, subscription, and
   state/priority metadata mutation types.
+- `src/core/ticket-list-query.ts`: provider-neutral ticket list query, sort,
+  count, grouping, pagination, and list result contracts plus default query
+  normalization.
 - `src/core/saved-views.ts`: provider-neutral saved view filters and metadata.
 - `src/core/helpdesk-connections.ts`: explicit helpdesk connection domain types.
 - `src/core/providers.ts`: provider plugin contract, capability names, provider
