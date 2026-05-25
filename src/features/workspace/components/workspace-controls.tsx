@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import {
   Checkbox,
+  Tooltip,
   ToolbarButton,
   ToolbarDropdownSelect,
   ToolbarMenuDropdown,
@@ -41,7 +42,6 @@ type WorkspaceControlsProps = {
   onRefresh(): void;
   onSelectAll(): void;
   onTabOrientationChange(orientation: "horizontal" | "vertical"): void;
-  orientationOptions: DropdownOption[];
   partiallySelected: boolean;
   savedViewOptions: DropdownOption[];
   selectedSavedViewId: string;
@@ -61,7 +61,6 @@ export function WorkspaceControls({
   onRefresh,
   onSelectAll,
   onTabOrientationChange,
-  orientationOptions,
   partiallySelected,
   savedViewOptions,
   selectedSavedViewId,
@@ -99,6 +98,7 @@ export function WorkspaceControls({
         <Checkbox
           checked={allSelected}
           className="items-center"
+          disabled={!listControlsEnabled}
           hideLabel
           indeterminate={partiallySelected}
           label="Select all tickets"
@@ -118,26 +118,11 @@ export function WorkspaceControls({
       <div className="flex flex-wrap items-center gap-2">
         <ToolbarSearchableDropdown
           ariaLabel="Saved view"
+          disabled={!listControlsEnabled}
           onValueChange={() => undefined}
           options={savedViewOptionsWithIcon}
           searchPlaceholder="Find view"
           value={selectedSavedViewId}
-        />
-        <ToolbarDropdownSelect
-          ariaLabel="Tab orientation"
-          onValueChange={(value) =>
-            onTabOrientationChange(value as "horizontal" | "vertical")
-          }
-          options={orientationOptions.map((option) => ({
-            ...option,
-            icon:
-              option.value === "vertical" ? (
-                <PanelLeft aria-hidden="true" className={dropdownIconClass} />
-              ) : (
-                <PanelTop aria-hidden="true" className={dropdownIconClass} />
-              ),
-          }))}
-          value={tabOrientation}
         />
         <ToolbarDropdownSelect
           ariaLabel="Group tickets by"
@@ -173,7 +158,58 @@ export function WorkspaceControls({
           }
           triggerLabel="Column visibility"
         />
+        <TabLayoutSwitch
+          onChange={onTabOrientationChange}
+          value={tabOrientation}
+        />
       </div>
     </section>
+  );
+}
+
+function TabLayoutSwitch({
+  onChange,
+  value,
+}: {
+  onChange(orientation: "horizontal" | "vertical"): void;
+  value: "horizontal" | "vertical";
+}) {
+  return (
+    <div
+      aria-label="Tab layout"
+      className="inline-flex h-6 items-center rounded-md border border-slate-200 bg-white p-0.5"
+      role="group"
+    >
+      <Tooltip content="Horizontal tabs" side="bottom">
+        <button
+          aria-label="Horizontal tabs"
+          aria-pressed={value === "horizontal"}
+          className={cn(
+            "grid size-5 place-items-center rounded-sm text-slate-600 hover:bg-slate-50",
+            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-600",
+            value === "horizontal" && "bg-indigo-50 text-indigo-700",
+          )}
+          onClick={() => onChange("horizontal")}
+          type="button"
+        >
+          <PanelTop aria-hidden="true" className="size-3.5" />
+        </button>
+      </Tooltip>
+      <Tooltip content="Vertical tabs" side="bottom">
+        <button
+          aria-label="Vertical tabs"
+          aria-pressed={value === "vertical"}
+          className={cn(
+            "grid size-5 place-items-center rounded-sm text-slate-600 hover:bg-slate-50",
+            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-600",
+            value === "vertical" && "bg-indigo-50 text-indigo-700",
+          )}
+          onClick={() => onChange("vertical")}
+          type="button"
+        >
+          <PanelLeft aria-hidden="true" className="size-3.5" />
+        </button>
+      </Tooltip>
+    </div>
   );
 }

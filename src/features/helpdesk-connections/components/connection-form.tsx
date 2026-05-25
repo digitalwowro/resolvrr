@@ -102,7 +102,7 @@ export function ConnectionForm({
       ) : null}
 
       <div className="mt-6 flex items-center justify-end gap-3">
-        <Link className="text-sm text-slate-600" href="/workspace/connections">
+        <Link className="text-sm" href="/workspace/connections">
           Cancel
         </Link>
         <button

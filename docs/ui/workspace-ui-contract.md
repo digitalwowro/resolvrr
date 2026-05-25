@@ -6,8 +6,8 @@ operational, calm, and keyboard-accessible.
 ## Regions
 
 - Header: compact product identity, global search, and avatar/profile trigger.
-- Controls and tabs: ticket actions, saved view selector, tab presentation
-  selector, column visibility, and open-ticket tabs.
+- Controls and tabs: ticket actions, saved view selector, column visibility,
+  tab layout segmented control, and open-ticket tabs.
 - Work area: ticket table first, with selected-ticket detail/thread rendered
   read-only when the active provider supports ticket reads.
 - Initial table columns: select, `#`, `Title`, `Customer`, `Owner`, `State`,
@@ -28,6 +28,21 @@ later.
 Horizontal ticket tabs sit directly above the table. Vertical ticket tabs use a
 fixed left rail below the header while toolbar controls remain with the table
 side. The vertical rail and ticket table scroll independently.
+
+The tab layout control is a two-button segmented control, not a dropdown. It is
+placed after column visibility and remains enabled in both List and selected
+ticket panes. List-only controls such as row selection, refresh, saved view,
+grouping, and column visibility remain visible but disabled while a selected
+ticket pane is active.
+
+## Ticket Detail
+
+Selected ticket detail is read-only in this slice. Thread articles render
+provider-sanitized rich HTML, use the shared global link color, and keep
+reply/reply-all/composer controls out of production. Article metadata prefers
+display names over email addresses, exposes email as secondary metadata when
+available, and only shows the expand/collapse affordance when recipient details
+exist.
 
 ## AI Status
 

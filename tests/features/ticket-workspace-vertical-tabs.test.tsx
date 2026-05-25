@@ -44,15 +44,13 @@ describe("TicketWorkspace vertical tabs", () => {
       />,
     );
 
-    await user.click(screen.getByRole("combobox", { name: "Tab orientation" }));
-    await user.click(screen.getByRole("option", { name: "Vertical tabs" }));
+    await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
 
     expect(screen.getByRole("table", { name: "Tickets" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Cannot log in/u })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("combobox", { name: "Tab orientation" }));
-    await user.click(screen.getByRole("option", { name: "Horizontal tabs" }));
+    await user.click(screen.getByRole("button", { name: "Horizontal tabs" }));
 
     expect(screen.getByRole("tab", { name: /#1001/u })).toBeInTheDocument();
 
@@ -80,8 +78,7 @@ describe("TicketWorkspace vertical tabs", () => {
       />,
     );
 
-    await user.click(screen.getByRole("combobox", { name: "Tab orientation" }));
-    await user.click(screen.getByRole("option", { name: "Vertical tabs" }));
+    await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
     await user.click(screen.getByRole("row", { name: /Webhook failed/u }));
 
@@ -131,8 +128,7 @@ describe("TicketWorkspace vertical tabs", () => {
       />,
     );
 
-    await user.click(screen.getByRole("combobox", { name: "Tab orientation" }));
-    await user.click(screen.getByRole("option", { name: "Vertical tabs" }));
+    await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
     await user.click(screen.getByRole("tab", { name: /Cannot log in/u }));
 

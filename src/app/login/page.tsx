@@ -67,9 +67,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </form>
         <p className="mt-5 text-sm text-slate-600">
           New to Resolvrr?{" "}
-          <Link className="text-indigo-600" href="/register">
-            Create an account
-          </Link>
+          <Link href="/register">Create an account</Link>
         </p>
       </section>
     </main>

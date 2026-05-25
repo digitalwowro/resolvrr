@@ -75,9 +75,7 @@ export default async function RegisterPage({
         </form>
         <p className="mt-5 text-sm text-slate-600">
           Already have an account?{" "}
-          <Link className="text-indigo-600" href="/login">
-            Sign in
-          </Link>
+          <Link href="/login">Sign in</Link>
         </p>
       </section>
     </main>
