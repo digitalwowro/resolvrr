@@ -1,4 +1,7 @@
-import { ExternalLink } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Check, Copy, ExternalLink } from "lucide-react";
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
@@ -9,6 +12,7 @@ import type {
 import type { TicketMetadataSavedPatch } from "./metadata-draft";
 import { StateIcon } from "./ticket-table-cells";
 import { TicketMetadataEditor } from "./ticket-metadata-editor";
+import { ticketPath } from "./workspace-url";
 
 type TicketDetailProps = {
   detail: WorkspaceTicketDetail;
@@ -31,6 +35,20 @@ export function TicketDetail({
   roundedTop = true,
   updateTicketMetadataAction,
 }: TicketDetailProps) {
+  const [ticketLinkCopied, setTicketLinkCopied] = useState(false);
+
+  function copyTicketLink() {
+    if (!window.navigator.clipboard) {
+      return;
+    }
+
+    const ticketUrl = new URL(ticketPath(detail.id), window.location.origin);
+    void window.navigator.clipboard.writeText(ticketUrl.toString()).then(() => {
+      setTicketLinkCopied(true);
+      window.setTimeout(() => setTicketLinkCopied(false), 1500);
+    });
+  }
+
   return (
     <section
       aria-label={`Ticket detail ${detail.number}`}
@@ -55,6 +73,22 @@ export function TicketDetail({
               <h2 className="min-w-0 truncate text-xl font-semibold text-black">
                 {detail.title}
               </h2>
+              <Tooltip
+                content={ticketLinkCopied ? "Ticket link copied" : "Copy ticket link"}
+              >
+                <button
+                  aria-label="Copy ticket link"
+                  className="inline-grid size-6 shrink-0 place-items-center rounded-md text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  onClick={copyTicketLink}
+                  type="button"
+                >
+                  {ticketLinkCopied ? (
+                    <Check aria-hidden="true" className="size-3.5" />
+                  ) : (
+                    <Copy aria-hidden="true" className="size-3.5" />
+                  )}
+                </button>
+              </Tooltip>
               {detail.providerUrl ? (
                 <Tooltip content="Open ticket in helpdesk">
                   <a

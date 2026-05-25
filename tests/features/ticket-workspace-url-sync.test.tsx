@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
@@ -14,6 +14,7 @@ import {
 } from "./ticket-workspace-test-utils";
 
 const routerPush = vi.fn();
+const writeText = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -25,6 +26,11 @@ vi.mock("next/navigation", () => ({
 describe("TicketWorkspace URL sync", () => {
   beforeEach(() => {
     routerPush.mockClear();
+    writeText.mockReset();
+    Object.defineProperty(window.navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
     window.history.replaceState(null, "", "/workspace?ticket=ticket-1");
   });
 
@@ -55,6 +61,34 @@ describe("TicketWorkspace URL sync", () => {
     expect(screen.getByRole("tab", { name: /#1001/u })).toHaveAttribute(
       "aria-selected",
       "true",
+    );
+  });
+
+  it("copies an explicit direct ticket link from the selected detail header", () => {
+    writeText.mockResolvedValue(undefined);
+    const detailProps = selectedDetailProps();
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={detailProps.detail}
+        detailResult={detailProps.detailResult}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        selectedTicketId="ticket-1"
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy ticket link" }));
+
+    expect(writeText).toHaveBeenCalledWith(
+      "http://localhost:3000/workspace?ticket=ticket-1",
     );
   });
 
