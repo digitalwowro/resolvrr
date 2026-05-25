@@ -145,6 +145,10 @@ describe("TicketWorkspace", () => {
     );
 
     expect(screen.getByLabelText("Ticket detail #1001")).toBeInTheDocument();
+    expect(screen.getByLabelText("Ticket state: Open")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Cannot log in" }),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("Maya Patel").length).toBeGreaterThan(0);
     expect(screen.getByText("Explore these links:")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Docs" })).toHaveAttribute(
