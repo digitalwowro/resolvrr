@@ -3,11 +3,12 @@
 import type { DropdownOption } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
-  TicketDetailReadResult,
+  LoadWorkspaceTicketDetailAction,
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
   WorkspaceTicketColumn,
   WorkspaceTicketDetail,
+  WorkspaceTicketDetailLoadResult,
   WorkspaceTicketRow,
   WorkspaceTicketTab,
 } from "@/features/tickets";
@@ -26,7 +27,8 @@ import {
 type TicketWorkspaceDisplayProps = {
   columns: WorkspaceTicketColumn[];
   detail?: WorkspaceTicketDetail;
-  detailResult?: TicketDetailReadResult;
+  detailResult?: WorkspaceTicketDetailLoadResult;
+  loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   rows: WorkspaceTicketRow[];
   selectedTicketId?: string;
@@ -44,6 +46,7 @@ export function TicketWorkspaceDisplay({
   columns,
   detail,
   detailResult,
+  loadTicketDetailAction,
   metadataMutationCapabilities,
   rows,
   selectedTicketId,
@@ -81,6 +84,7 @@ export function TicketWorkspaceDisplay({
     columns,
     detail,
     detailResult,
+    loadTicketDetailAction,
     rows,
     selectedTicketId,
     ticketTabs,
@@ -103,9 +107,9 @@ export function TicketWorkspaceDisplay({
         sortDirectionFor={sortDirectionFor}
         visibleColumns={visibleColumnSet}
       />
-    ) : activeDetail?.result?.status === "unavailable" ? (
-      <DetailUnavailableState key="work-area" reason={activeDetail.result.reason} />
-    ) : activeDetail?.detail ? (
+    ) : activeDetail?.status === "unavailable" ? (
+      <DetailUnavailableState key="work-area" reason={activeDetail.reason} />
+    ) : activeDetail?.status === "available" ? (
       <TicketDetail
         key="work-area"
         detail={activeDetail.detail}

@@ -4,10 +4,11 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTableSort } from "@/components/ui";
 import type {
-  TicketDetailReadResult,
+  LoadWorkspaceTicketDetailAction,
   WorkspaceTicketColumn,
   WorkspaceTicketColumnKey,
   WorkspaceTicketDetail,
+  WorkspaceTicketDetailLoadResult,
   WorkspaceTicketGroupKey,
   WorkspaceTicketRow,
   WorkspaceTicketSortKey,
@@ -20,54 +21,42 @@ import {
 } from "./ticket-table-grouping";
 import { patchTicketTabMetadata } from "./ticket-tab-metadata";
 import type { TicketTabOrientation } from "./ticket-tabs-panel";
+import { useTicketDetailLoader } from "./use-ticket-detail-loader";
 import { replaceWorkspaceUrl, ticketPath } from "./workspace-url";
 
 type ActiveWorkspacePane = "list" | { ticketId: string };
 
-type CachedTicketDetail = {
-  detail?: WorkspaceTicketDetail;
-  result?: TicketDetailReadResult;
-};
-
 type TicketWorkspaceStateProps = {
   columns: WorkspaceTicketColumn[];
   detail?: WorkspaceTicketDetail;
-  detailResult?: TicketDetailReadResult;
+  detailResult?: WorkspaceTicketDetailLoadResult;
+  loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
   rows: WorkspaceTicketRow[];
   selectedTicketId?: string;
   ticketTabs: WorkspaceTicketTab[];
 };
 
-function initialDetailCache({
-  detail,
-  detailResult,
-  selectedTicketId,
-}: {
-  detail?: WorkspaceTicketDetail;
-  detailResult?: TicketDetailReadResult;
-  selectedTicketId?: string;
-}) {
-  if (!selectedTicketId || (!detail && !detailResult)) {
-    return {};
-  }
-
-  return {
-    [selectedTicketId]: {
-      detail,
-      result: detailResult,
-    },
-  };
-}
-
 export function useTicketWorkspaceDisplayState({
   columns,
   detail,
   detailResult,
+  loadTicketDetailAction,
   rows,
   selectedTicketId,
   ticketTabs,
 }: TicketWorkspaceStateProps) {
   const router = useRouter();
+  const initialDetailResult =
+    detail ? { status: "available" as const, detail } : detailResult;
+  const {
+    cacheSelectedDetail,
+    detailFor,
+    ensureTicketDetail,
+  } = useTicketDetailLoader({
+    initialDetailResult,
+    loadTicketDetailAction,
+    selectedTicketId,
+  });
   const [tabOrientation, setTabOrientation] =
     useState<TicketTabOrientation>("horizontal");
   const [activeWorkspacePane, setActiveWorkspacePane] =
@@ -81,9 +70,6 @@ export function useTicketWorkspaceDisplayState({
         : undefined;
       return selectedTab ? [selectedTab] : [];
     },
-  );
-  const [detailCache, setDetailCache] = useState<Record<string, CachedTicketDetail>>(
-    () => initialDetailCache({ detail, detailResult, selectedTicketId }),
   );
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   const [visibleColumns, setVisibleColumns] = useState(
@@ -99,12 +85,7 @@ export function useTicketWorkspaceDisplayState({
   const activeTicketId =
     activeWorkspacePane === "list" ? undefined : activeWorkspacePane.ticketId;
   const listActive = activeWorkspacePane === "list";
-  const activeDetail =
-    activeTicketId === selectedTicketId && (detail || detailResult)
-      ? { detail, result: detailResult }
-      : activeTicketId
-        ? detailCache[activeTicketId]
-        : undefined;
+  const activeDetail = detailFor(activeTicketId);
   const groupedRows = useMemo(
     () => groupTicketRows(rows, groupBy, sortKey, sortDirection),
     [groupBy, rows, sortDirection, sortKey],
@@ -187,34 +168,12 @@ export function useTicketWorkspaceDisplayState({
     );
   }
 
-  function cacheSelectedDetail() {
-    if (!selectedTicketId || (!detail && !detailResult)) {
-      return;
-    }
-
-    setDetailCache((current) => {
-      const cached = current[selectedTicketId];
-      if (cached?.detail === detail && cached?.result === detailResult) {
-        return current;
-      }
-
-      return {
-        ...current,
-        [selectedTicketId]: {
-          detail,
-          result: detailResult,
-        },
-      };
-    });
-  }
-
   function showTicketFromRow(ticketId: string) {
     cacheSelectedDetail();
     rememberOpenTicket(ticketId);
     setActiveWorkspacePane({ ticketId });
-    if (ticketId !== selectedTicketId) {
-      router.push(ticketPath(ticketId));
-    }
+    replaceWorkspaceUrl(ticketId);
+    ensureTicketDetail(ticketId);
   }
 
   function showList() {
