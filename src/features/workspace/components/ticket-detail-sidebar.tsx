@@ -1,6 +1,44 @@
+"use client";
+
 import type { ReactNode } from "react";
-import type { WorkspaceTicketDetail } from "@/features/tickets";
-import { PriorityCell, StateCell } from "./ticket-table-cells";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  DropdownSelect,
+  type DropdownOption,
+} from "@/components/ui";
+import {
+  ticketPriorities,
+  ticketPriorityDefinitions,
+  ticketStates,
+  ticketStateDefinitions,
+  type TicketPriority,
+  type TicketState,
+} from "@/core/tickets";
+import type {
+  TicketMetadataMutationActionState,
+  TicketMetadataMutationCapabilities,
+  TicketMetadataMutationField,
+  WorkspaceTicketDetail,
+} from "@/features/tickets";
+import {
+  PriorityCell,
+  PriorityIcon,
+  StateCell,
+  StateIcon,
+} from "./ticket-table-cells";
+
+const stateOptions: DropdownOption[] = ticketStates.map((state) => ({
+  value: state,
+  label: ticketStateDefinitions[state].label,
+  icon: <StateIcon state={state} />,
+}));
+
+const priorityOptions: DropdownOption[] = ticketPriorities.map((priority) => ({
+  value: priority,
+  label: ticketPriorityDefinitions[priority].label,
+  icon: <PriorityIcon priority={priority} />,
+}));
 
 function SidebarField({
   children,
@@ -19,19 +57,141 @@ function SidebarField({
   );
 }
 
-export function TicketDetailSidebar({
-  detail,
+function EditableSidebarField({
+  children,
+  label,
 }: {
-  detail: WorkspaceTicketDetail;
+  children: ReactNode;
+  label: string;
 }) {
   return (
+    <label className="block w-full space-y-1">
+      <span className="block text-xs font-semibold">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function mutationStatusText(
+  pendingField: TicketMetadataMutationField | undefined,
+  result: TicketMetadataMutationActionState,
+) {
+  if (pendingField) {
+    return `Saving ${pendingField}...`;
+  }
+  if (
+    result.status === "failed" ||
+    result.status === "saved-refresh-failed"
+  ) {
+    return result.message;
+  }
+  return undefined;
+}
+
+export function TicketDetailSidebar({
+  detail,
+  metadataMutationCapabilities = { state: false, priority: false },
+  updateTicketMetadataAction,
+}: {
+  detail: WorkspaceTicketDetail;
+  metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
+  updateTicketMetadataAction(
+    formData: FormData,
+  ): Promise<TicketMetadataMutationActionState>;
+}) {
+  const router = useRouter();
+  const [pendingField, setPendingField] =
+    useState<TicketMetadataMutationField>();
+  const [mutationResult, setMutationResult] =
+    useState<TicketMetadataMutationActionState>({ status: "idle" });
+  const statusText = mutationStatusText(pendingField, mutationResult);
+
+  function saveMetadata(
+    field: TicketMetadataMutationField,
+    value: TicketState | TicketPriority,
+    currentValue: TicketState | TicketPriority | undefined,
+  ) {
+    if (pendingField || value === currentValue) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set("ticketExternalId", detail.id);
+    formData.set("field", field);
+    formData.set("value", value);
+    setPendingField(field);
+    setMutationResult({ status: "idle" });
+
+    void updateTicketMetadataAction(formData)
+      .then((result) => {
+        setMutationResult(result);
+        if (result.status === "saved") {
+          router.refresh();
+        }
+      })
+      .catch(() => {
+        setMutationResult({
+          status: "failed",
+          field,
+          message: "The ticket could not be updated. Try again.",
+        });
+      })
+      .finally(() => setPendingField(undefined));
+  }
+
+  return (
     <aside className="w-56 shrink-0 space-y-4 border-l border-slate-200 px-3 py-3">
-      <SidebarField label="State">
-        <StateCell label={detail.state} state={detail.stateKey} />
-      </SidebarField>
-      <SidebarField label="Priority">
-        <PriorityCell label={detail.priority} priority={detail.priorityKey} />
-      </SidebarField>
+      {metadataMutationCapabilities.state ? (
+        <EditableSidebarField label="State">
+          <DropdownSelect
+            ariaLabel="Ticket state"
+            className="block w-full [&>div]:w-full"
+            disabled={Boolean(pendingField)}
+            onValueChange={(value) =>
+              saveMetadata("state", value as TicketState, detail.stateKey)
+            }
+            options={stateOptions}
+            triggerClassName="w-full"
+            value={detail.stateKey}
+          />
+        </EditableSidebarField>
+      ) : (
+        <SidebarField label="State">
+          <StateCell label={detail.state} state={detail.stateKey} />
+        </SidebarField>
+      )}
+      {metadataMutationCapabilities.priority ? (
+        <EditableSidebarField label="Priority">
+          <DropdownSelect
+            ariaLabel="Ticket priority"
+            className="block w-full [&>div]:w-full"
+            disabled={Boolean(pendingField)}
+            onValueChange={(value) =>
+              saveMetadata("priority", value as TicketPriority, detail.priorityKey)
+            }
+            options={priorityOptions}
+            triggerClassName="w-full"
+            value={detail.priorityKey}
+          />
+        </EditableSidebarField>
+      ) : (
+        <SidebarField label="Priority">
+          <PriorityCell label={detail.priority} priority={detail.priorityKey} />
+        </SidebarField>
+      )}
+      {statusText ? (
+        <p
+          className={
+            mutationResult.status === "failed" ||
+            mutationResult.status === "saved-refresh-failed"
+              ? "text-xs text-amber-700"
+              : "text-xs text-slate-600"
+          }
+          role={pendingField ? "status" : "alert"}
+        >
+          {statusText}
+        </p>
+      ) : null}
       <SidebarField label="Group">
         <span>{detail.group}</span>
       </SidebarField>

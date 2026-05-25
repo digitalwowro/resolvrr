@@ -155,11 +155,7 @@ export type TicketDetail = {
   measuredAt: Date;
 };
 
-export type TicketUpdateInput = {
-  ownerExternalId?: string;
-  groupExternalId?: string;
+export type TicketMetadataMutationInput = {
   state?: TicketState;
   priority?: TicketPriority;
-  tags?: string[];
-  subscriptionFollowing?: boolean;
 };

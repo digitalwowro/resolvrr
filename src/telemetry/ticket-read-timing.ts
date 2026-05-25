@@ -1,6 +1,6 @@
 import { safeLogMetadata } from "@/security/safe-log";
 
-export type TicketReadOperation = "list" | "detail";
+export type TicketReadOperation = "list" | "detail" | "mutation";
 
 export type TicketReadTimingPhase =
   | "active-connection-lookup"
@@ -8,11 +8,13 @@ export type TicketReadTimingPhase =
   | "base-url-security-revalidation"
   | "provider-list-request"
   | "provider-detail-metadata-request"
+  | "provider-metadata-mutation-request"
   | "provider-article-thread-request"
   | "provider-user-lookup-request"
   | "provider-mapping-parsing"
   | "total-list-load"
-  | "total-detail-load";
+  | "total-detail-load"
+  | "total-metadata-mutation";
 
 export type TicketReadTimingStatus = "ok" | "unavailable" | "error";
 

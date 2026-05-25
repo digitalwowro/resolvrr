@@ -23,4 +23,5 @@ conversation content.
   content and encrypt sensitive body fields at rest.
 - Logs may include safe metadata such as provider key, connection id, ticket id,
   capability, status, and timing. Logs must not include credentials, tokens,
-  passwords, cookies, raw provider payloads, or customer message bodies.
+  passwords, cookies, raw provider payloads, provider response bodies, mutation
+  request bodies, or customer message bodies.

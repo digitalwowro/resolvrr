@@ -42,11 +42,12 @@ revalidated address set and reject private or changed DNS results at request
 time. Validation requests must avoid automatic redirects so credentials are not
 sent to an unvalidated redirect target.
 
-## Ticket Read Security
+## Ticket Request Security
 
-Provider-backed ticket reads must use the provider-safe JSON request helper in
-`src/security/provider-http.ts`. Reads must keep the same SSRF properties as
-connection validation:
+Provider-backed ticket reads and controlled metadata writes must use the
+provider-safe request helpers in `src/security/provider-http.ts`. Provider code
+must not use raw `fetch()`. Ticket requests must keep the same SSRF properties
+as connection validation:
 
 - HTTPS only.
 - DNS resolution checked against the validated public address set.
@@ -56,10 +57,21 @@ connection validation:
 - Abort-signal timeout support.
 - Explicit response-size limits before JSON parsing.
 
-Provider read errors, logs, and UI messages must not include provider response
-bodies, credentials, URLs with embedded secrets, or raw customer ticket content.
-Non-success responses are classified by status code while their bodies are
-discarded.
+Provider errors, logs, and UI messages must not include provider response
+bodies, request bodies containing secrets, credentials, URLs with embedded
+secrets, or raw customer ticket content. Non-success responses are classified
+by status code while their bodies are discarded.
+
+## Ticket Metadata Mutations
+
+The first approved mutation surface is state and priority only. Provider-neutral
+code passes canonical Resolvrr keys in `TicketMetadataMutationInput`; provider
+plugins map those keys to raw provider values inside their own folders.
+
+Successful writes are followed by a service-layer refresh check for the affected
+ticket detail and list row. If the write succeeds but refresh fails, callers
+receive `saved-refresh-failed` so UI can present a non-destructive warning.
+Optimistic metadata updates are not part of this slice.
 
 ## Ticket Read Observability
 
@@ -74,12 +86,13 @@ components must not introduce provider fetch fan-out.
 
 ## Zammad Boundary
 
-Zammad ticket list, detail, thread DTO validation, endpoint construction, and
-raw state/priority normalization live under `src/providers/zammad`. Core,
-feature, UI, and provider-neutral tests consume only canonical ticket values and
-provider capabilities. Zammad currently advertises only `ticket:list` and
-`ticket:detail`; unsupported links and subscription data are returned as the
-required empty canonical shapes documented in the ticket read contract.
+Zammad ticket list, detail, thread DTO validation, endpoint construction,
+metadata write payload construction, and raw state/priority normalization live
+under `src/providers/zammad`. Core, feature, UI, and provider-neutral tests
+consume only canonical ticket values and provider capabilities. Zammad currently
+advertises `ticket:list`, `ticket:detail`, `ticket:update-state`, and
+`ticket:update-priority`; unsupported links and subscription data are returned
+as the required empty canonical shapes documented in the ticket contract.
 
 Zammad reads request expanded/full payloads when available so provider-specific
 user assets can be mapped to canonical participants. Display names such as

@@ -7,9 +7,14 @@ import type {
 
 export async function noopAction() {}
 
+export async function noopMutationAction() {
+  return { status: "idle" as const };
+}
+
 export const availableList = {
   status: "available",
   connectionName: "Support",
+  metadataMutationCapabilities: { state: false, priority: false },
   tickets: [],
   measuredAt: new Date("2026-05-24T00:00:00Z"),
 } satisfies TicketListReadResult;

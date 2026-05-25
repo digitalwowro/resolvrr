@@ -43,6 +43,20 @@ const priorityIcon: Record<TicketPriority | "unknown", LucideIcon> = {
   unknown: SignalMedium,
 };
 
+export function StateIcon({
+  monochrome = false,
+  state,
+}: {
+  monochrome?: boolean;
+  state?: TicketState;
+}) {
+  const key = state ?? "unknown";
+  const Icon = stateIcon[key];
+  const iconClass = monochrome ? "size-3.5" : `size-3.5 ${stateClass[key]}`;
+
+  return <Icon aria-hidden="true" className={iconClass} />;
+}
+
 export function StateCell({
   label,
   monochrome = false,
@@ -52,16 +66,28 @@ export function StateCell({
   monochrome?: boolean;
   state?: TicketState;
 }) {
-  const key = state ?? "unknown";
-  const Icon = stateIcon[key];
-  const iconClass = monochrome ? "size-3.5" : `size-3.5 ${stateClass[key]}`;
-
   return (
     <span className="inline-flex min-w-0 items-center gap-1.5">
-      <Icon aria-hidden="true" className={iconClass} />
+      <StateIcon monochrome={monochrome} state={state} />
       <span className="truncate">{label}</span>
     </span>
   );
+}
+
+export function PriorityIcon({
+  monochrome = false,
+  priority,
+}: {
+  monochrome?: boolean;
+  priority?: TicketPriority;
+}) {
+  const key = priority ?? "unknown";
+  const Icon = priorityIcon[key];
+  const iconClass = monochrome
+    ? "size-3.5"
+    : `size-3.5 ${priorityClass[key]}`;
+
+  return <Icon aria-hidden="true" className={iconClass} />;
 }
 
 export function PriorityCell({
@@ -73,15 +99,9 @@ export function PriorityCell({
   monochrome?: boolean;
   priority?: TicketPriority;
 }) {
-  const key = priority ?? "unknown";
-  const Icon = priorityIcon[key];
-  const iconClass = monochrome
-    ? "size-3.5"
-    : `size-3.5 ${priorityClass[key]}`;
-
   return (
     <span className="inline-flex min-w-0 items-center gap-1.5">
-      <Icon aria-hidden="true" className={iconClass} />
+      <PriorityIcon monochrome={monochrome} priority={priority} />
       <span className="truncate">{label}</span>
     </span>
   );

@@ -37,12 +37,19 @@ ticket pane is active.
 
 ## Ticket Detail
 
-Selected ticket detail is read-only in this slice. Thread articles render
+Selected ticket detail keeps the approved dense layout. Thread articles render
 provider-sanitized rich HTML, use the shared global link color, and keep
 reply/reply-all/composer controls out of production. Article metadata prefers
 display names over email addresses, exposes email as secondary metadata when
 available, and only shows the expand/collapse affordance when recipient details
 exist.
+
+The metadata sidebar remains read-only except for state and priority when the
+active provider advertises the matching mutation capability. Editable state and
+priority controls use the approved dropdown primitive, show pending/error
+states, do not optimistic-update values, and refresh the workspace after a
+successful checked save. If a provider lacks the capability, the field renders
+as ordinary read-only metadata.
 
 ## AI Status
 

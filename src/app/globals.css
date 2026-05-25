@@ -4,6 +4,6 @@ body {
   @apply overflow-hidden bg-slate-50 text-sm text-slate-700;
 }
 
-:where(a) {
+a {
   color: var(--color-indigo-600);
 }

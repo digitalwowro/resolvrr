@@ -23,10 +23,12 @@ describe("Zammad ticket reads", () => {
     vi.clearAllMocks();
   });
 
-  it("advertises only implemented read capabilities", () => {
+  it("advertises implemented read and metadata mutation capabilities", () => {
     expect(zammadProviderPlugin.capabilities).toEqual([
       "ticket:list",
       "ticket:detail",
+      "ticket:update-state",
+      "ticket:update-priority",
     ]);
   });
 

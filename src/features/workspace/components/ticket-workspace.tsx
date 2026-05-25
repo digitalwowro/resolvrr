@@ -1,6 +1,8 @@
 import type {
   TicketDetailReadResult,
   TicketListReadResult,
+  TicketMetadataMutationActionState,
+  TicketMetadataMutationCapabilities,
   WorkspaceTicketColumn,
   WorkspaceTicketDetail,
   WorkspaceTicketRow,
@@ -21,10 +23,14 @@ type TicketWorkspaceProps = {
   detailResult?: TicketDetailReadResult;
   listResult: TicketListReadResult;
   logoutAction(formData: FormData): void | Promise<void>;
+  metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   rows: WorkspaceTicketRow[];
   selectedTicketId?: string;
   setActiveConnectionAction(formData: FormData): void | Promise<void>;
   tabs: WorkspaceTicketTab[];
+  updateTicketMetadataAction(
+    formData: FormData,
+  ): Promise<TicketMetadataMutationActionState>;
   userEmail: string;
 };
 
@@ -43,12 +49,20 @@ export function TicketWorkspace({
   detailResult,
   listResult,
   logoutAction,
+  metadataMutationCapabilities,
   rows,
   selectedTicketId,
   setActiveConnectionAction,
   tabs,
+  updateTicketMetadataAction,
   userEmail,
 }: TicketWorkspaceProps) {
+  const effectiveMetadataMutationCapabilities =
+    metadataMutationCapabilities ??
+    (listResult.status === "available"
+      ? listResult.metadataMutationCapabilities
+      : undefined);
+
   return (
     <main className="flex h-screen min-h-screen flex-col overflow-hidden">
       <WorkspaceHeader
@@ -65,9 +79,11 @@ export function TicketWorkspace({
           columns={columns}
           detail={detail}
           detailResult={detailResult}
+          metadataMutationCapabilities={effectiveMetadataMutationCapabilities}
           rows={rows}
           selectedTicketId={selectedTicketId}
           tabs={tabs}
+          updateTicketMetadataAction={updateTicketMetadataAction}
         />
       )}
     </main>

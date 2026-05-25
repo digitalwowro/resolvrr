@@ -3,6 +3,7 @@ export type {
   TicketArticle,
   TicketDetail,
   TicketListItem,
+  TicketMetadataMutationInput,
   TicketPriority,
   TicketState,
   TicketThread,
@@ -13,7 +14,17 @@ export {
 export {
   loadWorkspaceTicketDetail,
   loadWorkspaceTicketList,
+  updateWorkspaceTicketMetadata,
 } from "./service";
+export {
+  noTicketMetadataMutationCapabilities,
+  ticketMetadataMutationCapabilities,
+  type TicketMetadataMutationActionState,
+  type TicketMetadataMutationCapabilities,
+  type TicketMetadataMutationErrorReason,
+  type TicketMetadataMutationField,
+  type TicketMetadataMutationResult,
+} from "./mutation-model";
 export {
   selectedTicketExternalId,
   type TicketDetailReadResult,
