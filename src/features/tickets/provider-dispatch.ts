@@ -59,7 +59,10 @@ export async function dispatchTicketListRead(
         providerContext.plugin.capabilities,
       ),
       tickets: result.tickets,
+      loadedCount: result.loadedCount,
+      totalCount: result.totalCount,
       nextCursor: result.nextCursor,
+      buckets: result.buckets,
       measuredAt: result.measuredAt,
     };
   } catch (error) {

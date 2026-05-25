@@ -79,6 +79,7 @@ function provider(
           tags: [],
         },
       ],
+      loadedCount: 1,
       measuredAt: new Date("2026-05-24T00:00:00Z"),
     }),
     getTicketDetail: async (_context, ticketExternalId) => ({
@@ -148,7 +149,7 @@ describe("ticket metadata mutation service", () => {
     expect(getTicketDetail).toHaveBeenCalledWith(expect.any(Object), "ticket-1");
     expect(listTickets).toHaveBeenCalledWith(
       expect.any(Object),
-      expect.objectContaining({ limit: 25 }),
+      expect.objectContaining({ pageSize: 25 }),
     );
   });
 

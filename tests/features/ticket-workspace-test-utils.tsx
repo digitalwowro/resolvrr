@@ -16,6 +16,7 @@ export const availableList = {
   connectionName: "Support",
   metadataMutationCapabilities: { state: false, priority: false },
   tickets: [],
+  loadedCount: 0,
   measuredAt: new Date("2026-05-24T00:00:00Z"),
 } satisfies TicketListReadResult;
 

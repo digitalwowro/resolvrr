@@ -1,6 +1,7 @@
 import type { TicketDetail, TicketExternalId, TicketListItem } from "@/core/tickets";
-import type { TicketListQuery } from "@/core/providers";
+import type { TicketListBucket } from "@/core/providers";
 import type { TicketMetadataMutationCapabilities } from "./mutation-model";
+export { defaultTicketListQuery } from "@/core/ticket-list-query";
 
 export type TicketReadUnavailableReason =
   | "no-active-connection"
@@ -26,7 +27,10 @@ export type TicketListAvailable = {
   connectionName: string;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
   tickets: TicketListItem[];
+  loadedCount: number;
+  totalCount?: number;
   nextCursor?: string;
+  buckets?: TicketListBucket[];
   measuredAt: Date;
 };
 
@@ -37,12 +41,6 @@ export type TicketDetailAvailable = {
 
 export type TicketListReadResult = TicketListAvailable | TicketReadUnavailable;
 export type TicketDetailReadResult = TicketDetailAvailable | TicketReadUnavailable;
-
-export const defaultTicketListQuery: TicketListQuery = {
-  filter: {},
-  limit: 25,
-  sort: { key: "updated_at", direction: "descending" },
-};
 
 export function unavailableTicketRead(
   reason: TicketReadUnavailableReason,

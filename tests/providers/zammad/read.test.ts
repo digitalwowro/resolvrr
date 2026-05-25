@@ -44,8 +44,8 @@ describe("Zammad ticket reads", () => {
 
     const result = await zammadProviderPlugin.listTickets?.(providerContext(), {
       filter: {},
-      limit: 10,
-      sort: { key: "updated_at", direction: "descending" },
+      pageSize: 10,
+      sort: { key: "updatedAt", direction: "descending" },
     });
 
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
@@ -73,6 +73,7 @@ describe("Zammad ticket reads", () => {
       tags: [],
       providerUrl: "https://helpdesk.example.com/#ticket/zoom/42",
     });
+    expect(result?.loadedCount).toBe(1);
     expect(consoleInfo).toHaveBeenCalledWith(
       "Ticket read timing",
       expect.objectContaining({
@@ -181,7 +182,7 @@ describe("Zammad ticket reads", () => {
     await expect(
       zammadProviderPlugin.listTickets?.(providerContext(), {
         filter: {},
-        limit: 10,
+        pageSize: 10,
       }),
     ).rejects.toMatchObject({ kind: "provider-data-mismatch" });
   });

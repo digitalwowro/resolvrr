@@ -171,12 +171,23 @@ does not expose HTTP implementation details to core ticket types.
 Ticket list reads use `TicketListQuery`:
 
 - `filter`: provider-neutral saved-view filter.
+- `pageSize`: maximum number of list items requested for the current page.
 - `cursor`: opaque provider cursor returned by the previous read.
-- `limit`: maximum number of list items to return.
-- `sort`: optional provider-neutral sort key and direction.
+- `sort`: optional provider-neutral sort key and direction, using canonical
+  ticket field names such as `updatedAt`, `priority`, and `state`.
+- `count`: optional request for provider-neutral count metadata, currently
+  limited to whether a total count is requested.
+- `group`: optional provider-neutral bucket request keyed by `state`,
+  `priority`, `owner`, `customer`, or `group`.
+
+`TicketListResult.loadedCount` is the number of list items returned in the
+current response. `TicketListResult.totalCount`, when present, is the provider's
+total count for the query rather than the size of the loaded subset. Bucket
+results follow the same split: each bucket carries its loaded row count,
+optional total count, optional next cursor, and provider-neutral rows.
 
 `TicketListResult.nextCursor` is opaque to core code. Providers own cursor
-format, pagination compilation, and raw response mapping.
+format, pagination compilation, raw query syntax, and raw response mapping.
 
 ## Read And Mutation Coordination
 
