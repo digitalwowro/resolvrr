@@ -94,9 +94,11 @@ export function usePostUpdateNavigationPreference() {
 }
 
 export function PostUpdateNavigationSelector({
+  disabled = false,
   value,
   onValueChange,
 }: {
+  disabled?: boolean;
   value: PostUpdateNavigation;
   onValueChange(value: PostUpdateNavigation): void;
 }) {
@@ -110,10 +112,11 @@ export function PostUpdateNavigationSelector({
     <DropdownSelect
       ariaLabel="Post-update navigation"
       className="block"
-      menuClassName="!top-auto bottom-full mb-1 min-w-full"
+      disabled={disabled}
+      menuPlacement="top"
       onValueChange={handleValueChange}
       options={navigationOptions}
-      triggerClassName="h-8 text-sm font-normal"
+      triggerClassName="!h-8 text-sm font-normal"
       value={value}
     />
   );

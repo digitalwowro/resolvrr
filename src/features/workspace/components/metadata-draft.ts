@@ -105,10 +105,12 @@ export function metadataDraftRequiresPendingDate(
 
 export function validateMetadataDraft(
   detail: WorkspaceTicketDetail,
+  dirtyFields: TicketMetadataDraftDirtyFields,
   draft: TicketMetadataDraft,
 ): TicketMetadataDraftValidation {
   if (
     metadataDraftRequiresPendingDate(detail, draft) &&
+    (dirtyFields.state || dirtyFields.pendingUntil) &&
     !isFuturePendingDateTime(draft.pendingDateTime)
   ) {
     return {

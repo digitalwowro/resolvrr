@@ -96,7 +96,7 @@ export async function updateTicketMetadataAction(
     actionInput.input,
   );
 
-  if (result.status === "saved") {
+  if (result.status === "saved" || result.status === "saved-refresh-failed") {
     revalidatePath("/workspace");
   }
 

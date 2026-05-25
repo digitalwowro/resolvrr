@@ -95,6 +95,7 @@ describe("TicketWorkspace post-update navigation", () => {
       screen.getByRole("combobox", { name: "Post-update navigation" }),
     ).toHaveTextContent("Keep this tab open");
 
+    await stagePriorityChange(user);
     await chooseNavigation(user, "Close tab if state is Closed");
     expect(window.localStorage.getItem(postUpdateNavigationStorageKey)).toBe(
       "return_to_list_when_closed",
@@ -117,6 +118,21 @@ describe("TicketWorkspace post-update navigation", () => {
     ).toHaveTextContent("Keep this tab open");
   });
 
+  it("disables post-update navigation until Update is available", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    expect(
+      screen.getByRole("combobox", { name: "Post-update navigation" }),
+    ).toBeDisabled();
+
+    await stagePriorityChange(user);
+
+    expect(
+      screen.getByRole("combobox", { name: "Post-update navigation" }),
+    ).toBeEnabled();
+  });
+
   it("keeps the active ticket open after a successful update by default", async () => {
     const user = userEvent.setup();
     renderWorkspace();
@@ -133,8 +149,8 @@ describe("TicketWorkspace post-update navigation", () => {
     const user = userEvent.setup();
     renderWorkspace();
 
-    await chooseNavigation(user, "Close tab & go to List");
     await stagePriorityChange(user);
+    await chooseNavigation(user, "Close tab & go to List");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/workspace"));
@@ -148,9 +164,9 @@ describe("TicketWorkspace post-update navigation", () => {
     const user = userEvent.setup();
     renderWorkspace();
 
-    await chooseNavigation(user, "Close tab if state is Closed");
     await user.click(screen.getByRole("combobox", { name: "Ticket state" }));
     await user.click(screen.getByRole("option", { name: "Closed" }));
+    await chooseNavigation(user, "Close tab if state is Closed");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/workspace"));
@@ -161,8 +177,8 @@ describe("TicketWorkspace post-update navigation", () => {
     const user = userEvent.setup();
     renderWorkspace();
 
-    await chooseNavigation(user, "Close tab if state is Closed");
     await stagePriorityChange(user);
+    await chooseNavigation(user, "Close tab if state is Closed");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
@@ -176,8 +192,8 @@ describe("TicketWorkspace post-update navigation", () => {
       ticket: { ...row, state: "Closed", stateKey: "closed" },
     });
 
-    await chooseNavigation(user, "Close tab if state is Closed");
     await stagePriorityChange(user);
+    await chooseNavigation(user, "Close tab if state is Closed");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/workspace"));
@@ -191,8 +207,8 @@ describe("TicketWorkspace post-update navigation", () => {
     }));
     renderWorkspace({ action });
 
-    await chooseNavigation(user, "Close tab & go to List");
     await stagePriorityChange(user);
+    await chooseNavigation(user, "Close tab & go to List");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     expect(await screen.findByText("Save failed.")).toBeInTheDocument();
@@ -212,8 +228,8 @@ describe("TicketWorkspace post-update navigation", () => {
     }));
     renderWorkspace({ action });
 
-    await chooseNavigation(user, "Close tab & go to List");
     await stagePriorityChange(user);
+    await chooseNavigation(user, "Close tab & go to List");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/workspace"));

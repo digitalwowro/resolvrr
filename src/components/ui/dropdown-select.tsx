@@ -40,6 +40,7 @@ type DropdownSelectProps = {
   className?: string;
   triggerClassName?: string;
   menuClassName?: string;
+  menuPlacement?: "bottom" | "top";
 };
 
 export function DropdownSelect({
@@ -54,6 +55,7 @@ export function DropdownSelect({
   className,
   triggerClassName,
   menuClassName,
+  menuPlacement = "bottom",
 }: DropdownSelectProps) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -204,7 +206,12 @@ export function DropdownSelect({
         </button>
         {open ? (
           <div
-            className={cn(dropdownMenuClass, menuClassName, "left-0 top-full w-full")}
+            className={cn(
+              dropdownMenuClass,
+              menuClassName,
+              "left-0 top-full w-full",
+              menuPlacement === "top" && "!top-auto bottom-full -translate-y-1",
+            )}
             id={`${id}-listbox`}
             role="listbox"
           >

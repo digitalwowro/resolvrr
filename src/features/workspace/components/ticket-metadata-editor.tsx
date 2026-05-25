@@ -132,7 +132,7 @@ function TicketMetadataEditorState({
 
   const dirtyFields = metadataDraftDirtyFields(baseline, draft);
   const hasChanges = metadataDraftHasChanges(dirtyFields);
-  const validation = validateMetadataDraft(detail, draft);
+  const validation = validateMetadataDraft(detail, dirtyFields, draft);
   const statusText = mutationStatusText(saving, mutationResult);
   const stateDisplay = selectedStateDisplay(draft.state);
   const showPendingDate = stateRequiresPendingDate(detail, draft.state);

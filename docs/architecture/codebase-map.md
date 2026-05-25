@@ -384,6 +384,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   grouping behavior.
 - `tests/features/ticket-metadata-action-input.test.ts`: verifies staged
   selected-ticket metadata update payload parsing and pending date validation.
+- `tests/features/ticket-metadata-action-revalidation.test.ts`: verifies
+  successful metadata writes invalidate the workspace for saved and
+  saved-refresh-failed action results.
 - `tests/features/ticket-metadata-mutation-service.test.ts`: verifies
   provider-neutral metadata mutation service dispatch, capability failures,
   pending-date validation, unavailable-transition handling, and
@@ -391,6 +394,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-metadata-mutation-workspace.test.tsx`: verifies
   workspace metadata mutation submit, hidden state options, pending date/time
   input, error, and staged non-optimistic UI behavior.
+- `tests/features/ticket-overdue-pending-priority-update.test.tsx`: verifies
+  overdue pending tickets can still submit priority-only staged metadata
+  updates without resubmitting stale pending dates.
 - `tests/features/ticket-staged-metadata-workspace.test.tsx`: verifies staged
   single-ticket metadata update behavior, changed-field treatment, discard,
   selected-ticket rebasing, and saved-refresh-failed UI handling.
