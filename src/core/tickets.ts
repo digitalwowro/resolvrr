@@ -141,6 +141,7 @@ export type Ticket = {
   pendingUntil?: Date;
   tags: string[];
   providerUrl?: string;
+  metadataMutationConstraints?: TicketMetadataMutationConstraints;
 };
 
 export type TicketListItem = Ticket & {
@@ -158,4 +159,10 @@ export type TicketDetail = {
 export type TicketMetadataMutationInput = {
   state?: TicketState;
   priority?: TicketPriority;
+  pendingUntil?: Date;
+};
+
+export type TicketMetadataMutationConstraints = {
+  hiddenStates?: TicketState[];
+  pendingDateRequiredStates?: Partial<Record<TicketState, string>>;
 };

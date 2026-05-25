@@ -8,6 +8,7 @@ export type TicketReadTimingPhase =
   | "base-url-security-revalidation"
   | "provider-list-request"
   | "provider-detail-metadata-request"
+  | "provider-metadata-mutation-current-ticket-request"
   | "provider-metadata-mutation-request"
   | "provider-article-thread-request"
   | "provider-user-lookup-request"

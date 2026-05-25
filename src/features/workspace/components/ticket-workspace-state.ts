@@ -13,10 +13,12 @@ import type {
   WorkspaceTicketSortKey,
   WorkspaceTicketTab,
 } from "@/features/tickets";
+import type { TicketMetadataSavedPatch } from "./metadata-draft";
 import {
   groupTicketRows,
   sortTicketRows,
 } from "./ticket-table-grouping";
+import { patchTicketTabMetadata } from "./ticket-tab-metadata";
 import type { TicketTabOrientation } from "./ticket-tabs-panel";
 
 type ActiveWorkspacePane = "list" | { ticketId: string };
@@ -158,6 +160,16 @@ export function useTicketWorkspaceDisplayState({
     setSelectedRowIds(new Set());
   }
 
+  function updateOpenTicketTabMetadata({
+    priority,
+    state,
+    ticketExternalId,
+  }: TicketMetadataSavedPatch) {
+    setOpenTicketTabs((current) =>
+      patchTicketTabMetadata(current, { priority, state, ticketExternalId }),
+    );
+  }
+
   function handleGroupByChange(nextGroupBy: WorkspaceTicketGroupKey) {
     setGroupBy(nextGroupBy);
     if (nextGroupBy !== "none" && nextGroupBy === sortKey) {
@@ -213,6 +225,17 @@ export function useTicketWorkspaceDisplayState({
     setActiveWorkspacePane("list");
   }
 
+  function returnActiveTicketToList() {
+    cacheSelectedDetail();
+    if (activeTicketId) {
+      setOpenTicketTabs((current) =>
+        current.filter((tab) => tab.id !== activeTicketId),
+      );
+    }
+    setActiveWorkspacePane("list");
+    router.push(ticketPath());
+  }
+
   function showOpenTicket(ticketId: string) {
     cacheSelectedDetail();
     setActiveWorkspacePane({ ticketId });
@@ -256,6 +279,7 @@ export function useTicketWorkspaceDisplayState({
     openTicketTabs,
     partiallySelected,
     refreshList,
+    returnActiveTicketToList,
     selectedRowIds,
     setTabOrientation,
     showList,
@@ -268,6 +292,7 @@ export function useTicketWorkspaceDisplayState({
     toggleRow,
     toggleSelectAll,
     toggleSort,
+    updateOpenTicketTabMetadata,
     visibleColumnSet,
   };
 }

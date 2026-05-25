@@ -66,7 +66,10 @@ by status code while their bodies are discarded.
 
 The first approved mutation surface is state and priority only. Provider-neutral
 code passes canonical Resolvrr keys in `TicketMetadataMutationInput`; provider
-plugins map those keys to raw provider values inside their own folders.
+plugins map those keys to raw provider values inside their own folders. Pending
+state transitions may include a canonical `pendingUntil` timestamp as
+supporting data; provider-specific fields such as Zammad `pending_time` stay in
+the provider implementation.
 
 Successful writes are followed by a service-layer refresh check for the affected
 ticket detail and list row. If the write succeeds but refresh fails, callers
@@ -75,10 +78,11 @@ Optimistic metadata updates are not part of this slice.
 
 ## Ticket Read Observability
 
-Provider read implementations should measure their own upstream request and
-mapping phases through sanitized ticket-read timing events. Zammad currently
-measures list request, detail metadata request, article/thread request,
-user-lookup request, and mapping/parsing phases. If a provider requires
+Provider read and write implementations should measure their own upstream
+request and mapping phases through sanitized ticket-read timing events. Zammad
+currently measures list request, detail metadata request, article/thread
+request, metadata mutation current-ticket request, metadata mutation write
+request, user-lookup request, and mapping/parsing phases. If a provider requires
 additional upstream calls for future secondary data such as tags, links,
 subscription, or lookup lists, those calls must be orchestrated in the
 provider/read service layer and added as explicit measured phases. UI
@@ -93,6 +97,11 @@ consume only canonical ticket values and provider capabilities. Zammad currently
 advertises `ticket:list`, `ticket:detail`, `ticket:update-state`, and
 `ticket:update-priority`; unsupported links and subscription data are returned
 as the required empty canonical shapes documented in the ticket contract.
+Zammad-specific state-transition behavior also stays inside this provider
+folder: the canonical `new` state is shown as the current value when applicable
+but is omitted from the selectable state menu, and pending-state transitions
+require a future pending date/time. The UI only receives canonical hidden state
+keys, date-required state keys, and user-safe reasons.
 
 Zammad reads request expanded/full payloads when available so provider-specific
 user assets can be mapped to canonical participants. Display names such as

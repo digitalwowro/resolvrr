@@ -45,11 +45,16 @@ available, and only shows the expand/collapse affordance when recipient details
 exist.
 
 The metadata sidebar remains read-only except for state and priority when the
-active provider advertises the matching mutation capability. Editable state and
-priority controls use the approved dropdown primitive, show pending/error
-states, do not optimistic-update values, and refresh the workspace after a
-successful checked save. If a provider lacks the capability, the field renders
-as ordinary read-only metadata.
+active provider advertises the matching mutation capability. Editable state,
+priority, and provider-required pending date/time controls use local staged
+draft state: changing a value does not call the provider until the agent clicks
+`Update`. Changed controls are visually marked, `Discard changes` resets only
+unsaved UI edits to the loaded ticket values, and successful saves refresh the
+workspace after one checked mutation. The action row includes a persisted local
+browser post-Update navigation preference: keep the ticket open, return to list,
+or return to list when the final canonical state is closed. Provider-supplied
+hidden state options are omitted from the state dropdown. If a provider lacks
+the capability, the field renders as ordinary read-only metadata.
 
 ## AI Status
 
@@ -57,23 +62,12 @@ AI features are deferred. The first workspace UI should omit AI status. If a
 future interim indicator is added before AI features are approved, it must only
 communicate unavailable or not configured state.
 
-## Static Workspace Slice
-
-The static synthetic workspace now lives at `/workspace/demo`. It validates
-layout, primitive usage, density, local interaction states, horizontal and
-vertical ticket tabs, and a dense ticket table. Static state gallery controls
-are omitted from the operational toolbar.
-
-Static workspace data is feature-local fixture data. It does not represent a
-core domain model, provider contract, saved-view backend, helpdesk connection,
-ticket cache, or persisted user preference.
+## Production Data Boundary
 
 The real `/workspace` route must not mix synthetic tickets with provider-backed
 tickets. Without an active helpdesk connection, it renders a disconnected state
 with a path to connection management.
 
-Mockup-only code for the static preview lives under
-`src/features/workspace/demo`. Production workspace components live under
-`src/features/workspace/components` and must not import synthetic fixtures,
-demo modules, provider services, repositories, server actions, or provider
+Production workspace components live under `src/features/workspace/components`
+and must not import provider services, repositories, server actions, or provider
 plugin internals.

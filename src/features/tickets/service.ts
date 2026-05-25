@@ -171,7 +171,7 @@ export async function updateWorkspaceTicketMetadata(
       retryable: mutationResult.retryable,
       status: "unavailable",
     });
-    return failedMutation(mutationResult);
+    return mutationResult;
   }
 
   const [detailRefresh, listRefresh] = await Promise.all([

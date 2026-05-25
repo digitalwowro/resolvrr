@@ -32,6 +32,7 @@ type DropdownSelectProps = {
   options: DropdownOption[];
   value?: string;
   onValueChange(value: string): void;
+  selectedDisplay?: Pick<DropdownOption, "icon" | "label">;
   placeholder?: string;
   disabled?: boolean;
   label?: string;
@@ -39,12 +40,14 @@ type DropdownSelectProps = {
   className?: string;
   triggerClassName?: string;
   menuClassName?: string;
+  menuPlacement?: "bottom" | "top";
 };
 
 export function DropdownSelect({
   options,
   value,
   onValueChange,
+  selectedDisplay,
   placeholder = "Select",
   disabled = false,
   label,
@@ -52,6 +55,7 @@ export function DropdownSelect({
   className,
   triggerClassName,
   menuClassName,
+  menuPlacement = "bottom",
 }: DropdownSelectProps) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -59,7 +63,7 @@ export function DropdownSelect({
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const selectedIndex = selectedOptionIndex(options, value);
-  const selected = selectedIndex >= 0 ? options[selectedIndex] : undefined;
+  const selected = selectedIndex >= 0 ? options[selectedIndex] : selectedDisplay;
 
   const close = useCallback(() => setOpen(false), []);
   useOutsideClick(rootRef, close, open);
@@ -202,7 +206,12 @@ export function DropdownSelect({
         </button>
         {open ? (
           <div
-            className={cn(dropdownMenuClass, menuClassName, "left-0 top-full w-full")}
+            className={cn(
+              dropdownMenuClass,
+              menuClassName,
+              "left-0 top-full w-full",
+              menuPlacement === "top" && "!top-auto bottom-full -translate-y-1",
+            )}
             id={`${id}-listbox`}
             role="listbox"
           >

@@ -1,5 +1,5 @@
 import type { ProviderCapability } from "@/core/providers";
-import type { TicketMetadataMutationInput } from "@/core/tickets";
+import type { TicketMetadataMutationInput, TicketState } from "@/core/tickets";
 import type { TicketReadUnavailableReason } from "./read-model";
 
 export type TicketMetadataMutationField = "state" | "priority";
@@ -11,7 +11,8 @@ export type TicketMetadataMutationCapabilities = {
 
 export type TicketMetadataMutationErrorReason =
   | TicketReadUnavailableReason
-  | "invalid-input";
+  | "invalid-input"
+  | "unavailable-transition";
 
 export type TicketMetadataMutationResult =
   | { status: "saved" }
@@ -50,4 +51,23 @@ export function hasTicketMetadataMutationInput(
   input: TicketMetadataMutationInput,
 ): boolean {
   return Boolean(input.state || input.priority);
+}
+
+function isPendingState(state: TicketState | undefined): boolean {
+  return state === "pending_reminder" || state === "pending_close";
+}
+
+export function invalidTicketMetadataMutationInput(
+  input: TicketMetadataMutationInput,
+  now = new Date(),
+): boolean {
+  if (input.pendingUntil && (!input.state || !isPendingState(input.state))) {
+    return true;
+  }
+  if (input.state && isPendingState(input.state)) {
+    const pendingUntilTime = input.pendingUntil?.getTime() ?? Number.NaN;
+    return !Number.isFinite(pendingUntilTime) || pendingUntilTime <= now.getTime();
+  }
+
+  return false;
 }

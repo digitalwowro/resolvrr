@@ -6,13 +6,15 @@ import type {
   TicketMetadataMutationCapabilities,
   WorkspaceTicketDetail,
 } from "@/features/tickets";
+import type { TicketMetadataSavedPatch } from "./metadata-draft";
 import { StateCell } from "./ticket-table-cells";
-import { TicketDetailSidebar } from "./ticket-detail-sidebar";
-import { TicketThread } from "./ticket-thread";
+import { TicketMetadataEditor } from "./ticket-metadata-editor";
 
 type TicketDetailProps = {
   detail: WorkspaceTicketDetail;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
+  onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
+  onReturnToListAfterUpdate(): void;
   roundedTop?: boolean;
   updateTicketMetadataAction(
     formData: FormData,
@@ -22,6 +24,8 @@ type TicketDetailProps = {
 export function TicketDetail({
   detail,
   metadataMutationCapabilities,
+  onMetadataSaved,
+  onReturnToListAfterUpdate,
   roundedTop = true,
   updateTicketMetadataAction,
 }: TicketDetailProps) {
@@ -92,16 +96,15 @@ export function TicketDetail({
           </div>
         </div>
       </div>
-      <div className="flex min-h-0 flex-1">
-        <div className="flex min-w-0 flex-1 flex-col">
-          <TicketThread articles={detail.articles} />
-        </div>
-        <TicketDetailSidebar
-          detail={detail}
-          metadataMutationCapabilities={metadataMutationCapabilities}
-          updateTicketMetadataAction={updateTicketMetadataAction}
-        />
-      </div>
+      <TicketMetadataEditor
+        detail={detail}
+        metadataMutationCapabilities={
+          metadataMutationCapabilities ?? { state: false, priority: false }
+        }
+        onMetadataSaved={onMetadataSaved}
+        onReturnToListAfterUpdate={onReturnToListAfterUpdate}
+        updateTicketMetadataAction={updateTicketMetadataAction}
+      />
     </section>
   );
 }
