@@ -1,10 +1,11 @@
+import { ProviderError, type TicketListQuery } from "@/core/providers";
 import type { TicketExternalId, TicketMetadataMutationInput } from "@/core/tickets";
-import type { TicketListQuery } from "@/core/providers";
 import type { TicketProviderContext } from "./connection-context";
 import { readUnavailableForProviderError } from "./connection-context";
 import {
   hasTicketMetadataMutationInput,
   ticketMetadataMutationCapabilities,
+  type TicketMetadataMutationResult,
 } from "./mutation-model";
 import {
   unavailableTicketRead,
@@ -93,15 +94,27 @@ export async function dispatchTicketMetadataMutation(
   providerContext: TicketProviderContext,
   ticketExternalId: TicketExternalId,
   input: TicketMetadataMutationInput,
-) {
+): Promise<TicketMetadataMutationResult> {
   if (!hasTicketMetadataMutationInput(input)) {
-    return unavailableTicketRead("unsupported-capability");
+    return {
+      status: "failed",
+      reason: "unsupported-capability",
+      retryable: false,
+    };
   }
   if (!canUpdateTicketMetadata(providerContext, input)) {
-    return unavailableTicketRead("unsupported-capability");
+    return {
+      status: "failed",
+      reason: "unsupported-capability",
+      retryable: false,
+    };
   }
   if (!providerContext.plugin.updateTicketMetadata) {
-    return unavailableTicketRead("unsupported-capability");
+    return {
+      status: "failed",
+      reason: "unsupported-capability",
+      retryable: false,
+    };
   }
 
   try {
@@ -112,6 +125,19 @@ export async function dispatchTicketMetadataMutation(
     );
     return { status: "saved" as const };
   } catch (error) {
-    return readUnavailableForProviderError(error);
+    if (error instanceof ProviderError && error.kind === "validation-failure") {
+      return {
+        status: "failed",
+        reason: "unavailable-transition",
+        retryable: false,
+      };
+    }
+
+    const unavailable = readUnavailableForProviderError(error);
+    return {
+      status: "failed",
+      reason: unavailable.reason,
+      retryable: unavailable.retryable,
+    };
   }
 }

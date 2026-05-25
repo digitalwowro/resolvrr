@@ -11,7 +11,8 @@ export type TicketMetadataMutationCapabilities = {
 
 export type TicketMetadataMutationErrorReason =
   | TicketReadUnavailableReason
-  | "invalid-input";
+  | "invalid-input"
+  | "unavailable-transition";
 
 export type TicketMetadataMutationResult =
   | { status: "saved" }

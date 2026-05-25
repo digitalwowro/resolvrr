@@ -10,8 +10,6 @@ import {
 import {
   ticketPriorities,
   ticketPriorityDefinitions,
-  ticketStates,
-  ticketStateDefinitions,
   type TicketPriority,
   type TicketState,
 } from "@/core/tickets";
@@ -25,14 +23,20 @@ import {
   PriorityCell,
   PriorityIcon,
   StateCell,
-  StateIcon,
 } from "./ticket-table-cells";
-
-const stateOptions: DropdownOption[] = ticketStates.map((state) => ({
-  value: state,
-  label: ticketStateDefinitions[state].label,
-  icon: <StateIcon state={state} />,
-}));
+import {
+  defaultPendingDateTimeParts,
+  isFuturePendingDateTime,
+  pendingDateTimeIso,
+  type PendingDateTimeParts,
+  TicketPendingStateForm,
+} from "./ticket-pending-state-form";
+import {
+  selectedStateDisplay,
+  stateMutationLabel,
+  stateOptionsFor,
+  stateRequiresPendingDate,
+} from "./ticket-state-mutation-options";
 
 const priorityOptions: DropdownOption[] = ticketPriorities.map((priority) => ({
   value: priority,
@@ -104,12 +108,20 @@ export function TicketDetailSidebar({
     useState<TicketMetadataMutationField>();
   const [mutationResult, setMutationResult] =
     useState<TicketMetadataMutationActionState>({ status: "idle" });
+  const [pendingStateDraft, setPendingStateDraft] = useState<TicketState>();
+  const [pendingDateTime, setPendingDateTime] = useState(
+    defaultPendingDateTimeParts,
+  );
   const statusText = mutationStatusText(pendingField, mutationResult);
+  const availableStateOptions = stateOptionsFor(detail);
+  const displayedState = pendingStateDraft ?? detail.stateKey;
+  const stateDisplay = selectedStateDisplay(displayedState);
 
   function saveMetadata(
     field: TicketMetadataMutationField,
     value: TicketState | TicketPriority,
     currentValue: TicketState | TicketPriority | undefined,
+    extra?: { pendingUntil?: string },
   ) {
     if (pendingField || value === currentValue) {
       return;
@@ -119,6 +131,9 @@ export function TicketDetailSidebar({
     formData.set("ticketExternalId", detail.id);
     formData.set("field", field);
     formData.set("value", value);
+    if (extra?.pendingUntil) {
+      formData.set("pendingUntil", extra.pendingUntil);
+    }
     setPendingField(field);
     setMutationResult({ status: "idle" });
 
@@ -126,6 +141,7 @@ export function TicketDetailSidebar({
       .then((result) => {
         setMutationResult(result);
         if (result.status === "saved") {
+          setPendingStateDraft(undefined);
           router.refresh();
         }
       })
@@ -139,6 +155,50 @@ export function TicketDetailSidebar({
       .finally(() => setPendingField(undefined));
   }
 
+  function handleStateChange(value: string) {
+    const state = value as TicketState;
+    if (stateRequiresPendingDate(detail, state)) {
+      setPendingStateDraft(state);
+      setPendingDateTime(defaultPendingDateTimeParts());
+      setMutationResult({ status: "idle" });
+      return;
+    }
+
+    setPendingStateDraft(undefined);
+    saveMetadata("state", state, detail.stateKey);
+  }
+
+  function savePendingState(value: PendingDateTimeParts) {
+    if (!pendingStateDraft) {
+      return;
+    }
+    if (!isFuturePendingDateTime(value)) {
+      setMutationResult({
+        status: "failed",
+        field: "state",
+        message: "Choose a future pending date and time.",
+      });
+      return;
+    }
+
+    const pendingUntil = pendingDateTimeIso(value);
+    if (!pendingUntil) {
+      setMutationResult({
+        status: "failed",
+        field: "state",
+        message: "Choose a future pending date and time.",
+      });
+      return;
+    }
+
+    saveMetadata("state", pendingStateDraft, detail.stateKey, { pendingUntil });
+  }
+
+  function handlePendingDateTimeChange(value: PendingDateTimeParts) {
+    setPendingDateTime(value);
+    savePendingState(value);
+  }
+
   return (
     <aside className="w-56 shrink-0 space-y-4 border-l border-slate-200 px-3 py-3">
       {metadataMutationCapabilities.state ? (
@@ -147,13 +207,22 @@ export function TicketDetailSidebar({
             ariaLabel="Ticket state"
             className="block w-full [&>div]:w-full"
             disabled={Boolean(pendingField)}
-            onValueChange={(value) =>
-              saveMetadata("state", value as TicketState, detail.stateKey)
-            }
-            options={stateOptions}
+            onValueChange={handleStateChange}
+            options={availableStateOptions}
+            selectedDisplay={stateDisplay}
             triggerClassName="w-full"
-            value={detail.stateKey}
+            value={displayedState}
           />
+          {pendingStateDraft ? (
+            <div className="mt-2">
+              <TicketPendingStateForm
+                disabled={Boolean(pendingField)}
+                onChange={handlePendingDateTimeChange}
+                stateLabel={stateMutationLabel(pendingStateDraft)}
+                value={pendingDateTime}
+              />
+            </div>
+          ) : null}
         </EditableSidebarField>
       ) : (
         <SidebarField label="State">

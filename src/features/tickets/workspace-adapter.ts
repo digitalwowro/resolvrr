@@ -4,6 +4,7 @@ import {
   type TicketArticle,
   type TicketDetail,
   type TicketListItem,
+  type TicketMetadataMutationConstraints,
   type TicketPriority,
   type TicketState,
 } from "@/core/tickets";
@@ -100,6 +101,7 @@ export type WorkspaceTicketDetail = {
   updatedAt: string;
   providerUrl?: string;
   tags: string[];
+  metadataMutationConstraints?: TicketMetadataMutationConstraints;
   articles: WorkspaceArticle[];
 };
 
@@ -211,6 +213,7 @@ export function workspaceTicketDetail(
   return {
     ...workspaceTicketRow(detail.ticket),
     tags: detail.ticket.tags,
+    metadataMutationConstraints: detail.ticket.metadataMutationConstraints,
     articles: detail.thread.articles.map((article) => ({
       id: article.externalId,
       author: participantName(article.author),

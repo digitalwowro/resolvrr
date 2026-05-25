@@ -32,6 +32,7 @@ type DropdownSelectProps = {
   options: DropdownOption[];
   value?: string;
   onValueChange(value: string): void;
+  selectedDisplay?: Pick<DropdownOption, "icon" | "label">;
   placeholder?: string;
   disabled?: boolean;
   label?: string;
@@ -45,6 +46,7 @@ export function DropdownSelect({
   options,
   value,
   onValueChange,
+  selectedDisplay,
   placeholder = "Select",
   disabled = false,
   label,
@@ -59,7 +61,7 @@ export function DropdownSelect({
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const selectedIndex = selectedOptionIndex(options, value);
-  const selected = selectedIndex >= 0 ? options[selectedIndex] : undefined;
+  const selected = selectedIndex >= 0 ? options[selectedIndex] : selectedDisplay;
 
   const close = useCallback(() => setOpen(false), []);
   useOutsideClick(rootRef, close, open);

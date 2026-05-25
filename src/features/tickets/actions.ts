@@ -33,12 +33,24 @@ function isTicketPriority(value: string): value is TicketPriority {
   return ticketPriorities.includes(value as TicketPriority);
 }
 
+function pendingUntilValue(value: string): Date | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date : undefined;
+}
+
 function errorMessage(reason: TicketMetadataMutationErrorReason): string {
   if (reason === "invalid-input") {
     return "Choose a state or priority to save.";
   }
   if (reason === "unsupported-capability") {
     return "This workspace cannot update that field.";
+  }
+  if (reason === "unavailable-transition") {
+    return "That state change is not available for this ticket.";
   }
   if (reason === "provider-auth-failed") {
     return "The helpdesk rejected the saved credentials.";
@@ -96,11 +108,12 @@ export async function updateTicketMetadataAction(
   const ticketExternalId = textValue(formData, "ticketExternalId");
   const field = textValue(formData, "field");
   const value = textValue(formData, "value");
+  const pendingUntil = pendingUntilValue(textValue(formData, "pendingUntil"));
 
   let input: TicketMetadataMutationInput | undefined;
   let mutationField: TicketMetadataMutationField | undefined;
   if (field === "state" && isTicketState(value)) {
-    input = { state: value };
+    input = { state: value, ...(pendingUntil ? { pendingUntil } : {}) };
     mutationField = "state";
   }
   if (field === "priority" && isTicketPriority(value)) {

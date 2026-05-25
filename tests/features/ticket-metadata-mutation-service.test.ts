@@ -5,10 +5,7 @@ import type {
   HelpdeskConnectionWithCredential,
   HelpdeskConnectionsRepository,
 } from "@/features/helpdesk-connections/repository";
-import {
-  loadWorkspaceTicketDetail,
-  loadWorkspaceTicketList,
-} from "@/features/tickets";
+import { updateWorkspaceTicketMetadata } from "@/features/tickets";
 import { encryptSecret } from "@/security/encryption";
 import { validateProviderBaseUrl } from "@/security/base-url-validation";
 
@@ -101,7 +98,7 @@ function provider(
   };
 }
 
-describe("ticket read service", () => {
+describe("ticket metadata mutation service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedValidateProviderBaseUrl.mockResolvedValue({
@@ -110,158 +107,134 @@ describe("ticket read service", () => {
     });
   });
 
-  it("returns an unavailable state when no active connection exists", async () => {
-    const result = await loadWorkspaceTicketList(
-      repository({ activeConnectionId: null }),
-      createProviderRegistry([provider()]),
-      encryptionKey,
-      "user-1",
-    );
-
-    expect(result).toMatchObject({
-      status: "unavailable",
-      reason: "no-active-connection",
-    });
-  });
-
-  it.each([
-    ["inactive-connection", connection({ status: "disconnected" })],
-    ["missing-credentials", connection({ credential: null })],
-    ["unknown-provider", connection({ providerKey: "missing-provider" })],
-  ])("returns %s before calling the provider", async (reason, storedConnection) => {
-    const result = await loadWorkspaceTicketList(
-      repository({
-        activeConnectionId: "connection-1",
-        connection: storedConnection,
-      }),
-      createProviderRegistry([provider()]),
-      encryptionKey,
-      "user-1",
-    );
-
-    expect(result).toMatchObject({ status: "unavailable", reason });
-  });
-
-  it("passes decrypted credentials and validated addresses to provider reads", async () => {
-    const consoleInfo = vi
-      .spyOn(console, "info")
-      .mockImplementation(() => undefined);
+  it("updates canonical ticket metadata and refreshes affected list and detail", async () => {
+    const updateTicketMetadata = vi.fn().mockResolvedValue(undefined);
     const listTickets = vi.fn(provider().listTickets);
+    const getTicketDetail = vi.fn(provider().getTicketDetail);
 
-    const result = await loadWorkspaceTicketList(
-      repository({
-        activeConnectionId: "connection-1",
-        connection: connection(),
-      }),
-      createProviderRegistry([provider({ listTickets })]),
-      encryptionKey,
-      "user-1",
-    );
-
-    expect(result).toMatchObject({
-      status: "available",
-      connectionName: "Support",
-      metadataMutationCapabilities: { state: false, priority: false },
-    });
-    expect(listTickets).toHaveBeenCalledWith(
-      expect.objectContaining({
-        credentialPayload: { username: "agent", password: "secret" },
-        requestSecurity: { validatedAddresses: ["93.184.216.34"] },
-      }),
-      expect.objectContaining({ limit: 25 }),
-    );
-    expect(consoleInfo).toHaveBeenCalledWith(
-      "Ticket read timing",
-      expect.objectContaining({
-        operation: "list",
-        phase: "active-connection-lookup",
-        providerKey: "test-provider",
-        status: "ok",
-      }),
-    );
-    expect(consoleInfo).toHaveBeenCalledWith(
-      "Ticket read timing",
-      expect.objectContaining({
-        operation: "list",
-        phase: "base-url-security-revalidation",
-        providerKey: "test-provider",
-        status: "ok",
-      }),
-    );
-    expect(consoleInfo).toHaveBeenCalledWith(
-      "Ticket read timing",
-      expect.objectContaining({
-        operation: "list",
-        phase: "credential-decrypt",
-        providerKey: "test-provider",
-        status: "ok",
-      }),
-    );
-    expect(consoleInfo).toHaveBeenCalledWith(
-      "Ticket read timing",
-      expect.objectContaining({
-        operation: "list",
-        phase: "total-list-load",
-        providerKey: "test-provider",
-        status: "ok",
-      }),
-    );
-  });
-
-  it("maps unsupported capabilities to an unavailable state", async () => {
-    const result = await loadWorkspaceTicketDetail(
-      repository({
-        activeConnectionId: "connection-1",
-        connection: connection(),
-      }),
-      createProviderRegistry([provider({ capabilities: ["ticket:list"] })]),
-      encryptionKey,
-      "user-1",
-      "ticket-1",
-    );
-
-    expect(result).toMatchObject({
-      status: "unavailable",
-      reason: "unsupported-capability",
-    });
-  });
-
-  it.each([
-    [
-      new ProviderError("credential-auth-failure", "auth rejected"),
-      "provider-auth-failed",
-    ],
-    [new ProviderError("permission-denied", "denied"), "provider-permission-denied"],
-    [
-      new ProviderError("rate-limited", "rate limited", true),
-      "provider-rate-limited",
-    ],
-    [
-      new ProviderError("temporary-provider-failure", "network", true),
-      "provider-temporary-failure",
-    ],
-    [
-      new ProviderError("provider-data-mismatch", "unexpected"),
-      "provider-unexpected-response",
-    ],
-  ])("maps provider failure %s to %s", async (error, reason) => {
-    const result = await loadWorkspaceTicketList(
+    const result = await updateWorkspaceTicketMetadata(
       repository({
         activeConnectionId: "connection-1",
         connection: connection(),
       }),
       createProviderRegistry([
         provider({
-          listTickets: async () => {
-            throw error;
+          capabilities: [
+            "ticket:list",
+            "ticket:detail",
+            "ticket:update-state",
+            "ticket:update-priority",
+          ],
+          getTicketDetail,
+          listTickets,
+          updateTicketMetadata,
+        }),
+      ]),
+      encryptionKey,
+      "user-1",
+      "ticket-1",
+      { state: "closed", priority: "high" },
+    );
+
+    expect(result).toEqual({ status: "saved" });
+    expect(updateTicketMetadata).toHaveBeenCalledWith(
+      expect.objectContaining({
+        credentialPayload: { username: "agent", password: "secret" },
+        requestSecurity: { validatedAddresses: ["93.184.216.34"] },
+      }),
+      "ticket-1",
+      { state: "closed", priority: "high" },
+    );
+    expect(getTicketDetail).toHaveBeenCalledWith(expect.any(Object), "ticket-1");
+    expect(listTickets).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ limit: 25 }),
+    );
+  });
+
+  it("rejects ticket metadata mutation when provider capability is unavailable", async () => {
+    const updateTicketMetadata = vi.fn().mockResolvedValue(undefined);
+
+    const result = await updateWorkspaceTicketMetadata(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([
+        provider({
+          capabilities: ["ticket:list", "ticket:detail"],
+          updateTicketMetadata,
+        }),
+      ]),
+      encryptionKey,
+      "user-1",
+      "ticket-1",
+      { state: "closed" },
+    );
+
+    expect(result).toEqual({
+      status: "failed",
+      reason: "unsupported-capability",
+      retryable: false,
+    });
+    expect(updateTicketMetadata).not.toHaveBeenCalled();
+  });
+
+  it("reports unavailable-transition for provider validation failures", async () => {
+    const result = await updateWorkspaceTicketMetadata(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([
+        provider({
+          capabilities: ["ticket:list", "ticket:detail", "ticket:update-state"],
+          updateTicketMetadata: async () => {
+            throw new ProviderError(
+              "validation-failure",
+              "State transition is not available.",
+            );
           },
         }),
       ]),
       encryptionKey,
       "user-1",
+      "ticket-1",
+      { state: "new" },
     );
 
-    expect(result).toMatchObject({ status: "unavailable", reason });
+    expect(result).toEqual({
+      status: "failed",
+      reason: "unavailable-transition",
+      retryable: false,
+    });
   });
 
+  it("reports saved-refresh-failed when post-write provider refresh fails", async () => {
+    const result = await updateWorkspaceTicketMetadata(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([
+        provider({
+          capabilities: ["ticket:list", "ticket:detail", "ticket:update-state"],
+          getTicketDetail: async () => {
+            throw new ProviderError("temporary-provider-failure", "network", true);
+          },
+          updateTicketMetadata: async () => undefined,
+        }),
+      ]),
+      encryptionKey,
+      "user-1",
+      "ticket-1",
+      { state: "closed" },
+    );
+
+    expect(result).toEqual({
+      status: "saved-refresh-failed",
+      reason: "provider-temporary-failure",
+      retryable: true,
+    });
+  });
 });

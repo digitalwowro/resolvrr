@@ -104,8 +104,12 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/providers/zammad/errors.ts`: provider HTTP status classification.
 - `src/providers/zammad/mapping.ts`: provider raw value to canonical ticket,
   article, attachment, state, and priority mapping.
+- `src/providers/zammad/mutation-policy.ts`: Zammad-only state mutation
+  availability rules, exposed to core/UI as canonical hidden state keys and
+  pending-date requirements.
 - `src/providers/zammad/mutations.ts`: Zammad-only state/priority metadata
-  write payload mapping and endpoint call implementation.
+  write payload mapping, pending-time payload construction, state-transition
+  guard, and endpoint call implementation.
 - `src/providers/zammad/participants.ts`: Zammad user/participant display-name,
   email fallback, recipient, and expanded asset mapping helpers.
 - `src/providers/zammad/plugin.ts`: provider plugin object, capabilities, and
@@ -213,8 +217,14 @@ architecture folders or important files are added, moved, renamed, or removed.
   ticket detail header and layout.
 - `src/features/workspace/components/ticket-detail-sidebar.tsx`: production
   metadata sidebar for selected tickets. State and priority render as editable
-  dropdowns only when provider capabilities allow them; other metadata remains
-  read-only.
+  dropdowns only when provider capabilities allow them; provider-supplied hidden
+  state options and pending-date requirements are reflected in the state
+  control, and other metadata remains read-only.
+- `src/features/workspace/components/ticket-pending-state-form.tsx`: compact
+  pending date/time input and helpers used by pending state transitions.
+- `src/features/workspace/components/ticket-state-mutation-options.tsx`: state
+  dropdown option helpers for provider-supplied hidden states and selected-value
+  display.
 - `src/features/workspace/components/ticket-thread.tsx`: production read-only
   ticket article thread presentation with sanitized rich-text rendering,
   display-name-first From/To/Cc/Bcc metadata, and no reply/composer controls.
@@ -350,8 +360,14 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-workspace-test-utils.tsx`: shared provider-backed
   workspace fixtures and render helpers for feature tests.
 - `tests/features/ticket-workspace.test.tsx`: verifies provider-backed
-  workspace unavailable, table, profile menu, detail, metadata mutation UI, and
+  workspace unavailable, table, profile menu, detail, read-only metadata, and
   grouping behavior.
+- `tests/features/ticket-metadata-mutation-service.test.ts`: verifies
+  provider-neutral metadata mutation service dispatch, capability failures,
+  unavailable-transition handling, and refresh-after-write results.
+- `tests/features/ticket-metadata-mutation-workspace.test.tsx`: verifies
+  workspace metadata mutation submit, hidden state options, pending date/time
+  input, error, and non-optimistic UI behavior.
 - `tests/features/workspace-adapter.test.ts`: verifies ticket-to-workspace
   adapter display formatting for table/detail/thread date strings.
 - `tests/features/ticket-workspace-horizontal-tabs.test.tsx`: verifies local
@@ -365,6 +381,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   Auth credential helpers.
 - `tests/providers/zammad/mapping.test.ts`: verifies provider-specific raw state
   and priority mapping to canonical ticket keys.
+- `tests/providers/zammad/mutation-policy.test.ts`: verifies Zammad-only state
+  mutation availability constraints.
 - `tests/providers/zammad/read-helpers.ts`: shared Zammad read test fixtures.
 - `tests/providers/zammad/read.test.ts`: verifies Zammad ticket list/detail
   endpoint calls, canonical mapping, optional feature defaults, and read timing.

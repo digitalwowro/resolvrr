@@ -19,6 +19,7 @@ import {
   recipientParticipant,
   relationId,
 } from "./participants";
+import { zammadMetadataMutationConstraints } from "./mutation-policy";
 import type { ZammadArticle, ZammadAssets, ZammadTicket } from "./schemas";
 
 const stateMap = new Map<string, TicketState>([
@@ -191,7 +192,7 @@ export function mapTicket(
     namedReferenceValue(ticket.group) ??
     namedAssetValue(assets?.Group, ticket.group_id);
 
-  return {
+  const mappedTicket: Ticket = {
     externalId: String(ticket.id),
     number: ticket.number,
     title: ticket.title,
@@ -215,6 +216,14 @@ export function mapTicket(
     pendingUntil: dateValue(ticket.pending_time),
     tags: [],
     providerUrl: providerTicketUrl(baseUrl, ticket.id),
+  };
+  const mutationConstraints = zammadMetadataMutationConstraints(mappedTicket);
+
+  return {
+    ...mappedTicket,
+    ...(mutationConstraints
+      ? { metadataMutationConstraints: mutationConstraints }
+      : {}),
   };
 }
 

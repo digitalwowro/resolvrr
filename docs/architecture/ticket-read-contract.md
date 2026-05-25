@@ -46,6 +46,8 @@ Optional fields:
 - `createdAt`, `pendingUntil`: timestamps when the provider exposes them.
 - `providerUrl`: direct URL to the provider ticket when the provider can build
   it safely.
+- `metadataMutationConstraints`: provider-neutral state mutation UI constraints
+  expressed with canonical state keys and user-safe reasons.
 
 `TicketListItem` extends `Ticket` with optional `textPreview` for dense lists.
 List rows must not depend on provider-specific raw fields.
@@ -84,10 +86,12 @@ and UI code use canonical Resolvrr keys:
 
 - `TicketMetadataMutationInput.state?: TicketState`
 - `TicketMetadataMutationInput.priority?: TicketPriority`
+- `TicketMetadataMutationInput.pendingUntil?: Date`, used only as supporting
+  data for state transitions that require a pending time.
 
 Provider plugins own mapping from those keys to provider-specific raw values.
-Zammad raw values such as `pending reminder` or `2 normal` must not escape
-`src/providers/zammad/**`.
+Zammad raw values such as `pending reminder`, `2 normal`, or `pending_time`
+must not escape `src/providers/zammad/**`.
 
 The provider-neutral mutation capabilities are:
 
@@ -108,6 +112,11 @@ Mutation results distinguish write failure from refresh failure:
 
 The UI does not optimistic-update metadata. It submits the mutation, shows a
 pending state, and refreshes the workspace after a successful checked write.
+Providers may attach per-ticket state mutation constraints when a provider has
+stricter state-transition rules than the canonical model. These constraints can
+hide unavailable state options or require supporting pending-date input for
+specific canonical states. Provider raw values and provider-specific decisions
+remain inside the provider plugin.
 
 ## Detail Shape
 
@@ -193,6 +202,7 @@ The read path logs sanitized timing metadata for these phases:
 - provider mapping/parsing;
 - total list load;
 - total selected-ticket detail load.
+- provider metadata mutation current-ticket request;
 - provider metadata mutation request;
 - total metadata mutation.
 
