@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type FocusEvent,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -111,6 +112,15 @@ export function Tooltip({
     setPosition(null);
   }
 
+  function scheduleOpenForVisibleFocus(event: FocusEvent<HTMLSpanElement>) {
+    if (
+      event.target instanceof Element &&
+      event.target.matches(":focus-visible")
+    ) {
+      scheduleOpen();
+    }
+  }
+
   const tooltip = open
     ? createPortal(
         <span
@@ -134,7 +144,7 @@ export function Tooltip({
       aria-describedby={open ? tooltipId : undefined}
       className={cn("relative inline-flex", className)}
       onBlur={close}
-      onFocus={scheduleOpen}
+      onFocus={scheduleOpenForVisibleFocus}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           close();

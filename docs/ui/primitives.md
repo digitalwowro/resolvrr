@@ -119,7 +119,9 @@ keyboard behavior, or outside-click behavior.
 
 `Tooltip`:
 
-- Opens on hover or keyboard focus after a short delay.
+- Opens on hover or keyboard-visible focus after a short delay. Focus that is
+  restored by pointer interaction or browser-tab refocus should not open the
+  tooltip.
 - Closes on blur, pointer leave, or Escape.
 - Uses `aria-describedby` while visible.
 - Accepts plain text or short rich content through `content`.

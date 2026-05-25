@@ -258,7 +258,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/components/ui/ticket-tab.tsx`: open-ticket tab primitive.
 - `src/components/ui/toolbar-controls.tsx`: compact toolbar wrappers over
   button and dropdown primitives.
-- `src/components/ui/tooltip.tsx`: custom non-interactive tooltip primitive.
+- `src/components/ui/tooltip.tsx`: custom non-interactive tooltip primitive
+  that opens on hover or keyboard-visible focus.
 - `src/components/ui/index.ts`: UI primitive exports.
 - `src/components/ui/use-outside-click.ts`: shared outside-click close helper.
 - `src/components/ui/use-table-sort.ts`: shared sortable table state hook; row
@@ -313,7 +314,7 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/components/dropdowns.test.tsx`: verifies searchable and non-searchable
   dropdown keyboard and close behavior.
 - `tests/components/menu-tooltip.test.tsx`: verifies menu, profile menu, and
-  tooltip keyboard behavior.
+  tooltip hover, keyboard-visible focus, and close behavior.
 - `tests/components/primitives-state.test.tsx`: verifies basic primitive states.
 - `tests/components/table.test.tsx`: verifies shared table wrappers and sortable
   table state.
