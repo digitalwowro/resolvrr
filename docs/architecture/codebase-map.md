@@ -5,6 +5,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 
 ## Root Files
 
+- `.github/dependabot.yml`: Dependabot update configuration for npm packages
+  and GitHub Actions.
 - `.gitignore`: keeps local secrets, dependencies, build output, generated
   clients, logs, private memory, and editor files out of the app repo.
 - `package.json`: npm scripts and pinned application dependencies.
@@ -425,6 +427,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `docs/development`: local development workflow docs.
 - `docs/development/local-development.md`: development commands, service names,
   and local boundaries.
+- `docs/development/dependency-updates.md`: Dependabot and human-authored
+  dependency update handling rules.
 - `docs/operations`: service, cache, and operational command docs.
 - `docs/operations/dev-service.md`: user-level dev service operations.
 - `docs/operations/cache-clear.md`: cache-clear script usage.
