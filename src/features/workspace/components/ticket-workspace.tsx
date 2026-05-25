@@ -56,7 +56,7 @@ export function TicketWorkspace({
   detail,
   detailResult,
   listResult,
-  loadTicketDetailAction = unavailableTicketDetailAction,
+  loadTicketDetailAction,
   logoutAction,
   metadataMutationCapabilities,
   rows,
@@ -66,6 +66,9 @@ export function TicketWorkspace({
   updateTicketMetadataAction,
   userEmail,
 }: TicketWorkspaceProps) {
+  const providedLoadTicketDetailAction = Boolean(loadTicketDetailAction);
+  const effectiveLoadTicketDetailAction =
+    loadTicketDetailAction ?? unavailableTicketDetailAction;
   const effectiveMetadataMutationCapabilities =
     metadataMutationCapabilities ??
     (listResult.status === "available"
@@ -88,8 +91,9 @@ export function TicketWorkspace({
           columns={columns}
           detail={detail}
           detailResult={detailResult}
-          loadTicketDetailAction={loadTicketDetailAction}
+          loadTicketDetailAction={effectiveLoadTicketDetailAction}
           metadataMutationCapabilities={effectiveMetadataMutationCapabilities}
+          refreshTicketDetailAfterMetadataSave={providedLoadTicketDetailAction}
           rows={rows}
           selectedTicketId={selectedTicketId}
           tabs={tabs}

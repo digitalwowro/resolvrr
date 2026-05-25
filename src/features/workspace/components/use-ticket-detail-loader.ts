@@ -69,20 +69,20 @@ export function useTicketDetailLoader({
       return undefined;
     }
 
-    if (ticketId === selectedTicketId && initialDetailResult) {
-      return initialDetailResult;
-    }
-
-    return detailCache[ticketId];
+    return detailCache[ticketId] ??
+      (ticketId === selectedTicketId ? initialDetailResult : undefined);
   }
 
-  function ensureTicketDetail(ticketId: string) {
-    if (detailCache[ticketId]) {
+  function loadTicketDetail(ticketId: string, { force }: { force: boolean }) {
+    if (!force && detailCache[ticketId]) {
       return;
     }
 
     setDetailCacheState((current) => {
-      if (current[ticketId]) {
+      if (!force && current[ticketId]) {
+        return current;
+      }
+      if (force && current[ticketId]?.status === "available") {
         return current;
       }
 
@@ -107,9 +107,18 @@ export function useTicketDetailLoader({
       });
   }
 
+  function ensureTicketDetail(ticketId: string) {
+    loadTicketDetail(ticketId, { force: false });
+  }
+
+  function refreshTicketDetail(ticketId: string) {
+    loadTicketDetail(ticketId, { force: true });
+  }
+
   return {
     cacheSelectedDetail,
     detailFor,
     ensureTicketDetail,
+    refreshTicketDetail,
   };
 }
