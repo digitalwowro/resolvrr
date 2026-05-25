@@ -369,14 +369,6 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features`: feature-level component tests.
 - `tests/features/connection-message-query.test.tsx`: verifies transient
   connection action query parameters are removed after message rendering.
-- `tests/features/static-workspace-test-utils.tsx`: shared render helper for
-  local-only static workspace tests.
-- `tests/features/static-workspace-navigation.test.tsx`: verifies static
-  workspace saved-view, tabs, profile menu, and navigation interactions.
-- `tests/features/static-workspace-detail.test.tsx`: verifies static
-  ticket-detail sidebar, thread, and inert composer behavior.
-- `tests/features/static-workspace-table.test.tsx`: verifies static ticket table
-  grid, grouping, sorting, selection, and column behavior.
 - `tests/features/ticket-workspace-test-utils.tsx`: shared provider-backed
   workspace fixtures and render helpers for feature tests.
 - `tests/features/ticket-workspace.test.tsx`: verifies provider-backed
