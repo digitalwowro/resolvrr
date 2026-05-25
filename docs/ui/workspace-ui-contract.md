@@ -35,6 +35,19 @@ ticket panes. List-only controls such as row selection, refresh, saved view,
 grouping, and column visibility remain visible but disabled while a selected
 ticket pane is active.
 
+## URL And Sharing
+
+`/workspace?ticket=ID` is the direct-link and refresh contract for a selected
+ticket. Initial requests with a ticket query are server-loadable. Post-hydration
+workspace interactions keep navigation local: row opens, already-open tab
+activation, List activation, post-update return-to-list behavior, and close-tab
+fallbacks update the address bar with `window.history.replaceState()` instead
+of App Router navigation.
+
+The browser URL is kept aligned with the active ticket or List view. The ticket
+detail header also exposes an icon-only copy-link control that writes the
+current ticket's direct `/workspace?ticket=ID` URL to the clipboard.
+
 ## Ticket Detail
 
 Selected ticket detail keeps the approved dense layout. Thread articles render

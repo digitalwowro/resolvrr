@@ -210,7 +210,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   per-workspace-session selected-ticket detail cache and client detail loader
   for post-hydration row opens.
 - `src/features/workspace/components/workspace-url.ts`: workspace ticket/List
-  URL path and history replacement helpers for local tab navigation.
+  URL path helper used by local tab navigation and explicit ticket link sharing,
+  plus history replacement helpers for local tab navigation.
 - `src/features/workspace/components/workspace-header.tsx`: production
   workspace header presentation with brand, search, status icon, and an
   avatar/profile menu fed by real connection/action props.
@@ -402,9 +403,10 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-workspace-vertical-tabs.test.tsx`: verifies local
   vertical ticket tab orientation, open/activation behavior, and route
   navigation without persistence.
-- `tests/features/ticket-workspace-url-sync.test.tsx`: verifies local
-  ticket/List URL replacement for already-open tab activation and active-tab
-  close fallback behavior.
+- `tests/features/ticket-workspace-url-sync.test.tsx`: verifies direct initial
+  selected-ticket URLs, explicit ticket link copying, and local ticket/List URL
+  replacement for already-open tab activation and active-tab close fallback
+  behavior.
 - `tests/providers`: provider-specific tests.
 - `tests/providers/zammad/credentials.test.ts`: verifies provider-specific Basic
   Auth credential helpers.
