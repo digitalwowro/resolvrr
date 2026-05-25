@@ -1,6 +1,7 @@
 # Dependency Updates
 
 Dependabot is enabled for npm package updates and GitHub Actions updates.
+It is configured to ignore semver-major version updates for both ecosystems.
 
 Dependabot-authored pull requests are review inputs. Do not merge bot-authored
 commits directly unless the repository owner explicitly approves that specific

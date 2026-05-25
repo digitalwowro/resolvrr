@@ -11,6 +11,10 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     commit-message:
       prefix: "deps"
       include: "scope"
@@ -25,6 +29,10 @@ updates:
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     commit-message:
       prefix: "deps"
       include: "scope"
