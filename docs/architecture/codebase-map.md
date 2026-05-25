@@ -44,7 +44,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   route.
 - `src/app/workspace/connections/[connectionId]/edit/page.tsx`: protected
   edit-connection form route that never receives stored credential payloads.
-- `src/app/globals.css`: global Tailwind import and base document styles.
+- `src/app/globals.css`: global Tailwind import, base document styles, and
+  default plain-anchor color.
 - `src/core`: provider-neutral domain contracts and canonical values.
 - `src/core/tickets.ts`: canonical ticket state and priority definitions plus
   provider-neutral ticket, thread, article, link, subscription, and update
@@ -183,7 +184,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   avatar/profile menu fed by real connection/action props.
 - `src/features/workspace/components/workspace-controls.tsx`: read-safe
   workspace toolbar presentation for row selection, refresh, saved-view display,
-  tab orientation, local grouping, and column visibility.
+  local grouping, column visibility, and the always-available tab layout
+  segmented control. List-only controls remain mounted but disabled while a
+  ticket pane is active.
 - `src/features/workspace/components/workspace-states.tsx`: provider-neutral
   unavailable, detail-unavailable, and empty-detail states.
 - `src/features/workspace/components/ticket-table-grid.tsx`: production
@@ -200,7 +203,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/ticket-detail-sidebar.tsx`: production
   read-only metadata sidebar for selected tickets.
 - `src/features/workspace/components/ticket-thread.tsx`: production read-only
-  ticket article thread presentation.
+  ticket article thread presentation with sanitized rich-text rendering,
+  display-name-first From/To/Cc/Bcc metadata, and no reply/composer controls.
 - `src/features/workspace/components/ticket-tabs-panel.tsx`: production
   list/open-ticket tab panel composition.
 - `src/features/workspace/components/ticket-tabs`: split production ticket-tab
@@ -254,7 +258,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/components/ui/ticket-tab.tsx`: open-ticket tab primitive.
 - `src/components/ui/toolbar-controls.tsx`: compact toolbar wrappers over
   button and dropdown primitives.
-- `src/components/ui/tooltip.tsx`: custom non-interactive tooltip primitive.
+- `src/components/ui/tooltip.tsx`: custom non-interactive tooltip primitive
+  that opens on hover or keyboard-visible focus.
 - `src/components/ui/index.ts`: UI primitive exports.
 - `src/components/ui/use-outside-click.ts`: shared outside-click close helper.
 - `src/components/ui/use-table-sort.ts`: shared sortable table state hook; row
@@ -309,7 +314,7 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/components/dropdowns.test.tsx`: verifies searchable and non-searchable
   dropdown keyboard and close behavior.
 - `tests/components/menu-tooltip.test.tsx`: verifies menu, profile menu, and
-  tooltip keyboard behavior.
+  tooltip hover, keyboard-visible focus, and close behavior.
 - `tests/components/primitives-state.test.tsx`: verifies basic primitive states.
 - `tests/components/table.test.tsx`: verifies shared table wrappers and sortable
   table state.

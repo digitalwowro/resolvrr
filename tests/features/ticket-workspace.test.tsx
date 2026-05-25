@@ -167,6 +167,47 @@ describe("TicketWorkspace", () => {
     ).toBeNull();
   });
 
+  it("disables list controls only while a ticket pane is active", async () => {
+    const user = userEvent.setup();
+    const detailProps = selectedDetailProps();
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={detailProps.detail}
+        detailResult={detailProps.detailResult}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        selectedTicketId="ticket-1"
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    expect(screen.getByRole("checkbox", { name: "Select all tickets" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Refresh list" })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Saved view" })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Group tickets by" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Column visibility" })).toBeDisabled();
+    expect(screen.getByRole("group", { name: "Tab layout" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Horizontal tabs" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Vertical tabs" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Horizontal tabs" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
+
+    expect(screen.getByRole("checkbox", { name: "Select all tickets" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Refresh list" })).toBeEnabled();
+    expect(screen.getByRole("combobox", { name: "Saved view" })).toBeEnabled();
+    expect(screen.getByRole("combobox", { name: "Group tickets by" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Column visibility" })).toBeEnabled();
+  });
+
   it("groups loaded tickets locally by provider-neutral values", async () => {
     const user = userEvent.setup();
     render(

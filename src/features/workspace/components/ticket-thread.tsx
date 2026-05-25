@@ -13,9 +13,9 @@ type TicketThreadProps = {
 };
 
 const articleClass: Record<WorkspaceArticle["direction"], string> = {
-  inbound: "border-indigo-100 bg-indigo-50",
+  inbound: "border-indigo-100 bg-indigo-50/40",
   outbound: "border-slate-200 bg-slate-50/40",
-  internal: "border-amber-200 bg-amber-50",
+  internal: "border-amber-200 bg-amber-50/40",
   system: "border-slate-200 bg-slate-50/40",
   unknown: "border-slate-200 bg-slate-50/40",
 };
@@ -167,7 +167,7 @@ function ArticleCard({ article }: { article: WorkspaceArticle }) {
           className={cn(
             "max-w-none text-sm leading-5 text-slate-900",
             "whitespace-normal break-words",
-            "[&_a]:font-medium [&_a]:text-sky-600 [&_a]:underline-offset-2 [&_a:hover]:underline",
+            "[&_a]:font-medium [&_a]:underline-offset-2 [&_a:hover]:underline",
             "[&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-slate-300 [&_blockquote]:pl-3 [&_blockquote]:text-slate-700",
             "[&_br]:block [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.85em]",
             "[&_h1]:mb-2 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:font-semibold",

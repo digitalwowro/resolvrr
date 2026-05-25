@@ -33,11 +33,6 @@ const savedViewOptions: DropdownOption[] = [
   { value: "all-tickets", label: "All tickets" },
 ];
 
-const orientationOptions: DropdownOption[] = [
-  { value: "horizontal", label: "Horizontal tabs" },
-  { value: "vertical", label: "Vertical tabs" },
-];
-
 export function TicketWorkspaceDisplay({
   columns,
   detail,
@@ -115,12 +110,12 @@ export function TicketWorkspaceDisplay({
       columns={columns}
       groupBy={groupBy}
       groupOptions={ticketGroupOptions}
+      listControlsEnabled={listActive}
       onColumnToggle={toggleColumn}
       onGroupByChange={handleGroupByChange}
       onRefresh={refreshList}
       onSelectAll={toggleSelectAll}
       onTabOrientationChange={setTabOrientation}
-      orientationOptions={orientationOptions}
       partiallySelected={partiallySelected}
       savedViewOptions={savedViewOptions}
       selectedSavedViewId="all-tickets"
@@ -158,12 +153,12 @@ export function TicketWorkspaceDisplay({
         columns={columns}
         groupBy={groupBy}
         groupOptions={ticketGroupOptions}
+        listControlsEnabled={listActive}
         onColumnToggle={toggleColumn}
         onGroupByChange={handleGroupByChange}
         onRefresh={refreshList}
         onSelectAll={toggleSelectAll}
         onTabOrientationChange={setTabOrientation}
-        orientationOptions={orientationOptions}
         partiallySelected={partiallySelected}
         savedViewOptions={savedViewOptions}
         selectedSavedViewId="all-tickets"

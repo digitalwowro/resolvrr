@@ -55,6 +55,7 @@ type MenuDropdownProps = {
   items: MenuDropdownItem[];
   align?: "start" | "end";
   className?: string;
+  disabled?: boolean;
   triggerClassName?: string;
   menuClassName?: string;
   showChevron?: boolean;
@@ -67,6 +68,7 @@ export function MenuDropdown({
   items,
   align = "start",
   className,
+  disabled = false,
   triggerClassName,
   menuClassName,
   showChevron = true,
@@ -84,6 +86,10 @@ export function MenuDropdown({
   useOutsideClick(rootRef, close, open);
 
   function openMenu(nextIndex = -1) {
+    if (disabled) {
+      return;
+    }
+
     setHighlightedIndex(nextIndex);
     setOpen(true);
   }
@@ -165,8 +171,13 @@ export function MenuDropdown({
         triggerClassName,
         !unstyledTrigger && "col-start-1 row-start-1 w-full",
       )}
+      disabled={disabled}
       onClick={() => (open ? close() : openMenu())}
       onKeyDown={(event) => {
+        if (disabled) {
+          return;
+        }
+
         if (["Enter", " ", "ArrowDown"].includes(event.key)) {
           event.preventDefault();
           openMenu(

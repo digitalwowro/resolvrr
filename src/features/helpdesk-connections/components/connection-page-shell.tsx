@@ -21,7 +21,7 @@ export function ConnectionPageShell({
             <h1 className="mt-2 text-2xl text-slate-950">{title}</h1>
             <p className="mt-2 max-w-2xl text-sm">{description}</p>
           </div>
-          <Link className="text-sm text-indigo-600" href="/workspace">
+          <Link className="text-sm" href="/workspace">
             Back to workspace
           </Link>
         </div>

@@ -155,8 +155,23 @@ describe("MenuDropdown and ProfileMenu", () => {
 });
 
 describe("Tooltip", () => {
-  it("opens on focus, links with aria-describedby, and closes on Escape", async () => {
+  function mockFocusVisibleMatches(matchesFocusVisible: boolean) {
+    const originalMatches = Element.prototype.matches;
+
+    return vi
+      .spyOn(Element.prototype, "matches")
+      .mockImplementation(function (this: Element, selectors: string): boolean {
+        if (selectors === ":focus-visible") {
+          return matchesFocusVisible;
+        }
+
+        return originalMatches.call(this, selectors);
+      });
+  }
+
+  it("opens on keyboard-visible focus, links with aria-describedby, and closes on Escape", async () => {
     const user = userEvent.setup();
+    const matches = mockFocusVisibleMatches(true);
     render(
       <Tooltip content="More context" delayMs={0}>
         <button type="button">Info</button>
@@ -172,9 +187,28 @@ describe("Tooltip", () => {
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+    matches.mockRestore();
   });
 
-  it("supports rich non-interactive content", async () => {
+  it("does not open on ordinary focus without focus-visible intent", async () => {
+    const matches = mockFocusVisibleMatches(false);
+    render(
+      <Tooltip content="More context" delayMs={0}>
+        <button type="button">Info</button>
+      </Tooltip>,
+    );
+
+    screen.getByRole("button", { name: "Info" }).focus();
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+    matches.mockRestore();
+  });
+
+  it("opens on pointer hover and supports rich non-interactive content", async () => {
+    const user = userEvent.setup();
     render(
       <Tooltip
         content={
@@ -188,7 +222,7 @@ describe("Tooltip", () => {
       </Tooltip>,
     );
 
-    screen.getByRole("button", { name: "Details" }).focus();
+    await user.hover(screen.getByRole("button", { name: "Details" }));
 
     const tooltip = await screen.findByRole("tooltip");
     expect(tooltip).toHaveTextContent("Plain important");
@@ -196,6 +230,7 @@ describe("Tooltip", () => {
   });
 
   it("positions bottom tooltips from the viewport when left alignment would overflow", async () => {
+    const user = userEvent.setup();
     const originalWidth = window.innerWidth;
     const getBoundingClientRect = vi.spyOn(
       HTMLElement.prototype,
@@ -232,7 +267,7 @@ describe("Tooltip", () => {
       </Tooltip>,
     );
 
-    screen.getByRole("button", { name: "Edge" }).focus();
+    await user.hover(screen.getByRole("button", { name: "Edge" }));
 
     await waitFor(() => {
       expect(screen.getByRole("tooltip")).toHaveStyle({
@@ -250,6 +285,7 @@ describe("Tooltip", () => {
   });
 
   it("renders the tooltip outside clipping ancestors", async () => {
+    const user = userEvent.setup();
     render(
       <div data-testid="clipping-parent" className="overflow-hidden">
         <Tooltip content="Escapes clipping" delayMs={0}>
@@ -258,7 +294,7 @@ describe("Tooltip", () => {
       </div>,
     );
 
-    screen.getByRole("button", { name: "Clipped trigger" }).focus();
+    await user.hover(screen.getByRole("button", { name: "Clipped trigger" }));
 
     const tooltip = await screen.findByRole("tooltip");
     expect(tooltip).toHaveTextContent("Escapes clipping");
