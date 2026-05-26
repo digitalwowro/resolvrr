@@ -1,5 +1,6 @@
 import type {
   LoadWorkspaceTicketDetailAction,
+  LoadWorkspaceTicketListPageAction,
   TicketListReadResult,
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
@@ -23,6 +24,7 @@ type TicketWorkspaceProps = {
   detail?: WorkspaceTicketDetail;
   detailResult?: WorkspaceTicketDetailLoadResult;
   listResult: TicketListReadResult;
+  loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
   loadTicketDetailAction?: LoadWorkspaceTicketDetailAction;
   logoutAction(formData: FormData): void | Promise<void>;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
@@ -42,6 +44,13 @@ const unavailableTicketDetailAction: LoadWorkspaceTicketDetailAction = async () 
   retryable: true,
 });
 
+const unavailableTicketListPageAction: LoadWorkspaceTicketListPageAction =
+  async () => ({
+    status: "unavailable",
+    reason: "provider-temporary-failure",
+    retryable: true,
+  });
+
 const profileActions: WorkspaceProfileAction[] = [
   {
     id: "manage-workspaces",
@@ -56,6 +65,7 @@ export function TicketWorkspace({
   detail,
   detailResult,
   listResult,
+  loadTicketListPageAction,
   loadTicketDetailAction,
   logoutAction,
   metadataMutationCapabilities,
@@ -74,6 +84,10 @@ export function TicketWorkspace({
     (listResult.status === "available"
       ? listResult.metadataMutationCapabilities
       : undefined);
+  const listVersion =
+    listResult.status === "available"
+      ? `${listResult.measuredAt.toISOString()}-${listResult.nextCursor ?? "end"}`
+      : "unavailable";
 
   return (
     <main className="flex h-screen min-h-screen flex-col overflow-hidden">
@@ -88,9 +102,14 @@ export function TicketWorkspace({
         <UnavailableState reason={listResult.reason} />
       ) : (
         <TicketWorkspaceDisplay
+          key={listVersion}
           columns={columns}
           detail={detail}
           detailResult={detailResult}
+          listResult={listResult}
+          loadTicketListPageAction={
+            loadTicketListPageAction ?? unavailableTicketListPageAction
+          }
           loadTicketDetailAction={effectiveLoadTicketDetailAction}
           metadataMutationCapabilities={effectiveMetadataMutationCapabilities}
           refreshTicketDetailAfterMetadataSave={providedLoadTicketDetailAction}

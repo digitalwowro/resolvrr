@@ -4,6 +4,8 @@ import type { DropdownOption } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
   LoadWorkspaceTicketDetailAction,
+  LoadWorkspaceTicketListPageAction,
+  TicketListReadResult,
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
   WorkspaceTicketColumn,
@@ -18,6 +20,7 @@ import { TicketTabsPanel } from "./ticket-tabs-panel";
 import { ticketGroupOptions } from "./ticket-table-grouping";
 import { useTicketWorkspaceDisplayState } from "./ticket-workspace-state";
 import { WorkspaceControls } from "./workspace-controls";
+import { useTicketListPagination } from "./use-ticket-list-pagination";
 import {
   DetailLoadingState,
   DetailUnavailableState,
@@ -28,6 +31,8 @@ type TicketWorkspaceDisplayProps = {
   columns: WorkspaceTicketColumn[];
   detail?: WorkspaceTicketDetail;
   detailResult?: WorkspaceTicketDetailLoadResult;
+  listResult: TicketListReadResult;
+  loadTicketListPageAction: LoadWorkspaceTicketListPageAction;
   loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   refreshTicketDetailAfterMetadataSave: boolean;
@@ -47,6 +52,8 @@ export function TicketWorkspaceDisplay({
   columns,
   detail,
   detailResult,
+  listResult,
+  loadTicketListPageAction,
   loadTicketDetailAction,
   metadataMutationCapabilities,
   refreshTicketDetailAfterMetadataSave,
@@ -55,6 +62,17 @@ export function TicketWorkspaceDisplay({
   tabs: ticketTabs,
   updateTicketMetadataAction,
 }: TicketWorkspaceDisplayProps) {
+  const pagination = useTicketListPagination({
+    initialRows: rows,
+    initialTabs: ticketTabs,
+    initialLoadedCount:
+      listResult.status === "available" ? listResult.loadedCount : rows.length,
+    initialTotalCount:
+      listResult.status === "available" ? listResult.totalCount : undefined,
+    initialNextCursor:
+      listResult.status === "available" ? listResult.nextCursor : undefined,
+    loadTicketListPageAction,
+  });
   const {
     activeDetail,
     activeTicketId,
@@ -89,9 +107,9 @@ export function TicketWorkspaceDisplay({
     detailResult,
     loadTicketDetailAction,
     refreshTicketDetailAfterMetadataSave,
-    rows,
+    rows: pagination.rows,
     selectedTicketId,
-    ticketTabs,
+    ticketTabs: pagination.tabs,
   });
 
   const workArea =
@@ -105,9 +123,15 @@ export function TicketWorkspaceDisplay({
         onRowSelect={showTicketFromRow}
         onSort={toggleSort}
         onToggleRow={toggleRow}
+        onLoadMore={pagination.loadNextPage}
         roundedTop={tabOrientation === "vertical"}
         rows={sortedRows}
         selectedRowIds={selectedRowIds}
+        loadingMore={pagination.loadingMore}
+        loadedCount={pagination.loadedCount}
+        loadMoreError={pagination.error?.reason}
+        nextCursor={groupBy === "none" ? pagination.nextCursor : undefined}
+        totalCount={pagination.totalCount}
         sortDirectionFor={sortDirectionFor}
         visibleColumns={visibleColumnSet}
       />

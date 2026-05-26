@@ -18,12 +18,18 @@ import {
   TicketGridHeaderCell,
   TicketGridStaticHeaderCell,
 } from "./ticket-table-grid";
+import { TicketTablePagination } from "./ticket-table-pagination";
 
 type TicketTableProps = {
   activeTicketId?: string;
   columns: WorkspaceTicketColumn[];
   groupedRows?: TicketTableGroup[];
   groupBy: WorkspaceTicketGroupKey;
+  loadedCount?: number;
+  loadingMore?: boolean;
+  loadMoreError?: string;
+  nextCursor?: string;
+  onLoadMore?(): void;
   onRowSelect(ticketId: string): void;
   onSort(key: WorkspaceTicketSortKey): void;
   onToggleRow(ticketId: string): void;
@@ -31,6 +37,7 @@ type TicketTableProps = {
   rows: WorkspaceTicketRow[];
   selectedRowIds: Set<string>;
   sortDirectionFor(key: WorkspaceTicketSortKey): SortDirection | undefined;
+  totalCount?: number;
   visibleColumns: Set<WorkspaceTicketColumnKey>;
 };
 
@@ -66,6 +73,11 @@ export function TicketTable({
   columns,
   groupedRows,
   groupBy,
+  loadedCount,
+  loadingMore = false,
+  loadMoreError,
+  nextCursor,
+  onLoadMore,
   onRowSelect,
   onSort,
   onToggleRow,
@@ -73,6 +85,7 @@ export function TicketTable({
   rows,
   selectedRowIds,
   sortDirectionFor,
+  totalCount,
   visibleColumns,
 }: TicketTableProps) {
   const templateStyle = ticketGridTemplate(visibleColumns);
@@ -81,6 +94,7 @@ export function TicketTable({
   );
   const groups = groupedRows ?? [{ id: "all", label: "", value: "", rows }];
   const rowCount = groups.reduce((total, group) => total + group.rows.length, 0);
+  const visibleLoadedCount = loadedCount ?? rowCount;
   let rowIndex = 0;
 
   function sortHandler(key: WorkspaceTicketSortKey) {
@@ -253,6 +267,14 @@ export function TicketTable({
           })}
         </div>
       </div>
+      <TicketTablePagination
+        loadedCount={visibleLoadedCount}
+        loadingMore={loadingMore}
+        loadMoreError={loadMoreError}
+        nextCursor={nextCursor}
+        onLoadMore={onLoadMore}
+        totalCount={totalCount}
+      />
     </div>
   );
 }

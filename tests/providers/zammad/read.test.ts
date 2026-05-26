@@ -94,6 +94,29 @@ describe("Zammad ticket reads", () => {
     );
   });
 
+  it("uses page cursors and reports the next ungrouped page cursor", async () => {
+    mockedSafeProviderJson.mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: [rawTicket],
+    });
+
+    const result = await zammadProviderPlugin.listTickets?.(providerContext(), {
+      filter: {},
+      pageSize: 1,
+      cursor: "2",
+    });
+
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
+      "https://helpdesk.example.com/api/v1/tickets?page=2&per_page=1&expand=true&full=true",
+      expect.any(Object),
+    );
+    expect(result).toMatchObject({
+      loadedCount: 1,
+      nextCursor: "3",
+    });
+  });
+
   it("maps Zammad detail and thread without optional feature leakage", async () => {
     const consoleInfo = vi
       .spyOn(console, "info")

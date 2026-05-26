@@ -17,6 +17,7 @@ import {
 } from "@/features/tickets";
 import { updateTicketMetadataAction } from "@/features/tickets/actions";
 import { loadWorkspaceTicketDetailAction } from "@/features/tickets/detail-actions";
+import { loadWorkspaceTicketListPageAction } from "@/features/tickets/list-actions";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import { providerRegistry } from "@/providers";
 
@@ -79,6 +80,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       detail={detail}
       detailResult={workspaceDetailResult}
       listResult={listResult}
+      loadTicketListPageAction={loadWorkspaceTicketListPageAction}
       loadTicketDetailAction={loadWorkspaceTicketDetailAction}
       logoutAction={logoutAction}
       metadataMutationCapabilities={

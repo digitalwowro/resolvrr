@@ -213,6 +213,9 @@ optional total count, optional next cursor, and provider-neutral rows.
 
 `TicketListResult.nextCursor` is opaque to core code. Providers own cursor
 format, pagination compilation, raw query syntax, and raw response mapping.
+The workspace uses `nextCursor` only for ungrouped "Load more" pagination; it
+appends the next page to the active session list and keeps detail/thread loading
+on the separate selected-ticket path.
 
 ## Read And Mutation Coordination
 

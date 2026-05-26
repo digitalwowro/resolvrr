@@ -188,6 +188,10 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/tickets/detail-actions.ts`: authenticated server action for
   post-hydration workspace detail loads. It returns adapted workspace detail or
   provider-neutral unavailable state only.
+- `src/features/tickets/list-action-result.ts`: client-safe workspace ticket
+  list page action result and loader action function types.
+- `src/features/tickets/list-actions.ts`: authenticated server action for
+  post-hydration ungrouped workspace list pagination.
 - `src/features/tickets/service.ts`: thin ticket read orchestration and
   controlled state/priority metadata mutation entrypoints with refresh-after-
   write checks.
@@ -215,6 +219,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/use-ticket-detail-loader.ts`: in-memory
   per-workspace-session selected-ticket detail cache and client detail loader
   for post-hydration row opens.
+- `src/features/workspace/components/use-ticket-list-pagination.ts`: in-memory
+  per-workspace-session ungrouped list page append state.
 - `src/features/workspace/components/workspace-url.ts`: workspace ticket/List
   URL path helper used by local tab navigation and explicit ticket link sharing,
   plus history replacement helpers for local tab navigation.
@@ -235,6 +241,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   state and priority display cells driven by canonical ticket labels and keys.
 - `src/features/workspace/components/ticket-table.tsx`: production ticket list
   table shell and row/header presentation for workspace ticket rows.
+- `src/features/workspace/components/ticket-table-pagination.tsx`: production
+  ungrouped list pagination footer.
 - `src/features/workspace/components/ticket-table-grouping.ts`: provider-neutral
   local presentation grouping and sorting helpers for loaded workspace rows.
 - `src/features/workspace/components/ticket-detail.tsx`: production selected-
@@ -395,6 +403,10 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-list-query-guardrails.test.ts`: verifies
   provider-neutral list query capability derivation and unsupported or
   too-expensive query rejection before provider dispatch.
+- `tests/features/ticket-list-action.test.ts`: verifies client-safe list page
+  server action adaptation and unavailable-state passthrough.
+- `tests/features/ticket-workspace-pagination.test.tsx`: verifies ungrouped
+  workspace Load more behavior.
 - `tests/features/ticket-metadata-mutation-workspace.test.tsx`: verifies
   workspace metadata mutation submit, hidden state options, pending date/time
   input, error, and staged non-optimistic UI behavior.
