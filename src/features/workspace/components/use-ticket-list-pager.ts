@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { LoadWorkspaceTicketListPageAction } from "@/features/tickets/list-page-action-result";
 import type { TicketReadUnavailableReason } from "@/features/tickets/read-model";
 import type { WorkspaceTicketRow } from "@/features/tickets/workspace-adapter";
@@ -24,6 +24,30 @@ export function useTicketListPager({
   const [loading, setLoading] = useState(false);
   const [errorReason, setErrorReason] =
     useState<TicketReadUnavailableReason>();
+  const baselineIdentity = useRef(ticketListIdentity(initialRows));
+  const hasClientLoadedRowsRef = useRef(false);
+
+  useEffect(() => {
+    const nextIdentity = ticketListIdentity(initialRows);
+    const sameListIdentity = baselineIdentity.current === nextIdentity;
+    baselineIdentity.current = nextIdentity;
+
+    if (!sameListIdentity) {
+      setRows(initialRows);
+      setNextCursor(initialNextCursor);
+      setTotalCount(initialTotalCount);
+      setErrorReason(undefined);
+      setLoading(false);
+      hasClientLoadedRowsRef.current = false;
+      return;
+    }
+
+    setRows((current) => mergeRefreshedBaselineRows(current, initialRows));
+    setNextCursor((current) =>
+      hasClientLoadedRowsRef.current ? current : initialNextCursor,
+    );
+    setTotalCount(initialTotalCount);
+  }, [initialRows, initialNextCursor, initialTotalCount]);
 
   async function loadMore() {
     if (!nextCursor || loading || !loadTicketListPageAction) {
@@ -49,6 +73,7 @@ export function useTicketListPager({
 
     setNextCursor(result.nextCursor);
     setTotalCount(result.totalCount);
+    hasClientLoadedRowsRef.current = true;
     setRows((current) => appendUniqueRows(current, result.rows));
   }
 
@@ -77,5 +102,20 @@ function appendUniqueRows(
       existingIds.add(row.id);
       return true;
     }),
+  ];
+}
+
+function ticketListIdentity(rows: WorkspaceTicketRow[]) {
+  return rows.map((row) => row.id).join("\0");
+}
+
+function mergeRefreshedBaselineRows(
+  current: WorkspaceTicketRow[],
+  baselineRows: WorkspaceTicketRow[],
+) {
+  const baselineIds = new Set(baselineRows.map((row) => row.id));
+  return [
+    ...baselineRows,
+    ...current.filter((row) => !baselineIds.has(row.id)),
   ];
 }

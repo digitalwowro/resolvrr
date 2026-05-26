@@ -309,4 +309,64 @@ describe("TicketWorkspace", () => {
     expect(loadTicketListPageAction).toHaveBeenCalledWith("2");
     expect(loadTicketDetailAction).not.toHaveBeenCalled();
   });
+
+  it("reflects refreshed server row metadata while keeping loaded pages", async () => {
+    const user = userEvent.setup();
+    const refreshedRow = {
+      ...row,
+      title: "Login restored",
+      state: "Closed",
+      stateKey: "closed" as const,
+      priority: "Low",
+      priorityKey: "low" as const,
+    };
+    const loadTicketListPageAction = vi.fn(async () => ({
+      status: "available" as const,
+      rows: [highRow],
+      loadedCount: 2,
+      totalCount: 2,
+    }));
+    const workspaceProps = {
+      columns: defaultWorkspaceTicketColumns,
+      connections: [{ id: "connection-1", label: "Support", active: true }],
+      loadTicketListPageAction,
+      logoutAction: noopAction,
+      setActiveConnectionAction: noopAction,
+      updateTicketMetadataAction: noopMutationAction,
+      userEmail: "agent@example.com",
+    };
+
+    const { rerender } = render(
+      <TicketWorkspace
+        {...workspaceProps}
+        listResult={{ ...availableList, loadedCount: 1, nextCursor: "2" }}
+        rows={[row]}
+        tabs={[{ ...row }]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Load more" }));
+    expect(await screen.findByText("Webhook failed")).toBeInTheDocument();
+
+    rerender(
+      <TicketWorkspace
+        {...workspaceProps}
+        listResult={{
+          ...availableList,
+          loadedCount: 1,
+          nextCursor: "2",
+          totalCount: 2,
+        }}
+        rows={[refreshedRow]}
+        tabs={[{ ...refreshedRow }]}
+      />,
+    );
+
+    const table = screen.getByRole("table", { name: "Tickets" });
+    expect(within(table).queryByText("Cannot log in")).toBeNull();
+    expect(within(table).getByText("Login restored")).toBeInTheDocument();
+    expect(within(table).getByText("Closed")).toBeInTheDocument();
+    expect(within(table).getByText("Low")).toBeInTheDocument();
+    expect(within(table).getAllByText("Webhook failed")).toHaveLength(1);
+  });
 });
