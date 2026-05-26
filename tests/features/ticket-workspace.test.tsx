@@ -372,6 +372,66 @@ describe("TicketWorkspace", () => {
     expect(await screen.findByText("Cannot log in")).toBeInTheDocument();
   });
 
+  it("keeps the previous effective sort when a provider sort reload fails", async () => {
+    const user = userEvent.setup();
+    const loadTicketListPageAction = vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: "unavailable" as const,
+        reason: "provider-temporary-failure" as const,
+        retryable: true,
+      })
+      .mockResolvedValueOnce({
+        status: "available" as const,
+        rows: [highRow],
+        loadedCount: 2,
+      });
+    const sortableList = {
+      ...availableList,
+      loadedCount: 1,
+      nextCursor: "2",
+      queryCapabilities: {
+        totalCount: false,
+        providerSort: true,
+        providerGrouping: false,
+        groupedTotalCount: false,
+        fullTextSearch: false,
+        maxPageSize: 50,
+        unsupportedCombinations: ["grouped-total-count" as const],
+      },
+    };
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        listResult={sortableList}
+        loadTicketListPageAction={loadTicketListPageAction}
+        logoutAction={noopAction}
+        rows={[row]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Priority" }));
+
+    expect(loadTicketListPageAction).toHaveBeenCalledWith({
+      sort: { key: "priority", direction: "ascending" },
+    });
+    expect(await screen.findByText("Cannot log in")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Could not load more tickets.",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Load more" }));
+
+    expect(loadTicketListPageAction).toHaveBeenLastCalledWith({ cursor: "2" });
+    expect(await screen.findByText("Webhook failed")).toBeInTheDocument();
+  });
+
   it("does not locally sort incomplete provider lists without sort support", () => {
     render(
       <TicketWorkspace

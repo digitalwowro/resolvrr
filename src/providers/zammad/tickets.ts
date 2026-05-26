@@ -1,4 +1,8 @@
-import { ProviderError, type TicketListQuery } from "@/core/providers";
+import {
+  ProviderError,
+  type TicketListQuery,
+  type TicketSortKey,
+} from "@/core/providers";
 import type { ProviderContext } from "@/core/providers";
 import type { TicketDetail } from "@/core/tickets";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
@@ -23,6 +27,45 @@ function pageFromCursor(cursor: string | undefined): number {
 
   const page = Number(cursor);
   return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+const zammadTicketSortFields: Record<TicketSortKey, string> = {
+  number: "number",
+  title: "title",
+  customer: "customer_id",
+  owner: "owner_id",
+  group: "group_id",
+  createdAt: "created_at",
+  updatedAt: "updated_at",
+  pendingUntil: "pending_time",
+  state: "state_id",
+  priority: "priority_id",
+};
+
+function zammadTicketListPath(
+  query: TicketListQuery,
+  page: number,
+  limit: number,
+) {
+  const params = new URLSearchParams({
+    page: String(page),
+    per_page: String(limit),
+    expand: "true",
+    full: "true",
+  });
+
+  if (!query.sort) {
+    return `/api/v1/tickets?${params}`;
+  }
+
+  params.set("query", "*");
+  params.set("sort_by", zammadTicketSortFields[query.sort.key]);
+  params.set(
+    "order_by",
+    query.sort.direction === "ascending" ? "asc" : "desc",
+  );
+
+  return `/api/v1/tickets/search?${params}`;
 }
 
 function providerDataMismatch(): ProviderError {
@@ -175,17 +218,12 @@ export async function listZammadTickets(
 ) {
   const page = pageFromCursor(query.cursor);
   const limit = Math.min(Math.max(query.pageSize, 1), 50);
-  const params = new URLSearchParams({
-    page: String(page),
-    per_page: String(limit),
-    expand: "true",
-    full: "true",
-  });
   const metadata = timingMetadata(context);
+  const path = zammadTicketListPath(query, page, limit);
   const raw = await measureTicketReadPhase(
     "provider-list-request",
     { ...metadata, operation: "list" },
-    () => zammadGetJson(context, `/api/v1/tickets?${params}`),
+    () => zammadGetJson(context, path),
   );
 
   return measureTicketReadPhase(

@@ -26,6 +26,7 @@ describe("Zammad ticket reads", () => {
   it("advertises implemented read and metadata mutation capabilities", () => {
     expect(zammadProviderPlugin.capabilities).toEqual([
       "ticket:list",
+      "ticket:sort",
       "ticket:detail",
       "ticket:update-state",
       "ticket:update-priority",
@@ -45,7 +46,6 @@ describe("Zammad ticket reads", () => {
     const result = await zammadProviderPlugin.listTickets?.(providerContext(), {
       filter: {},
       pageSize: 10,
-      sort: { key: "updatedAt", direction: "descending" },
     });
 
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
@@ -92,6 +92,33 @@ describe("Zammad ticket reads", () => {
         status: "ok",
       }),
     );
+  });
+
+  it("uses the Zammad search endpoint for provider-backed sorting", async () => {
+    mockedSafeProviderJson.mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: [rawTicket],
+    });
+
+    const result = await zammadProviderPlugin.listTickets?.(providerContext(), {
+      filter: {},
+      pageSize: 10,
+      sort: { key: "updatedAt", direction: "descending" },
+    });
+
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
+      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=10&expand=true&full=true&query=*&sort_by=updated_at&order_by=desc",
+      expect.objectContaining({
+        allowedAddresses: ["93.184.216.34"],
+        headers: expect.objectContaining({
+          Accept: "application/json",
+          Authorization: "Basic YWdlbnQ6c2VjcmV0",
+          "User-Agent": "Resolvrr/1.0",
+        }),
+      }),
+    );
+    expect(result?.tickets[0]?.externalId).toBe("42");
   });
 
   it("maps Zammad detail and thread without optional feature leakage", async () => {

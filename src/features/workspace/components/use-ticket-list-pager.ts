@@ -89,7 +89,6 @@ export function useTicketListPager({
       return;
     }
 
-    setSort(nextSort);
     setLoading(true);
     setErrorReason(undefined);
     let result;
@@ -109,6 +108,7 @@ export function useTicketListPager({
 
     hasClientLoadedRowsRef.current = false;
     baselineIdentity.current = ticketListIdentity(result.rows);
+    setSort(nextSort);
     setRows(result.rows);
     setNextCursor(result.nextCursor);
     setTotalCount(result.totalCount);

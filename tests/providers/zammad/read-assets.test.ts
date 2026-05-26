@@ -203,7 +203,6 @@ describe("Zammad ticket read assets", () => {
     const result = await zammadProviderPlugin.listTickets?.(providerContext(), {
       filter: {},
       pageSize: 10,
-      sort: { key: "updatedAt", direction: "descending" },
     });
 
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(

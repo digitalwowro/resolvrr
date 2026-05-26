@@ -222,8 +222,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   for post-hydration row opens.
 - `src/features/workspace/components/use-ticket-list-pager.ts`: in-memory
   active-workspace list pager for appending provider-backed ungrouped list pages
-  and reloading page 1 for provider-backed sort changes without touching
-  selected-ticket detail reads.
+  and reloading page 1 for provider-backed sort changes after the provider
+  reload succeeds, without touching selected-ticket detail reads.
 - `src/features/workspace/components/workspace-url.ts`: workspace ticket/List
   URL path helper used by local tab navigation and explicit ticket link sharing,
   plus history replacement helpers for local tab navigation.
