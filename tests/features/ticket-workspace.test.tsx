@@ -275,4 +275,38 @@ describe("TicketWorkspace", () => {
     expect(screen.getByRole("cell", { name: /^Agent Smith 1$/ })).toBeInTheDocument();
     expect(screen.getByRole("cell", { name: /^Unassigned 1$/ })).toBeInTheDocument();
   });
+
+  it("loads the next ungrouped list page without loading ticket detail", async () => {
+    const user = userEvent.setup();
+    const loadTicketListPageAction = vi.fn(async () => ({
+      status: "available" as const,
+      rows: [highRow],
+      loadedCount: 1,
+    }));
+    const loadTicketDetailAction = vi.fn();
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        listResult={{ ...availableList, loadedCount: 1, nextCursor: "2" }}
+        loadTicketDetailAction={loadTicketDetailAction}
+        loadTicketListPageAction={loadTicketListPageAction}
+        logoutAction={noopAction}
+        rows={[row]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    expect(screen.queryByText("Webhook failed")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Load more" }));
+
+    expect(await screen.findByText("Webhook failed")).toBeInTheDocument();
+    expect(loadTicketListPageAction).toHaveBeenCalledWith("2");
+    expect(loadTicketDetailAction).not.toHaveBeenCalled();
+  });
 });

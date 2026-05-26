@@ -1,5 +1,6 @@
 import type {
   LoadWorkspaceTicketDetailAction,
+  LoadWorkspaceTicketListPageAction,
   TicketListReadResult,
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
@@ -24,6 +25,7 @@ type TicketWorkspaceProps = {
   detailResult?: WorkspaceTicketDetailLoadResult;
   listResult: TicketListReadResult;
   loadTicketDetailAction?: LoadWorkspaceTicketDetailAction;
+  loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
   logoutAction(formData: FormData): void | Promise<void>;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   rows: WorkspaceTicketRow[];
@@ -57,6 +59,7 @@ export function TicketWorkspace({
   detailResult,
   listResult,
   loadTicketDetailAction,
+  loadTicketListPageAction,
   logoutAction,
   metadataMutationCapabilities,
   rows,
@@ -92,7 +95,10 @@ export function TicketWorkspace({
           detail={detail}
           detailResult={detailResult}
           loadTicketDetailAction={effectiveLoadTicketDetailAction}
+          loadTicketListPageAction={loadTicketListPageAction}
           metadataMutationCapabilities={effectiveMetadataMutationCapabilities}
+          nextListCursor={listResult.nextCursor}
+          totalListCount={listResult.totalCount}
           refreshTicketDetailAfterMetadataSave={providedLoadTicketDetailAction}
           rows={rows}
           selectedTicketId={selectedTicketId}

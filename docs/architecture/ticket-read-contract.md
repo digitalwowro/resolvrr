@@ -213,6 +213,10 @@ optional total count, optional next cursor, and provider-neutral rows.
 
 `TicketListResult.nextCursor` is opaque to core code. Providers own cursor
 format, pagination compilation, raw query syntax, and raw response mapping.
+Post-hydration ungrouped list pagination requests the next cursor through a
+server action and appends the returned provider-neutral rows in active
+workspace memory. Selected ticket detail/thread loading remains a separate read
+path and is not triggered by loading more list rows.
 
 ## Read And Mutation Coordination
 
