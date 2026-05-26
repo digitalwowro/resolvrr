@@ -6,6 +6,7 @@ import type {
   LoadWorkspaceTicketDetailAction,
   WorkspaceTicketDetailLoadResult,
 } from "@/features/tickets/detail-action-result";
+import type { WorkspaceTicketListSort } from "@/features/tickets/list-page-action-result";
 import type {
   WorkspaceTicketColumn,
   WorkspaceTicketColumnKey,
@@ -32,6 +33,9 @@ type TicketWorkspaceStateProps = {
   detail?: WorkspaceTicketDetail;
   detailResult?: WorkspaceTicketDetailLoadResult;
   loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
+  localSortEnabled: boolean;
+  onProviderSortChange(sort: WorkspaceTicketListSort): void;
+  providerSortEnabled: boolean;
   refreshTicketDetailAfterMetadataSave: boolean;
   rows: WorkspaceTicketRow[];
   selectedTicketId?: string;
@@ -43,6 +47,9 @@ export function useTicketWorkspaceDisplayState({
   detail,
   detailResult,
   loadTicketDetailAction,
+  localSortEnabled,
+  onProviderSortChange,
+  providerSortEnabled,
   refreshTicketDetailAfterMetadataSave,
   rows,
   selectedTicketId,
@@ -81,7 +88,7 @@ export function useTicketWorkspaceDisplayState({
     () => new Set(columns.map((column) => column.key)),
   );
   const [groupBy, setGroupBy] = useState<WorkspaceTicketGroupKey>("none");
-  const { setSort, sortDirection, sortDirectionFor, sortKey, toggleSort } =
+  const { setSort, sortDirection, sortDirectionFor, sortKey } =
     useTableSort<WorkspaceTicketSortKey>({
       initialSortKey: "updatedAt",
       initialSortDirection: "descending",
@@ -96,11 +103,24 @@ export function useTicketWorkspaceDisplayState({
     [groupBy, rows, sortDirection, sortKey],
   );
   const sortedRows = useMemo(
-    () =>
-      groupBy === "none"
-        ? sortTicketRows(rows, sortKey, sortDirection)
-        : groupedRows.flatMap((group) => group.rows),
-    [groupBy, groupedRows, rows, sortDirection, sortKey],
+    () => {
+      if (groupBy !== "none") {
+        return groupedRows.flatMap((group) => group.rows);
+      }
+      if (providerSortEnabled || !localSortEnabled) {
+        return rows;
+      }
+      return sortTicketRows(rows, sortKey, sortDirection);
+    },
+    [
+      groupBy,
+      groupedRows,
+      localSortEnabled,
+      providerSortEnabled,
+      rows,
+      sortDirection,
+      sortKey,
+    ],
   );
   const allSelected = sortedRows.length > 0 && selectedRowIds.size === sortedRows.length;
   const partiallySelected = selectedRowIds.size > 0 && !allSelected;
@@ -137,6 +157,20 @@ export function useTicketWorkspaceDisplayState({
       }
       return next;
     });
+  }
+
+  function nextSortDirection(key: WorkspaceTicketSortKey) {
+    return key === sortKey && sortDirection === "ascending"
+      ? "descending"
+      : "ascending";
+  }
+
+  function toggleTableSort(key: WorkspaceTicketSortKey) {
+    const direction = nextSortDirection(key);
+    setSort(key, direction);
+    if (providerSortEnabled && groupBy === "none") {
+      onProviderSortChange({ key, direction });
+    }
   }
 
   function refreshList() {
@@ -253,12 +287,13 @@ export function useTicketWorkspaceDisplayState({
     showOpenTicket,
     showTicketFromRow,
     sortDirectionFor,
+    sortingEnabled: providerSortEnabled || localSortEnabled,
     sortedRows,
     tabOrientation,
     toggleColumn,
     toggleRow,
     toggleSelectAll,
-    toggleSort,
+    toggleSort: toggleTableSort,
     updateOpenTicketTabMetadata,
     refreshSavedTicketDetail,
     visibleColumnSet,
