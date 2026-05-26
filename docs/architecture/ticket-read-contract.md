@@ -205,6 +205,12 @@ called. Grouped total counts without `ticket:group-count` return
 `query-too-expensive`. Query normalization drops unknown fields so raw provider
 query syntax cannot be forwarded through the provider-neutral service boundary.
 
+Workspace list sorting uses this same contract: when the active provider
+advertises `providerSort`, changing a table sort requests page 1 with the
+selected provider-neutral sort and subsequent page loads keep that sort. When a
+list is incomplete and provider-backed sort is unavailable, the workspace does
+not locally sort the partial subset as if it were complete.
+
 `TicketListResult.loadedCount` is the number of list items returned in the
 current response. `TicketListResult.totalCount`, when present, is the provider's
 total count for the query rather than the size of the loaded subset. Bucket

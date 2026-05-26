@@ -53,7 +53,7 @@ describe("loadWorkspaceTicketListPageAction", () => {
       measuredAt: new Date("2026-05-24T08:31:30Z"),
     });
 
-    const result = await loadWorkspaceTicketListPageAction(" 2 ");
+    const result = await loadWorkspaceTicketListPageAction({ cursor: " 2 " });
 
     expect(mockedLoadWorkspaceTicketList).toHaveBeenCalledWith(
       {},
@@ -93,10 +93,33 @@ describe("loadWorkspaceTicketListPageAction", () => {
       retryable: true,
     });
 
-    await expect(loadWorkspaceTicketListPageAction("2")).resolves.toEqual({
+    await expect(loadWorkspaceTicketListPageAction({ cursor: "2" })).resolves.toEqual({
       status: "unavailable",
       reason: "provider-temporary-failure",
       retryable: true,
     });
+  });
+
+  it("loads a sorted first page with provider-neutral sort input", async () => {
+    mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
+      status: "available",
+      connectionName: "Support",
+      metadataMutationCapabilities: { state: false, priority: false },
+      tickets: [],
+      loadedCount: 0,
+      measuredAt: new Date("2026-05-24T08:31:30Z"),
+    });
+
+    await loadWorkspaceTicketListPageAction({
+      sort: { key: "pendingTill", direction: "ascending" },
+    });
+
+    expect(mockedLoadWorkspaceTicketList).toHaveBeenCalledWith(
+      {},
+      {},
+      "test-encryption-key",
+      "user-1",
+      { sort: { key: "pendingUntil", direction: "ascending" } },
+    );
   });
 });

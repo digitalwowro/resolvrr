@@ -306,8 +306,88 @@ describe("TicketWorkspace", () => {
     await user.click(screen.getByRole("button", { name: "Load more" }));
 
     expect(await screen.findByText("Webhook failed")).toBeInTheDocument();
-    expect(loadTicketListPageAction).toHaveBeenCalledWith("2");
+    expect(loadTicketListPageAction).toHaveBeenCalledWith({ cursor: "2" });
     expect(loadTicketDetailAction).not.toHaveBeenCalled();
+  });
+
+  it("reloads the first page through provider sort and keeps the sort for next pages", async () => {
+    const user = userEvent.setup();
+    const loadTicketListPageAction = vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: "available" as const,
+        rows: [highRow],
+        loadedCount: 1,
+        nextCursor: "2",
+      })
+      .mockResolvedValueOnce({
+        status: "available" as const,
+        rows: [row],
+        loadedCount: 2,
+      });
+    const sortableList = {
+      ...availableList,
+      loadedCount: 1,
+      nextCursor: "2",
+      queryCapabilities: {
+        totalCount: false,
+        providerSort: true,
+        providerGrouping: false,
+        groupedTotalCount: false,
+        fullTextSearch: false,
+        maxPageSize: 50,
+        unsupportedCombinations: ["grouped-total-count" as const],
+      },
+    };
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        listResult={sortableList}
+        loadTicketListPageAction={loadTicketListPageAction}
+        logoutAction={noopAction}
+        rows={[row]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Priority" }));
+
+    expect(loadTicketListPageAction).toHaveBeenCalledWith({
+      sort: { key: "priority", direction: "ascending" },
+    });
+    expect(await screen.findByText("Webhook failed")).toBeInTheDocument();
+    expect(screen.queryByText("Cannot log in")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Load more" }));
+
+    expect(loadTicketListPageAction).toHaveBeenLastCalledWith({
+      cursor: "2",
+      sort: { key: "priority", direction: "ascending" },
+    });
+    expect(await screen.findByText("Cannot log in")).toBeInTheDocument();
+  });
+
+  it("does not locally sort incomplete provider lists without sort support", () => {
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        listResult={{ ...availableList, loadedCount: 2, nextCursor: "3" }}
+        logoutAction={noopAction}
+        rows={[row, highRow]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Priority" })).toBeDisabled();
   });
 
   it("reflects refreshed server row metadata while keeping loaded pages", async () => {

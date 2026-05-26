@@ -1,5 +1,18 @@
-import type { WorkspaceTicketRow } from "./workspace-adapter";
+import type {
+  WorkspaceTicketRow,
+  WorkspaceTicketSortKey,
+} from "./workspace-adapter";
 import type { TicketReadUnavailable } from "./read-model";
+
+export type WorkspaceTicketListSort = {
+  key: WorkspaceTicketSortKey;
+  direction: "ascending" | "descending";
+};
+
+export type WorkspaceTicketListPageRequest = {
+  cursor?: string;
+  sort?: WorkspaceTicketListSort;
+};
 
 export type WorkspaceTicketListPageAvailable = {
   status: "available";
@@ -14,5 +27,5 @@ export type WorkspaceTicketListPageLoadResult =
   | TicketReadUnavailable;
 
 export type LoadWorkspaceTicketListPageAction = (
-  cursor: string,
+  request: WorkspaceTicketListPageRequest,
 ) => Promise<WorkspaceTicketListPageLoadResult>;

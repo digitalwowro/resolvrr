@@ -39,6 +39,7 @@ type TicketWorkspaceDisplayProps = {
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   nextListCursor?: string;
+  providerSortEnabled: boolean;
   refreshTicketDetailAfterMetadataSave: boolean;
   rows: WorkspaceTicketRow[];
   selectedTicketId?: string;
@@ -61,6 +62,7 @@ export function TicketWorkspaceDisplay({
   loadTicketListPageAction,
   metadataMutationCapabilities,
   nextListCursor,
+  providerSortEnabled,
   refreshTicketDetailAfterMetadataSave,
   rows,
   selectedTicketId,
@@ -98,6 +100,7 @@ export function TicketWorkspaceDisplay({
     showOpenTicket,
     showTicketFromRow,
     sortDirectionFor,
+    sortingEnabled,
     sortedRows,
     tabOrientation,
     toggleColumn,
@@ -110,7 +113,10 @@ export function TicketWorkspaceDisplay({
     columns,
     detail,
     detailResult,
+    localSortEnabled: !providerSortEnabled && !listPager.hasMorePages,
     loadTicketDetailAction,
+    onProviderSortChange: listPager.reloadFirstPage,
+    providerSortEnabled,
     refreshTicketDetailAfterMetadataSave,
     rows: listPager.rows,
     selectedTicketId,
@@ -136,6 +142,7 @@ export function TicketWorkspaceDisplay({
         roundedTop={tabOrientation === "vertical"}
         rows={sortedRows}
         selectedRowIds={selectedRowIds}
+        sortingEnabled={sortingEnabled}
         sortDirectionFor={sortDirectionFor}
         totalCount={listPager.totalCount}
         visibleColumns={visibleColumnSet}

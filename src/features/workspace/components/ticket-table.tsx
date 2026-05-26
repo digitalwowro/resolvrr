@@ -36,6 +36,7 @@ type TicketTableProps = {
   roundedTop?: boolean;
   rows: WorkspaceTicketRow[];
   selectedRowIds: Set<string>;
+  sortingEnabled?: boolean;
   sortDirectionFor(key: WorkspaceTicketSortKey): SortDirection | undefined;
   totalCount?: number;
   visibleColumns: Set<WorkspaceTicketColumnKey>;
@@ -84,6 +85,7 @@ export function TicketTable({
   roundedTop = true,
   rows,
   selectedRowIds,
+  sortingEnabled = true,
   sortDirectionFor,
   totalCount,
   visibleColumns,
@@ -97,11 +99,11 @@ export function TicketTable({
   let rowIndex = 0;
 
   function sortHandler(key: WorkspaceTicketSortKey) {
-    return groupBy === key ? undefined : () => onSort(key);
+    return sortingEnabled && groupBy !== key ? () => onSort(key) : undefined;
   }
 
   function sortDirection(key: WorkspaceTicketSortKey) {
-    return groupBy === key ? undefined : sortDirectionFor(key);
+    return sortingEnabled && groupBy !== key ? sortDirectionFor(key) : undefined;
   }
 
   function groupLabel(group: TicketTableGroup) {

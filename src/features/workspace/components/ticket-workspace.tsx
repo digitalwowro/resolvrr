@@ -102,11 +102,12 @@ export function TicketWorkspace({
           loadTicketListPageAction={loadTicketListPageAction}
           metadataMutationCapabilities={effectiveMetadataMutationCapabilities}
           nextListCursor={listResult.nextCursor}
-          totalListCount={listResult.totalCount}
+          providerSortEnabled={listResult.queryCapabilities?.providerSort === true}
           refreshTicketDetailAfterMetadataSave={providedLoadTicketDetailAction}
           rows={rows}
           selectedTicketId={selectedTicketId}
           tabs={tabs}
+          totalListCount={listResult.totalCount}
           updateTicketMetadataAction={updateTicketMetadataAction}
         />
       )}

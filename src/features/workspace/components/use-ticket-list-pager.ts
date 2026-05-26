@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { LoadWorkspaceTicketListPageAction } from "@/features/tickets/list-page-action-result";
+import type {
+  LoadWorkspaceTicketListPageAction,
+  WorkspaceTicketListSort,
+} from "@/features/tickets/list-page-action-result";
 import type { TicketReadUnavailableReason } from "@/features/tickets/read-model";
 import type { WorkspaceTicketRow } from "@/features/tickets/workspace-adapter";
 
@@ -24,6 +27,7 @@ export function useTicketListPager({
   const [loading, setLoading] = useState(false);
   const [errorReason, setErrorReason] =
     useState<TicketReadUnavailableReason>();
+  const [sort, setSort] = useState<WorkspaceTicketListSort>();
   const baselineIdentity = useRef(ticketListIdentity(initialRows));
   const hasClientLoadedRowsRef = useRef(false);
 
@@ -58,7 +62,10 @@ export function useTicketListPager({
     setErrorReason(undefined);
     let result;
     try {
-      result = await loadTicketListPageAction(nextCursor);
+      result = await loadTicketListPageAction({
+        cursor: nextCursor,
+        ...(sort ? { sort } : {}),
+      });
     } catch {
       setLoading(false);
       setErrorReason("provider-temporary-failure");
@@ -77,13 +84,46 @@ export function useTicketListPager({
     setRows((current) => appendUniqueRows(current, result.rows));
   }
 
+  async function reloadFirstPage(nextSort: WorkspaceTicketListSort) {
+    if (loading || !loadTicketListPageAction) {
+      return;
+    }
+
+    setSort(nextSort);
+    setLoading(true);
+    setErrorReason(undefined);
+    let result;
+    try {
+      result = await loadTicketListPageAction({ sort: nextSort });
+    } catch {
+      setLoading(false);
+      setErrorReason("provider-temporary-failure");
+      return;
+    }
+    setLoading(false);
+
+    if (result.status === "unavailable") {
+      setErrorReason(result.reason);
+      return;
+    }
+
+    hasClientLoadedRowsRef.current = false;
+    baselineIdentity.current = ticketListIdentity(result.rows);
+    setRows(result.rows);
+    setNextCursor(result.nextCursor);
+    setTotalCount(result.totalCount);
+  }
+
   return {
     canLoadMore: Boolean(nextCursor && loadTicketListPageAction),
     errorReason,
+    hasMorePages: Boolean(nextCursor),
     loadedCount: rows.length,
     loading,
     loadMore,
+    reloadFirstPage,
     rows,
+    sort,
     totalCount,
   };
 }
