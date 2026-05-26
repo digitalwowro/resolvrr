@@ -4,16 +4,20 @@ import type { DropdownOption } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
   LoadWorkspaceTicketDetailAction,
-  LoadWorkspaceTicketListPageAction,
+  WorkspaceTicketDetailLoadResult,
+} from "@/features/tickets/detail-action-result";
+import type { LoadWorkspaceTicketListPageAction } from "@/features/tickets/list-page-action-result";
+import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
-  WorkspaceTicketColumn,
-  WorkspaceTicketDetail,
-  WorkspaceTicketDetailLoadResult,
-  WorkspaceTicketRow,
-  WorkspaceTicketTab,
-} from "@/features/tickets";
-import { workspaceTicketTabs } from "@/features/tickets";
+} from "@/features/tickets/mutation-model";
+import {
+  type WorkspaceTicketColumn,
+  type WorkspaceTicketDetail,
+  type WorkspaceTicketRow,
+  type WorkspaceTicketTab,
+  workspaceTicketTabs,
+} from "@/features/tickets/workspace-adapter";
 import { TicketDetail } from "./ticket-detail";
 import { TicketTable } from "./ticket-table";
 import { TicketTabsPanel } from "./ticket-tabs-panel";

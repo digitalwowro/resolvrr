@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { WorkspaceTicketDetail } from "@/features/tickets";
+import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import { SidebarField } from "./ticket-sidebar-field";
 
 export function TicketDetailSidebar({

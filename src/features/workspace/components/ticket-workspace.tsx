@@ -1,15 +1,19 @@
 import type {
   LoadWorkspaceTicketDetailAction,
-  LoadWorkspaceTicketListPageAction,
-  TicketListReadResult,
+  WorkspaceTicketDetailLoadResult,
+} from "@/features/tickets/detail-action-result";
+import type { LoadWorkspaceTicketListPageAction } from "@/features/tickets/list-page-action-result";
+import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
+} from "@/features/tickets/mutation-model";
+import type { TicketListReadResult } from "@/features/tickets/read-model";
+import type {
   WorkspaceTicketColumn,
   WorkspaceTicketDetail,
-  WorkspaceTicketDetailLoadResult,
   WorkspaceTicketRow,
   WorkspaceTicketTab,
-} from "@/features/tickets";
+} from "@/features/tickets/workspace-adapter";
 import { TicketWorkspaceDisplay } from "./ticket-workspace-display";
 import {
   type WorkspaceMenuConnection,

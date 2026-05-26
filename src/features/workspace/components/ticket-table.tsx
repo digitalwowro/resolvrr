@@ -10,7 +10,7 @@ import type {
   WorkspaceTicketGroupKey,
   WorkspaceTicketRow,
   WorkspaceTicketSortKey,
-} from "@/features/tickets";
+} from "@/features/tickets/workspace-adapter";
 import { PriorityCell, StateCell } from "./ticket-table-cells";
 import {
   ticketGridTableClass,

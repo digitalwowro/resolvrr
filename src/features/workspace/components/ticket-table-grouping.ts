@@ -4,7 +4,7 @@ import type {
   WorkspaceTicketGroupKey,
   WorkspaceTicketRow,
   WorkspaceTicketSortKey,
-} from "@/features/tickets";
+} from "@/features/tickets/workspace-adapter";
 import type { TicketTableGroup } from "./ticket-table";
 
 const priorityOrder = ["high", "medium", "low"];

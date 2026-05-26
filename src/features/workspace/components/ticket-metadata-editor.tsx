@@ -12,8 +12,8 @@ import {
 import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
-  WorkspaceTicketDetail,
-} from "@/features/tickets";
+} from "@/features/tickets/mutation-model";
+import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import {
   metadataDraftDirtyFields,
   metadataDraftFormData,

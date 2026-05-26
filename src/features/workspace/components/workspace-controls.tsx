@@ -28,7 +28,7 @@ import type {
   WorkspaceTicketColumn,
   WorkspaceTicketColumnKey,
   WorkspaceTicketGroupKey,
-} from "@/features/tickets";
+} from "@/features/tickets/workspace-adapter";
 
 type WorkspaceControlsProps = {
   allSelected: boolean;

@@ -4,7 +4,7 @@ import { useState } from "react";
 import type {
   LoadWorkspaceTicketDetailAction,
   WorkspaceTicketDetailLoadResult,
-} from "@/features/tickets";
+} from "@/features/tickets/detail-action-result";
 
 type TicketDetailCacheEntry = WorkspaceTicketDetailLoadResult | { status: "loading" };
 

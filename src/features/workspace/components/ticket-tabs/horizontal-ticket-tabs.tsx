@@ -3,7 +3,7 @@
 import { TriangleAlert } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TicketTab, Tooltip } from "@/components/ui";
-import type { WorkspaceTicketTab } from "@/features/tickets";
+import type { WorkspaceTicketTab } from "@/features/tickets/workspace-adapter";
 import {
   horizontalTicketTabDensity,
   visibleIconTicketTabCount,

@@ -4,15 +4,17 @@ import { useMemo, useState } from "react";
 import { useTableSort } from "@/components/ui";
 import type {
   LoadWorkspaceTicketDetailAction,
+  WorkspaceTicketDetailLoadResult,
+} from "@/features/tickets/detail-action-result";
+import type {
   WorkspaceTicketColumn,
   WorkspaceTicketColumnKey,
   WorkspaceTicketDetail,
-  WorkspaceTicketDetailLoadResult,
   WorkspaceTicketGroupKey,
   WorkspaceTicketRow,
   WorkspaceTicketSortKey,
   WorkspaceTicketTab,
-} from "@/features/tickets";
+} from "@/features/tickets/workspace-adapter";
 import type { TicketMetadataSavedPatch } from "./metadata-draft";
 import {
   groupTicketRows,

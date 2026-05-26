@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type {
-  LoadWorkspaceTicketListPageAction,
-  TicketReadUnavailableReason,
-  WorkspaceTicketRow,
-} from "@/features/tickets";
+import type { LoadWorkspaceTicketListPageAction } from "@/features/tickets/list-page-action-result";
+import type { TicketReadUnavailableReason } from "@/features/tickets/read-model";
+import type { WorkspaceTicketRow } from "@/features/tickets/workspace-adapter";
 
 type TicketListPagerProps = {
   initialRows: WorkspaceTicketRow[];
