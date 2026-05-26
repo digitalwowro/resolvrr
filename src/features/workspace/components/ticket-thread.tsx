@@ -6,7 +6,7 @@ import { cn } from "@/components/ui/classnames";
 import type {
   WorkspaceArticle,
   WorkspaceArticleContact,
-} from "@/features/tickets";
+} from "@/features/tickets/workspace-adapter";
 
 type TicketThreadProps = {
   articles: WorkspaceArticle[];

@@ -188,6 +188,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/tickets/detail-actions.ts`: authenticated server action for
   post-hydration workspace detail loads. It returns adapted workspace detail or
   provider-neutral unavailable state only.
+- `src/features/tickets/list-page-action-result.ts`: client-safe workspace
+  ticket list page action result and loader action function types.
+- `src/features/tickets/list-actions.ts`: authenticated server action for
+  post-hydration ungrouped workspace list page loads. It returns adapted
+  workspace rows and provider-neutral pagination metadata only.
 - `src/features/tickets/service.ts`: thin ticket read orchestration and
   controlled state/priority metadata mutation entrypoints with refresh-after-
   write checks.
@@ -215,6 +220,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/use-ticket-detail-loader.ts`: in-memory
   per-workspace-session selected-ticket detail cache and client detail loader
   for post-hydration row opens.
+- `src/features/workspace/components/use-ticket-list-pager.ts`: in-memory
+  active-workspace list pager for appending provider-backed ungrouped list pages
+  without touching selected-ticket detail reads.
 - `src/features/workspace/components/workspace-url.ts`: workspace ticket/List
   URL path helper used by local tab navigation and explicit ticket link sharing,
   plus history replacement helpers for local tab navigation.
@@ -381,8 +389,10 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-workspace-test-utils.tsx`: shared provider-backed
   workspace fixtures and render helpers for feature tests.
 - `tests/features/ticket-workspace.test.tsx`: verifies provider-backed
-  workspace unavailable, table, profile menu, detail, read-only metadata, and
-  grouping behavior.
+  workspace unavailable, table, profile menu, detail, read-only metadata,
+  grouping behavior, and post-hydration ungrouped list page loading.
+- `tests/features/ticket-list-action.test.ts`: verifies client-safe
+  post-hydration workspace list page action results.
 - `tests/features/ticket-metadata-action-input.test.ts`: verifies staged
   selected-ticket metadata update payload parsing and pending date validation.
 - `tests/features/ticket-metadata-action-revalidation.test.ts`: verifies

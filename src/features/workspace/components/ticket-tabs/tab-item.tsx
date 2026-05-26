@@ -11,7 +11,7 @@ import {
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type { TicketState } from "@/core/tickets";
-import type { WorkspaceTicketTab } from "@/features/tickets";
+import type { WorkspaceTicketTab } from "@/features/tickets/workspace-adapter";
 
 export const stateColor: Record<TicketState | "unknown", string> = {
   new: "text-rose-600",

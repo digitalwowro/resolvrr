@@ -21,6 +21,10 @@ export {
   type WorkspaceTicketDetailLoadResult,
 } from "./detail-action-result";
 export {
+  type LoadWorkspaceTicketListPageAction,
+  type WorkspaceTicketListPageLoadResult,
+} from "./list-page-action-result";
+export {
   noTicketMetadataMutationCapabilities,
   ticketMetadataMutationCapabilities,
   type TicketMetadataMutationActionState,

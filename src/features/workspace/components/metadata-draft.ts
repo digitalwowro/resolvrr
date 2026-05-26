@@ -1,5 +1,5 @@
 import type { TicketPriority, TicketState } from "@/core/tickets";
-import type { WorkspaceTicketDetail } from "@/features/tickets";
+import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import {
   isFuturePendingDateTime,
   pendingDateTimeIso,

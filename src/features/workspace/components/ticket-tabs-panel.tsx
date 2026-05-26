@@ -1,4 +1,4 @@
-import type { WorkspaceTicketTab } from "@/features/tickets";
+import type { WorkspaceTicketTab } from "@/features/tickets/workspace-adapter";
 import { HorizontalTicketTabs } from "./ticket-tabs/horizontal-ticket-tabs";
 import { VerticalTicketTabs } from "./ticket-tabs/vertical-ticket-tabs";
 

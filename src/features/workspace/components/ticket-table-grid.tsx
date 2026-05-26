@@ -2,7 +2,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, GripVertical } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import type { SortDirection } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
-import type { WorkspaceTicketColumnKey } from "@/features/tickets";
+import type { WorkspaceTicketColumnKey } from "@/features/tickets/workspace-adapter";
 
 const columnTemplates: Record<WorkspaceTicketColumnKey, string> = {
   customer: "fit-content(14rem)",

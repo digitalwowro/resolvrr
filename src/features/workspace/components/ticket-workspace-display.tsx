@@ -4,19 +4,26 @@ import type { DropdownOption } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
   LoadWorkspaceTicketDetailAction,
+  WorkspaceTicketDetailLoadResult,
+} from "@/features/tickets/detail-action-result";
+import type { LoadWorkspaceTicketListPageAction } from "@/features/tickets/list-page-action-result";
+import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
-  WorkspaceTicketColumn,
-  WorkspaceTicketDetail,
-  WorkspaceTicketDetailLoadResult,
-  WorkspaceTicketRow,
-  WorkspaceTicketTab,
-} from "@/features/tickets";
+} from "@/features/tickets/mutation-model";
+import {
+  type WorkspaceTicketColumn,
+  type WorkspaceTicketDetail,
+  type WorkspaceTicketRow,
+  type WorkspaceTicketTab,
+  workspaceTicketTabs,
+} from "@/features/tickets/workspace-adapter";
 import { TicketDetail } from "./ticket-detail";
 import { TicketTable } from "./ticket-table";
 import { TicketTabsPanel } from "./ticket-tabs-panel";
 import { ticketGroupOptions } from "./ticket-table-grouping";
 import { useTicketWorkspaceDisplayState } from "./ticket-workspace-state";
+import { useTicketListPager } from "./use-ticket-list-pager";
 import { WorkspaceControls } from "./workspace-controls";
 import {
   DetailLoadingState,
@@ -29,11 +36,14 @@ type TicketWorkspaceDisplayProps = {
   detail?: WorkspaceTicketDetail;
   detailResult?: WorkspaceTicketDetailLoadResult;
   loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
+  loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
+  nextListCursor?: string;
   refreshTicketDetailAfterMetadataSave: boolean;
   rows: WorkspaceTicketRow[];
   selectedTicketId?: string;
   tabs: WorkspaceTicketTab[];
+  totalListCount?: number;
   updateTicketMetadataAction(
     formData: FormData,
   ): Promise<TicketMetadataMutationActionState>;
@@ -48,13 +58,26 @@ export function TicketWorkspaceDisplay({
   detail,
   detailResult,
   loadTicketDetailAction,
+  loadTicketListPageAction,
   metadataMutationCapabilities,
+  nextListCursor,
   refreshTicketDetailAfterMetadataSave,
   rows,
   selectedTicketId,
   tabs: ticketTabs,
+  totalListCount,
   updateTicketMetadataAction,
 }: TicketWorkspaceDisplayProps) {
+  const listPager = useTicketListPager({
+    initialRows: rows,
+    initialNextCursor: nextListCursor,
+    initialTotalCount: totalListCount,
+    loadTicketListPageAction,
+  });
+  const pagedTicketTabs = mergeTicketTabs(
+    ticketTabs,
+    workspaceTicketTabs(listPager.rows),
+  );
   const {
     activeDetail,
     activeTicketId,
@@ -89,9 +112,9 @@ export function TicketWorkspaceDisplay({
     detailResult,
     loadTicketDetailAction,
     refreshTicketDetailAfterMetadataSave,
-    rows,
+    rows: listPager.rows,
     selectedTicketId,
-    ticketTabs,
+    ticketTabs: pagedTicketTabs,
   });
 
   const workArea =
@@ -105,10 +128,16 @@ export function TicketWorkspaceDisplay({
         onRowSelect={showTicketFromRow}
         onSort={toggleSort}
         onToggleRow={toggleRow}
+        canLoadMore={groupBy === "none" && listPager.canLoadMore}
+        loadMoreError={listPager.errorReason}
+        loadedCount={listPager.loadedCount}
+        loadingMore={listPager.loading}
+        onLoadMore={listPager.loadMore}
         roundedTop={tabOrientation === "vertical"}
         rows={sortedRows}
         selectedRowIds={selectedRowIds}
         sortDirectionFor={sortDirectionFor}
+        totalCount={listPager.totalCount}
         visibleColumns={visibleColumnSet}
       />
     ) : activeDetail?.status === "unavailable" ? (
@@ -183,4 +212,15 @@ export function TicketWorkspaceDisplay({
       </div>
     </section>
   );
+}
+
+function mergeTicketTabs(
+  initialTabs: WorkspaceTicketTab[],
+  rowTabs: WorkspaceTicketTab[],
+) {
+  const tabsById = new Map(initialTabs.map((tab) => [tab.id, tab]));
+  for (const tab of rowTabs) {
+    tabsById.set(tab.id, tab);
+  }
+  return [...tabsById.values()];
 }

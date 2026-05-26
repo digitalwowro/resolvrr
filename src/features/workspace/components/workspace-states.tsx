@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { TicketReadUnavailableReason } from "@/features/tickets";
+import type { TicketReadUnavailableReason } from "@/features/tickets/read-model";
 
 const unavailableMessages: Record<TicketReadUnavailableReason, string> = {
   "no-active-connection": "No active helpdesk workspace is connected.",

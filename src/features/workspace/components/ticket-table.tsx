@@ -1,6 +1,7 @@
 "use client";
 
-import { Checkbox } from "@/components/ui";
+import { ChevronDown } from "lucide-react";
+import { Button, Checkbox } from "@/components/ui";
 import type { SortDirection } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
@@ -9,7 +10,7 @@ import type {
   WorkspaceTicketGroupKey,
   WorkspaceTicketRow,
   WorkspaceTicketSortKey,
-} from "@/features/tickets";
+} from "@/features/tickets/workspace-adapter";
 import { PriorityCell, StateCell } from "./ticket-table-cells";
 import {
   ticketGridTableClass,
@@ -27,10 +28,16 @@ type TicketTableProps = {
   onRowSelect(ticketId: string): void;
   onSort(key: WorkspaceTicketSortKey): void;
   onToggleRow(ticketId: string): void;
+  canLoadMore?: boolean;
+  loadedCount?: number;
+  loadingMore?: boolean;
+  loadMoreError?: string;
+  onLoadMore?(): void;
   roundedTop?: boolean;
   rows: WorkspaceTicketRow[];
   selectedRowIds: Set<string>;
   sortDirectionFor(key: WorkspaceTicketSortKey): SortDirection | undefined;
+  totalCount?: number;
   visibleColumns: Set<WorkspaceTicketColumnKey>;
 };
 
@@ -69,10 +76,16 @@ export function TicketTable({
   onRowSelect,
   onSort,
   onToggleRow,
+  canLoadMore = false,
+  loadedCount,
+  loadingMore = false,
+  loadMoreError,
+  onLoadMore,
   roundedTop = true,
   rows,
   selectedRowIds,
   sortDirectionFor,
+  totalCount,
   visibleColumns,
 }: TicketTableProps) {
   const templateStyle = ticketGridTemplate(visibleColumns);
@@ -193,67 +206,98 @@ export function TicketTable({
     );
   }
 
-  return (
-    <div
-      aria-label="Tickets"
-      className={ticketGridTableClass({ roundedTop })}
-      role="table"
-    >
-      <div className="grid w-full min-w-0" style={templateStyle}>
-        <div className="contents" role="rowgroup">
-          <div className="contents" role="row">
-            <TicketGridStaticHeaderCell />
-            <TicketGridHeaderCell
-              label="#"
-              onSort={sortHandler("number")}
-              sortDirection={sortDirection("number")}
-            />
-            <TicketGridHeaderCell
-              label="Title"
-              onSort={sortHandler("title")}
-              sortDirection={sortDirection("title")}
-            />
-            {visibleColumnList.map((column) => (
-              <TicketGridHeaderCell
-                key={column.key}
-                label={column.label}
-                onSort={sortHandler(column.key)}
-                sortDirection={sortDirection(column.key)}
-              />
-            ))}
-          </div>
-        </div>
-        <div className="contents" role="rowgroup">
-          {groups.flatMap((group) => {
-            const firstGroup = groups[0]?.id === group.id;
-            const groupHeader =
-              groupBy === "none" ? null : (
-                <div className="contents" key={`group-${group.id}`} role="row">
-                  <div
-                    aria-label={`${group.label} ${group.rows.length}`}
-                    className={cn(
-                      "flex h-8 items-center gap-2 border-b border-slate-700 bg-slate-700 px-3 text-sm font-semibold text-white",
-                      firstGroup ? null : "border-t border-slate-700",
-                    )}
-                    role="cell"
-                    style={{ gridColumn: "1 / -1" }}
-                  >
-                    <span className="inline-flex items-center gap-1.5">
-                      {groupLabel(group)}
-                    </span>
-                    <span className="text-white/75">{group.rows.length}</span>
-                  </div>
-                </div>
-              );
-            const renderedRows = group.rows.map((row) =>
-              renderRow(row, rowIndex++),
-            );
-
-            return groupHeader ? [groupHeader, ...renderedRows] : renderedRows;
-          })}
+  const loadMoreFooter =
+    canLoadMore || loadingMore || loadMoreError ? (
+      <div className="flex min-h-12 items-center justify-between gap-3 border-x border-t border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+        <span>
+          {totalCount === undefined
+            ? `${loadedCount ?? rows.length} loaded`
+            : `${loadedCount ?? rows.length} of ${totalCount} loaded`}
+        </span>
+        <div className="flex items-center gap-3">
+          {loadMoreError ? (
+            <span className="text-red-700" role="alert">
+              Could not load more tickets.
+            </span>
+          ) : null}
+          {canLoadMore ? (
+            <Button
+              icon={<ChevronDown aria-hidden="true" className="size-4" />}
+              loading={loadingMore}
+              onClick={onLoadMore}
+              type="button"
+            >
+              Load more
+            </Button>
+          ) : null}
         </div>
       </div>
-    </div>
+    ) : null;
+
+  return (
+    <section className="flex min-h-0 flex-1 flex-col">
+      <div
+        aria-label="Tickets"
+        className={ticketGridTableClass({ roundedTop })}
+        role="table"
+      >
+        <div className="grid w-full min-w-0" style={templateStyle}>
+          <div className="contents" role="rowgroup">
+            <div className="contents" role="row">
+              <TicketGridStaticHeaderCell />
+              <TicketGridHeaderCell
+                label="#"
+                onSort={sortHandler("number")}
+                sortDirection={sortDirection("number")}
+              />
+              <TicketGridHeaderCell
+                label="Title"
+                onSort={sortHandler("title")}
+                sortDirection={sortDirection("title")}
+              />
+              {visibleColumnList.map((column) => (
+                <TicketGridHeaderCell
+                  key={column.key}
+                  label={column.label}
+                  onSort={sortHandler(column.key)}
+                  sortDirection={sortDirection(column.key)}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="contents" role="rowgroup">
+            {groups.flatMap((group) => {
+              const firstGroup = groups[0]?.id === group.id;
+              const groupHeader =
+                groupBy === "none" ? null : (
+                  <div className="contents" key={`group-${group.id}`} role="row">
+                    <div
+                      aria-label={`${group.label} ${group.rows.length}`}
+                      className={cn(
+                        "flex h-8 items-center gap-2 border-b border-slate-700 bg-slate-700 px-3 text-sm font-semibold text-white",
+                        firstGroup ? null : "border-t border-slate-700",
+                      )}
+                      role="cell"
+                      style={{ gridColumn: "1 / -1" }}
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        {groupLabel(group)}
+                      </span>
+                      <span className="text-white/75">{group.rows.length}</span>
+                    </div>
+                  </div>
+                );
+              const renderedRows = group.rows.map((row) =>
+                renderRow(row, rowIndex++),
+              );
+
+              return groupHeader ? [groupHeader, ...renderedRows] : renderedRows;
+            })}
+          </div>
+        </div>
+      </div>
+      {loadMoreFooter}
+    </section>
   );
 }
 

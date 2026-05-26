@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
-import type { WorkspaceTicketTab } from "@/features/tickets";
+import type { WorkspaceTicketTab } from "@/features/tickets/workspace-adapter";
 import {
   stateColor,
   stateIcon,

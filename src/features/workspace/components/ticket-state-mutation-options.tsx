@@ -4,7 +4,7 @@ import {
   ticketStateDefinitions,
   type TicketState,
 } from "@/core/tickets";
-import type { WorkspaceTicketDetail } from "@/features/tickets";
+import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import { StateIcon } from "./ticket-table-cells";
 
 const stateOptions: DropdownOption[] = ticketStates.map((state) => ({

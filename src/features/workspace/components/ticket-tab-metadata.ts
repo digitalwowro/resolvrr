@@ -2,7 +2,7 @@ import {
   ticketPriorityDefinitions,
   ticketStateDefinitions,
 } from "@/core/tickets";
-import type { WorkspaceTicketTab } from "@/features/tickets";
+import type { WorkspaceTicketTab } from "@/features/tickets/workspace-adapter";
 import type { TicketMetadataSavedPatch } from "./metadata-draft";
 
 export function patchTicketTabMetadata(

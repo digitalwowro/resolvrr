@@ -1,14 +1,19 @@
 import type {
   LoadWorkspaceTicketDetailAction,
-  TicketListReadResult,
+  WorkspaceTicketDetailLoadResult,
+} from "@/features/tickets/detail-action-result";
+import type { LoadWorkspaceTicketListPageAction } from "@/features/tickets/list-page-action-result";
+import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
+} from "@/features/tickets/mutation-model";
+import type { TicketListReadResult } from "@/features/tickets/read-model";
+import type {
   WorkspaceTicketColumn,
   WorkspaceTicketDetail,
-  WorkspaceTicketDetailLoadResult,
   WorkspaceTicketRow,
   WorkspaceTicketTab,
-} from "@/features/tickets";
+} from "@/features/tickets/workspace-adapter";
 import { TicketWorkspaceDisplay } from "./ticket-workspace-display";
 import {
   type WorkspaceMenuConnection,
@@ -24,6 +29,7 @@ type TicketWorkspaceProps = {
   detailResult?: WorkspaceTicketDetailLoadResult;
   listResult: TicketListReadResult;
   loadTicketDetailAction?: LoadWorkspaceTicketDetailAction;
+  loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
   logoutAction(formData: FormData): void | Promise<void>;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   rows: WorkspaceTicketRow[];
@@ -57,6 +63,7 @@ export function TicketWorkspace({
   detailResult,
   listResult,
   loadTicketDetailAction,
+  loadTicketListPageAction,
   logoutAction,
   metadataMutationCapabilities,
   rows,
@@ -92,7 +99,10 @@ export function TicketWorkspace({
           detail={detail}
           detailResult={detailResult}
           loadTicketDetailAction={effectiveLoadTicketDetailAction}
+          loadTicketListPageAction={loadTicketListPageAction}
           metadataMutationCapabilities={effectiveMetadataMutationCapabilities}
+          nextListCursor={listResult.nextCursor}
+          totalListCount={listResult.totalCount}
           refreshTicketDetailAfterMetadataSave={providedLoadTicketDetailAction}
           rows={rows}
           selectedTicketId={selectedTicketId}

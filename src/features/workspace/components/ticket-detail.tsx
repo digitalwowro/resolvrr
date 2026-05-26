@@ -7,8 +7,10 @@ import { cn } from "@/components/ui/classnames";
 import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
+} from "@/features/tickets/mutation-model";
+import type {
   WorkspaceTicketDetail,
-} from "@/features/tickets";
+} from "@/features/tickets/workspace-adapter";
 import type { TicketMetadataSavedPatch } from "./metadata-draft";
 import { StateIcon } from "./ticket-table-cells";
 import { TicketMetadataEditor } from "./ticket-metadata-editor";
