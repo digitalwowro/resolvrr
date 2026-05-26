@@ -229,6 +229,60 @@ describe("Zammad ticket read assets", () => {
     });
   });
 
+  it("resolves list state and priority names when Zammad only returns ids", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [
+          {
+            ...rawTicket,
+            state: undefined,
+            state_id: 2,
+            priority: undefined,
+            priority_id: 3,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [
+          { id: 1, name: "new" },
+          { id: 2, name: "open" },
+        ],
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [
+          { id: 1, name: "1 low" },
+          { id: 2, name: "2 normal" },
+          { id: 3, name: "3 high" },
+        ],
+      });
+
+    const result = await zammadProviderPlugin.listTickets?.(providerContext(), {
+      filter: {},
+      pageSize: 10,
+    });
+
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      2,
+      "https://helpdesk.example.com/api/v1/ticket_states",
+      expect.any(Object),
+    );
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      3,
+      "https://helpdesk.example.com/api/v1/ticket_priorities",
+      expect.any(Object),
+    );
+    expect(result?.tickets[0]).toMatchObject({
+      state: "open",
+      priority: "high",
+    });
+  });
+
   it("resolves selected-ticket detail names when Zammad omits full user assets", async () => {
     mockedSafeProviderJson
       .mockResolvedValueOnce({

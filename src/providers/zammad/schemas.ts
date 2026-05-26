@@ -90,12 +90,16 @@ export const zammadArticleSchema = z
 
 export const zammadArticleListSchema = z.array(zammadArticleSchema);
 
-const zammadGenericNamedAssetSchema = z
+export const zammadGenericNamedAssetSchema = z
   .object({
     id: z.number().optional(),
     name: zammadNullableStringSchema,
   })
   .passthrough();
+
+export const zammadGenericNamedAssetListResponseSchema = z.array(
+  zammadGenericNamedAssetSchema,
+);
 
 export const zammadAssetsSchema = z
   .object({
@@ -129,5 +133,6 @@ export const zammadArticleListResponseSchema = z.union([
 export type ZammadTicket = z.infer<typeof zammadTicketSchema>;
 export type ZammadArticle = z.infer<typeof zammadArticleSchema>;
 export type ZammadAssets = z.infer<typeof zammadAssetsSchema>;
+export type ZammadGenericNamedAsset = z.infer<typeof zammadGenericNamedAssetSchema>;
 export type ZammadUser = z.infer<typeof zammadUserSchema>;
 export type ZammadFullTicketPayload = z.infer<typeof zammadFullTicketPayloadSchema>;
