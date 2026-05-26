@@ -7,14 +7,17 @@ import type { ProviderContext } from "@/core/providers";
 import type { TicketDetail } from "@/core/tickets";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
 import { mapArticle, mapTicket, mapTicketListItem } from "./mapping";
+import { namedAssetValue, namedReferenceValue, relationId } from "./participants";
 import {
   zammadArticleListResponseSchema,
+  zammadGenericNamedAssetListResponseSchema,
   zammadFullTicketPayloadSchema,
   zammadTicketListResponseSchema,
   zammadTicketSchema,
   zammadUserSchema,
   type ZammadArticle,
   type ZammadAssets,
+  type ZammadGenericNamedAsset,
   type ZammadTicket,
   type ZammadUser,
 } from "./schemas";
@@ -152,6 +155,20 @@ function collectUserIdsFromTickets(tickets: ZammadTicket[]): string[] {
   ];
 }
 
+function collectNamedAssetIds(
+  tickets: ZammadTicket[],
+  idField: "state_id" | "priority_id",
+) {
+  return [
+    ...new Set(
+      tickets
+        .map((ticket) => ticket[idField])
+        .filter((id): id is string | number => id !== null && id !== undefined)
+        .map(String),
+    ),
+  ];
+}
+
 function collectUserIdsFromArticles(articles: ZammadArticle[]): string[] {
   return [
     ...new Set(
@@ -161,6 +178,18 @@ function collectUserIdsFromArticles(articles: ZammadArticle[]): string[] {
         .map(String),
     ),
   ];
+}
+
+function namedAssetMap(
+  assets: ZammadGenericNamedAsset[],
+): Record<string, ZammadGenericNamedAsset> {
+  return Object.fromEntries(
+    assets
+      .map((asset) => [relationId(asset.id), asset] as const)
+      .filter((entry): entry is [string, ZammadGenericNamedAsset] =>
+        Boolean(entry[0]),
+      ),
+  );
 }
 
 async function fetchZammadUsers(
@@ -195,6 +224,25 @@ async function fetchZammadUsers(
   );
 }
 
+async function fetchZammadNamedAssets(
+  context: ProviderContext,
+  path: string,
+  operation: "list" | "detail",
+): Promise<Record<string, ZammadGenericNamedAsset>> {
+  return measureTicketReadPhase(
+    "provider-lookup-request",
+    { ...timingMetadata(context), operation },
+    async () => {
+      const rawAssets = await zammadGetJson(context, path);
+      const parsed = zammadGenericNamedAssetListResponseSchema.safeParse(rawAssets);
+      if (!parsed.success) {
+        throw providerDataMismatch();
+      }
+      return namedAssetMap(parsed.data);
+    },
+  );
+}
+
 function mergeUserAssets(
   assets: ZammadAssets | undefined,
   users: Record<string, ZammadUser>,
@@ -208,8 +256,53 @@ function mergeUserAssets(
   };
 }
 
+function mergeListAssets(
+  assets: ZammadAssets | undefined,
+  users: Record<string, ZammadUser>,
+  states: Record<string, ZammadGenericNamedAsset>,
+  priorities: Record<string, ZammadGenericNamedAsset>,
+): ZammadAssets {
+  return {
+    ...mergeUserAssets(assets, users),
+    State: {
+      ...assets?.State,
+      ...states,
+    },
+    TicketPriority: {
+      ...assets?.TicketPriority,
+      ...priorities,
+    },
+  };
+}
+
 function missingUserIds(assets: ZammadAssets | undefined, userIds: string[]) {
   return userIds.filter((userId) => !assets?.User?.[userId]);
+}
+
+function missingStateIds(assets: ZammadAssets | undefined, tickets: ZammadTicket[]) {
+  return collectNamedAssetIds(tickets, "state_id").filter((stateId) =>
+    tickets.some(
+      (ticket) =>
+        relationId(ticket.state_id) === stateId &&
+        !namedReferenceValue(ticket.state) &&
+        !namedAssetValue(assets?.State, stateId),
+    ),
+  );
+}
+
+function missingPriorityIds(
+  assets: ZammadAssets | undefined,
+  tickets: ZammadTicket[],
+) {
+  return collectNamedAssetIds(tickets, "priority_id").filter((priorityId) =>
+    tickets.some(
+      (ticket) =>
+        relationId(ticket.priority_id) === priorityId &&
+        !namedReferenceValue(ticket.priority) &&
+        !namedAssetValue(assets?.TicketPriority, priorityId) &&
+        !namedAssetValue(assets?.Priority, priorityId),
+    ),
+  );
 }
 
 export async function listZammadTickets(
@@ -235,12 +328,23 @@ export async function listZammadTickets(
         throw providerDataMismatch();
       }
       const payload = ticketPayloadRecords(parsed.data);
-      const users = await fetchZammadUsers(
-        context,
-        missingUserIds(payload.assets, collectUserIdsFromTickets(payload.tickets)),
-        "list",
-      );
-      const assets = mergeUserAssets(payload.assets, users);
+      const [users, states, priorities] = await Promise.all([
+        fetchZammadUsers(
+          context,
+          missingUserIds(
+            payload.assets,
+            collectUserIdsFromTickets(payload.tickets),
+          ),
+          "list",
+        ),
+        missingStateIds(payload.assets, payload.tickets).length > 0
+          ? fetchZammadNamedAssets(context, "/api/v1/ticket_states", "list")
+          : Promise.resolve({}),
+        missingPriorityIds(payload.assets, payload.tickets).length > 0
+          ? fetchZammadNamedAssets(context, "/api/v1/ticket_priorities", "list")
+          : Promise.resolve({}),
+      ]);
+      const assets = mergeListAssets(payload.assets, users, states, priorities);
 
       return {
         tickets: payload.tickets.map((ticket) =>

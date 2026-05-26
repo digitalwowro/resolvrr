@@ -11,6 +11,7 @@ export type TicketReadTimingPhase =
   | "provider-metadata-mutation-current-ticket-request"
   | "provider-metadata-mutation-request"
   | "provider-article-thread-request"
+  | "provider-lookup-request"
   | "provider-user-lookup-request"
   | "provider-mapping-parsing"
   | "total-list-load"
