@@ -26,6 +26,7 @@ describe("Zammad ticket reads", () => {
   it("advertises implemented read and metadata mutation capabilities", () => {
     expect(zammadProviderPlugin.capabilities).toEqual([
       "ticket:list",
+      "ticket:count",
       "ticket:sort",
       "ticket:detail",
       "ticket:update-state",
@@ -119,6 +120,63 @@ describe("Zammad ticket reads", () => {
       }),
     );
     expect(result?.tickets[0]?.externalId).toBe("42");
+  });
+
+  it("requests and maps Zammad search total counts when requested", async () => {
+    mockedSafeProviderJson.mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: {
+        record_ids: [42],
+        total_count: 216,
+        assets: { Ticket: { "42": rawTicket } },
+      },
+    });
+
+    const result = await zammadProviderPlugin.listTickets?.(providerContext(), {
+      filter: {},
+      pageSize: 25,
+      count: { includeTotal: true },
+    });
+
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
+      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=25&expand=true&full=true&query=*&with_total_count=true",
+      expect.objectContaining({
+        allowedAddresses: ["93.184.216.34"],
+        headers: expect.objectContaining({
+          Accept: "application/json",
+          Authorization: "Basic YWdlbnQ6c2VjcmV0",
+          "User-Agent": "Resolvrr/1.0",
+        }),
+      }),
+    );
+    expect(result).toMatchObject({
+      loadedCount: 1,
+      totalCount: 216,
+      nextCursor: "2",
+    });
+  });
+
+  it("omits the next cursor when a count proves the current page is complete", async () => {
+    mockedSafeProviderJson.mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: {
+        record_ids: [42],
+        total_count: 1,
+        assets: { Ticket: { "42": rawTicket } },
+      },
+    });
+
+    const result = await zammadProviderPlugin.listTickets?.(providerContext(), {
+      filter: {},
+      pageSize: 1,
+      count: { includeTotal: true },
+    });
+
+    expect(result?.loadedCount).toBe(1);
+    expect(result?.totalCount).toBe(1);
+    expect(result?.nextCursor).toBeUndefined();
   });
 
   it("maps Zammad detail and thread without optional feature leakage", async () => {

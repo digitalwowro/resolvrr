@@ -204,6 +204,9 @@ provider-neutral `unsupported-query` unavailable state before provider code is
 called. Grouped total counts without `ticket:group-count` return
 `query-too-expensive`. Query normalization drops unknown fields so raw provider
 query syntax cannot be forwarded through the provider-neutral service boundary.
+For ungrouped list reads, the service automatically requests total counts when
+the active provider advertises `ticket:count`; providers without that capability
+keep returning loaded-count-only list results.
 
 Workspace list sorting uses this same contract: when the active provider
 advertises `providerSort`, changing a table sort requests page 1 with the
@@ -216,6 +219,8 @@ current response. `TicketListResult.totalCount`, when present, is the provider's
 total count for the query rather than the size of the loaded subset. Bucket
 results follow the same split: each bucket carries its loaded row count,
 optional total count, optional next cursor, and provider-neutral rows.
+Zammad-backed totals are sourced from the ticket search endpoint's
+`with_total_count=true` response rather than by fetching every ticket page.
 
 `TicketListResult.nextCursor` is opaque to core code. Providers own cursor
 format, pagination compilation, raw query syntax, and raw response mapping.

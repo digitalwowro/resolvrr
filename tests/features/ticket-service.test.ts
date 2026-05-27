@@ -285,6 +285,40 @@ describe("ticket read service", () => {
     });
   });
 
+  it("requests provider totals automatically for ungrouped count-capable lists", async () => {
+    const listTickets = vi.fn(async () => ({
+      tickets: [],
+      loadedCount: 0,
+      totalCount: 42,
+      measuredAt: new Date("2026-05-24T00:00:00Z"),
+    }));
+
+    const result = await loadWorkspaceTicketList(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([
+        provider({
+          capabilities: ["ticket:list", "ticket:detail", "ticket:count"],
+          listTickets,
+        }),
+      ]),
+      encryptionKey,
+      "user-1",
+    );
+
+    expect(listTickets).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ count: { includeTotal: true } }),
+    );
+    expect(result).toMatchObject({
+      status: "available",
+      loadedCount: 0,
+      totalCount: 42,
+    });
+  });
+
   it("returns an unsupported query state before calling providers without query capabilities", async () => {
     const listTickets = vi.fn(provider().listTickets);
 
