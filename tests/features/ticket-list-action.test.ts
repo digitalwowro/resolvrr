@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
 import { loadWorkspaceTicketListPageAction } from "@/features/tickets/list-actions";
 import { loadWorkspaceTicketList } from "@/features/tickets/service";
@@ -12,7 +13,9 @@ vi.mock("@/config/env", () => ({
 }));
 
 vi.mock("@/data/helpdesk-connections-repository", () => ({
-  prismaHelpdeskConnectionsRepository: {},
+  prismaHelpdeskConnectionsRepository: {
+    getActiveConnectionId: vi.fn(),
+  },
 }));
 
 vi.mock("@/data/saved-views-repository", () => ({
@@ -30,11 +33,15 @@ vi.mock("@/features/tickets/service", () => ({
 }));
 
 const mockedLoadWorkspaceTicketList = vi.mocked(loadWorkspaceTicketList);
+const mockedGetActiveConnectionId = vi.mocked(
+  prismaHelpdeskConnectionsRepository.getActiveConnectionId,
+);
 const mockedFindSavedView = vi.mocked(prismaSavedViewsRepository.findForUser);
 
 describe("loadWorkspaceTicketListPageAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedGetActiveConnectionId.mockResolvedValue("connection-1");
     mockedFindSavedView.mockResolvedValue(null);
   });
 
@@ -65,7 +72,7 @@ describe("loadWorkspaceTicketListPageAction", () => {
     const result = await loadWorkspaceTicketListPageAction({ cursor: " 2 " });
 
     expect(mockedLoadWorkspaceTicketList).toHaveBeenCalledWith(
-      {},
+      prismaHelpdeskConnectionsRepository,
       {},
       "test-encryption-key",
       "user-1",
@@ -124,7 +131,7 @@ describe("loadWorkspaceTicketListPageAction", () => {
     });
 
     expect(mockedLoadWorkspaceTicketList).toHaveBeenCalledWith(
-      {},
+      prismaHelpdeskConnectionsRepository,
       {},
       "test-encryption-key",
       "user-1",
@@ -167,7 +174,7 @@ describe("loadWorkspaceTicketListPageAction", () => {
     const result = await loadWorkspaceTicketListPageAction({ group: "priority" });
 
     expect(mockedLoadWorkspaceTicketList).toHaveBeenCalledWith(
-      {},
+      prismaHelpdeskConnectionsRepository,
       {},
       "test-encryption-key",
       "user-1",
@@ -207,7 +214,7 @@ describe("loadWorkspaceTicketListPageAction", () => {
     });
 
     expect(mockedLoadWorkspaceTicketList).toHaveBeenCalledWith(
-      {},
+      prismaHelpdeskConnectionsRepository,
       {},
       "test-encryption-key",
       "user-1",
@@ -247,9 +254,13 @@ describe("loadWorkspaceTicketListPageAction", () => {
       savedViewId: "view-1",
     });
 
-    expect(mockedFindSavedView).toHaveBeenCalledWith("user-1", "view-1");
+    expect(mockedFindSavedView).toHaveBeenCalledWith(
+      "user-1",
+      "view-1",
+      "connection-1",
+    );
     expect(mockedLoadWorkspaceTicketList).toHaveBeenCalledWith(
-      {},
+      prismaHelpdeskConnectionsRepository,
       {},
       "test-encryption-key",
       "user-1",
@@ -266,5 +277,82 @@ describe("loadWorkspaceTicketListPageAction", () => {
       appliedSavedViewId: "view-1",
       appliedSort: { key: "updatedAt", direction: "descending" },
     });
+  });
+
+  it("applies a global saved view in the active workspace connection", async () => {
+    mockedFindSavedView.mockResolvedValueOnce({
+      id: "global-view",
+      ownerUserId: "user-1",
+      name: "Global high priority",
+      visibility: "shared",
+      filter: { priorities: ["high"] },
+      query: { filter: { priorities: ["high"] } },
+      isSystem: false,
+      createdAt: new Date("2026-05-24T00:00:00Z"),
+      updatedAt: new Date("2026-05-24T00:00:00Z"),
+    });
+    mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
+      status: "available",
+      connectionName: "Support",
+      metadataMutationCapabilities: { state: false, priority: false },
+      tickets: [],
+      loadedCount: 0,
+      measuredAt: new Date("2026-05-24T08:31:30Z"),
+    });
+
+    const result = await loadWorkspaceTicketListPageAction({
+      savedViewId: "global-view",
+    });
+
+    expect(mockedFindSavedView).toHaveBeenCalledWith(
+      "user-1",
+      "global-view",
+      "connection-1",
+    );
+    expect(mockedLoadWorkspaceTicketList).toHaveBeenCalledWith(
+      prismaHelpdeskConnectionsRepository,
+      {},
+      "test-encryption-key",
+      "user-1",
+      { filter: { priorities: ["high"] } },
+    );
+    expect(result).toMatchObject({
+      status: "available",
+      appliedSavedViewId: "global-view",
+    });
+  });
+
+  it("rejects saved views outside the active workspace connection", async () => {
+    mockedFindSavedView.mockResolvedValueOnce(null);
+
+    await expect(
+      loadWorkspaceTicketListPageAction({ savedViewId: "other-connection-view" }),
+    ).resolves.toMatchObject({
+      status: "unavailable",
+      reason: "provider-unexpected-response",
+      retryable: false,
+    });
+
+    expect(mockedFindSavedView).toHaveBeenCalledWith(
+      "user-1",
+      "other-connection-view",
+      "connection-1",
+    );
+    expect(mockedLoadWorkspaceTicketList).not.toHaveBeenCalled();
+  });
+
+  it("rejects saved views when there is no active workspace connection", async () => {
+    mockedGetActiveConnectionId.mockResolvedValueOnce(null);
+
+    await expect(
+      loadWorkspaceTicketListPageAction({ savedViewId: "view-1" }),
+    ).resolves.toMatchObject({
+      status: "unavailable",
+      reason: "provider-unexpected-response",
+      retryable: false,
+    });
+
+    expect(mockedFindSavedView).not.toHaveBeenCalled();
+    expect(mockedLoadWorkspaceTicketList).not.toHaveBeenCalled();
   });
 });

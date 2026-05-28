@@ -136,13 +136,18 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
       );
   },
 
-  async findForUser(userId, savedViewId) {
+  async findForUser(userId, savedViewId, helpdeskConnectionId) {
     const view = await prisma.savedView.findFirst({
       where: {
-        id: savedViewId,
-        OR: [
-          { ownerUserId: userId },
-          { visibility: DbSavedViewVisibility.SHARED },
+        AND: [
+          { id: savedViewId },
+          {
+            OR: [
+              { ownerUserId: userId },
+              { visibility: DbSavedViewVisibility.SHARED },
+            ],
+          },
+          connectionFilter(helpdeskConnectionId),
         ],
       },
       select: {

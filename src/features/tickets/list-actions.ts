@@ -117,12 +117,24 @@ function ticketListQuery(
   };
 }
 
-async function savedViewForRequest(userId: string, savedViewId: string | undefined) {
+async function savedViewForRequest(
+  userId: string,
+  savedViewId: string | undefined,
+  helpdeskConnectionId: string | undefined,
+) {
   if (!savedViewId || savedViewId === allTicketsSavedViewId) {
     return undefined;
   }
 
-  return prismaSavedViewsRepository.findForUser(userId, savedViewId);
+  if (!helpdeskConnectionId) {
+    return null;
+  }
+
+  return prismaSavedViewsRepository.findForUser(
+    userId,
+    savedViewId,
+    helpdeskConnectionId,
+  );
 }
 
 export async function loadWorkspaceTicketListPageAction(
@@ -137,7 +149,15 @@ export async function loadWorkspaceTicketListPageAction(
   }
 
   const user = await requireCurrentUser();
-  const savedView = await savedViewForRequest(user.id, request.savedViewId);
+  const activeConnectionId =
+    request.savedViewId && request.savedViewId !== allTicketsSavedViewId
+      ? await prismaHelpdeskConnectionsRepository.getActiveConnectionId(user.id)
+      : undefined;
+  const savedView = await savedViewForRequest(
+    user.id,
+    request.savedViewId,
+    activeConnectionId ?? undefined,
+  );
   if (savedView === null) {
     return unavailableTicketRead("provider-unexpected-response");
   }
