@@ -29,7 +29,7 @@ type TicketTableProps = {
   onSort(key: WorkspaceTicketSortKey): void;
   onToggleRow(ticketId: string): void;
   canLoadMore?: boolean;
-  groupLoadMoreError?: string;
+  groupLoadMoreError?: { groupId: string; reason: string };
   loadedCount?: number;
   loadingGroupId?: string;
   loadingMore?: boolean;
@@ -300,7 +300,7 @@ export function TicketTable({
                         {groupLabel(group)}
                       </span>
                       <span className="text-white/75">{groupCountLabel(group)}</span>
-                      {groupLoadMoreError ? (
+                      {groupLoadMoreError?.groupId === group.id ? (
                         <span className="ml-auto text-xs text-red-100" role="alert">
                           Could not load more tickets.
                         </span>

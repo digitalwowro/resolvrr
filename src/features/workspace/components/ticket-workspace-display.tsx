@@ -164,7 +164,7 @@ export function TicketWorkspaceDisplay({
         onSort={toggleSort}
         onToggleRow={toggleRow}
         canLoadMore={!providerGroupedActive && listPager.canLoadMore}
-        groupLoadMoreError={listPager.groupErrorReason}
+        groupLoadMoreError={listPager.groupError}
         loadingGroupId={listPager.loadingGroupId}
         loadMoreError={listPager.errorReason}
         loadedCount={listPager.loadedCount}

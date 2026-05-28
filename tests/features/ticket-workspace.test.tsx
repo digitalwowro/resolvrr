@@ -247,35 +247,6 @@ describe("TicketWorkspace", () => {
     expect(screen.getByRole("button", { name: "Column visibility" })).toBeEnabled();
   });
 
-  it("groups loaded tickets locally by provider-neutral values", async () => {
-    const user = userEvent.setup();
-    render(
-      <TicketWorkspace
-        columns={defaultWorkspaceTicketColumns}
-        connections={[{ id: "connection-1", label: "Support", active: true }]}
-        listResult={availableList}
-        logoutAction={noopAction}
-        rows={[row, highRow]}
-        setActiveConnectionAction={noopAction}
-        tabs={[]}
-        updateTicketMetadataAction={noopMutationAction}
-        userEmail="agent@example.com"
-      />,
-    );
-
-    await user.click(screen.getByRole("combobox", { name: "Group tickets by" }));
-    await user.click(screen.getByRole("option", { name: "Priority" }));
-
-    expect(screen.getByRole("cell", { name: /^High 1$/ })).toBeInTheDocument();
-    expect(screen.getByRole("cell", { name: /^Medium 1$/ })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("combobox", { name: "Group tickets by" }));
-    await user.click(screen.getByRole("option", { name: "Owner" }));
-
-    expect(screen.getByRole("cell", { name: /^Agent Smith 1$/ })).toBeInTheDocument();
-    expect(screen.getByRole("cell", { name: /^Unassigned 1$/ })).toBeInTheDocument();
-  });
-
   it("loads the next ungrouped list page without loading ticket detail", async () => {
     const user = userEvent.setup();
     const loadTicketListPageAction = vi.fn(async () => ({
@@ -370,86 +341,6 @@ describe("TicketWorkspace", () => {
       sort: { key: "priority", direction: "ascending" },
     });
     expect(await screen.findByText("Cannot log in")).toBeInTheDocument();
-  });
-
-  it("loads provider-backed priority groups and paginates a bucket independently", async () => {
-    const user = userEvent.setup();
-    const nextHighRow = {
-      ...highRow,
-      id: "ticket-3",
-      number: "#1003",
-      title: "Webhook retry still failing",
-    };
-    const loadTicketListPageAction = vi
-      .fn()
-      .mockResolvedValueOnce({
-        status: "available" as const,
-        rows: [highRow],
-        loadedCount: 1,
-        totalCount: 2,
-        groups: [
-          {
-            id: "priority-high",
-            key: "priority" as const,
-            value: "high",
-            label: "High",
-            rows: [highRow],
-            loadedCount: 1,
-            totalCount: 2,
-            nextCursor: "2",
-          },
-        ],
-      })
-      .mockResolvedValueOnce({
-        status: "available" as const,
-        rows: [nextHighRow],
-        loadedCount: 1,
-        totalCount: 2,
-      });
-    const groupedList = {
-      ...availableList,
-      queryCapabilities: {
-        totalCount: true,
-        providerSort: true,
-        providerGrouping: true,
-        groupedTotalCount: true,
-        fullTextSearch: false,
-        maxPageSize: 50,
-        unsupportedCombinations: [],
-      },
-    };
-
-    render(
-      <TicketWorkspace
-        columns={defaultWorkspaceTicketColumns}
-        connections={[{ id: "connection-1", label: "Support", active: true }]}
-        listResult={groupedList}
-        loadTicketListPageAction={loadTicketListPageAction}
-        logoutAction={noopAction}
-        rows={[row]}
-        setActiveConnectionAction={noopAction}
-        tabs={[{ ...row }]}
-        updateTicketMetadataAction={noopMutationAction}
-        userEmail="agent@example.com"
-      />,
-    );
-
-    await user.click(screen.getByRole("combobox", { name: "Group tickets by" }));
-    await user.click(screen.getByRole("option", { name: "Priority" }));
-
-    expect(loadTicketListPageAction).toHaveBeenCalledWith({ group: "priority" });
-    expect(await screen.findByText("Webhook failed")).toBeInTheDocument();
-    expect(screen.getByRole("cell", { name: /High 1\/2/u })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Load more" }));
-
-    expect(loadTicketListPageAction).toHaveBeenLastCalledWith({
-      bucketValue: "high",
-      cursor: "2",
-      group: "priority",
-    });
-    expect(await screen.findByText("Webhook retry still failing")).toBeInTheDocument();
-    expect(screen.getByRole("cell", { name: /High 2\/2/u })).toBeInTheDocument();
   });
 
   it("keeps the previous effective sort when a provider sort reload fails", async () => {

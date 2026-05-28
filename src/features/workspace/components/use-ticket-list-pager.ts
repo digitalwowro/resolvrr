@@ -33,8 +33,10 @@ export function useTicketListPager({
   const [loadingGroupId, setLoadingGroupId] = useState<string>();
   const [errorReason, setErrorReason] =
     useState<TicketReadUnavailableReason>();
-  const [groupErrorReason, setGroupErrorReason] =
-    useState<TicketReadUnavailableReason>();
+  const [groupError, setGroupError] = useState<{
+    groupId: string;
+    reason: TicketReadUnavailableReason;
+  }>();
   const [sort, setSort] = useState<WorkspaceTicketListSort>();
   const baselineIdentity = useRef(ticketListIdentity(initialRows));
   const hasClientLoadedRowsRef = useRef(false);
@@ -135,7 +137,7 @@ export function useTicketListPager({
 
     setLoading(true);
     setErrorReason(undefined);
-    setGroupErrorReason(undefined);
+    setGroupError(undefined);
     let result;
     try {
       result = await loadTicketListPageAction({ group: nextGroupBy });
@@ -174,7 +176,7 @@ export function useTicketListPager({
     }
 
     setLoadingGroupId(group.id);
-    setGroupErrorReason(undefined);
+    setGroupError(undefined);
     let result;
     try {
       result = await loadTicketListPageAction({
@@ -184,13 +186,16 @@ export function useTicketListPager({
       });
     } catch {
       setLoadingGroupId(undefined);
-      setGroupErrorReason("provider-temporary-failure");
+      setGroupError({
+        groupId: group.id,
+        reason: "provider-temporary-failure",
+      });
       return;
     }
     setLoadingGroupId(undefined);
 
     if (result.status === "unavailable") {
-      setGroupErrorReason(result.reason);
+      setGroupError({ groupId: group.id, reason: result.reason });
       return;
     }
 
@@ -215,7 +220,7 @@ export function useTicketListPager({
     canLoadMore: Boolean(nextCursor && loadTicketListPageAction),
     errorReason,
     groupBy,
-    groupErrorReason,
+    groupError,
     groups,
     hasMorePages: Boolean(nextCursor),
     loadedCount: rows.length,

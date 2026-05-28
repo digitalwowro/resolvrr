@@ -124,9 +124,10 @@ architecture folders or important files are added, moved, renamed, or removed.
   and user DTO schemas.
 - `src/providers/zammad/ticket-search-query.ts`: Zammad ticket search path,
   sort, state/priority filter, and state/priority bucket query construction.
+- `src/providers/zammad/ticket-groups.ts`: Zammad provider-owned
+  state/priority bucket discovery and grouped list page orchestration.
 - `src/providers/zammad/tickets.ts`: Zammad ticket list/detail endpoint reads,
-  search-backed list totals, state/priority bucket grouping, read-phase timing,
-  and canonical response assembly.
+  search-backed list totals, read-phase timing, and canonical response assembly.
 - `src/providers/zammad/index.ts`: provider plugin export.
 - `src/features`: product feature boundaries that compose core contracts into
   workflows.
@@ -396,8 +397,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   workspace fixtures and render helpers for feature tests.
 - `tests/features/ticket-workspace.test.tsx`: verifies provider-backed
   workspace unavailable, table, profile menu, detail, read-only metadata,
-  grouping behavior, post-hydration ungrouped list page loading, and
-  provider-backed grouped bucket pagination.
+  grouping behavior, and post-hydration ungrouped list page loading.
+- `tests/features/ticket-workspace-grouping.test.tsx`: verifies provider-backed
+  workspace state/priority grouping and per-bucket pagination behavior.
 - `tests/features/ticket-list-action.test.ts`: verifies client-safe
   post-hydration workspace list page action results.
 - `tests/features/ticket-metadata-action-input.test.ts`: verifies staged

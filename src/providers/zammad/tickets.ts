@@ -1,9 +1,4 @@
-import {
-  ProviderError,
-  type TicketListBucket,
-  type TicketListGroupKey,
-  type TicketListQuery,
-} from "@/core/providers";
+import { ProviderError, type TicketListQuery } from "@/core/providers";
 import type { ProviderContext } from "@/core/providers";
 import type { TicketDetail } from "@/core/tickets";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
@@ -28,12 +23,9 @@ import {
 } from "./schemas";
 import { zammadBaseUrl, zammadGetJson } from "./client";
 import {
-  zammadBucketDefinition,
-  zammadBucketFilterAllows,
-  zammadBucketPageQuery,
   zammadTicketListPath,
-  type ZammadBucketDefinition,
 } from "./ticket-search-query";
+import { listZammadGroupedTickets } from "./ticket-groups";
 
 function pageFromCursor(cursor: string | undefined): number {
   if (!cursor) {
@@ -369,79 +361,6 @@ async function readZammadTicketListPage(
   );
 }
 
-async function zammadBucketDefinitions(
-  context: ProviderContext,
-  groupKey: TicketListGroupKey,
-  query: TicketListQuery,
-) {
-  const assetPath =
-    groupKey === "state"
-      ? "/api/v1/ticket_states"
-      : groupKey === "priority"
-        ? "/api/v1/ticket_priorities"
-        : undefined;
-
-  if (!assetPath) {
-    throw new ProviderError(
-      "unsupported-capability",
-      "This grouping is not supported by the helpdesk provider.",
-    );
-  }
-
-  const assets = await fetchZammadNamedAssets(context, assetPath, "list");
-  return Object.values(assets)
-    .map((asset) => zammadBucketDefinition(groupKey, asset))
-    .filter((bucket): bucket is ZammadBucketDefinition => Boolean(bucket))
-    .filter((bucket) => zammadBucketFilterAllows(query, bucket));
-}
-
-async function listZammadGroupedTickets(
-  context: ProviderContext,
-  query: TicketListQuery,
-  page: number,
-  limit: number,
-) {
-  if (!query.group) {
-    throw providerDataMismatch();
-  }
-
-  const buckets = await Promise.all(
-    (
-      await zammadBucketDefinitions(context, query.group.key, query)
-    ).map(async (bucketDefinition): Promise<TicketListBucket> => {
-      const bucketQuery = zammadBucketPageQuery(query, bucketDefinition);
-      const result = await readZammadTicketListPage(
-        context,
-        bucketQuery,
-        page,
-        limit,
-        bucketDefinition.searchQuery,
-      );
-
-      return {
-        key: query.group!.key,
-        value: bucketDefinition.value,
-        label: bucketDefinition.label,
-        tickets: result.tickets,
-        loadedCount: result.loadedCount,
-        totalCount: result.totalCount,
-        nextCursor: result.nextCursor,
-      };
-    }),
-  );
-
-  return {
-    tickets: buckets.flatMap((bucket) => bucket.tickets),
-    loadedCount: buckets.reduce((total, bucket) => total + bucket.loadedCount, 0),
-    totalCount: buckets.reduce(
-      (total, bucket) => total + (bucket.totalCount ?? bucket.loadedCount),
-      0,
-    ),
-    buckets,
-    measuredAt: new Date(),
-  };
-}
-
 export async function listZammadTickets(
   context: ProviderContext,
   query: TicketListQuery,
@@ -450,7 +369,10 @@ export async function listZammadTickets(
   const limit = Math.min(Math.max(query.pageSize, 1), 50);
 
   if (query.group) {
-    return listZammadGroupedTickets(context, query, page, limit);
+    return listZammadGroupedTickets(context, query, page, limit, {
+      fetchNamedAssets: fetchZammadNamedAssets,
+      readTicketListPage: readZammadTicketListPage,
+    });
   }
 
   return readZammadTicketListPage(context, query, page, limit);
