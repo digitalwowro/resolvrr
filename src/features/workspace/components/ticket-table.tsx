@@ -29,9 +29,12 @@ type TicketTableProps = {
   onSort(key: WorkspaceTicketSortKey): void;
   onToggleRow(ticketId: string): void;
   canLoadMore?: boolean;
+  groupLoadMoreError?: { groupId: string; reason: string };
   loadedCount?: number;
+  loadingGroupId?: string;
   loadingMore?: boolean;
   loadMoreError?: string;
+  onLoadMoreGroup?(group: TicketTableGroup): void;
   onLoadMore?(): void;
   roundedTop?: boolean;
   rows: WorkspaceTicketRow[];
@@ -47,6 +50,9 @@ export type TicketTableGroup = {
   label: string;
   value: string;
   rows: WorkspaceTicketRow[];
+  loadedCount?: number;
+  totalCount?: number;
+  nextCursor?: string;
 };
 
 function cellValue(row: WorkspaceTicketRow, column: WorkspaceTicketColumnKey) {
@@ -78,9 +84,12 @@ export function TicketTable({
   onSort,
   onToggleRow,
   canLoadMore = false,
+  groupLoadMoreError,
   loadedCount,
+  loadingGroupId,
   loadingMore = false,
   loadMoreError,
+  onLoadMoreGroup,
   onLoadMore,
   roundedTop = true,
   rows,
@@ -128,6 +137,11 @@ export function TicketTable({
     }
 
     return group.label;
+  }
+
+  function groupCountLabel(group: TicketTableGroup) {
+    const loaded = group.loadedCount ?? group.rows.length;
+    return group.totalCount === undefined ? `${loaded}` : `${loaded}/${group.totalCount}`;
   }
 
   function renderRow(row: WorkspaceTicketRow, index: number) {
@@ -274,7 +288,7 @@ export function TicketTable({
                 groupBy === "none" ? null : (
                   <div className="contents" key={`group-${group.id}`} role="row">
                     <div
-                      aria-label={`${group.label} ${group.rows.length}`}
+                      aria-label={`${group.label} ${groupCountLabel(group)}`}
                       className={cn(
                         "flex h-8 items-center gap-2 border-b border-slate-700 bg-slate-700 px-3 text-sm font-semibold text-white",
                         firstGroup ? null : "border-t border-slate-700",
@@ -285,7 +299,23 @@ export function TicketTable({
                       <span className="inline-flex items-center gap-1.5">
                         {groupLabel(group)}
                       </span>
-                      <span className="text-white/75">{group.rows.length}</span>
+                      <span className="text-white/75">{groupCountLabel(group)}</span>
+                      {groupLoadMoreError?.groupId === group.id ? (
+                        <span className="ml-auto text-xs text-red-100" role="alert">
+                          Could not load more tickets.
+                        </span>
+                      ) : null}
+                      {group.nextCursor && onLoadMoreGroup ? (
+                        <Button
+                          className="ml-auto h-6 border-white/30 bg-white/10 px-2 text-xs text-white hover:bg-white/20"
+                          loading={loadingGroupId === group.id}
+                          onClick={() => onLoadMoreGroup(group)}
+                          type="button"
+                          variant="secondary"
+                        >
+                          Load more
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
                 );

@@ -122,4 +122,87 @@ describe("loadWorkspaceTicketListPageAction", () => {
       { sort: { key: "pendingUntil", direction: "ascending" } },
     );
   });
+
+  it("returns provider-neutral grouped workspace buckets", async () => {
+    mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
+      status: "available",
+      connectionName: "Support",
+      metadataMutationCapabilities: { state: false, priority: false },
+      tickets: [],
+      loadedCount: 1,
+      totalCount: 3,
+      buckets: [
+        {
+          key: "priority",
+          value: "high",
+          label: "High",
+          loadedCount: 1,
+          totalCount: 3,
+          nextCursor: "2",
+          tickets: [
+            {
+              externalId: "ticket-2",
+              number: "1002",
+              title: "Webhook failed",
+              state: "open",
+              priority: "high",
+              updatedAt: new Date("2026-05-24T08:30:00Z"),
+              tags: [],
+            },
+          ],
+        },
+      ],
+      measuredAt: new Date("2026-05-24T08:31:30Z"),
+    });
+
+    const result = await loadWorkspaceTicketListPageAction({ group: "priority" });
+
+    expect(mockedLoadWorkspaceTicketList).toHaveBeenCalledWith(
+      {},
+      {},
+      "test-encryption-key",
+      "user-1",
+      { count: { includeTotal: true }, group: { key: "priority" } },
+    );
+    expect(result).toMatchObject({
+      status: "available",
+      groups: [
+        {
+          id: "priority-high",
+          key: "priority",
+          value: "high",
+          label: "High",
+          loadedCount: 1,
+          totalCount: 3,
+          nextCursor: "2",
+          rows: [{ id: "ticket-2", priority: "High" }],
+        },
+      ],
+    });
+  });
+
+  it("loads a specific grouped bucket page with a canonical filter", async () => {
+    mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
+      status: "available",
+      connectionName: "Support",
+      metadataMutationCapabilities: { state: false, priority: false },
+      tickets: [],
+      loadedCount: 0,
+      measuredAt: new Date("2026-05-24T08:31:30Z"),
+    });
+
+    await loadWorkspaceTicketListPageAction({
+      bucketValue: "open",
+      cursor: "2",
+      group: "state",
+    });
+
+    expect(mockedLoadWorkspaceTicketList).toHaveBeenCalledWith(
+      {},
+      {},
+      "test-encryption-key",
+      "user-1",
+      { cursor: "2", filter: { states: ["open"] } },
+    );
+  });
 });

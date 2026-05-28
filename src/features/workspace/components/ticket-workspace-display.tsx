@@ -6,7 +6,10 @@ import type {
   LoadWorkspaceTicketDetailAction,
   WorkspaceTicketDetailLoadResult,
 } from "@/features/tickets/detail-action-result";
-import type { LoadWorkspaceTicketListPageAction } from "@/features/tickets/list-page-action-result";
+import type {
+  LoadWorkspaceTicketListPageAction,
+  WorkspaceTicketListGroup,
+} from "@/features/tickets/list-page-action-result";
 import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
@@ -38,7 +41,9 @@ type TicketWorkspaceDisplayProps = {
   loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
+  initialListGroups?: WorkspaceTicketListGroup[];
   nextListCursor?: string;
+  providerGroupingEnabled: boolean;
   providerSortEnabled: boolean;
   refreshTicketDetailAfterMetadataSave: boolean;
   rows: WorkspaceTicketRow[];
@@ -61,7 +66,9 @@ export function TicketWorkspaceDisplay({
   loadTicketDetailAction,
   loadTicketListPageAction,
   metadataMutationCapabilities,
+  initialListGroups,
   nextListCursor,
+  providerGroupingEnabled,
   providerSortEnabled,
   refreshTicketDetailAfterMetadataSave,
   rows,
@@ -72,6 +79,7 @@ export function TicketWorkspaceDisplay({
 }: TicketWorkspaceDisplayProps) {
   const listPager = useTicketListPager({
     initialRows: rows,
+    initialGroups: initialListGroups,
     initialNextCursor: nextListCursor,
     initialTotalCount: totalListCount,
     loadTicketListPageAction,
@@ -122,6 +130,27 @@ export function TicketWorkspaceDisplay({
     selectedTicketId,
     ticketTabs: pagedTicketTabs,
   });
+  const providerGroupedActive =
+    providerGroupingEnabled &&
+    (groupBy === "state" || groupBy === "priority") &&
+    listPager.groupBy === groupBy &&
+    listPager.groups !== undefined;
+  const tableGroupedRows = providerGroupedActive ? listPager.groups : groupedRows;
+  const tableRows = providerGroupedActive ? listPager.rows : sortedRows;
+
+  function handleWorkspaceGroupByChange(nextGroupBy: typeof groupBy) {
+    handleGroupByChange(nextGroupBy);
+    if (
+      providerGroupingEnabled &&
+      (nextGroupBy === "state" || nextGroupBy === "priority")
+    ) {
+      listPager.reloadGroupedFirstPage(nextGroupBy);
+      return;
+    }
+    if (providerGroupedActive || listPager.groupBy) {
+      listPager.reloadFirstPage();
+    }
+  }
 
   const workArea =
     listActive ? (
@@ -129,20 +158,23 @@ export function TicketWorkspaceDisplay({
         key="work-area"
         activeTicketId={activeTicketId}
         columns={columns}
-        groupedRows={groupBy === "none" ? undefined : groupedRows}
+        groupedRows={groupBy === "none" ? undefined : tableGroupedRows}
         groupBy={groupBy}
         onRowSelect={showTicketFromRow}
         onSort={toggleSort}
         onToggleRow={toggleRow}
-        canLoadMore={groupBy === "none" && listPager.canLoadMore}
+        canLoadMore={!providerGroupedActive && listPager.canLoadMore}
+        groupLoadMoreError={listPager.groupError}
+        loadingGroupId={listPager.loadingGroupId}
         loadMoreError={listPager.errorReason}
         loadedCount={listPager.loadedCount}
         loadingMore={listPager.loading}
+        onLoadMoreGroup={listPager.loadMoreGroup}
         onLoadMore={listPager.loadMore}
         roundedTop={tabOrientation === "vertical"}
-        rows={sortedRows}
+        rows={tableRows}
         selectedRowIds={selectedRowIds}
-        sortingEnabled={sortingEnabled}
+        sortingEnabled={sortingEnabled && !providerGroupedActive}
         sortDirectionFor={sortDirectionFor}
         totalCount={listPager.totalCount}
         visibleColumns={visibleColumnSet}
@@ -172,10 +204,10 @@ export function TicketWorkspaceDisplay({
       allSelected={allSelected}
       columns={columns}
       groupBy={groupBy}
-      groupOptions={ticketGroupOptions}
+      groupOptions={ticketGroupOptions(providerGroupingEnabled)}
       listControlsEnabled={listActive}
       onColumnToggle={toggleColumn}
-      onGroupByChange={handleGroupByChange}
+      onGroupByChange={handleWorkspaceGroupByChange}
       onRefresh={refreshList}
       onSelectAll={toggleSelectAll}
       onTabOrientationChange={setTabOrientation}

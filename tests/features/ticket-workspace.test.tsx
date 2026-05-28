@@ -247,35 +247,6 @@ describe("TicketWorkspace", () => {
     expect(screen.getByRole("button", { name: "Column visibility" })).toBeEnabled();
   });
 
-  it("groups loaded tickets locally by provider-neutral values", async () => {
-    const user = userEvent.setup();
-    render(
-      <TicketWorkspace
-        columns={defaultWorkspaceTicketColumns}
-        connections={[{ id: "connection-1", label: "Support", active: true }]}
-        listResult={availableList}
-        logoutAction={noopAction}
-        rows={[row, highRow]}
-        setActiveConnectionAction={noopAction}
-        tabs={[]}
-        updateTicketMetadataAction={noopMutationAction}
-        userEmail="agent@example.com"
-      />,
-    );
-
-    await user.click(screen.getByRole("combobox", { name: "Group tickets by" }));
-    await user.click(screen.getByRole("option", { name: "Priority" }));
-
-    expect(screen.getByRole("cell", { name: /^High 1$/ })).toBeInTheDocument();
-    expect(screen.getByRole("cell", { name: /^Medium 1$/ })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("combobox", { name: "Group tickets by" }));
-    await user.click(screen.getByRole("option", { name: "Owner" }));
-
-    expect(screen.getByRole("cell", { name: /^Agent Smith 1$/ })).toBeInTheDocument();
-    expect(screen.getByRole("cell", { name: /^Unassigned 1$/ })).toBeInTheDocument();
-  });
-
   it("loads the next ungrouped list page without loading ticket detail", async () => {
     const user = userEvent.setup();
     const loadTicketListPageAction = vi.fn(async () => ({

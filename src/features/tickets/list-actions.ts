@@ -2,7 +2,12 @@
 
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
-import type { TicketSort, TicketSortKey } from "@/core/providers";
+import type {
+  TicketListQueryInput,
+  TicketSort,
+  TicketSortKey,
+} from "@/core/providers";
+import { ticketPriorities, ticketStates } from "@/core/tickets";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { providerRegistry } from "@/providers";
 import type {
@@ -13,7 +18,10 @@ import type {
 import { unavailableTicketRead } from "./read-model";
 import { loadWorkspaceTicketList } from "./service";
 import type { WorkspaceTicketSortKey } from "./workspace-adapter";
-import { workspaceTicketRows } from "./workspace-adapter";
+import {
+  workspaceTicketListGroups,
+  workspaceTicketRows,
+} from "./workspace-adapter";
 
 const workspaceSortKeyMap: Record<WorkspaceTicketSortKey, TicketSortKey> = {
   number: "number",
@@ -33,11 +41,51 @@ function ticketListSort(sort: WorkspaceTicketListSort): TicketSort {
   };
 }
 
+function groupFilter(
+  request: WorkspaceTicketListPageRequest,
+): TicketListQueryInput["filter"] | undefined {
+  if (!request.group || !request.bucketValue) {
+    return undefined;
+  }
+
+  if (request.group === "state") {
+    const state = request.bucketValue as (typeof ticketStates)[number];
+    if (!ticketStates.includes(state)) {
+      return undefined;
+    }
+    return { states: [state] };
+  }
+
+  const priority = request.bucketValue as (typeof ticketPriorities)[number];
+  if (!ticketPriorities.includes(priority)) {
+    return undefined;
+  }
+  return { priorities: [priority] };
+}
+
+function ticketListQuery(
+  request: WorkspaceTicketListPageRequest,
+): TicketListQueryInput {
+  const filter = groupFilter(request);
+
+  return {
+    ...(request.cursor ? { cursor: request.cursor } : {}),
+    ...(request.sort ? { sort: ticketListSort(request.sort) } : {}),
+    ...(request.group && !request.bucketValue
+      ? { count: { includeTotal: true }, group: { key: request.group } }
+      : {}),
+    ...(filter ? { filter } : {}),
+  };
+}
+
 export async function loadWorkspaceTicketListPageAction(
   request: WorkspaceTicketListPageRequest,
 ): Promise<WorkspaceTicketListPageLoadResult> {
   const normalizedCursor = request.cursor?.trim();
   if (request.cursor !== undefined && !normalizedCursor) {
+    return unavailableTicketRead("provider-unexpected-response");
+  }
+  if (request.bucketValue && !groupFilter(request)) {
     return unavailableTicketRead("provider-unexpected-response");
   }
 
@@ -47,10 +95,10 @@ export async function loadWorkspaceTicketListPageAction(
     providerRegistry,
     env.APP_ENCRYPTION_KEY,
     user.id,
-    {
+    ticketListQuery({
+      ...request,
       ...(normalizedCursor ? { cursor: normalizedCursor } : {}),
-      ...(request.sort ? { sort: ticketListSort(request.sort) } : {}),
-    },
+    }),
   );
 
   if (result.status === "unavailable") {
@@ -63,5 +111,6 @@ export async function loadWorkspaceTicketListPageAction(
     loadedCount: result.loadedCount,
     totalCount: result.totalCount,
     nextCursor: result.nextCursor,
+    groups: workspaceTicketListGroups(result.buckets),
   };
 }

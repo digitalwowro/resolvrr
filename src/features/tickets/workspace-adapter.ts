@@ -1,3 +1,4 @@
+import type { TicketListBucket } from "@/core/providers";
 import {
   ticketPriorityDefinitions,
   ticketStateDefinitions,
@@ -192,6 +193,26 @@ export function workspaceTicketRows(
   tickets: TicketListItem[],
 ): WorkspaceTicketRow[] {
   return tickets.map(workspaceTicketRow);
+}
+
+export function workspaceTicketListGroups(buckets: TicketListBucket[] = []) {
+  return buckets
+    .filter(
+      (
+        bucket,
+      ): bucket is TicketListBucket & { key: "state" | "priority" } =>
+        bucket.key === "state" || bucket.key === "priority",
+    )
+    .map((bucket) => ({
+      id: `${bucket.key}-${bucket.value}`,
+      key: bucket.key,
+      value: bucket.value,
+      label: bucket.label,
+      rows: workspaceTicketRows(bucket.tickets),
+      loadedCount: bucket.loadedCount,
+      totalCount: bucket.totalCount,
+      nextCursor: bucket.nextCursor,
+    }));
 }
 
 export function workspaceTicketTabs(

@@ -16,7 +16,7 @@ const stateOrder = [
   "closed",
 ];
 
-export const ticketGroupOptions: DropdownOption[] = [
+const localTicketGroupOptions: DropdownOption[] = [
   { value: "none", label: "No grouping" },
   { value: "priority", label: "Priority" },
   { value: "state", label: "State" },
@@ -24,6 +24,18 @@ export const ticketGroupOptions: DropdownOption[] = [
   { value: "customer", label: "Customer" },
   { value: "group", label: "Group" },
 ];
+
+const providerTicketGroupOptions: DropdownOption[] = [
+  { value: "none", label: "No grouping" },
+  { value: "priority", label: "Priority" },
+  { value: "state", label: "State" },
+];
+
+export function ticketGroupOptions(providerGroupingEnabled: boolean) {
+  return providerGroupingEnabled
+    ? providerTicketGroupOptions
+    : localTicketGroupOptions;
+}
 
 function rowSortValue(row: WorkspaceTicketRow, sortKey: WorkspaceTicketSortKey) {
   if (sortKey === "priority") {

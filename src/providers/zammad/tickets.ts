@@ -1,12 +1,12 @@
-import {
-  ProviderError,
-  type TicketListQuery,
-  type TicketSortKey,
-} from "@/core/providers";
+import { ProviderError, type TicketListQuery } from "@/core/providers";
 import type { ProviderContext } from "@/core/providers";
 import type { TicketDetail } from "@/core/tickets";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
-import { mapArticle, mapTicket, mapTicketListItem } from "./mapping";
+import {
+  mapArticle,
+  mapTicket,
+  mapTicketListItem,
+} from "./mapping";
 import { namedAssetValue, namedReferenceValue, relationId } from "./participants";
 import {
   zammadArticleListResponseSchema,
@@ -22,6 +22,10 @@ import {
   type ZammadUser,
 } from "./schemas";
 import { zammadBaseUrl, zammadGetJson } from "./client";
+import {
+  zammadTicketListPath,
+} from "./ticket-search-query";
+import { listZammadGroupedTickets } from "./ticket-groups";
 
 function pageFromCursor(cursor: string | undefined): number {
   if (!cursor) {
@@ -30,52 +34,6 @@ function pageFromCursor(cursor: string | undefined): number {
 
   const page = Number(cursor);
   return Number.isInteger(page) && page > 0 ? page : 1;
-}
-
-const zammadTicketSortFields: Record<TicketSortKey, string> = {
-  number: "number",
-  title: "title",
-  customer: "customer_id",
-  owner: "owner_id",
-  group: "group_id",
-  createdAt: "created_at",
-  updatedAt: "updated_at",
-  pendingUntil: "pending_time",
-  state: "state_id",
-  priority: "priority_id",
-};
-
-function zammadTicketListPath(
-  query: TicketListQuery,
-  page: number,
-  limit: number,
-) {
-  const params = new URLSearchParams({
-    page: String(page),
-    per_page: String(limit),
-    expand: "true",
-    full: "true",
-  });
-
-  const useSearch = Boolean(query.sort || query.count?.includeTotal);
-
-  if (!useSearch) {
-    return `/api/v1/tickets?${params}`;
-  }
-
-  params.set("query", "*");
-  if (query.count?.includeTotal) {
-    params.set("with_total_count", "true");
-  }
-  if (query.sort) {
-    params.set("sort_by", zammadTicketSortFields[query.sort.key]);
-    params.set(
-      "order_by",
-      query.sort.direction === "ascending" ? "asc" : "desc",
-    );
-  }
-
-  return `/api/v1/tickets/search?${params}`;
 }
 
 function providerDataMismatch(): ProviderError {
@@ -327,18 +285,69 @@ function missingPriorityIds(
         !namedReferenceValue(ticket.priority) &&
         !namedAssetValue(assets?.TicketPriority, priorityId) &&
         !namedAssetValue(assets?.Priority, priorityId),
-    ),
+      ),
   );
 }
 
-export async function listZammadTickets(
+async function mapZammadTicketListPayload(
   context: ProviderContext,
   query: TicketListQuery,
+  raw: unknown,
+  page: number,
+  limit: number,
 ) {
-  const page = pageFromCursor(query.cursor);
-  const limit = Math.min(Math.max(query.pageSize, 1), 50);
+  const parsed = zammadTicketListResponseSchema.safeParse(raw);
+  if (!parsed.success) {
+    throw providerDataMismatch();
+  }
+  const payload = ticketPayloadRecords(parsed.data);
+  if (query.count?.includeTotal && payload.totalCount === undefined) {
+    throw providerDataMismatch();
+  }
+  const [users, states, priorities] = await Promise.all([
+    fetchZammadUsers(
+      context,
+      missingUserIds(
+        payload.assets,
+        collectUserIdsFromTickets(payload.tickets),
+      ),
+      "list",
+    ),
+    missingStateIds(payload.assets, payload.tickets).length > 0
+      ? fetchZammadNamedAssets(context, "/api/v1/ticket_states", "list")
+      : Promise.resolve({}),
+    missingPriorityIds(payload.assets, payload.tickets).length > 0
+      ? fetchZammadNamedAssets(context, "/api/v1/ticket_priorities", "list")
+      : Promise.resolve({}),
+  ]);
+  const assets = mergeListAssets(payload.assets, users, states, priorities);
+  const totalCount = query.count?.includeTotal ? payload.totalCount : undefined;
+
+  return {
+    tickets: payload.tickets.map((ticket) =>
+      mapTicketListItem(ticket, zammadBaseUrl(context), assets),
+    ),
+    loadedCount: payload.tickets.length,
+    totalCount,
+    nextCursor: nextTicketListCursor(
+      page,
+      limit,
+      payload.tickets.length,
+      totalCount,
+    ),
+    measuredAt: new Date(),
+  };
+}
+
+async function readZammadTicketListPage(
+  context: ProviderContext,
+  query: TicketListQuery,
+  page: number,
+  limit: number,
+  searchQuery?: string,
+) {
   const metadata = timingMetadata(context);
-  const path = zammadTicketListPath(query, page, limit);
+  const path = zammadTicketListPath(query, page, limit, searchQuery);
   const raw = await measureTicketReadPhase(
     "provider-list-request",
     { ...metadata, operation: "list" },
@@ -348,49 +357,25 @@ export async function listZammadTickets(
   return measureTicketReadPhase(
     "provider-mapping-parsing",
     { ...metadata, operation: "list" },
-    async () => {
-      const parsed = zammadTicketListResponseSchema.safeParse(raw);
-      if (!parsed.success) {
-        throw providerDataMismatch();
-      }
-      const payload = ticketPayloadRecords(parsed.data);
-      if (query.count?.includeTotal && payload.totalCount === undefined) {
-        throw providerDataMismatch();
-      }
-      const [users, states, priorities] = await Promise.all([
-        fetchZammadUsers(
-          context,
-          missingUserIds(
-            payload.assets,
-            collectUserIdsFromTickets(payload.tickets),
-          ),
-          "list",
-        ),
-        missingStateIds(payload.assets, payload.tickets).length > 0
-          ? fetchZammadNamedAssets(context, "/api/v1/ticket_states", "list")
-          : Promise.resolve({}),
-        missingPriorityIds(payload.assets, payload.tickets).length > 0
-          ? fetchZammadNamedAssets(context, "/api/v1/ticket_priorities", "list")
-          : Promise.resolve({}),
-      ]);
-      const assets = mergeListAssets(payload.assets, users, states, priorities);
-
-      return {
-        tickets: payload.tickets.map((ticket) =>
-          mapTicketListItem(ticket, zammadBaseUrl(context), assets),
-        ),
-        loadedCount: payload.tickets.length,
-        totalCount: query.count?.includeTotal ? payload.totalCount : undefined,
-        nextCursor: nextTicketListCursor(
-          page,
-          limit,
-          payload.tickets.length,
-          query.count?.includeTotal ? payload.totalCount : undefined,
-        ),
-        measuredAt: new Date(),
-      };
-    },
+    () => mapZammadTicketListPayload(context, query, raw, page, limit),
   );
+}
+
+export async function listZammadTickets(
+  context: ProviderContext,
+  query: TicketListQuery,
+) {
+  const page = pageFromCursor(query.cursor);
+  const limit = Math.min(Math.max(query.pageSize, 1), 50);
+
+  if (query.group) {
+    return listZammadGroupedTickets(context, query, page, limit, {
+      fetchNamedAssets: fetchZammadNamedAssets,
+      readTicketListPage: readZammadTicketListPage,
+    });
+  }
+
+  return readZammadTicketListPage(context, query, page, limit);
 }
 
 export async function getZammadTicketDetail(

@@ -84,6 +84,8 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "ticket:list",
     "ticket:count",
     "ticket:sort",
+    "ticket:group",
+    "ticket:group-count",
     "ticket:detail",
     "ticket:update-state",
     "ticket:update-priority",
