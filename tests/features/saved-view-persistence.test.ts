@@ -122,6 +122,35 @@ describe("saved view persistence", () => {
     expect(create).not.toHaveBeenCalled();
   });
 
+  it("drops raw or malformed sort and group values before persistence", async () => {
+    let captured: CreateSavedViewInput | undefined;
+    const { repo } = repository((input) => {
+      captured = input;
+    });
+
+    const result = await createSavedView(
+      repo,
+      ["ticket:list", "ticket:sort", "ticket:group"],
+      {
+        userId: "user-1",
+        name: "Malformed view",
+        query: {
+          filter: { states: ["open"] },
+          group: { key: "provider_raw_group" } as never,
+          sort: {
+            direction: "sideways",
+            key: "provider_raw_sort",
+          } as never,
+        },
+      },
+    );
+
+    expect(result.status).toBe("saved");
+    expect(captured?.query).toEqual({
+      filter: { states: ["open"] },
+    });
+  });
+
   it("round-trips versioned and legacy saved-view filter storage", () => {
     const versioned = savedViewStorageFromQuery({
       filter: { states: ["open"], tagNames: ["vip"] },
@@ -140,6 +169,14 @@ describe("saved view persistence", () => {
         providerRawQuery: "state.name:closed",
       }),
     ).toEqual({ filter: { states: ["closed"] } });
+    expect(
+      savedViewQueryFromStorage({
+        version: 1,
+        filter: { priorities: ["high"] },
+        group: { key: "provider_raw_group" },
+        sort: { key: "provider_raw_sort", direction: "sideways" },
+      }),
+    ).toEqual({ filter: { priorities: ["high"] } });
   });
 
   it("exposes saved-view guardrails without persisting anything", () => {

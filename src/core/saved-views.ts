@@ -1,5 +1,11 @@
 import type { TicketPriority, TicketState } from "./tickets";
-import type { TicketListGroupRequest, TicketSort } from "./ticket-list-query";
+import type {
+  TicketListGroupKey,
+  TicketListGroupRequest,
+  TicketSort,
+  TicketSortDirection,
+  TicketSortKey,
+} from "./ticket-list-query";
 
 export type SavedViewVisibility = "personal" | "shared";
 
@@ -39,6 +45,32 @@ export type SavedViewStorage = {
   group?: TicketListGroupRequest;
 };
 
+const ticketSortKeys = [
+  "number",
+  "title",
+  "customer",
+  "owner",
+  "group",
+  "createdAt",
+  "updatedAt",
+  "pendingUntil",
+  "state",
+  "priority",
+] satisfies TicketSortKey[];
+
+const ticketSortDirections = [
+  "ascending",
+  "descending",
+] satisfies TicketSortDirection[];
+
+const ticketGroupKeys = [
+  "state",
+  "priority",
+  "owner",
+  "customer",
+  "group",
+] satisfies TicketListGroupKey[];
+
 function stringList(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) {
     return undefined;
@@ -60,6 +92,17 @@ function canonicalList<const T extends string>(
   );
 
   return values && values.length > 0 ? values : undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isAllowed<const T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+): value is T {
+  return typeof value === "string" && allowed.includes(value as T);
 }
 
 export function normalizeSavedViewFilter(
@@ -109,14 +152,44 @@ export function normalizeSavedViewFilter(
   };
 }
 
+export function normalizeSavedViewSort(sort: unknown): TicketSort | undefined {
+  if (!isRecord(sort)) {
+    return undefined;
+  }
+  if (
+    !isAllowed(sort.key, ticketSortKeys) ||
+    !isAllowed(sort.direction, ticketSortDirections)
+  ) {
+    return undefined;
+  }
+
+  return {
+    key: sort.key,
+    direction: sort.direction,
+  };
+}
+
+export function normalizeSavedViewGroup(
+  group: unknown,
+): TicketListGroupRequest | undefined {
+  if (!isRecord(group) || !isAllowed(group.key, ticketGroupKeys)) {
+    return undefined;
+  }
+
+  return { key: group.key };
+}
+
 export function savedViewStorageFromQuery(
   query: SavedViewQuery,
 ): SavedViewStorage {
+  const sort = normalizeSavedViewSort(query.sort);
+  const group = normalizeSavedViewGroup(query.group);
+
   return {
     version: savedViewStorageVersion,
     filter: normalizeSavedViewFilter(query.filter),
-    ...(query.sort ? { sort: query.sort } : {}),
-    ...(query.group ? { group: query.group } : {}),
+    ...(sort ? { sort } : {}),
+    ...(group ? { group } : {}),
   };
 }
 
@@ -129,14 +202,18 @@ export function savedViewQueryFromStorage(value: unknown): SavedViewQuery {
   const filterSource =
     stored.version === savedViewStorageVersion ? stored.filter : stored;
   const filter = normalizeSavedViewFilter(filterSource ?? {});
+  const sort =
+    stored.version === savedViewStorageVersion
+      ? normalizeSavedViewSort(stored.sort)
+      : undefined;
+  const group =
+    stored.version === savedViewStorageVersion
+      ? normalizeSavedViewGroup(stored.group)
+      : undefined;
 
   return {
     filter,
-    ...(stored.version === savedViewStorageVersion && stored.sort
-      ? { sort: stored.sort }
-      : {}),
-    ...(stored.version === savedViewStorageVersion && stored.group
-      ? { group: stored.group }
-      : {}),
+    ...(sort ? { sort } : {}),
+    ...(group ? { group } : {}),
   };
 }

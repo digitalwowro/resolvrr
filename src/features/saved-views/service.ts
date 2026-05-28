@@ -5,6 +5,8 @@ import type {
 } from "@/core/providers";
 import {
   normalizeSavedViewFilter,
+  normalizeSavedViewGroup,
+  normalizeSavedViewSort,
   type SavedViewQuery,
   type SavedViewVisibility,
 } from "@/core/saved-views";
@@ -38,11 +40,13 @@ export type SaveSavedViewResult =
 
 function savedViewQueryInput(query: TicketListQueryInput): TicketListQueryInput {
   const filter = normalizeSavedViewFilter(query.filter);
+  const sort = normalizeSavedViewSort(query.sort);
+  const group = normalizeSavedViewGroup(query.group);
 
   return {
     filter,
-    ...(query.sort ? { sort: query.sort } : {}),
-    ...(query.group ? { group: query.group } : {}),
+    ...(sort ? { sort } : {}),
+    ...(group ? { group } : {}),
   };
 }
 
