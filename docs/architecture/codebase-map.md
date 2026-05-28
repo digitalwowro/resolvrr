@@ -123,7 +123,7 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/providers/zammad/schemas.ts`: Zammad raw ticket, article, expanded asset,
   and user DTO schemas.
 - `src/providers/zammad/tickets.ts`: Zammad ticket list/detail endpoint reads,
-  read-phase timing, and canonical response assembly.
+  search-backed list totals, read-phase timing, and canonical response assembly.
 - `src/providers/zammad/index.ts`: provider plugin export.
 - `src/features`: product feature boundaries that compose core contracts into
   workflows.
@@ -223,7 +223,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/use-ticket-list-pager.ts`: in-memory
   active-workspace list pager for appending provider-backed ungrouped list pages
   and reloading page 1 for provider-backed sort changes after the provider
-  reload succeeds, without touching selected-ticket detail reads.
+  reload succeeds, while preserving provider-backed total count metadata and
+  without touching selected-ticket detail reads.
 - `src/features/workspace/components/workspace-url.ts`: workspace ticket/List
   URL path helper used by local tab navigation and explicit ticket link sharing,
   plus history replacement helpers for local tab navigation.
@@ -439,7 +440,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   mutation availability constraints.
 - `tests/providers/zammad/read-helpers.ts`: shared Zammad read test fixtures.
 - `tests/providers/zammad/read.test.ts`: verifies Zammad ticket list/detail
-  endpoint calls, canonical mapping, optional feature defaults, and read timing.
+  endpoint calls, search-backed total counts, canonical mapping, optional
+  feature defaults, and read timing.
 - `tests/providers/zammad/mutations.test.ts`: verifies Zammad state/priority
   metadata write payload mapping, orphan pending-time rejection, and
   provider-safe request usage.

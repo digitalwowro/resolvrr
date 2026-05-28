@@ -82,6 +82,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   label: "Zammad",
   capabilities: [
     "ticket:list",
+    "ticket:count",
     "ticket:sort",
     "ticket:detail",
     "ticket:update-state",

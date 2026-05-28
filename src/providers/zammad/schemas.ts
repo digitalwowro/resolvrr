@@ -117,6 +117,7 @@ export const zammadFullTicketPayloadSchema = z
   .object({
     record_ids: z.array(z.union([z.number(), z.string()])).optional(),
     assets: zammadAssetsSchema,
+    total_count: z.number().int().nonnegative().optional(),
   })
   .passthrough();
 

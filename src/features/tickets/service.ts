@@ -1,5 +1,5 @@
 import type { TicketExternalId, TicketMetadataMutationInput } from "@/core/tickets";
-import type { TicketListQueryInput } from "@/core/providers";
+import type { ProviderCapability, TicketListQueryInput } from "@/core/providers";
 import { normalizeTicketListQuery } from "@/core/ticket-list-query";
 import type { ProviderRegistry } from "@/providers";
 import type { HelpdeskConnectionsRepository } from "@/features/helpdesk-connections/repository";
@@ -37,6 +37,28 @@ function failedMutation(
   };
 }
 
+function hasProviderCapability(
+  capabilities: ProviderCapability[],
+  capability: ProviderCapability,
+) {
+  return capabilities.includes(capability);
+}
+
+function countAwareListQueryInput(
+  capabilities: ProviderCapability[],
+  query: TicketListQueryInput,
+): TicketListQueryInput {
+  if (
+    query.count ||
+    query.group ||
+    !hasProviderCapability(capabilities, "ticket:count")
+  ) {
+    return query;
+  }
+
+  return { ...query, count: { includeTotal: true } };
+}
+
 export async function loadWorkspaceTicketList(
   repository: HelpdeskConnectionsRepository,
   registry: ProviderRegistry,
@@ -64,11 +86,15 @@ export async function loadWorkspaceTicketList(
     return providerContext;
   }
 
-  const listQuery = normalizeTicketListQuery(query);
+  const countAwareQuery = countAwareListQueryInput(
+    providerContext.value.plugin.capabilities,
+    query,
+  );
+  const listQuery = normalizeTicketListQuery(countAwareQuery);
   const guardrail = guardTicketListQuery(
     providerContext.value.plugin.capabilities,
     listQuery,
-    query,
+    countAwareQuery,
   );
   if (guardrail.status === "unsupported") {
     const result = unavailableTicketRead(

@@ -57,16 +57,23 @@ function zammadTicketListPath(
     full: "true",
   });
 
-  if (!query.sort) {
+  const useSearch = Boolean(query.sort || query.count?.includeTotal);
+
+  if (!useSearch) {
     return `/api/v1/tickets?${params}`;
   }
 
   params.set("query", "*");
-  params.set("sort_by", zammadTicketSortFields[query.sort.key]);
-  params.set(
-    "order_by",
-    query.sort.direction === "ascending" ? "asc" : "desc",
-  );
+  if (query.count?.includeTotal) {
+    params.set("with_total_count", "true");
+  }
+  if (query.sort) {
+    params.set("sort_by", zammadTicketSortFields[query.sort.key]);
+    params.set(
+      "order_by",
+      query.sort.direction === "ascending" ? "asc" : "desc",
+    );
+  }
 
   return `/api/v1/tickets/search?${params}`;
 }
@@ -87,7 +94,11 @@ function timingMetadata(context: ProviderContext) {
 
 function isFullPayload(
   payload: unknown,
-): payload is { assets: ZammadAssets; record_ids?: Array<string | number> } {
+): payload is {
+  assets: ZammadAssets;
+  record_ids?: Array<string | number>;
+  total_count?: number;
+} {
   return zammadFullTicketPayloadSchema.safeParse(payload).success;
 }
 
@@ -110,6 +121,7 @@ function orderedAssetRecords<T>(
 function ticketPayloadRecords(payload: unknown): {
   assets?: ZammadAssets;
   tickets: ZammadTicket[];
+  totalCount?: number;
 } {
   if (Array.isArray(payload)) {
     return { tickets: payload };
@@ -118,10 +130,24 @@ function ticketPayloadRecords(payload: unknown): {
     return {
       assets: payload.assets,
       tickets: orderedAssetRecords(payload.assets.Ticket, payload.record_ids),
+      totalCount: payload.total_count,
     };
   }
 
   return { tickets: [] };
+}
+
+function nextTicketListCursor(
+  page: number,
+  limit: number,
+  loadedCount: number,
+  totalCount: number | undefined,
+) {
+  if (totalCount !== undefined) {
+    return page * limit < totalCount ? String(page + 1) : undefined;
+  }
+
+  return loadedCount === limit ? String(page + 1) : undefined;
 }
 
 function articlePayloadRecords(payload: unknown): {
@@ -328,6 +354,9 @@ export async function listZammadTickets(
         throw providerDataMismatch();
       }
       const payload = ticketPayloadRecords(parsed.data);
+      if (query.count?.includeTotal && payload.totalCount === undefined) {
+        throw providerDataMismatch();
+      }
       const [users, states, priorities] = await Promise.all([
         fetchZammadUsers(
           context,
@@ -351,8 +380,13 @@ export async function listZammadTickets(
           mapTicketListItem(ticket, zammadBaseUrl(context), assets),
         ),
         loadedCount: payload.tickets.length,
-        nextCursor:
-          payload.tickets.length === limit ? String(page + 1) : undefined,
+        totalCount: query.count?.includeTotal ? payload.totalCount : undefined,
+        nextCursor: nextTicketListCursor(
+          page,
+          limit,
+          payload.tickets.length,
+          query.count?.includeTotal ? payload.totalCount : undefined,
+        ),
         measuredAt: new Date(),
       };
     },
