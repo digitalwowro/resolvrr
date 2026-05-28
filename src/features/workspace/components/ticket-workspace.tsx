@@ -3,6 +3,10 @@ import type {
   WorkspaceTicketDetailLoadResult,
 } from "@/features/tickets/detail-action-result";
 import type { LoadWorkspaceTicketListPageAction } from "@/features/tickets/list-page-action-result";
+import {
+  allTicketsSavedViewId,
+  type WorkspaceSavedView,
+} from "@/features/saved-views";
 import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
@@ -34,6 +38,8 @@ type TicketWorkspaceProps = {
   logoutAction(formData: FormData): void | Promise<void>;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   rows: WorkspaceTicketRow[];
+  savedViews?: WorkspaceSavedView[];
+  selectedSavedViewId?: string;
   selectedTicketId?: string;
   setActiveConnectionAction(formData: FormData): void | Promise<void>;
   tabs: WorkspaceTicketTab[];
@@ -68,6 +74,8 @@ export function TicketWorkspace({
   logoutAction,
   metadataMutationCapabilities,
   rows,
+  savedViews,
+  selectedSavedViewId,
   selectedTicketId,
   setActiveConnectionAction,
   tabs,
@@ -110,6 +118,10 @@ export function TicketWorkspace({
           providerSortEnabled={listResult.queryCapabilities?.providerSort === true}
           refreshTicketDetailAfterMetadataSave={providedLoadTicketDetailAction}
           rows={rows}
+          savedViews={
+            savedViews ?? [{ id: allTicketsSavedViewId, label: "All tickets" }]
+          }
+          selectedSavedViewId={selectedSavedViewId ?? allTicketsSavedViewId}
           selectedTicketId={selectedTicketId}
           tabs={tabs}
           totalListCount={listResult.totalCount}

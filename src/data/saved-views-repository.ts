@@ -136,6 +136,33 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
       );
   },
 
+  async findForUser(userId, savedViewId, helpdeskConnectionId) {
+    const view = await prisma.savedView.findFirst({
+      where: {
+        AND: [
+          { id: savedViewId },
+          {
+            OR: [
+              { ownerUserId: userId },
+              { visibility: DbSavedViewVisibility.SHARED },
+            ],
+          },
+          connectionFilter(helpdeskConnectionId),
+        ],
+      },
+      select: {
+        ...savedViewSelect,
+        preferences: {
+          where: { userId },
+          select: { position: true, isDefault: true },
+          take: 1,
+        },
+      },
+    });
+
+    return view ? toStoredSavedView(view) : null;
+  },
+
   async create(input: CreateSavedViewInput) {
     const createView = async (client: Pick<typeof prisma, "savedView">) =>
       client.savedView.create({

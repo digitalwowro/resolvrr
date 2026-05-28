@@ -34,6 +34,11 @@ export type SavedViewsRepository = {
     userId: string,
     helpdeskConnectionId?: string,
   ): Promise<StoredSavedView[]>;
+  findForUser(
+    userId: string,
+    savedViewId: string,
+    helpdeskConnectionId?: string,
+  ): Promise<StoredSavedView | null>;
   create(input: CreateSavedViewInput): Promise<StoredSavedView>;
   setDefaultForUser(userId: string, savedViewId: string): Promise<boolean>;
 };

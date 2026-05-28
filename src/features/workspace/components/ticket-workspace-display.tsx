@@ -2,6 +2,10 @@
 
 import type { DropdownOption } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
+import {
+  allTicketsSavedViewId,
+  type WorkspaceSavedView,
+} from "@/features/saved-views";
 import type {
   LoadWorkspaceTicketDetailAction,
   WorkspaceTicketDetailLoadResult,
@@ -47,6 +51,8 @@ type TicketWorkspaceDisplayProps = {
   providerSortEnabled: boolean;
   refreshTicketDetailAfterMetadataSave: boolean;
   rows: WorkspaceTicketRow[];
+  savedViews: WorkspaceSavedView[];
+  selectedSavedViewId: string;
   selectedTicketId?: string;
   tabs: WorkspaceTicketTab[];
   totalListCount?: number;
@@ -54,10 +60,6 @@ type TicketWorkspaceDisplayProps = {
     formData: FormData,
   ): Promise<TicketMetadataMutationActionState>;
 };
-
-const savedViewOptions: DropdownOption[] = [
-  { value: "all-tickets", label: "All tickets" },
-];
 
 export function TicketWorkspaceDisplay({
   columns,
@@ -72,12 +74,15 @@ export function TicketWorkspaceDisplay({
   providerSortEnabled,
   refreshTicketDetailAfterMetadataSave,
   rows,
+  savedViews,
+  selectedSavedViewId,
   selectedTicketId,
   tabs: ticketTabs,
   totalListCount,
   updateTicketMetadataAction,
 }: TicketWorkspaceDisplayProps) {
   const listPager = useTicketListPager({
+    initialSavedViewId: selectedSavedViewId,
     initialRows: rows,
     initialGroups: initialListGroups,
     initialNextCursor: nextListCursor,
@@ -137,6 +142,16 @@ export function TicketWorkspaceDisplay({
     listPager.groups !== undefined;
   const tableGroupedRows = providerGroupedActive ? listPager.groups : groupedRows;
   const tableRows = providerGroupedActive ? listPager.rows : sortedRows;
+  const savedViewOptions: DropdownOption[] = savedViews.map((savedView) => ({
+    value: savedView.id,
+    label: savedView.disabledReason
+      ? `${savedView.label} (unsupported)`
+      : savedView.label,
+    disabled: Boolean(savedView.disabledReason),
+  }));
+  const activeSavedView =
+    savedViews.find((savedView) => savedView.id === listPager.savedViewId) ??
+    savedViews.find((savedView) => savedView.id === allTicketsSavedViewId);
 
   function handleWorkspaceGroupByChange(nextGroupBy: typeof groupBy) {
     handleGroupByChange(nextGroupBy);
@@ -150,6 +165,14 @@ export function TicketWorkspaceDisplay({
     if (providerGroupedActive || listPager.groupBy) {
       listPager.reloadFirstPage();
     }
+  }
+
+  async function handleSavedViewChange(nextSavedViewId: string) {
+    const result = await listPager.reloadSavedView(nextSavedViewId);
+    if (result.status !== "available") {
+      return;
+    }
+    handleGroupByChange(result.groupBy ?? "none");
   }
 
   const workArea =
@@ -209,11 +232,12 @@ export function TicketWorkspaceDisplay({
       onColumnToggle={toggleColumn}
       onGroupByChange={handleWorkspaceGroupByChange}
       onRefresh={refreshList}
+      onSavedViewChange={handleSavedViewChange}
       onSelectAll={toggleSelectAll}
       onTabOrientationChange={setTabOrientation}
       partiallySelected={partiallySelected}
       savedViewOptions={savedViewOptions}
-      selectedSavedViewId="all-tickets"
+      selectedSavedViewId={listPager.savedViewId}
       tabOrientation={tabOrientation}
       visibleColumns={visibleColumnSet}
     />
@@ -228,7 +252,7 @@ export function TicketWorkspaceDisplay({
       onSelectList={showList}
       onSelectTicket={showOpenTicket}
       orientation={tabOrientation}
-      savedViewLabel="All tickets"
+      savedViewLabel={activeSavedView?.label ?? "All tickets"}
       tabs={openTicketTabs}
     />
   );

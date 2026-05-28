@@ -36,6 +36,7 @@ function repository(onCreate: (input: CreateSavedViewInput) => void) {
   return {
     repo: {
       listForUser: async () => [],
+      findForUser: async () => null,
       create,
       setDefaultForUser: async () => true,
     } satisfies SavedViewsRepository,

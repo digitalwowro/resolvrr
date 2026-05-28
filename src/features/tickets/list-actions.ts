@@ -9,6 +9,11 @@ import type {
 } from "@/core/providers";
 import { ticketPriorities, ticketStates } from "@/core/tickets";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
+import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
+import {
+  allTicketsSavedViewId,
+  type StoredSavedView,
+} from "@/features/saved-views";
 import { providerRegistry } from "@/providers";
 import type {
   WorkspaceTicketListPageLoadResult,
@@ -33,6 +38,12 @@ const workspaceSortKeyMap: Record<WorkspaceTicketSortKey, TicketSortKey> = {
   pendingTill: "pendingUntil",
   updatedAt: "updatedAt",
 };
+const ticketSortKeyMap = Object.fromEntries(
+  Object.entries(workspaceSortKeyMap).map(([workspaceKey, ticketKey]) => [
+    ticketKey,
+    workspaceKey,
+  ]),
+) as Partial<Record<TicketSortKey, WorkspaceTicketSortKey>>;
 
 function ticketListSort(sort: WorkspaceTicketListSort): TicketSort {
   return {
@@ -63,19 +74,67 @@ function groupFilter(
   return { priorities: [priority] };
 }
 
+function workspaceSort(sort: TicketSort | undefined): WorkspaceTicketListSort | undefined {
+  const key = sort ? ticketSortKeyMap[sort.key] : undefined;
+  return key && sort
+    ? {
+        key,
+        direction: sort.direction,
+      }
+    : undefined;
+}
+
+function providerBackedGroup(
+  group: WorkspaceTicketListPageRequest["group"] | StoredSavedView["group"],
+) {
+  const groupKey = typeof group === "string" ? group : group?.key;
+  return groupKey === "state" || groupKey === "priority" ? groupKey : undefined;
+}
+
 function ticketListQuery(
   request: WorkspaceTicketListPageRequest,
+  savedView?: StoredSavedView,
 ): TicketListQueryInput {
   const filter = groupFilter(request);
+  const savedGroup = savedView?.query.group;
+  const providerGroup = request.group ?? providerBackedGroup(savedGroup);
+  const nextFilter = {
+    ...savedView?.query.filter,
+    ...filter,
+  };
 
   return {
     ...(request.cursor ? { cursor: request.cursor } : {}),
-    ...(request.sort ? { sort: ticketListSort(request.sort) } : {}),
-    ...(request.group && !request.bucketValue
-      ? { count: { includeTotal: true }, group: { key: request.group } }
+    ...(request.sort
+      ? { sort: ticketListSort(request.sort) }
+      : savedView?.query.sort
+        ? { sort: savedView.query.sort }
+        : {}),
+    ...(providerGroup && !request.bucketValue
+      ? { count: { includeTotal: true }, group: { key: providerGroup } }
       : {}),
-    ...(filter ? { filter } : {}),
+    ...(Object.keys(nextFilter).length > 0 ? { filter: nextFilter } : {}),
   };
+}
+
+async function savedViewForRequest(
+  userId: string,
+  savedViewId: string | undefined,
+  helpdeskConnectionId: string | undefined,
+) {
+  if (!savedViewId || savedViewId === allTicketsSavedViewId) {
+    return undefined;
+  }
+
+  if (!helpdeskConnectionId) {
+    return null;
+  }
+
+  return prismaSavedViewsRepository.findForUser(
+    userId,
+    savedViewId,
+    helpdeskConnectionId,
+  );
 }
 
 export async function loadWorkspaceTicketListPageAction(
@@ -90,6 +149,19 @@ export async function loadWorkspaceTicketListPageAction(
   }
 
   const user = await requireCurrentUser();
+  const activeConnectionId =
+    request.savedViewId && request.savedViewId !== allTicketsSavedViewId
+      ? await prismaHelpdeskConnectionsRepository.getActiveConnectionId(user.id)
+      : undefined;
+  const savedView = await savedViewForRequest(
+    user.id,
+    request.savedViewId,
+    activeConnectionId ?? undefined,
+  );
+  if (savedView === null) {
+    return unavailableTicketRead("provider-unexpected-response");
+  }
+
   const result = await loadWorkspaceTicketList(
     prismaHelpdeskConnectionsRepository,
     providerRegistry,
@@ -98,7 +170,7 @@ export async function loadWorkspaceTicketListPageAction(
     ticketListQuery({
       ...request,
       ...(normalizedCursor ? { cursor: normalizedCursor } : {}),
-    }),
+    }, savedView),
   );
 
   if (result.status === "unavailable") {
@@ -112,5 +184,8 @@ export async function loadWorkspaceTicketListPageAction(
     totalCount: result.totalCount,
     nextCursor: result.nextCursor,
     groups: workspaceTicketListGroups(result.buckets),
+    appliedGroupBy: request.group ?? savedView?.query.group?.key,
+    appliedSavedViewId: request.savedViewId ?? allTicketsSavedViewId,
+    appliedSort: request.sort ?? workspaceSort(savedView?.query.sort),
   };
 }
