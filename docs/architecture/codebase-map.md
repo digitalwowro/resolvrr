@@ -56,7 +56,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/core/ticket-list-query.ts`: provider-neutral ticket list query, sort,
   count, grouping, pagination, and list result contracts plus default query
   normalization.
-- `src/core/saved-views.ts`: provider-neutral saved view filters and metadata.
+- `src/core/saved-views.ts`: provider-neutral saved view filters, query
+  defaults, storage envelope helpers, and metadata.
 - `src/core/helpdesk-connections.ts`: explicit helpdesk connection domain types.
 - `src/core/providers.ts`: provider plugin contract, capability names, provider
   errors, and provider operation types.
@@ -80,6 +81,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/data/helpdesk-connections-repository.ts`: Prisma-backed helpdesk
   connection repository and active connection preference persistence.
 - `src/data/prisma.ts`: Prisma Client singleton with PostgreSQL driver adapter.
+- `src/data/saved-views-repository.ts`: Prisma-backed saved view and per-user
+  saved-view preference repository.
 - `src/security`: security-sensitive helpers shared by server-side code.
 - `src/security/encryption.ts`: AES-256-GCM secret envelope encryption.
 - `src/security/base-url-validation.ts`: provider-neutral HTTPS and SSRF
@@ -165,6 +168,10 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/helpdesk-connections/components/connection-form.tsx`: add/edit
   form that never echoes stored credentials to the browser.
 - `src/features/saved-views/index.ts`: saved view feature boundary.
+- `src/features/saved-views/repository.ts`: saved view persistence repository
+  contract and stored view/preference shapes.
+- `src/features/saved-views/service.ts`: saved view query sanitization,
+  guardrail enforcement, and create-use-case logic.
 - `src/features/tickets/index.ts`: ticket workflow feature boundary. It does
   not export server actions so component/test imports do not pull in env or
   database modules.
@@ -393,6 +400,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features`: feature-level component tests.
 - `tests/features/connection-message-query.test.tsx`: verifies transient
   connection action query parameters are removed after message rendering.
+- `tests/features/saved-view-persistence.test.ts`: verifies saved view
+  persistence sanitization, guardrails, and storage round-tripping.
 - `tests/features/ticket-workspace-test-utils.tsx`: shared provider-backed
   workspace fixtures and render helpers for feature tests.
 - `tests/features/ticket-workspace.test.tsx`: verifies provider-backed
