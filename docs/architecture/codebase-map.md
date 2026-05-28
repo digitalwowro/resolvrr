@@ -50,14 +50,12 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/app/globals.css`: global Tailwind import, base document styles, and
   default plain-anchor color.
 - `src/core`: provider-neutral domain contracts and canonical values.
-- `src/core/tickets.ts`: canonical ticket state and priority definitions plus
-  provider-neutral ticket, thread, article, link, subscription, and
-  state/priority metadata mutation types.
-- `src/core/ticket-list-query.ts`: provider-neutral ticket list query, sort,
-  count, grouping, pagination, and list result contracts plus default query
-  normalization.
+- `src/core/tickets.ts`: canonical ticket values and provider-neutral
+  ticket/thread/link/subscription/mutation types.
+- `src/core/ticket-list-query.ts`: provider-neutral list query, sort, count,
+  grouping, pagination, result contracts, and normalization.
 - `src/core/saved-views.ts`: provider-neutral saved view filters, query
-  defaults, storage envelope helpers, and metadata.
+  defaults, storage helpers, and metadata.
 - `src/core/helpdesk-connections.ts`: explicit helpdesk connection domain types.
 - `src/core/providers.ts`: provider plugin contract, capability names, provider
   errors, and provider operation types.
@@ -81,16 +79,14 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/data/helpdesk-connections-repository.ts`: Prisma-backed helpdesk
   connection repository and active connection preference persistence.
 - `src/data/prisma.ts`: Prisma Client singleton with PostgreSQL driver adapter.
-- `src/data/saved-views-repository.ts`: Prisma-backed saved view and per-user
-  saved-view preference repository.
+- `src/data/saved-views-repository.ts`: Prisma-backed saved view/preference
+  repository.
 - `src/security`: security-sensitive helpers shared by server-side code.
 - `src/security/encryption.ts`: AES-256-GCM secret envelope encryption.
 - `src/security/base-url-validation.ts`: provider-neutral HTTPS and SSRF
   validation for user-provided helpdesk base URLs.
-- `src/security/provider-http.ts`: SSRF-safe provider HTTPS request helper that
-  binds requests to the revalidated address set and falls back only across
-  validated public addresses; also exposes size-limited JSON request handling
-  for provider ticket reads and controlled metadata writes.
+- `src/security/provider-http.ts`: SSRF-safe provider HTTPS/JSON request helper
+  with revalidated address binding and bounded reads/writes.
 - `src/security/sanitize-html.ts`: provider HTML sanitization that preserves
   safe rich-text article structure such as links, lists, headings, tables, and
   inline emphasis while dropping scripts and unsafe attributes.
@@ -168,10 +164,12 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/helpdesk-connections/components/connection-form.tsx`: add/edit
   form that never echoes stored credentials to the browser.
 - `src/features/saved-views/index.ts`: saved view feature boundary.
-- `src/features/saved-views/repository.ts`: saved view persistence repository
-  contract and stored view/preference shapes.
+- `src/features/saved-views/repository.ts`: saved view repository contract and
+  stored view/preference shapes.
 - `src/features/saved-views/service.ts`: saved view query sanitization,
-  guardrail enforcement, and create-use-case logic.
+  guardrails, and create-use-case logic.
+- `src/features/saved-views/workspace.ts`: workspace saved-view option mapping
+  and unsupported-view flagging.
 - `src/features/tickets/index.ts`: ticket workflow feature boundary. It does
   not export server actions so component/test imports do not pull in env or
   database modules.
@@ -409,6 +407,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   grouping behavior, and post-hydration ungrouped list page loading.
 - `tests/features/ticket-workspace-grouping.test.tsx`: verifies provider-backed
   workspace state/priority grouping and per-bucket pagination behavior.
+- `tests/features/ticket-workspace-saved-views.test.tsx`: verifies workspace
+  saved-view selection and unsupported options.
 - `tests/features/ticket-list-action.test.ts`: verifies client-safe
   post-hydration workspace list page action results.
 - `tests/features/ticket-metadata-action-input.test.ts`: verifies staged

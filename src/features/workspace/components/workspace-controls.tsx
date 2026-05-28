@@ -40,6 +40,7 @@ type WorkspaceControlsProps = {
   onColumnToggle(column: WorkspaceTicketColumnKey): void;
   onGroupByChange(groupBy: WorkspaceTicketGroupKey): void;
   onRefresh(): void;
+  onSavedViewChange(savedViewId: string): void;
   onSelectAll(): void;
   onTabOrientationChange(orientation: "horizontal" | "vertical"): void;
   partiallySelected: boolean;
@@ -59,6 +60,7 @@ export function WorkspaceControls({
   onColumnToggle,
   onGroupByChange,
   onRefresh,
+  onSavedViewChange,
   onSelectAll,
   onTabOrientationChange,
   partiallySelected,
@@ -75,17 +77,15 @@ export function WorkspaceControls({
     ) : undefined,
     onSelect: () => onColumnToggle(column.key),
   }));
-  const selectedSavedViewOption = savedViewOptions.find(
-    (option) => option.value === selectedSavedViewId,
-  );
-  const savedViewOptionsWithIcon = selectedSavedViewOption
-    ? [
-        {
-          ...selectedSavedViewOption,
-          icon: <BriefcaseBusiness aria-hidden="true" className={dropdownIconClass} />,
-        },
-      ]
-    : savedViewOptions;
+  const savedViewOptionsWithIcon = savedViewOptions.map((option) => ({
+    ...option,
+    icon:
+      option.value === selectedSavedViewId ? (
+        <BriefcaseBusiness aria-hidden="true" className={dropdownIconClass} />
+      ) : (
+        option.icon
+      ),
+  }));
 
   return (
     <section
@@ -119,7 +119,7 @@ export function WorkspaceControls({
         <ToolbarSearchableDropdown
           ariaLabel="Saved view"
           disabled={!listControlsEnabled}
-          onValueChange={() => undefined}
+          onValueChange={onSavedViewChange}
           options={savedViewOptionsWithIcon}
           searchPlaceholder="Find view"
           value={selectedSavedViewId}

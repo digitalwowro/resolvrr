@@ -11,6 +11,12 @@ export {
   type SaveSavedViewInput,
   type SaveSavedViewResult,
 } from "./service";
+export {
+  allTicketsSavedViewId,
+  defaultWorkspaceSavedViewId,
+  workspaceSavedViews,
+  type WorkspaceSavedView,
+} from "./workspace";
 export type {
   CreateSavedViewInput,
   SavedViewPreference,

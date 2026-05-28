@@ -3,13 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import type {
   LoadWorkspaceTicketListPageAction,
+  WorkspaceTicketListPageLoadResult,
   WorkspaceTicketListGroup,
   WorkspaceTicketListSort,
 } from "@/features/tickets/list-page-action-result";
+import { allTicketsSavedViewId } from "@/features/saved-views/workspace";
 import type { TicketReadUnavailableReason } from "@/features/tickets/read-model";
-import type { WorkspaceTicketRow } from "@/features/tickets/workspace-adapter";
+import type {
+  WorkspaceTicketGroupKey,
+  WorkspaceTicketRow,
+} from "@/features/tickets/workspace-adapter";
 
 type TicketListPagerProps = {
+  initialSavedViewId: string;
   initialRows: WorkspaceTicketRow[];
   initialGroups?: WorkspaceTicketListGroup[];
   initialNextCursor?: string;
@@ -18,6 +24,7 @@ type TicketListPagerProps = {
 };
 
 export function useTicketListPager({
+  initialSavedViewId,
   initialGroups,
   initialRows,
   initialNextCursor,
@@ -25,6 +32,7 @@ export function useTicketListPager({
   loadTicketListPageAction,
 }: TicketListPagerProps) {
   const [rows, setRows] = useState(initialRows);
+  const [savedViewId, setSavedViewId] = useState(initialSavedViewId);
   const [groups, setGroups] = useState(initialGroups);
   const [groupBy, setGroupBy] = useState<"state" | "priority">();
   const [nextCursor, setNextCursor] = useState(initialNextCursor);
@@ -48,6 +56,7 @@ export function useTicketListPager({
 
     if (!sameListIdentity) {
       setRows(initialRows);
+      setSavedViewId(initialSavedViewId);
       setGroups(initialGroups);
       setGroupBy(initialGroups?.[0]?.key);
       setNextCursor(initialNextCursor);
@@ -63,7 +72,17 @@ export function useTicketListPager({
       hasClientLoadedRowsRef.current ? current : initialNextCursor,
     );
     setTotalCount(initialTotalCount);
-  }, [initialGroups, initialRows, initialNextCursor, initialTotalCount]);
+  }, [
+    initialGroups,
+    initialRows,
+    initialNextCursor,
+    initialSavedViewId,
+    initialTotalCount,
+  ]);
+
+  function savedViewRequest() {
+    return savedViewId === allTicketsSavedViewId ? {} : { savedViewId };
+  }
 
   async function loadMore() {
     if (!nextCursor || loading || !loadTicketListPageAction) {
@@ -76,6 +95,7 @@ export function useTicketListPager({
     try {
       result = await loadTicketListPageAction({
         cursor: nextCursor,
+        ...savedViewRequest(),
         ...(sort ? { sort } : {}),
       });
     } catch {
@@ -106,6 +126,7 @@ export function useTicketListPager({
     let result;
     try {
       result = await loadTicketListPageAction({
+        ...savedViewRequest(),
         ...(nextSort ? { sort: nextSort } : {}),
       });
     } catch {
@@ -122,7 +143,7 @@ export function useTicketListPager({
 
     hasClientLoadedRowsRef.current = false;
     baselineIdentity.current = ticketListIdentity(result.rows);
-    setSort(nextSort);
+    setSort(result.appliedSort ?? nextSort);
     setGroups(undefined);
     setGroupBy(undefined);
     setRows(result.rows);
@@ -140,7 +161,10 @@ export function useTicketListPager({
     setGroupError(undefined);
     let result;
     try {
-      result = await loadTicketListPageAction({ group: nextGroupBy });
+      result = await loadTicketListPageAction({
+        group: nextGroupBy,
+        ...savedViewRequest(),
+      });
     } catch {
       setLoading(false);
       setErrorReason("provider-temporary-failure");
@@ -163,6 +187,64 @@ export function useTicketListPager({
     setTotalCount(result.totalCount);
   }
 
+  async function reloadSavedView(
+    nextSavedViewId: string,
+  ): Promise<
+    | { status: "available"; groupBy?: WorkspaceTicketGroupKey }
+    | Extract<WorkspaceTicketListPageLoadResult, { status: "unavailable" }>
+  > {
+    if (loading || !loadTicketListPageAction) {
+      return {
+        status: "unavailable",
+        reason: "provider-temporary-failure",
+        retryable: true,
+      };
+    }
+
+    setLoading(true);
+    setErrorReason(undefined);
+    setGroupError(undefined);
+    let result;
+    try {
+      result = await loadTicketListPageAction({
+        ...(nextSavedViewId === allTicketsSavedViewId
+          ? {}
+          : { savedViewId: nextSavedViewId }),
+      });
+    } catch {
+      setLoading(false);
+      setErrorReason("provider-temporary-failure");
+      return {
+        status: "unavailable",
+        reason: "provider-temporary-failure",
+        retryable: true,
+      };
+    }
+    setLoading(false);
+
+    if (result.status === "unavailable") {
+      setErrorReason(result.reason);
+      return result;
+    }
+
+    const nextGroups = result.groups?.length ? result.groups : undefined;
+    hasClientLoadedRowsRef.current = false;
+    baselineIdentity.current = ticketListIdentity(result.rows);
+    setSavedViewId(nextSavedViewId);
+    setSort(result.appliedSort);
+    setGroupBy(
+      result.appliedGroupBy === "state" || result.appliedGroupBy === "priority"
+        ? result.appliedGroupBy
+        : undefined,
+    );
+    setGroups(nextGroups);
+    setRows(result.rows);
+    setNextCursor(result.nextCursor);
+    setTotalCount(result.totalCount);
+
+    return { status: "available", groupBy: result.appliedGroupBy };
+  }
+
   async function loadMoreGroup(
     group: Pick<WorkspaceTicketListGroup, "id" | "nextCursor" | "value">,
   ) {
@@ -183,6 +265,7 @@ export function useTicketListPager({
         bucketValue: group.value,
         cursor: group.nextCursor,
         group: groupBy,
+        ...savedViewRequest(),
       });
     } catch {
       setLoadingGroupId(undefined);
@@ -230,7 +313,9 @@ export function useTicketListPager({
     loadingGroupId,
     reloadGroupedFirstPage,
     reloadFirstPage,
+    reloadSavedView,
     rows,
+    savedViewId,
     sort,
     totalCount,
   };

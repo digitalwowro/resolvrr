@@ -15,6 +15,7 @@ export type WorkspaceTicketListPageRequest = {
   sort?: WorkspaceTicketListSort;
   group?: Extract<WorkspaceTicketGroupKey, "state" | "priority">;
   bucketValue?: string;
+  savedViewId?: string;
 };
 
 export type WorkspaceTicketListGroup = {
@@ -35,6 +36,9 @@ export type WorkspaceTicketListPageAvailable = {
   totalCount?: number;
   nextCursor?: string;
   groups?: WorkspaceTicketListGroup[];
+  appliedGroupBy?: WorkspaceTicketGroupKey;
+  appliedSavedViewId?: string;
+  appliedSort?: WorkspaceTicketListSort;
 };
 
 export type WorkspaceTicketListPageLoadResult =

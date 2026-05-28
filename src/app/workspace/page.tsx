@@ -1,6 +1,8 @@
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
+import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
+import type { TicketListQueryInput } from "@/core/providers";
 import { logoutAction } from "@/features/auth/actions";
 import {
   listConnectionsForUser,
@@ -18,6 +20,11 @@ import {
 import { updateTicketMetadataAction } from "@/features/tickets/actions";
 import { loadWorkspaceTicketDetailAction } from "@/features/tickets/detail-actions";
 import { loadWorkspaceTicketListPageAction } from "@/features/tickets/list-actions";
+import {
+  defaultWorkspaceSavedViewId,
+  workspaceSavedViews,
+  type StoredSavedView,
+} from "@/features/saved-views";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import { providerRegistry } from "@/providers";
 
@@ -25,22 +32,52 @@ type WorkspacePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+function savedViewTicketListQuery(
+  savedView: StoredSavedView | undefined,
+): TicketListQueryInput | undefined {
+  if (!savedView) {
+    return undefined;
+  }
+
+  const providerBackedGroup =
+    savedView.query.group?.key === "state" ||
+    savedView.query.group?.key === "priority"
+      ? savedView.query.group
+      : undefined;
+
+  return {
+    filter: savedView.query.filter,
+    ...(savedView.query.sort ? { sort: savedView.query.sort } : {}),
+    ...(providerBackedGroup
+      ? { count: { includeTotal: true }, group: providerBackedGroup }
+      : {}),
+  };
+}
+
 export default async function WorkspacePage({ searchParams }: WorkspacePageProps) {
   const user = await requireCurrentUser();
   const params = await searchParams;
-  const [listResult, connections] = await Promise.all([
-    loadWorkspaceTicketList(
-      prismaHelpdeskConnectionsRepository,
-      providerRegistry,
-      env.APP_ENCRYPTION_KEY,
-      user.id,
-    ),
-    listConnectionsForUser(
-      prismaHelpdeskConnectionsRepository,
-      providerRegistry,
-      user.id,
-    ),
-  ]);
+  const connections = await listConnectionsForUser(
+    prismaHelpdeskConnectionsRepository,
+    providerRegistry,
+    user.id,
+  );
+  const activeConnection = connections.find((connection) => connection.active);
+  const savedViews = await prismaSavedViewsRepository.listForUser(
+    user.id,
+    activeConnection?.id,
+  );
+  const selectedSavedViewId = defaultWorkspaceSavedViewId(savedViews);
+  const selectedSavedView = savedViews.find(
+    (savedView) => savedView.id === selectedSavedViewId,
+  );
+  const listResult = await loadWorkspaceTicketList(
+    prismaHelpdeskConnectionsRepository,
+    providerRegistry,
+    env.APP_ENCRYPTION_KEY,
+    user.id,
+    savedViewTicketListQuery(selectedSavedView),
+  );
 
   const rows =
     listResult.status === "available"
@@ -89,6 +126,13 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           : undefined
       }
       rows={rows}
+      savedViews={workspaceSavedViews(
+        savedViews,
+        listResult.status === "available"
+          ? listResult.queryCapabilities
+          : undefined,
+      )}
+      selectedSavedViewId={selectedSavedViewId}
       selectedTicketId={selectedTicketId}
       setActiveConnectionAction={setActiveHelpdeskConnectionAction}
       tabs={workspaceTicketTabs(rows)}

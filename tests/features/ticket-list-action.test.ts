@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
 import { loadWorkspaceTicketListPageAction } from "@/features/tickets/list-actions";
 import { loadWorkspaceTicketList } from "@/features/tickets/service";
 
@@ -14,6 +15,12 @@ vi.mock("@/data/helpdesk-connections-repository", () => ({
   prismaHelpdeskConnectionsRepository: {},
 }));
 
+vi.mock("@/data/saved-views-repository", () => ({
+  prismaSavedViewsRepository: {
+    findForUser: vi.fn(),
+  },
+}));
+
 vi.mock("@/providers", () => ({
   providerRegistry: {},
 }));
@@ -23,10 +30,12 @@ vi.mock("@/features/tickets/service", () => ({
 }));
 
 const mockedLoadWorkspaceTicketList = vi.mocked(loadWorkspaceTicketList);
+const mockedFindSavedView = vi.mocked(prismaSavedViewsRepository.findForUser);
 
 describe("loadWorkspaceTicketListPageAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedFindSavedView.mockResolvedValue(null);
   });
 
   it("loads the next list page and returns workspace rows only", async () => {
@@ -204,5 +213,58 @@ describe("loadWorkspaceTicketListPageAction", () => {
       "user-1",
       { cursor: "2", filter: { states: ["open"] } },
     );
+  });
+
+  it("loads a saved view with provider-neutral filter, sort, and provider group", async () => {
+    mockedFindSavedView.mockResolvedValueOnce({
+      id: "view-1",
+      ownerUserId: "user-1",
+      helpdeskConnectionId: "connection-1",
+      name: "Open priority",
+      visibility: "personal",
+      filter: { states: ["open"] },
+      query: {
+        filter: { states: ["open"] },
+        group: { key: "priority" },
+        sort: { key: "updatedAt", direction: "descending" },
+      },
+      group: { key: "priority" },
+      sort: { key: "updatedAt", direction: "descending" },
+      isSystem: false,
+      createdAt: new Date("2026-05-24T00:00:00Z"),
+      updatedAt: new Date("2026-05-24T00:00:00Z"),
+    });
+    mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
+      status: "available",
+      connectionName: "Support",
+      metadataMutationCapabilities: { state: false, priority: false },
+      tickets: [],
+      loadedCount: 0,
+      measuredAt: new Date("2026-05-24T08:31:30Z"),
+    });
+
+    const result = await loadWorkspaceTicketListPageAction({
+      savedViewId: "view-1",
+    });
+
+    expect(mockedFindSavedView).toHaveBeenCalledWith("user-1", "view-1");
+    expect(mockedLoadWorkspaceTicketList).toHaveBeenCalledWith(
+      {},
+      {},
+      "test-encryption-key",
+      "user-1",
+      {
+        count: { includeTotal: true },
+        filter: { states: ["open"] },
+        group: { key: "priority" },
+        sort: { key: "updatedAt", direction: "descending" },
+      },
+    );
+    expect(result).toMatchObject({
+      status: "available",
+      appliedGroupBy: "priority",
+      appliedSavedViewId: "view-1",
+      appliedSort: { key: "updatedAt", direction: "descending" },
+    });
   });
 });
