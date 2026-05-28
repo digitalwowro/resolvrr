@@ -14,6 +14,7 @@ import type {
   WorkspaceTicketRow,
   WorkspaceTicketTab,
 } from "@/features/tickets/workspace-adapter";
+import { workspaceTicketListGroups } from "@/features/tickets/workspace-adapter";
 import { TicketWorkspaceDisplay } from "./ticket-workspace-display";
 import {
   type WorkspaceMenuConnection,
@@ -101,7 +102,11 @@ export function TicketWorkspace({
           loadTicketDetailAction={effectiveLoadTicketDetailAction}
           loadTicketListPageAction={loadTicketListPageAction}
           metadataMutationCapabilities={effectiveMetadataMutationCapabilities}
+          providerGroupingEnabled={
+            listResult.queryCapabilities?.providerGrouping === true
+          }
           nextListCursor={listResult.nextCursor}
+          initialListGroups={workspaceTicketListGroups(listResult.buckets)}
           providerSortEnabled={listResult.queryCapabilities?.providerSort === true}
           refreshTicketDetailAfterMetadataSave={providedLoadTicketDetailAction}
           rows={rows}

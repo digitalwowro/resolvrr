@@ -107,16 +107,18 @@ Zammad ticket list, detail, thread DTO validation, endpoint construction,
 metadata write payload construction, and raw state/priority normalization live
 under `src/providers/zammad`. Core, feature, UI, and provider-neutral tests
 consume only canonical ticket values and provider capabilities. Zammad currently
-advertises `ticket:list`, `ticket:count`, `ticket:sort`, `ticket:detail`,
-`ticket:update-state`, and `ticket:update-priority`; unsupported links and
-subscription data are returned as the required empty canonical shapes documented
-in the ticket contract. Zammad-backed sorting is implemented through the
-provider's ticket search endpoint with provider-neutral sort keys translated to
-Zammad sort fields. Zammad-backed total counts use the documented search
-`with_total_count=true` response and map only the provider-neutral `totalCount`
-field out of the provider layer. Zammad still does not advertise grouping,
-grouped count, or full-text search yet, so those requests are rejected by the
-provider-neutral guardrail layer before Zammad list code is called.
+advertises `ticket:list`, `ticket:count`, `ticket:sort`, `ticket:group`,
+`ticket:group-count`, `ticket:detail`, `ticket:update-state`, and
+`ticket:update-priority`; unsupported links and subscription data are returned
+as the required empty canonical shapes documented in the ticket contract.
+Zammad-backed sorting is implemented through the provider's ticket search
+endpoint with provider-neutral sort keys translated to Zammad sort fields.
+Zammad-backed total counts and state/priority grouped bucket counts use the
+documented search `with_total_count=true` response and map only
+provider-neutral `totalCount` and bucket metadata out of the provider layer.
+Zammad still does not advertise full-text search, and owner/customer/group
+grouping remains deferred until bucket cardinality and provider support are
+designed.
 Zammad-specific state-transition behavior also stays inside this provider
 folder: the canonical `new` state is shown as the current value when applicable
 but is omitted from the selectable state menu, and pending-state transitions

@@ -122,8 +122,11 @@ architecture folders or important files are added, moved, renamed, or removed.
   connection validation boundary.
 - `src/providers/zammad/schemas.ts`: Zammad raw ticket, article, expanded asset,
   and user DTO schemas.
+- `src/providers/zammad/ticket-search-query.ts`: Zammad ticket search path,
+  sort, state/priority filter, and state/priority bucket query construction.
 - `src/providers/zammad/tickets.ts`: Zammad ticket list/detail endpoint reads,
-  search-backed list totals, read-phase timing, and canonical response assembly.
+  search-backed list totals, state/priority bucket grouping, read-phase timing,
+  and canonical response assembly.
 - `src/providers/zammad/index.ts`: provider plugin export.
 - `src/features`: product feature boundaries that compose core contracts into
   workflows.
@@ -222,8 +225,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   for post-hydration row opens.
 - `src/features/workspace/components/use-ticket-list-pager.ts`: in-memory
   active-workspace list pager for appending provider-backed ungrouped list pages
-  and reloading page 1 for provider-backed sort changes after the provider
-  reload succeeds, while preserving provider-backed total count metadata and
+  and reloading page 1 for provider-backed sort changes or state/priority
+  grouped buckets after the provider reload succeeds, while preserving
+  provider-backed total count metadata and independent grouped-bucket cursors
   without touching selected-ticket detail reads.
 - `src/features/workspace/components/workspace-url.ts`: workspace ticket/List
   URL path helper used by local tab navigation and explicit ticket link sharing,
@@ -392,7 +396,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   workspace fixtures and render helpers for feature tests.
 - `tests/features/ticket-workspace.test.tsx`: verifies provider-backed
   workspace unavailable, table, profile menu, detail, read-only metadata,
-  grouping behavior, and post-hydration ungrouped list page loading.
+  grouping behavior, post-hydration ungrouped list page loading, and
+  provider-backed grouped bucket pagination.
 - `tests/features/ticket-list-action.test.ts`: verifies client-safe
   post-hydration workspace list page action results.
 - `tests/features/ticket-metadata-action-input.test.ts`: verifies staged
@@ -440,8 +445,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   mutation availability constraints.
 - `tests/providers/zammad/read-helpers.ts`: shared Zammad read test fixtures.
 - `tests/providers/zammad/read.test.ts`: verifies Zammad ticket list/detail
-  endpoint calls, search-backed total counts, canonical mapping, optional
-  feature defaults, and read timing.
+  endpoint calls, search-backed total counts and grouped bucket counts,
+  canonical mapping, optional feature defaults, and read timing.
 - `tests/providers/zammad/mutations.test.ts`: verifies Zammad state/priority
   metadata write payload mapping, orphan pending-time rejection, and
   provider-safe request usage.

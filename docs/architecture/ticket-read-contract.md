@@ -214,13 +214,21 @@ selected provider-neutral sort and subsequent page loads keep that sort. When a
 list is incomplete and provider-backed sort is unavailable, the workspace does
 not locally sort the partial subset as if it were complete.
 
+Workspace state and priority grouping use provider-backed buckets when the
+active provider advertises `providerGrouping`. The workspace requests the first
+page of each provider bucket with grouped totals, and subsequent bucket loads
+request the next page only for that bucket. Owner, customer, and group grouping
+remain local-only for providers without grouping support and are not implemented
+as provider-backed buckets yet.
+
 `TicketListResult.loadedCount` is the number of list items returned in the
 current response. `TicketListResult.totalCount`, when present, is the provider's
 total count for the query rather than the size of the loaded subset. Bucket
 results follow the same split: each bucket carries its loaded row count,
 optional total count, optional next cursor, and provider-neutral rows.
 Zammad-backed totals are sourced from the ticket search endpoint's
-`with_total_count=true` response rather than by fetching every ticket page.
+`with_total_count=true` response rather than by fetching every ticket page;
+state and priority bucket totals use the same count-backed search path.
 
 `TicketListResult.nextCursor` is opaque to core code. Providers own cursor
 format, pagination compilation, raw query syntax, and raw response mapping.

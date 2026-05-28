@@ -28,6 +28,8 @@ describe("Zammad ticket reads", () => {
       "ticket:list",
       "ticket:count",
       "ticket:sort",
+      "ticket:group",
+      "ticket:group-count",
       "ticket:detail",
       "ticket:update-state",
       "ticket:update-priority",
@@ -177,6 +179,56 @@ describe("Zammad ticket reads", () => {
     expect(result?.loadedCount).toBe(1);
     expect(result?.totalCount).toBe(1);
     expect(result?.nextCursor).toBeUndefined();
+  });
+
+  it("returns provider-backed state buckets with full bucket counts", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [{ id: 2, name: "open" }],
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          record_ids: [42],
+          total_count: 11,
+          assets: { Ticket: { "42": rawTicket } },
+        },
+      });
+
+    const result = await zammadProviderPlugin.listTickets?.(providerContext(), {
+      filter: { states: ["open"] },
+      pageSize: 10,
+      count: { includeTotal: true },
+      group: { key: "state" },
+    });
+
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      1,
+      "https://helpdesk.example.com/api/v1/ticket_states",
+      expect.any(Object),
+    );
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      2,
+      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=10&expand=true&full=true&query=state.name%3A%22open%22&with_total_count=true",
+      expect.any(Object),
+    );
+    expect(result).toMatchObject({
+      loadedCount: 1,
+      totalCount: 11,
+      buckets: [
+        {
+          key: "state",
+          value: "open",
+          label: "Open",
+          loadedCount: 1,
+          totalCount: 11,
+          nextCursor: "2",
+        },
+      ],
+    });
   });
 
   it("maps Zammad detail and thread without optional feature leakage", async () => {
