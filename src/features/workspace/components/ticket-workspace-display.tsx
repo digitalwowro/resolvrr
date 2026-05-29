@@ -145,7 +145,7 @@ export function TicketWorkspaceDisplay({
   const savedViewOptions: DropdownOption[] = savedViews.map((savedView) => ({
     value: savedView.id,
     label: savedView.disabledReason
-      ? `${savedView.label} (unsupported)`
+      ? `${savedView.label} (${savedView.disabledLabel ?? "unsupported"})`
       : savedView.label,
     disabled: Boolean(savedView.disabledReason),
   }));

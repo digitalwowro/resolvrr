@@ -398,8 +398,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features`: feature-level component tests.
 - `tests/features/connection-message-query.test.tsx`: verifies transient
   connection action query parameters are removed after message rendering.
-- `tests/features/saved-view-persistence.test.ts`: verifies saved view
-  persistence sanitization, guardrails, and storage round-tripping.
+- `tests/features/saved-view-persistence.test.ts`: verifies saved view persistence sanitization, guardrails, and storage round-tripping.
+- `tests/features/saved-view-workspace.test.ts`: verifies workspace saved-view performance guardrails and provider-neutral disabled labels.
 - `tests/features/ticket-workspace-test-utils.tsx`: shared provider-backed
   workspace fixtures and render helpers for feature tests.
 - `tests/features/ticket-workspace.test.tsx`: verifies provider-backed

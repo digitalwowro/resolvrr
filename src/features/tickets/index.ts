@@ -55,3 +55,6 @@ export {
   type WorkspaceTicketSortKey,
   type WorkspaceTicketTab,
 } from "./workspace-adapter";
+export {
+  ticketListQueryCapabilities,
+} from "./list-query-guardrails";
