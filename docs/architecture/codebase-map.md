@@ -145,6 +145,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   missing group-name lookup.
 - `src/providers/zammad/ticket-secondary-mutations.ts`: Zammad selected-ticket
   secondary metadata writes for tags, related links, and subscription state.
+- `src/providers/zammad/ticket-subscription.ts`: Zammad subscription/following
+  reads through `/users/me` and `/mentions`, with provider-safe unavailable
+  diagnostics for optional detail fallback behavior.
 - `src/providers/zammad/tickets.ts`: Zammad ticket detail/thread endpoint reads
   and canonical detail response assembly with provider-neutral secondary data;
   list reads are re-exported from the provider-local list module.
@@ -590,6 +593,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   article payloads and provider-safe request usage.
 - `tests/providers/zammad/secondary-mutations.test.ts`: verifies Zammad tag,
   related-link, and subscription metadata write endpoint payloads.
+- `tests/providers/zammad/subscription-diagnostics.test.ts`: verifies Zammad
+  subscription secondary-read fallback diagnostics for current-user and mentions
+  endpoint failures or malformed responses.
 - `tests/providers/zammad/read-assets.test.ts`: verifies Zammad attachment
   metadata mapping.
 - `tests/providers/zammad/read-lookup-assets.test.ts`: verifies Zammad expanded

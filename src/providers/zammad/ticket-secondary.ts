@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ProviderError, type ProviderContext } from "@/core/providers";
+import type { ProviderContext } from "@/core/providers";
 import type { TicketLink, TicketSubscription } from "@/core/tickets";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
 import { zammadBaseUrl, zammadGetJson } from "./client";
@@ -7,10 +7,10 @@ import { namedReferenceValue, relationId } from "./participants";
 import {
   zammadAssetsSchema,
   zammadGenericNamedAssetSchema,
-  zammadUserSchema,
   type ZammadAssets,
   type ZammadTicket,
 } from "./schemas";
+import { readOptionalZammadTicketSubscription } from "./ticket-subscription";
 
 const zammadTagsResponseSchema = z
   .object({ tags: z.array(z.string()).default([]) })
@@ -31,37 +31,12 @@ const zammadLinksResponseSchema = z
   })
   .passthrough();
 
-const zammadMentionSchema = z
-  .object({
-    id: z.union([z.number(), z.string()]),
-    mentionable_type: z.string().nullish(),
-    mentionable_id: z.union([z.number(), z.string()]).nullish(),
-    user_id: z.union([z.number(), z.string()]).nullish(),
-  })
-  .passthrough();
-
-const zammadMentionsResponseSchema = z
-  .object({ mentions: z.array(zammadMentionSchema).default([]) })
-  .passthrough();
-
 export type ZammadSecondaryTicketData = {
   assets?: ZammadAssets;
   links: TicketLink[];
   subscription: TicketSubscription;
   tags: string[];
 };
-
-const unimplementedSubscription: TicketSubscription = {
-  supported: false,
-  following: false,
-};
-
-function providerDataMismatch(): ProviderError {
-  return new ProviderError(
-    "provider-data-mismatch",
-    "The helpdesk provider returned an unexpected response.",
-  );
-}
 
 function timingMetadata(context: ProviderContext) {
   return {
@@ -76,10 +51,7 @@ async function optionalSecondary<T>(
 ): Promise<T> {
   try {
     return await read();
-  } catch (error) {
-    if (error instanceof ProviderError || error instanceof Error) {
-      return fallback;
-    }
+  } catch {
     return fallback;
   }
 }
@@ -149,44 +121,6 @@ export async function readZammadTicketTags(
   );
 }
 
-export async function readZammadTicketSubscription(
-  context: ProviderContext,
-  ticketId: string,
-): Promise<TicketSubscription> {
-  return measureTicketReadPhase(
-    "provider-secondary-subscription-request",
-    { ...timingMetadata(context), operation: "detail" },
-    async () => {
-      const currentUserRequest = zammadGetJson(context, "/api/v1/users/me");
-      const mentionsRequest = zammadGetJson(context, "/api/v1/mentions");
-      const [rawCurrentUser, rawMentions] = await Promise.all([
-        currentUserRequest,
-        mentionsRequest,
-      ]);
-      const currentUser = zammadUserSchema.safeParse(rawCurrentUser);
-      if (!currentUser.success || currentUser.data.id === undefined) {
-        throw providerDataMismatch();
-      }
-      const currentUserId = String(currentUser.data.id);
-      const parsed = zammadMentionsResponseSchema.safeParse(rawMentions);
-      if (!parsed.success) {
-        return { supported: true, following: false };
-      }
-      const mention = parsed.data.mentions.find(
-        (candidate) =>
-          candidate.mentionable_type === "Ticket" &&
-          String(candidate.mentionable_id) === ticketId &&
-          String(candidate.user_id) === currentUserId,
-      );
-      return {
-        externalId: mention ? String(mention.id) : undefined,
-        supported: true,
-        following: Boolean(mention),
-      };
-    },
-  );
-}
-
 async function readZammadTicketLinks(
   context: ProviderContext,
   ticketId: string,
@@ -246,9 +180,7 @@ export async function readZammadSecondaryTicketData(
   const [tags, linkResult, subscription, groupAssets] = await Promise.all([
     optionalSecondary([], () => readZammadTicketTags(context, ticketId)),
     optionalSecondary({ links: [] }, () => readZammadTicketLinks(context, ticketId)),
-    optionalSecondary(unimplementedSubscription, () =>
-      readZammadTicketSubscription(context, ticketId),
-    ),
+    readOptionalZammadTicketSubscription(context, ticketId),
     optionalSecondary(undefined, () => readZammadTicketGroup(context, ticket, assets)),
   ]);
 
