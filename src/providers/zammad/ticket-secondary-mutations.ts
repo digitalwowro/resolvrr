@@ -2,10 +2,8 @@ import { ProviderError, type ProviderContext } from "@/core/providers";
 import type { TicketMetadataMutationInput } from "@/core/tickets";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
 import { zammadSendJson } from "./client";
-import {
-  readZammadTicketSubscription,
-  readZammadTicketTags,
-} from "./ticket-secondary";
+import { readZammadTicketTags } from "./ticket-secondary";
+import { readZammadTicketSubscription } from "./ticket-subscription";
 
 function timingMetadata(context: ProviderContext) {
   return {

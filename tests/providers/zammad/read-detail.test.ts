@@ -153,6 +153,11 @@ describe("Zammad ticket detail reads", () => {
       .mockResolvedValueOnce({
         status: 200,
         headers: new Headers(),
+        data: { id: 2, name: "2nd Level" },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
         data: {
           mentions: [
             {
@@ -169,11 +174,6 @@ describe("Zammad ticket detail reads", () => {
             },
           ],
         },
-      })
-      .mockResolvedValueOnce({
-        status: 200,
-        headers: new Headers(),
-        data: { id: 2, name: "2nd Level" },
       });
 
     const result = await zammadProviderPlugin.getTicketDetail?.(
@@ -196,13 +196,11 @@ describe("Zammad ticket detail reads", () => {
       "https://helpdesk.example.com/api/v1/users/me",
       expect.any(Object),
     );
-    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
-      6,
-      "https://helpdesk.example.com/api/v1/mentions",
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
+      "https://helpdesk.example.com/api/v1/mentions?mentionable_type=Ticket&mentionable_id=42",
       expect.any(Object),
     );
-    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
-      7,
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
       "https://helpdesk.example.com/api/v1/groups/2",
       expect.any(Object),
     );

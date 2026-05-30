@@ -79,9 +79,7 @@ describe("TicketWorkspace secondary metadata updates", () => {
     }));
     renderWorkspace(action);
 
-    await user.click(
-      screen.getByRole("checkbox", { name: "Subscribed Following" }),
-    );
+    await user.click(screen.getByRole("checkbox", { name: "Subscribed" }));
     await user.clear(screen.getByLabelText("Ticket tags"));
     await user.type(screen.getByLabelText("Ticket tags"), "vip, renewal");
     await user.type(screen.getByLabelText("Related ticket ID"), "77");

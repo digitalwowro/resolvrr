@@ -1,5 +1,7 @@
 import { RotateCcw, Trash2 } from "lucide-react";
-import { Button, Checkbox } from "@/components/ui";
+import type { ChangeEvent } from "react";
+import { Button } from "@/components/ui";
+import { cn } from "@/components/ui/classnames";
 import type { TicketMetadataMutationCapabilities } from "@/features/tickets/mutation-model";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import type {
@@ -39,6 +41,39 @@ function subscriptionLabel(detail: WorkspaceTicketDetail) {
   return detail.subscription.following ? "Following" : "Not following";
 }
 
+function SubscriptionSwitch({
+  checked,
+  disabled,
+  onChange,
+}: {
+  checked: boolean;
+  disabled: boolean;
+  onChange(event: ChangeEvent<HTMLInputElement>): void;
+}) {
+  return (
+    <span
+      className={cn(
+        "relative inline-flex h-9 w-16 items-center rounded-full p-1 transition-colors",
+        checked ? "bg-indigo-600" : "bg-slate-300",
+        disabled && "cursor-not-allowed opacity-60",
+      )}
+    >
+      <input
+        aria-label="Subscribed"
+        checked={checked}
+        className="peer sr-only"
+        disabled={disabled}
+        onChange={onChange}
+        type="checkbox"
+      />
+      <span
+        aria-hidden="true"
+        className="size-7 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-7"
+      />
+    </span>
+  );
+}
+
 export function TicketSecondaryMetadataFields({
   detail,
   dirtyFields,
@@ -71,10 +106,9 @@ export function TicketSecondaryMetadataFields({
                 : "rounded-md border border-slate-200 bg-white px-3 py-2"
             }
           >
-            <Checkbox
+            <SubscriptionSwitch
               checked={draft.metadata.subscriptionFollowing === true}
               disabled={saving}
-              label="Following"
               onChange={(event) =>
                 onDraftChange({
                   ...draft,
