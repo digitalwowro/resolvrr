@@ -99,6 +99,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/telemetry/ticket-read-timing.ts`: sanitized ticket timing logger used by
   provider-backed list/detail orchestration, controlled metadata mutations, and
   provider request/mapping phases.
+- `src/telemetry/ticket-mutation-audit.ts`: sanitized metadata mutation audit
+  logger that records only mutation field names/counts and outcome metadata.
 - `src/providers`: provider registry and provider plugin implementations.
 - `src/providers/available-providers.ts`: single documented provider assembly
   file allowed to import installed provider plugins directly before exporting
@@ -492,6 +494,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   provider-neutral metadata mutation service dispatch, capability failures,
   pending-date validation, unavailable-transition handling, and
   refresh-after-write results.
+- `tests/features/ticket-metadata-mutation-audit.test.ts`: verifies mutation
+  audit logs preserve saved-refresh-failed and failed outcomes without logging
+  raw ticket IDs, metadata values, provider bodies, or customer content.
 - `tests/features/ticket-owner-group-metadata-service.test.ts`: verifies owner
   and group metadata mutation dispatch and capability gating.
 - `tests/features/ticket-secondary-metadata-service.test.ts`: verifies tags,

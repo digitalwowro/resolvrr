@@ -91,6 +91,12 @@ ticket detail and list row. If the write succeeds but refresh fails, callers
 receive `saved-refresh-failed` so UI can present a non-destructive warning.
 Optimistic metadata updates are not part of this slice.
 
+Metadata mutation audit logs stay at the provider-neutral service boundary and
+record only field names, field counts, status, retryability, and safe provider
+metadata. Provider request payloads, response bodies, provider-local ticket IDs,
+assignment IDs, link IDs, tag values, and customer content must remain out of
+logs.
+
 ## Ticket Read Observability
 
 Provider read and write implementations should measure their own upstream

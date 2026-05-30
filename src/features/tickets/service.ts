@@ -8,6 +8,7 @@ import {
   ticketReadTimingDuration,
   ticketReadTimingStart,
 } from "@/telemetry/ticket-read-timing";
+import { recordTicketMetadataMutationAudit } from "@/telemetry/ticket-mutation-audit";
 import { loadActiveTicketProviderContext } from "./connection-context";
 import {
   dispatchTicketDetailRead,
@@ -194,6 +195,7 @@ export async function updateWorkspaceTicketMetadata(
 ): Promise<TicketMetadataMutationResult> {
   const totalStart = ticketReadTimingStart();
   if (!hasTicketMetadataMutationInput(input)) {
+    recordTicketMetadataMutationAudit({ input, reason: "invalid-input", retryable: false, status: "failed" });
     return { status: "failed", reason: "invalid-input", retryable: false };
   }
 
@@ -205,6 +207,12 @@ export async function updateWorkspaceTicketMetadata(
     "mutation",
   );
   if (providerContext.status === "unavailable") {
+    recordTicketMetadataMutationAudit({
+      input,
+      reason: providerContext.reason,
+      retryable: providerContext.retryable,
+      status: "failed",
+    });
     recordTicketReadTiming({
       durationMs: ticketReadTimingDuration(totalStart),
       operation: "mutation",
@@ -216,18 +224,28 @@ export async function updateWorkspaceTicketMetadata(
     return failedMutation(providerContext);
   }
 
+  const mutationLogContext = {
+    connectionId: providerContext.value.context.connection.id,
+    providerKey: providerContext.value.context.connection.providerKey,
+  };
   const mutationResult = await dispatchTicketMetadataMutation(
     providerContext.value,
     ticketExternalId,
     input,
   );
   if (mutationResult.status !== "saved") {
+    recordTicketMetadataMutationAudit({
+      ...mutationLogContext,
+      input,
+      reason: mutationResult.reason,
+      retryable: mutationResult.retryable,
+      status: "failed",
+    });
     recordTicketReadTiming({
-      connectionId: providerContext.value.context.connection.id,
+      ...mutationLogContext,
       durationMs: ticketReadTimingDuration(totalStart),
       operation: "mutation",
       phase: "total-metadata-mutation",
-      providerKey: providerContext.value.context.connection.providerKey,
       reason: mutationResult.reason,
       retryable: mutationResult.retryable,
       status: "unavailable",
@@ -247,23 +265,35 @@ export async function updateWorkspaceTicketMetadata(
         : undefined;
 
   recordTicketReadTiming({
-    connectionId: providerContext.value.context.connection.id,
+    ...mutationLogContext,
     durationMs: ticketReadTimingDuration(totalStart),
     operation: "mutation",
     phase: "total-metadata-mutation",
-    providerKey: providerContext.value.context.connection.providerKey,
     reason: refreshFailure?.reason,
     retryable: refreshFailure?.retryable,
     status: refreshFailure ? "unavailable" : "ok",
   });
 
   if (refreshFailure) {
+    recordTicketMetadataMutationAudit({
+      ...mutationLogContext,
+      input,
+      reason: refreshFailure.reason,
+      retryable: refreshFailure.retryable,
+      status: "saved-refresh-failed",
+    });
     return {
       status: "saved-refresh-failed",
       reason: refreshFailure.reason,
       retryable: refreshFailure.retryable,
     };
   }
+
+  recordTicketMetadataMutationAudit({
+    ...mutationLogContext,
+    input,
+    status: "saved",
+  });
 
   return { status: "saved" };
 }
