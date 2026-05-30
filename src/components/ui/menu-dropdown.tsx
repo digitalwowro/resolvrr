@@ -14,14 +14,11 @@ import { cn } from "./classnames";
 import {
   dropdownMenuClass,
   dropdownIconClass,
-  dropdownMeasureMenuClass,
-  dropdownMeasureMenuFrameClass,
-  dropdownMeasureOptionClass,
-  dropdownMeasureRootClass,
   dropdownOptionClass,
   dropdownOptionStateClass,
   dropdownTriggerClass,
 } from "./dropdown-styles";
+import { MenuDropdownMeasure } from "./menu-dropdown-measure";
 import {
   nextActionableIndex,
   typeaheadActionableIndex,
@@ -270,53 +267,14 @@ export function MenuDropdown({
   return (
     <div className={cn("inline-block", className)} ref={rootRef}>
       <div className="relative grid w-max max-w-sm">
-        <div
-          aria-hidden="true"
-          className={cn(dropdownMeasureRootClass, menuClassName)}
-        >
-          <div
-            className={cn(
-              dropdownTriggerClass,
-              triggerClassName,
-              "col-start-1 row-start-1",
-            )}
-          >
-            {triggerContent ?? <span className="truncate">{triggerLabel}</span>}
-            {showChevron ? (
-              <ChevronDown aria-hidden="true" className={dropdownIconClass} />
-            ) : null}
-          </div>
-          <div className={dropdownMeasureMenuFrameClass}>
-            <div className={dropdownMeasureMenuClass}>
-              {items.map((item) => {
-                if (item.type === "separator") {
-                  return null;
-                }
-
-                if (item.type === "heading") {
-                  return (
-                    <div
-                      className="h-8 w-max overflow-hidden px-2 py-0 uppercase whitespace-nowrap text-slate-500"
-                      key={item.id}
-                    >
-                      {item.label}
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className={dropdownMeasureOptionClass} key={item.id}>
-                    {item.icon}
-                    <span>{item.label}</span>
-                    {item.selected ? (
-                      <Check aria-hidden="true" className={dropdownIconClass} />
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        <MenuDropdownMeasure
+          items={items}
+          menuClassName={menuClassName}
+          showChevron={showChevron}
+          triggerClassName={triggerClassName}
+          triggerContent={triggerContent}
+          triggerLabel={triggerLabel}
+        />
         {triggerButton}
         {menuPanel}
       </div>

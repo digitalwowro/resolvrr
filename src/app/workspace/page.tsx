@@ -13,6 +13,7 @@ import {
   loadWorkspaceTicketDetail,
   loadWorkspaceTicketList,
   selectedTicketExternalId,
+  ticketListQueryCapabilities,
   workspaceTicketDetail,
   workspaceTicketRows,
   workspaceTicketTabs,
@@ -67,7 +68,16 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     user.id,
     activeConnection?.id,
   );
-  const selectedSavedViewId = defaultWorkspaceSavedViewId(savedViews);
+  const activeProvider = activeConnection
+    ? providerRegistry.get(activeConnection.providerKey)
+    : undefined;
+  const activeQueryCapabilities = activeProvider
+    ? ticketListQueryCapabilities(activeProvider.capabilities)
+    : undefined;
+  const selectedSavedViewId = defaultWorkspaceSavedViewId(
+    savedViews,
+    activeQueryCapabilities,
+  );
   const selectedSavedView = savedViews.find(
     (savedView) => savedView.id === selectedSavedViewId,
   );
@@ -130,7 +140,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
         savedViews,
         listResult.status === "available"
           ? listResult.queryCapabilities
-          : undefined,
+          : activeQueryCapabilities,
       )}
       selectedSavedViewId={selectedSavedViewId}
       selectedTicketId={selectedTicketId}

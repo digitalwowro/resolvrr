@@ -12,9 +12,10 @@ export type WorkspaceSavedView = {
   label: string;
   query?: SavedViewQuery;
   disabledReason?: TicketListQueryRejection["kind"];
+  disabledLabel?: string;
 };
 
-function unsupportedReason(
+export function savedViewQueryRejection(
   query: SavedViewQuery,
   capabilities?: TicketListQueryCapabilities,
 ): TicketListQueryRejection["kind"] | undefined {
@@ -43,24 +44,61 @@ function unsupportedReason(
   return undefined;
 }
 
+export function savedViewDisabledLabel(
+  reason: TicketListQueryRejection["kind"],
+) {
+  if (reason === "grouped-total-count-too-expensive") {
+    return "too expensive";
+  }
+  if (reason === "full-text-search-unsupported") {
+    return "search unsupported";
+  }
+  if (reason === "sort-unsupported") {
+    return "sort unsupported";
+  }
+  if (reason === "grouping-unsupported") {
+    return "grouping unsupported";
+  }
+  return "unsupported";
+}
+
 export function workspaceSavedViews(
   savedViews: StoredSavedView[],
   capabilities?: TicketListQueryCapabilities,
 ): WorkspaceSavedView[] {
   return [
     { id: allTicketsSavedViewId, label: "All tickets" },
-    ...savedViews.map((savedView) => ({
-      id: savedView.id,
-      label: savedView.name,
-      query: savedView.query,
-      disabledReason: unsupportedReason(savedView.query, capabilities),
-    })),
+    ...savedViews.map((savedView) => {
+      const disabledReason = savedViewQueryRejection(
+        savedView.query,
+        capabilities,
+      );
+
+      return {
+        id: savedView.id,
+        label: savedView.name,
+        query: savedView.query,
+        ...(disabledReason
+          ? {
+              disabledLabel: savedViewDisabledLabel(disabledReason),
+              disabledReason,
+            }
+          : {}),
+      };
+    }),
   ];
 }
 
-export function defaultWorkspaceSavedViewId(savedViews: StoredSavedView[]) {
+export function defaultWorkspaceSavedViewId(
+  savedViews: StoredSavedView[],
+  capabilities?: TicketListQueryCapabilities,
+) {
   return (
-    savedViews.find((savedView) => savedView.preference?.isDefault)?.id ??
+    savedViews.find(
+      (savedView) =>
+        savedView.preference?.isDefault &&
+        !savedViewQueryRejection(savedView.query, capabilities),
+    )?.id ??
     allTicketsSavedViewId
   );
 }

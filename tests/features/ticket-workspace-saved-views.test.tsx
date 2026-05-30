@@ -83,6 +83,7 @@ describe("TicketWorkspace saved views", () => {
           {
             id: "view-2",
             label: "Full text",
+            disabledLabel: "search unsupported",
             disabledReason: "full-text-search-unsupported",
           },
         ]}
@@ -98,7 +99,9 @@ describe("TicketWorkspace saved views", () => {
 
     const listbox = screen.getByRole("listbox");
     expect(
-      within(listbox).getByRole("option", { name: "Full text (unsupported)" }),
+      within(listbox).getByRole("option", {
+        name: "Full text (search unsupported)",
+      }),
     ).toBeDisabled();
   });
 });

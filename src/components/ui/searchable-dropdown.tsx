@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -15,15 +15,15 @@ import { firstEnabledIndex, nextEnabledIndex } from "./dropdown-navigation";
 import {
   dropdownMenuClass,
   dropdownIconClass,
-  dropdownMeasureMenuClass,
-  dropdownMeasureMenuFrameClass,
-  dropdownMeasureOptionClass,
-  dropdownMeasureRootClass,
-  dropdownOptionClass,
-  dropdownOptionStateClass,
   dropdownTriggerClass,
 } from "./dropdown-styles";
 import type { DropdownOption } from "./dropdown-types";
+import {
+  SearchableDropdownMeasure,
+  SearchableDropdownOption,
+  visibleOptionsFor,
+  type VisibleOption,
+} from "./searchable-dropdown-parts";
 import { useOutsideClick } from "./use-outside-click";
 
 type SearchableDropdownProps = {
@@ -40,24 +40,6 @@ type SearchableDropdownProps = {
   triggerClassName?: string;
   menuClassName?: string;
 };
-
-type VisibleOption = DropdownOption & {
-  optionIndex: number;
-};
-
-function visibleOptionsFor(
-  options: DropdownOption[],
-  query: string,
-): VisibleOption[] {
-  const normalizedQuery = query.trim().toLocaleLowerCase();
-  return options
-    .map((option, optionIndex) => ({ ...option, optionIndex }))
-    .filter((option) =>
-      normalizedQuery
-        ? option.label.toLocaleLowerCase().includes(normalizedQuery)
-        : true,
-    );
-}
 
 function initialHighlightIndex(options: VisibleOption[]): number {
   return firstEnabledIndex(options);
@@ -156,39 +138,14 @@ export function SearchableDropdown({
         </span>
       ) : null}
       <div className="relative grid w-max max-w-sm">
-        <div
-          aria-hidden="true"
-          className={cn(dropdownMeasureRootClass, menuClassName)}
-        >
-          <div
-            className={cn(
-              dropdownTriggerClass,
-              triggerClassName,
-              "col-start-1 row-start-1",
-            )}
-          >
-            <span className="flex items-center gap-2 whitespace-nowrap">
-              {selected?.icon}
-              <span className={selected ? undefined : "text-slate-500"}>
-                {selected?.label ?? placeholder}
-              </span>
-            </span>
-            <ChevronDown aria-hidden="true" className={dropdownIconClass} />
-          </div>
-          <div className={dropdownMeasureMenuFrameClass}>
-            <div className={dropdownMeasureMenuClass}>
-              {options.map((option) => (
-                <div className={dropdownMeasureOptionClass} key={option.value}>
-                  {option.icon}
-                  <span>{option.label}</span>
-                  {option.value === value ? (
-                    <Check aria-hidden="true" className={dropdownIconClass} />
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <SearchableDropdownMeasure
+          menuClassName={menuClassName}
+          options={options}
+          placeholder={placeholder}
+          selected={selected}
+          triggerClassName={triggerClassName}
+          value={value}
+        />
         <button
           aria-hidden={open || undefined}
           aria-label={ariaLabel ?? label}
@@ -264,31 +221,15 @@ export function SearchableDropdown({
                   const selectedOption = option.value === value;
 
                   return (
-                    <button
-                      aria-disabled={option.disabled || undefined}
-                      aria-selected={selectedOption}
-                      className={cn(
-                        dropdownOptionClass,
-                        !selectedOption && dropdownOptionStateClass.idle,
-                        selectedOption && dropdownOptionStateClass.selected,
-                        highlighted &&
-                          !selectedOption &&
-                          dropdownOptionStateClass.highlighted,
-                        option.disabled && dropdownOptionStateClass.disabled,
-                      )}
-                      disabled={option.disabled}
-                      id={`${id}-option-${option.optionIndex}`}
+                    <SearchableDropdownOption
+                      highlighted={highlighted}
+                      id={id}
+                      index={index}
                       key={option.value}
-                      onClick={() => selectVisibleOption(index)}
-                      role="option"
-                      type="button"
-                    >
-                      {option.icon}
-                      <span className="min-w-0 truncate">{option.label}</span>
-                      {selectedOption ? (
-                        <Check aria-hidden="true" className={dropdownIconClass} />
-                      ) : null}
-                    </button>
+                      onSelect={selectVisibleOption}
+                      option={option}
+                      selected={selectedOption}
+                    />
                   );
                 })
               ) : (

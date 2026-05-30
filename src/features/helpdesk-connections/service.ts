@@ -1,12 +1,10 @@
 import { decryptSecret, encryptSecret } from "@/security/encryption";
 import { validateProviderBaseUrl } from "@/security/base-url-validation";
-import { ProviderError, type HelpdeskProviderPlugin } from "@/core/providers";
+import { ProviderError } from "@/core/providers";
 import type { ProviderRegistry } from "@/providers";
-import type {
-  HelpdeskConnectionsRepository,
-  StoredHelpdeskConnection,
-} from "./repository";
+import type { HelpdeskConnectionsRepository } from "./repository";
 import type { HelpdeskConnectionMessageCode } from "./messages";
+import type { ConnectionMutationResult } from "./service-types";
 import { parseConnectionForm } from "./form-parsing";
 import {
   logProviderValidationFailure,
@@ -16,20 +14,16 @@ import {
   validateWithProvider,
 } from "./provider-validation";
 
-export type ConnectionProviderOption = {
-  key: string;
-  label: string;
-  credentialSchemes: HelpdeskProviderPlugin["credentialSchemes"];
-};
-
-export type ConnectionListItem = StoredHelpdeskConnection & {
-  providerLabel: string;
-  active: boolean;
-};
-
-export type ConnectionMutationResult =
-  | { ok: true; connectionId?: string; code: HelpdeskConnectionMessageCode }
-  | { ok: false; code: HelpdeskConnectionMessageCode };
+export type {
+  ConnectionListItem,
+  ConnectionMutationResult,
+  ConnectionProviderOption,
+} from "./service-types";
+export {
+  getConnectionForEdit,
+  listConnectionProviderOptions,
+  listConnectionsForUser,
+} from "./service-listing";
 
 const validationFailureCodes = new Set<HelpdeskConnectionMessageCode>([
   "invalid-base-url",
@@ -45,60 +39,6 @@ function isValidationFailureCode(
   value: string,
 ): value is HelpdeskConnectionMessageCode {
   return validationFailureCodes.has(value as HelpdeskConnectionMessageCode);
-}
-
-function providerOptions(registry: ProviderRegistry): ConnectionProviderOption[] {
-  return registry.list().map((provider) => ({
-    key: provider.key,
-    label: provider.label,
-    credentialSchemes: provider.credentialSchemes,
-  }));
-}
-
-export function listConnectionProviderOptions(
-  registry: ProviderRegistry,
-): ConnectionProviderOption[] {
-  return providerOptions(registry);
-}
-
-export async function listConnectionsForUser(
-  repository: HelpdeskConnectionsRepository,
-  registry: ProviderRegistry,
-  userId: string,
-): Promise<ConnectionListItem[]> {
-  const [connections, activeConnectionId] = await Promise.all([
-    repository.listForUser(userId),
-    repository.getActiveConnectionId(userId),
-  ]);
-
-  return connections.map((connection) => ({
-    ...connection,
-    providerLabel:
-      registry.get(connection.providerKey)?.label ?? connection.providerKey,
-    active: connection.id === activeConnectionId,
-  }));
-}
-
-export async function getConnectionForEdit(
-  repository: HelpdeskConnectionsRepository,
-  userId: string,
-  connectionId: string,
-): Promise<StoredHelpdeskConnection | null> {
-  const connection = await repository.findForUser(userId, connectionId);
-  if (!connection) {
-    return null;
-  }
-
-  return {
-    id: connection.id,
-    userId: connection.userId,
-    providerKey: connection.providerKey,
-    displayName: connection.displayName,
-    baseUrl: connection.baseUrl,
-    status: connection.status,
-    createdAt: connection.createdAt,
-    updatedAt: connection.updatedAt,
-  };
 }
 
 export async function createConnection(

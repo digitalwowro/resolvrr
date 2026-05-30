@@ -208,6 +208,12 @@ For ungrouped list reads, the service automatically requests total counts when
 the active provider advertises `ticket:count`; providers without that capability
 keep returning loaded-count-only list results.
 
+Workspace saved views use the same provider-neutral guardrails before selecting
+a default view. If the user's default saved view requires unsupported search,
+sort, grouping, or grouped total-count behavior for the active provider, the
+workspace falls back to the provider-neutral "All tickets" view and keeps the
+unsupported saved view visible but disabled with a provider-neutral warning.
+
 Workspace list sorting uses this same contract: when the active provider
 advertises `providerSort`, changing a table sort requests page 1 with the
 selected provider-neutral sort and subsequent page loads keep that sort. When a

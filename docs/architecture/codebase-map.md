@@ -85,8 +85,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/security/encryption.ts`: AES-256-GCM secret envelope encryption.
 - `src/security/base-url-validation.ts`: provider-neutral HTTPS and SSRF
   validation for user-provided helpdesk base URLs.
-- `src/security/provider-http.ts`: SSRF-safe provider HTTPS/JSON request helper
-  with revalidated address binding and bounded reads/writes.
+- `src/security/provider-http.ts`: public SSRF-safe provider HTTPS/JSON helper
+  boundary and exports.
+- `src/security/provider-http-request.ts`: provider HTTP request internals for
+  revalidated address binding, redirects-disabled fetches, bounded
+  reads/writes, and safe JSON body errors.
 - `src/security/sanitize-html.ts`: provider HTML sanitization that preserves
   safe rich-text article structure such as links, lists, headings, tables, and
   inline emphasis while dropping scripts and unsafe attributes.
@@ -125,8 +128,12 @@ architecture folders or important files are added, moved, renamed, or removed.
   sort, state/priority filter, and state/priority bucket query construction.
 - `src/providers/zammad/ticket-groups.ts`: Zammad provider-owned
   state/priority bucket discovery and grouped list page orchestration.
-- `src/providers/zammad/tickets.ts`: Zammad ticket list/detail endpoint reads,
-  search-backed list totals, read-phase timing, and canonical response assembly.
+- `src/providers/zammad/ticket-list.ts`: Zammad ticket list endpoint reads,
+  search-backed list totals, list asset lookup, read-phase timing, and
+  canonical list response assembly.
+- `src/providers/zammad/tickets.ts`: Zammad ticket detail/thread endpoint reads
+  and canonical detail response assembly; list reads are re-exported from the
+  provider-local list module.
 - `src/providers/zammad/index.ts`: provider plugin export.
 - `src/features`: product feature boundaries that compose core contracts into
   workflows.
@@ -140,9 +147,13 @@ architecture folders or important files are added, moved, renamed, or removed.
   create, update, validate, enable/disable, active selection, and local delete.
 - `src/features/helpdesk-connections/repository.ts`: persistence interface and
   active-connection preference key for connection workflows.
-- `src/features/helpdesk-connections/service.ts`: connection use cases for
-  ownership, encrypted credential handling, SSRF validation, and provider
+- `src/features/helpdesk-connections/service.ts`: connection mutation use cases
+  for ownership, encrypted credential handling, SSRF validation, and provider
   validation.
+- `src/features/helpdesk-connections/service-listing.ts`: connection provider
+  option, list, and edit-read use cases.
+- `src/features/helpdesk-connections/service-types.ts`: provider option,
+  connection list item, and mutation result shapes.
 - `src/features/helpdesk-connections/form-parsing.ts`: provider-neutral
   connection form parsing and blank credential preservation rules.
 - `src/features/helpdesk-connections/provider-validation.ts`: connection
@@ -226,6 +237,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   workspace-only state for active pane, open ticket tabs, tab metadata patches
   after successful staged updates, tab orientation, visible columns, row
   selection, grouping, sorting, and route navigation.
+- `src/features/workspace/components/ticket-workspace-state-types.ts`: shared
+  workspace display state prop and active-pane types.
 - `src/features/workspace/components/use-ticket-detail-loader.ts`: in-memory
   per-workspace-session selected-ticket detail cache and client detail loader
   for post-hydration row opens.
@@ -235,6 +248,10 @@ architecture folders or important files are added, moved, renamed, or removed.
   grouped buckets after the provider reload succeeds, while preserving
   provider-backed total count metadata and independent grouped-bucket cursors
   without touching selected-ticket detail reads.
+- `src/features/workspace/components/ticket-list-pager-rows.ts`: list pager
+  request, identity, row append, and refreshed-baseline merge helpers.
+- `src/features/workspace/components/ticket-list-pager-types.ts`: list pager
+  hook prop type boundary.
 - `src/features/workspace/components/workspace-url.ts`: workspace ticket/List
   URL path helper used by local tab navigation and explicit ticket link sharing,
   plus history replacement helpers for local tab navigation.
@@ -255,6 +272,12 @@ architecture folders or important files are added, moved, renamed, or removed.
   state and priority display cells driven by canonical ticket labels and keys.
 - `src/features/workspace/components/ticket-table.tsx`: production ticket list
   table shell and row/header presentation for workspace ticket rows.
+- `src/features/workspace/components/ticket-table-row.tsx`: production ticket
+  table row rendering and row cell value mapping.
+- `src/features/workspace/components/ticket-table-group-header.tsx`: grouped
+  ticket table bucket header rendering and grouped-load-more controls.
+- `src/features/workspace/components/ticket-table-types.ts`: ticket table group
+  shape shared by grouped table modules.
 - `src/features/workspace/components/ticket-table-grouping.ts`: provider-neutral
   local presentation grouping and sorting helpers for loaded workspace rows.
 - `src/features/workspace/components/ticket-detail.tsx`: production selected-
@@ -264,6 +287,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/ticket-metadata-editor.tsx`: staged
   single-ticket metadata editor for state, priority, pending date/time,
   Update, Discard changes, pending/error states, and changed-field treatment.
+- `src/features/workspace/components/ticket-metadata-editor-state.tsx`: stateful
+  staged metadata editor implementation used by the thin editor wrapper.
 - `src/features/workspace/components/ticket-metadata-action-bar.tsx`: sticky
   full-width selected-ticket metadata action row with Discard changes and
   Update controls plus post-update navigation selection.
@@ -312,12 +337,16 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/components/ui/dropdown-types.ts`: shared dropdown option type.
 - `src/components/ui/loading-state.tsx`: labeled compact loading state.
 - `src/components/ui/menu-dropdown.tsx`: generic action menu primitive.
+- `src/components/ui/menu-dropdown-measure.tsx`: hidden measurement shell for
+  menu dropdown natural-width behavior.
 - `src/components/ui/menu-navigation.ts`: shared menu item navigation and
   typeahead helpers.
 - `src/components/ui/profile-menu.tsx`: generic profile-style menu trigger and
   menu composition.
 - `src/components/ui/searchable-dropdown.tsx`: searchable single-select
   dropdown primitive.
+- `src/components/ui/searchable-dropdown-parts.tsx`: searchable dropdown
+  option filtering, hidden measurement, and row rendering helpers.
 - `src/components/ui/spinner.tsx`: standard loading spinner primitive.
 - `src/components/ui/status-badge.tsx`: compact state badge primitive.
 - `src/components/ui/table.tsx`: shared table shell, header, row, and cell
@@ -388,8 +417,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/components`: component interaction tests for shared UI primitives.
 - `tests/components/dropdowns.test.tsx`: verifies searchable and non-searchable
   dropdown keyboard and close behavior.
-- `tests/components/menu-tooltip.test.tsx`: verifies menu, profile menu, and
-  tooltip hover, keyboard-visible focus, and close behavior.
+- `tests/components/menu-tooltip.test.tsx`: verifies menu and profile menu
+  behavior.
+- `tests/components/tooltip.test.tsx`: verifies tooltip hover,
+  keyboard-visible focus, viewport positioning, portal rendering, and close
+  behavior.
 - `tests/components/primitives-state.test.tsx`: verifies basic primitive states.
 - `tests/components/table.test.tsx`: verifies shared table wrappers and sortable
   table state.
@@ -398,19 +430,25 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features`: feature-level component tests.
 - `tests/features/connection-message-query.test.tsx`: verifies transient
   connection action query parameters are removed after message rendering.
-- `tests/features/saved-view-persistence.test.ts`: verifies saved view
-  persistence sanitization, guardrails, and storage round-tripping.
+- `tests/features/saved-view-persistence.test.ts`: verifies saved view persistence sanitization, guardrails, and storage round-tripping.
+- `tests/features/saved-view-workspace.test.ts`: verifies workspace saved-view performance guardrails and provider-neutral disabled labels.
 - `tests/features/ticket-workspace-test-utils.tsx`: shared provider-backed
   workspace fixtures and render helpers for feature tests.
 - `tests/features/ticket-workspace.test.tsx`: verifies provider-backed
-  workspace unavailable, table, profile menu, detail, read-only metadata,
-  grouping behavior, and post-hydration ungrouped list page loading.
+  workspace unavailable, table, profile menu, detail, read-only metadata, and
+  grouping behavior.
+- `tests/features/ticket-workspace-paging-sort.test.tsx`: verifies
+  post-hydration ungrouped list page loading, refreshed baseline row merging,
+  provider-backed sorting, and grouped reload behavior.
 - `tests/features/ticket-workspace-grouping.test.tsx`: verifies provider-backed
   workspace state/priority grouping and per-bucket pagination behavior.
 - `tests/features/ticket-workspace-saved-views.test.tsx`: verifies workspace
   saved-view selection and unsupported options.
 - `tests/features/ticket-list-action.test.ts`: verifies client-safe
   post-hydration workspace list page action results.
+- `tests/features/ticket-list-action-saved-views.test.ts`: verifies saved-view
+  application, global/active connection scope, and rejected cross-connection
+  workspace list page loads.
 - `tests/features/ticket-metadata-action-input.test.ts`: verifies staged
   selected-ticket metadata update payload parsing and pending date validation.
 - `tests/features/ticket-metadata-action-revalidation.test.ts`: verifies
@@ -420,6 +458,11 @@ architecture folders or important files are added, moved, renamed, or removed.
   provider-neutral metadata mutation service dispatch, capability failures,
   pending-date validation, unavailable-transition handling, and
   refresh-after-write results.
+- `tests/features/ticket-service-test-helpers.ts`: shared ticket service test
+  repository, provider, connection, and encryption fixtures.
+- `tests/features/ticket-service-query.test.ts`: verifies ticket list query
+  normalization, count requests, capability rejection, page-size constraining,
+  and provider-boundary dispatch fields.
 - `tests/features/ticket-list-query-guardrails.test.ts`: verifies
   provider-neutral list query capability derivation and unsupported or
   too-expensive query rejection before provider dispatch.
@@ -447,6 +490,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   selected-ticket URLs, explicit ticket link copying, and local ticket/List URL
   replacement for already-open tab activation and active-tab close fallback
   behavior.
+- `tests/features/ticket-workspace-client-detail-cache.test.tsx`: verifies
+  selected-ticket detail cache refresh after metadata saves and cached-detail
+  reuse when returning to an open ticket.
 - `tests/providers`: provider-specific tests.
 - `tests/providers/zammad/credentials.test.ts`: verifies provider-specific Basic
   Auth credential helpers.
@@ -455,14 +501,19 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/providers/zammad/mutation-policy.test.ts`: verifies Zammad-only state
   mutation availability constraints.
 - `tests/providers/zammad/read-helpers.ts`: shared Zammad read test fixtures.
-- `tests/providers/zammad/read.test.ts`: verifies Zammad ticket list/detail
-  endpoint calls, search-backed total counts and grouped bucket counts,
-  canonical mapping, optional feature defaults, and read timing.
+- `tests/providers/zammad/read.test.ts`: verifies Zammad ticket list endpoint
+  calls, search-backed total counts and grouped bucket counts, canonical list
+  mapping, and read timing.
+- `tests/providers/zammad/read-detail.test.ts`: verifies Zammad ticket detail
+  and article-thread endpoint calls, optional feature defaults, sanitization,
+  and detail read timing.
 - `tests/providers/zammad/mutations.test.ts`: verifies Zammad state/priority
   metadata write payload mapping, orphan pending-time rejection, and
   provider-safe request usage.
 - `tests/providers/zammad/read-assets.test.ts`: verifies Zammad attachment
-  metadata and expanded user display-name asset mapping.
+  metadata mapping.
+- `tests/providers/zammad/read-lookup-assets.test.ts`: verifies Zammad expanded
+  user display-name asset lookup behavior.
 - `tests/providers/zammad/validation.test.ts`: verifies provider-specific Basic
   Auth validation request behavior.
 - `tests/setup.ts`: component test cleanup and DOM matcher setup.
