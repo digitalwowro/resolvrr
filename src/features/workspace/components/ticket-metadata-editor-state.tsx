@@ -7,6 +7,11 @@ import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
+import type {
+  TicketCommunicationCapabilities,
+  TicketInternalNoteActionState,
+  TicketInternalNotePayload,
+} from "@/features/tickets/communication-model";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import {
   metadataDraftDirtyFields,
@@ -28,6 +33,7 @@ import {
 } from "./ticket-assignment-fields";
 import { TicketMetadataActionBar } from "./ticket-metadata-action-bar";
 import { TicketDetailSidebar } from "./ticket-detail-sidebar";
+import { TicketInternalNoteComposer } from "./ticket-internal-note-composer";
 import { TicketPrimaryMetadataFields } from "./ticket-primary-metadata-fields";
 import { TicketSecondaryMetadataFields } from "./ticket-secondary-metadata-fields";
 import { TicketThread } from "./ticket-thread";
@@ -55,6 +61,8 @@ function actionErrorState(): TicketMetadataMutationActionState {
 }
 
 export function TicketMetadataEditorState({
+  addTicketInternalNoteAction,
+  communicationCapabilities,
   detail,
   loadedBaseline,
   metadataMutationCapabilities,
@@ -63,6 +71,10 @@ export function TicketMetadataEditorState({
   onReturnToListAfterUpdate,
   updateTicketMetadataAction,
 }: {
+  addTicketInternalNoteAction(
+    request: TicketInternalNotePayload,
+  ): Promise<TicketInternalNoteActionState>;
+  communicationCapabilities: TicketCommunicationCapabilities;
   detail: WorkspaceTicketDetail;
   loadedBaseline: SelectedTicketDraft;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
@@ -218,6 +230,12 @@ export function TicketMetadataEditorState({
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1 flex-col">
           <TicketThread articles={detail.articles} />
+          <TicketInternalNoteComposer
+            addTicketInternalNoteAction={addTicketInternalNoteAction}
+            communicationCapabilities={communicationCapabilities}
+            onNoteSaved={refreshSavedDetail}
+            ticketExternalId={detail.id}
+          />
         </div>
         <TicketDetailSidebar>{fields}</TicketDetailSidebar>
       </div>

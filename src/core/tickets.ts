@@ -173,6 +173,10 @@ export type TicketMetadataMutationInput = {
   pendingUntil?: Date;
 };
 
+export type TicketInternalNoteInput = {
+  body: string;
+};
+
 export type TicketMetadataMutationConstraints = {
   hiddenStates?: TicketState[];
   pendingDateRequiredStates?: Partial<Record<TicketState, string>>;

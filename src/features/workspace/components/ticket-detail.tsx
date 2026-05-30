@@ -10,6 +10,11 @@ import type {
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
 import type {
+  TicketCommunicationCapabilities,
+  TicketInternalNoteActionState,
+  TicketInternalNotePayload,
+} from "@/features/tickets/communication-model";
+import type {
   WorkspaceTicketDetail,
 } from "@/features/tickets/workspace-adapter";
 import type { TicketMetadataSavedPatch } from "./metadata-draft";
@@ -18,6 +23,10 @@ import { TicketMetadataEditor } from "./ticket-metadata-editor";
 import { ticketPath } from "./workspace-url";
 
 type TicketDetailProps = {
+  addTicketInternalNoteAction(
+    request: TicketInternalNotePayload,
+  ): Promise<TicketInternalNoteActionState>;
+  communicationCapabilities: TicketCommunicationCapabilities;
   detail: WorkspaceTicketDetail;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
@@ -30,6 +39,8 @@ type TicketDetailProps = {
 };
 
 export function TicketDetail({
+  addTicketInternalNoteAction,
+  communicationCapabilities,
   detail,
   metadataMutationCapabilities,
   onMetadataSaved,
@@ -143,6 +154,8 @@ export function TicketDetail({
         </div>
       </div>
       <TicketMetadataEditor
+        addTicketInternalNoteAction={addTicketInternalNoteAction}
+        communicationCapabilities={communicationCapabilities}
         detail={detail}
         metadataMutationCapabilities={
           metadataMutationCapabilities ?? { state: false, priority: false }

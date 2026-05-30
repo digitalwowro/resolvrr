@@ -15,6 +15,7 @@ import {
 import type { TicketExternalId, TicketMetadataMutationInput } from "@/core/tickets";
 import type { TicketProviderContext } from "./connection-context";
 import { readUnavailableForProviderError } from "./connection-context";
+import { ticketCommunicationCapabilities } from "./communication-model";
 import { ticketListQueryCapabilities } from "./list-query-guardrails";
 import {
   hasTicketMetadataMutationInput,
@@ -126,6 +127,9 @@ export async function dispatchTicketListRead(
 
     return {
       status: "available",
+      communicationCapabilities: ticketCommunicationCapabilities(
+        providerContext.plugin.capabilities,
+      ),
       connectionName: providerContext.context.connection.displayName,
       metadataMutationCapabilities: ticketMetadataMutationCapabilities(
         providerContext.plugin.capabilities,

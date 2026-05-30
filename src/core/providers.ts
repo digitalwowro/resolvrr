@@ -1,6 +1,7 @@
 import type { HelpdeskConnection } from "./helpdesk-connections";
 import type { TicketLookupOption } from "./ticket-lookups";
 import type {
+  TicketInternalNoteInput,
   TicketMetadataMutationInput,
   TicketDetail,
   TicketExternalId,
@@ -43,6 +44,7 @@ export type ProviderCapability =
   | "ticket:update-tags"
   | "ticket:update-links"
   | "ticket:update-subscription"
+  | "ticket:add-internal-note"
   | "lookup:assignable-users"
   | "lookup:groups"
   | "search:full-text";
@@ -132,6 +134,11 @@ export type HelpdeskProviderPlugin = {
     context: ProviderContext,
     ticketExternalId: TicketExternalId,
     input: TicketMetadataMutationInput,
+  ): Promise<void>;
+  addTicketInternalNote?(
+    context: ProviderContext,
+    ticketExternalId: TicketExternalId,
+    input: TicketInternalNoteInput,
   ): Promise<void>;
   listAssignableUsers?(context: ProviderContext): Promise<ProviderLookupOption[]>;
   listGroups?(context: ProviderContext): Promise<ProviderLookupOption[]>;

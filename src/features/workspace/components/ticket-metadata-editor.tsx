@@ -5,6 +5,12 @@ import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
+import {
+  noTicketCommunicationCapabilities,
+  type TicketCommunicationCapabilities,
+  type TicketInternalNoteActionState,
+  type TicketInternalNotePayload,
+} from "@/features/tickets/communication-model";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import {
   metadataDraftFromDetail,
@@ -14,6 +20,8 @@ import {
 import { TicketMetadataEditorState } from "./ticket-metadata-editor-state";
 
 export function TicketMetadataEditor({
+  addTicketInternalNoteAction = unavailableInternalNoteAction,
+  communicationCapabilities = noTicketCommunicationCapabilities,
   detail,
   metadataMutationCapabilities,
   onMetadataSaved,
@@ -21,6 +29,10 @@ export function TicketMetadataEditor({
   onReturnToListAfterUpdate,
   updateTicketMetadataAction,
 }: {
+  addTicketInternalNoteAction?: (
+    request: TicketInternalNotePayload,
+  ) => Promise<TicketInternalNoteActionState>;
+  communicationCapabilities?: TicketCommunicationCapabilities;
   detail: WorkspaceTicketDetail;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
@@ -34,6 +46,8 @@ export function TicketMetadataEditor({
 
   return (
     <TicketMetadataEditorState
+      addTicketInternalNoteAction={addTicketInternalNoteAction}
+      communicationCapabilities={communicationCapabilities}
       detail={detail}
       key={metadataDraftKey(loadedBaseline)}
       loadedBaseline={loadedBaseline}
@@ -44,4 +58,11 @@ export function TicketMetadataEditor({
       updateTicketMetadataAction={updateTicketMetadataAction}
     />
   );
+}
+
+async function unavailableInternalNoteAction(): Promise<TicketInternalNoteActionState> {
+  return {
+    status: "failed",
+    message: "This workspace cannot add internal notes.",
+  };
 }

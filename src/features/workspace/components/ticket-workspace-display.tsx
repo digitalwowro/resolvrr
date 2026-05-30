@@ -19,6 +19,11 @@ import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
+import type {
+  TicketCommunicationCapabilities,
+  TicketInternalNoteActionState,
+  TicketInternalNotePayload,
+} from "@/features/tickets/communication-model";
 import {
   type WorkspaceTicketColumn,
   type WorkspaceTicketDetail,
@@ -38,9 +43,11 @@ import {
   DetailUnavailableState,
   EmptyDetailState,
 } from "./workspace-states";
+import { mergeTicketTabs } from "./ticket-tabs-merge";
 
 type TicketWorkspaceDisplayProps = {
   columns: WorkspaceTicketColumn[];
+  communicationCapabilities: TicketCommunicationCapabilities;
   detail?: WorkspaceTicketDetail;
   detailResult?: WorkspaceTicketDetailLoadResult;
   loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
@@ -57,6 +64,9 @@ type TicketWorkspaceDisplayProps = {
   selectedTicketId?: string;
   tabs: WorkspaceTicketTab[];
   totalListCount?: number;
+  addTicketInternalNoteAction(
+    request: TicketInternalNotePayload,
+  ): Promise<TicketInternalNoteActionState>;
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
@@ -64,6 +74,7 @@ type TicketWorkspaceDisplayProps = {
 
 export function TicketWorkspaceDisplay({
   columns,
+  communicationCapabilities,
   detail,
   detailResult,
   loadTicketDetailAction,
@@ -80,6 +91,7 @@ export function TicketWorkspaceDisplay({
   selectedTicketId,
   tabs: ticketTabs,
   totalListCount,
+  addTicketInternalNoteAction,
   updateTicketMetadataAction,
 }: TicketWorkspaceDisplayProps) {
   const listPager = useTicketListPager({
@@ -209,6 +221,8 @@ export function TicketWorkspaceDisplay({
       <TicketDetail
         key="work-area"
         detail={activeDetail.detail}
+        addTicketInternalNoteAction={addTicketInternalNoteAction}
+        communicationCapabilities={communicationCapabilities}
         metadataMutationCapabilities={metadataMutationCapabilities}
         onMetadataSaved={updateOpenTicketTabMetadata}
         onMetadataSavedDetailRefresh={refreshSavedTicketDetail}
@@ -276,15 +290,4 @@ export function TicketWorkspaceDisplay({
       </div>
     </section>
   );
-}
-
-function mergeTicketTabs(
-  initialTabs: WorkspaceTicketTab[],
-  rowTabs: WorkspaceTicketTab[],
-) {
-  const tabsById = new Map(initialTabs.map((tab) => [tab.id, tab]));
-  for (const tab of rowTabs) {
-    tabsById.set(tab.id, tab);
-  }
-  return [...tabsById.values()];
 }
