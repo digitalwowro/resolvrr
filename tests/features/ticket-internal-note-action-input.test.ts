@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { ticketInternalNoteActionInput } from "@/features/tickets/communication-action-input";
+import {
+  ticketCustomerReplyActionInput,
+  ticketInternalNoteActionInput,
+} from "@/features/tickets/communication-action-input";
 
 describe("ticket internal note action input", () => {
   it("trims the ticket id and note body", () => {
@@ -28,6 +31,38 @@ describe("ticket internal note action input", () => {
         ticketExternalId: "ticket-1",
         body: "Checked the logs.",
         publicReply: true,
+      }),
+    ).toEqual({ status: "invalid" });
+  });
+});
+
+describe("ticket customer reply action input", () => {
+  it("trims the ticket id and reply body", () => {
+    expect(
+      ticketCustomerReplyActionInput({
+        ticketExternalId: " ticket-1 ",
+        body: "  Thanks for the report.  ",
+      }),
+    ).toEqual({
+      status: "valid",
+      ticketExternalId: "ticket-1",
+      input: { body: "Thanks for the report." },
+    });
+  });
+
+  it("rejects empty replies and unsupported payload keys", () => {
+    expect(
+      ticketCustomerReplyActionInput({
+        ticketExternalId: "ticket-1",
+        body: "   ",
+      }),
+    ).toEqual({ status: "invalid" });
+
+    expect(
+      ticketCustomerReplyActionInput({
+        ticketExternalId: "ticket-1",
+        body: "Thanks for the report.",
+        internal: false,
       }),
     ).toEqual({ status: "invalid" });
   });

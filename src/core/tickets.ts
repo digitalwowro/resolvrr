@@ -177,6 +177,10 @@ export type TicketInternalNoteInput = {
   body: string;
 };
 
+export type TicketCustomerReplyInput = {
+  body: string;
+};
+
 export type TicketMetadataMutationConstraints = {
   hiddenStates?: TicketState[];
   pendingDateRequiredStates?: Partial<Record<TicketState, string>>;

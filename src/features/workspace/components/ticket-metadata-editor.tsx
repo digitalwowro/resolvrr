@@ -8,6 +8,8 @@ import type {
 import {
   noTicketCommunicationCapabilities,
   type TicketCommunicationCapabilities,
+  type TicketCustomerReplyActionState,
+  type TicketCustomerReplyPayload,
   type TicketInternalNoteActionState,
   type TicketInternalNotePayload,
 } from "@/features/tickets/communication-model";
@@ -20,6 +22,7 @@ import {
 import { TicketMetadataEditorState } from "./ticket-metadata-editor-state";
 
 export function TicketMetadataEditor({
+  addTicketCustomerReplyAction = unavailableCustomerReplyAction,
   addTicketInternalNoteAction = unavailableInternalNoteAction,
   communicationCapabilities = noTicketCommunicationCapabilities,
   detail,
@@ -29,6 +32,9 @@ export function TicketMetadataEditor({
   onReturnToListAfterUpdate,
   updateTicketMetadataAction,
 }: {
+  addTicketCustomerReplyAction?: (
+    request: TicketCustomerReplyPayload,
+  ) => Promise<TicketCustomerReplyActionState>;
   addTicketInternalNoteAction?: (
     request: TicketInternalNotePayload,
   ) => Promise<TicketInternalNoteActionState>;
@@ -46,6 +52,7 @@ export function TicketMetadataEditor({
 
   return (
     <TicketMetadataEditorState
+      addTicketCustomerReplyAction={addTicketCustomerReplyAction}
       addTicketInternalNoteAction={addTicketInternalNoteAction}
       communicationCapabilities={communicationCapabilities}
       detail={detail}
@@ -58,6 +65,13 @@ export function TicketMetadataEditor({
       updateTicketMetadataAction={updateTicketMetadataAction}
     />
   );
+}
+
+async function unavailableCustomerReplyAction(): Promise<TicketCustomerReplyActionState> {
+  return {
+    status: "failed",
+    message: "This workspace cannot send customer replies.",
+  };
 }
 
 async function unavailableInternalNoteAction(): Promise<TicketInternalNoteActionState> {

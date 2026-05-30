@@ -25,5 +25,5 @@ conversation content.
   capability, mutation field names, field counts, status, retryability, and
   timing. Logs must not include credentials, tokens, passwords, cookies, raw
   provider payloads, provider response bodies, mutation request bodies,
-  provider-local ticket or linked-ticket IDs, internal note bodies, or customer
-  message bodies.
+  provider-local ticket or linked-ticket IDs, internal note bodies, customer
+  reply bodies, or customer message bodies.

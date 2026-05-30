@@ -11,6 +11,8 @@ import type {
 } from "@/features/tickets/mutation-model";
 import type {
   TicketCommunicationCapabilities,
+  TicketCustomerReplyActionState,
+  TicketCustomerReplyPayload,
   TicketInternalNoteActionState,
   TicketInternalNotePayload,
 } from "@/features/tickets/communication-model";
@@ -23,6 +25,9 @@ import { TicketMetadataEditor } from "./ticket-metadata-editor";
 import { ticketPath } from "./workspace-url";
 
 type TicketDetailProps = {
+  addTicketCustomerReplyAction(
+    request: TicketCustomerReplyPayload,
+  ): Promise<TicketCustomerReplyActionState>;
   addTicketInternalNoteAction(
     request: TicketInternalNotePayload,
   ): Promise<TicketInternalNoteActionState>;
@@ -39,6 +44,7 @@ type TicketDetailProps = {
 };
 
 export function TicketDetail({
+  addTicketCustomerReplyAction,
   addTicketInternalNoteAction,
   communicationCapabilities,
   detail,
@@ -154,6 +160,7 @@ export function TicketDetail({
         </div>
       </div>
       <TicketMetadataEditor
+        addTicketCustomerReplyAction={addTicketCustomerReplyAction}
         addTicketInternalNoteAction={addTicketInternalNoteAction}
         communicationCapabilities={communicationCapabilities}
         detail={detail}

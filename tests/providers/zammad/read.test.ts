@@ -23,7 +23,7 @@ describe("Zammad ticket reads", () => {
     vi.clearAllMocks();
   });
 
-  it("advertises implemented read, mutation, and internal note capabilities", () => {
+  it("advertises implemented read, mutation, and communication capabilities", () => {
     expect(zammadProviderPlugin.capabilities).toEqual([
       "ticket:list",
       "ticket:count",
@@ -41,6 +41,7 @@ describe("Zammad ticket reads", () => {
       "ticket:update-links",
       "ticket:update-subscription",
       "ticket:add-internal-note",
+      "ticket:add-customer-reply",
       "lookup:assignable-users",
       "lookup:groups",
     ]);

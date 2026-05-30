@@ -1,6 +1,7 @@
 export type {
   Ticket,
   TicketArticle,
+  TicketCustomerReplyInput,
   TicketDetail,
   TicketInternalNoteInput,
   TicketListItem,
@@ -18,11 +19,15 @@ export {
   updateWorkspaceTicketMetadata,
 } from "./service";
 export {
+  addWorkspaceTicketCustomerReply,
   addWorkspaceTicketInternalNote,
 } from "./communication-service";
 export {
   noTicketCommunicationCapabilities,
   ticketCommunicationCapabilities,
+  type TicketCustomerReplyActionState,
+  type TicketCustomerReplyPayload,
+  type TicketCustomerReplyResult,
   type TicketCommunicationCapabilities,
   type TicketCommunicationErrorReason,
   type TicketInternalNoteActionState,

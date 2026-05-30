@@ -5,9 +5,18 @@ import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { providerRegistry } from "@/providers";
-import { ticketInternalNoteActionInput } from "./communication-action-input";
-import { addWorkspaceTicketInternalNote } from "./communication-service";
+import {
+  ticketCustomerReplyActionInput,
+  ticketInternalNoteActionInput,
+} from "./communication-action-input";
+import {
+  addWorkspaceTicketCustomerReply,
+  addWorkspaceTicketInternalNote,
+} from "./communication-service";
 import type {
+  TicketCustomerReplyActionState,
+  TicketCustomerReplyPayload,
+  TicketCustomerReplyResult,
   TicketCommunicationErrorReason,
   TicketInternalNoteActionState,
   TicketInternalNotePayload,
@@ -20,6 +29,40 @@ function noteErrorMessage(reason: TicketCommunicationErrorReason): string {
   }
   if (reason === "unsupported-capability") {
     return "This workspace cannot add internal notes.";
+  }
+  if (reason === "provider-auth-failed") {
+    return "The helpdesk rejected the saved credentials.";
+  }
+  if (reason === "provider-permission-denied") {
+    return "The helpdesk account does not have permission to update this ticket.";
+  }
+  if (reason === "provider-rate-limited") {
+    return "The helpdesk rate limit was reached. Try again later.";
+  }
+  if (reason === "provider-temporary-failure") {
+    return "The helpdesk could not be reached. Try again.";
+  }
+  if (reason === "invalid-connection") {
+    return "The active helpdesk workspace is no longer valid.";
+  }
+  if (
+    reason === "no-active-connection" ||
+    reason === "inactive-connection" ||
+    reason === "missing-credentials" ||
+    reason === "unknown-provider"
+  ) {
+    return "No active helpdesk workspace is available for ticket updates.";
+  }
+
+  return "The helpdesk returned an unexpected response.";
+}
+
+function replyErrorMessage(reason: TicketCommunicationErrorReason): string {
+  if (reason === "invalid-input") {
+    return "Enter a reply before sending it.";
+  }
+  if (reason === "unsupported-capability") {
+    return "This workspace cannot send customer replies.";
   }
   if (reason === "provider-auth-failed") {
     return "The helpdesk rejected the saved credentials.";
@@ -68,6 +111,26 @@ function actionStateForResult(
   };
 }
 
+function replyActionStateForResult(
+  result: TicketCustomerReplyResult,
+): TicketCustomerReplyActionState {
+  if (result.status === "saved") {
+    return { status: "saved", message: "Reply sent." };
+  }
+  if (result.status === "saved-refresh-failed") {
+    return {
+      status: "saved-refresh-failed",
+      message:
+        "Reply sent, but the ticket could not be refreshed. Refresh the workspace to verify the latest thread.",
+    };
+  }
+
+  return {
+    status: "failed",
+    message: replyErrorMessage(result.reason),
+  };
+}
+
 export async function addTicketInternalNoteAction(
   request: TicketInternalNotePayload,
 ): Promise<TicketInternalNoteActionState> {
@@ -94,4 +157,32 @@ export async function addTicketInternalNoteAction(
   }
 
   return actionStateForResult(result);
+}
+
+export async function addTicketCustomerReplyAction(
+  request: TicketCustomerReplyPayload,
+): Promise<TicketCustomerReplyActionState> {
+  const actionInput = ticketCustomerReplyActionInput(request);
+  if (actionInput.status === "invalid") {
+    return {
+      status: "failed",
+      message: replyErrorMessage("invalid-input"),
+    };
+  }
+
+  const user = await requireCurrentUser();
+  const result = await addWorkspaceTicketCustomerReply(
+    prismaHelpdeskConnectionsRepository,
+    providerRegistry,
+    env.APP_ENCRYPTION_KEY,
+    user.id,
+    actionInput.ticketExternalId,
+    actionInput.input,
+  );
+
+  if (result.status === "saved" || result.status === "saved-refresh-failed") {
+    revalidatePath("/workspace");
+  }
+
+  return replyActionStateForResult(result);
 }

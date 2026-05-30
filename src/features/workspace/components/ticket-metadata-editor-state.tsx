@@ -9,6 +9,8 @@ import type {
 } from "@/features/tickets/mutation-model";
 import type {
   TicketCommunicationCapabilities,
+  TicketCustomerReplyActionState,
+  TicketCustomerReplyPayload,
   TicketInternalNoteActionState,
   TicketInternalNotePayload,
 } from "@/features/tickets/communication-model";
@@ -31,6 +33,7 @@ import {
   assignmentLabel,
   TicketAssignmentFields,
 } from "./ticket-assignment-fields";
+import { TicketCustomerReplyComposer } from "./ticket-customer-reply-composer";
 import { TicketMetadataActionBar } from "./ticket-metadata-action-bar";
 import { TicketDetailSidebar } from "./ticket-detail-sidebar";
 import { TicketInternalNoteComposer } from "./ticket-internal-note-composer";
@@ -61,6 +64,7 @@ function actionErrorState(): TicketMetadataMutationActionState {
 }
 
 export function TicketMetadataEditorState({
+  addTicketCustomerReplyAction,
   addTicketInternalNoteAction,
   communicationCapabilities,
   detail,
@@ -71,6 +75,9 @@ export function TicketMetadataEditorState({
   onReturnToListAfterUpdate,
   updateTicketMetadataAction,
 }: {
+  addTicketCustomerReplyAction(
+    request: TicketCustomerReplyPayload,
+  ): Promise<TicketCustomerReplyActionState>;
   addTicketInternalNoteAction(
     request: TicketInternalNotePayload,
   ): Promise<TicketInternalNoteActionState>;
@@ -230,6 +237,12 @@ export function TicketMetadataEditorState({
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1 flex-col">
           <TicketThread articles={detail.articles} />
+          <TicketCustomerReplyComposer
+            addTicketCustomerReplyAction={addTicketCustomerReplyAction}
+            communicationCapabilities={communicationCapabilities}
+            onReplySaved={refreshSavedDetail}
+            ticketExternalId={detail.id}
+          />
           <TicketInternalNoteComposer
             addTicketInternalNoteAction={addTicketInternalNoteAction}
             communicationCapabilities={communicationCapabilities}
