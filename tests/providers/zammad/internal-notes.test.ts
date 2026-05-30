@@ -18,7 +18,7 @@ vi.mock("@/security/provider-http", () => ({
 
 const mockedSafeProviderJson = vi.mocked(safeProviderJson);
 
-describe("Zammad internal note mutations", () => {
+describe("Zammad ticket article mutations", () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -76,5 +76,46 @@ describe("Zammad internal note mutations", () => {
     });
 
     expect(mockedSafeProviderJson).not.toHaveBeenCalled();
+  });
+
+  it("creates a public email reply article for the ticket", async () => {
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 201,
+      headers: new Headers(),
+      data: {
+        id: 78,
+        ticket_id: 42,
+        type: "email",
+        sender: "Agent",
+        internal: false,
+        body: "Thanks for the report.",
+        created_at: "2026-05-30T12:00:00.000Z",
+        attachments: [],
+      },
+    });
+
+    await zammadProviderPlugin.addTicketCustomerReply?.(
+      providerContext(),
+      "42",
+      { body: "  Thanks for the report.  " },
+    );
+
+    expect(mockedSafeProviderJson).toHaveBeenCalledOnce();
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
+      "https://helpdesk.example.com/api/v1/ticket_articles",
+      expect.objectContaining({
+        allowedAddresses: ["93.184.216.34"],
+        body: JSON.stringify({
+          ticket_id: 42,
+          subject: "Customer reply",
+          body: "Thanks for the report.",
+          content_type: "text/plain",
+          type: "email",
+          internal: false,
+          sender: "Agent",
+        }),
+        method: "POST",
+      }),
+    );
   });
 });

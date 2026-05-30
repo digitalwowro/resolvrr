@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   defaultWorkspaceTicketColumns,
+  type TicketCustomerReplyActionState,
+  type TicketCustomerReplyPayload,
   type TicketInternalNoteActionState,
   type TicketInternalNotePayload,
 } from "@/features/tickets";
@@ -29,6 +31,10 @@ type InternalNoteAction = (
   request: TicketInternalNotePayload,
 ) => Promise<TicketInternalNoteActionState>;
 
+type CustomerReplyAction = (
+  request: TicketCustomerReplyPayload,
+) => Promise<TicketCustomerReplyActionState>;
+
 describe("TicketWorkspace internal notes", () => {
   beforeEach(() => {
     routerPush.mockClear();
@@ -53,7 +59,7 @@ describe("TicketWorkspace internal notes", () => {
         detailResult={initialDetail.detailResult}
         listResult={{
           ...availableList,
-          communicationCapabilities: { internalNotes: true },
+          communicationCapabilities: { customerReplies: false, internalNotes: true },
         }}
         loadTicketDetailAction={loadTicketDetailAction}
         logoutAction={noopAction}
@@ -95,7 +101,7 @@ describe("TicketWorkspace internal notes", () => {
         detailResult={detailProps.detailResult}
         listResult={{
           ...availableList,
-          communicationCapabilities: { internalNotes: true },
+          communicationCapabilities: { customerReplies: false, internalNotes: true },
         }}
         logoutAction={noopAction}
         rows={[row]}
@@ -135,7 +141,7 @@ describe("TicketWorkspace internal notes", () => {
         detailResult={detailProps.detailResult}
         listResult={{
           ...availableList,
-          communicationCapabilities: { internalNotes: true },
+          communicationCapabilities: { customerReplies: false, internalNotes: true },
         }}
         loadTicketDetailAction={loadTicketDetailAction}
         logoutAction={noopAction}
@@ -157,6 +163,106 @@ describe("TicketWorkspace internal notes", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Internal note")).toHaveValue("");
+    expect(loadTicketDetailAction).not.toHaveBeenCalled();
+  });
+});
+
+describe("TicketWorkspace customer replies", () => {
+  beforeEach(() => {
+    routerPush.mockClear();
+  });
+
+  it("submits a customer reply explicitly and refreshes the selected detail", async () => {
+    const user = userEvent.setup();
+    const initialDetail = selectedDetailProps();
+    const refreshedDetail = detailPropsFor(row, "Thanks for the report.");
+    const addTicketCustomerReplyAction = vi.fn<CustomerReplyAction>(async () => ({
+      status: "saved",
+      message: "Reply sent.",
+    }));
+    const loadTicketDetailAction = vi.fn(async () => refreshedDetail.detailResult);
+
+    render(
+      <TicketWorkspace
+        addTicketCustomerReplyAction={addTicketCustomerReplyAction}
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={initialDetail.detail}
+        detailResult={initialDetail.detailResult}
+        listResult={{
+          ...availableList,
+          communicationCapabilities: { customerReplies: true, internalNotes: false },
+        }}
+        loadTicketDetailAction={loadTicketDetailAction}
+        logoutAction={noopAction}
+        rows={[row]}
+        selectedTicketId="ticket-1"
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await user.type(
+      screen.getByLabelText("Customer reply"),
+      "Thanks for the report.",
+    );
+    await user.click(screen.getByRole("button", { name: "Send reply" }));
+
+    expect(addTicketCustomerReplyAction).toHaveBeenCalledWith({
+      body: "Thanks for the report.",
+      ticketExternalId: "ticket-1",
+    });
+    expect(await screen.findByText("Thanks for the report.")).toBeInTheDocument();
+    expect(loadTicketDetailAction).toHaveBeenCalledWith("ticket-1");
+    expect(screen.getByLabelText("Customer reply")).toHaveValue("");
+  });
+
+  it("clears the reply draft and shows a refresh warning for saved-refresh-failed", async () => {
+    const user = userEvent.setup();
+    const detailProps = selectedDetailProps();
+    const addTicketCustomerReplyAction = vi.fn<CustomerReplyAction>(async () => ({
+      status: "saved-refresh-failed",
+      message:
+        "Reply sent, but the ticket could not be refreshed. Refresh the workspace to verify the latest thread.",
+    }));
+    const loadTicketDetailAction = vi.fn(async () => detailProps.detailResult);
+
+    render(
+      <TicketWorkspace
+        addTicketCustomerReplyAction={addTicketCustomerReplyAction}
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={detailProps.detail}
+        detailResult={detailProps.detailResult}
+        listResult={{
+          ...availableList,
+          communicationCapabilities: { customerReplies: true, internalNotes: false },
+        }}
+        loadTicketDetailAction={loadTicketDetailAction}
+        logoutAction={noopAction}
+        rows={[row]}
+        selectedTicketId="ticket-1"
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await user.type(
+      screen.getByLabelText("Customer reply"),
+      "Thanks for the report.",
+    );
+    await user.click(screen.getByRole("button", { name: "Send reply" }));
+
+    expect(
+      await screen.findByText(
+        "Reply sent, but the ticket could not be refreshed. Refresh the workspace to verify the latest thread.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Customer reply")).toHaveValue("");
     expect(loadTicketDetailAction).not.toHaveBeenCalled();
   });
 });

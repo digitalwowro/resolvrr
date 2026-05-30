@@ -15,6 +15,8 @@ import type {
 import {
   noTicketCommunicationCapabilities,
   type TicketCommunicationCapabilities,
+  type TicketCustomerReplyActionState,
+  type TicketCustomerReplyPayload,
   type TicketInternalNoteActionState,
   type TicketInternalNotePayload,
 } from "@/features/tickets/communication-model";
@@ -35,6 +37,9 @@ import {
 import { UnavailableState } from "./workspace-states";
 
 type TicketWorkspaceProps = {
+  addTicketCustomerReplyAction?(
+    request: TicketCustomerReplyPayload,
+  ): Promise<TicketCustomerReplyActionState>;
   addTicketInternalNoteAction?(
     request: TicketInternalNotePayload,
   ): Promise<TicketInternalNoteActionState>;
@@ -71,6 +76,11 @@ const unavailableInternalNoteAction = async (): Promise<TicketInternalNoteAction
   message: "This workspace cannot add internal notes.",
 });
 
+const unavailableCustomerReplyAction = async (): Promise<TicketCustomerReplyActionState> => ({
+  status: "failed",
+  message: "This workspace cannot send customer replies.",
+});
+
 const profileActions: WorkspaceProfileAction[] = [
   {
     id: "manage-workspaces",
@@ -80,6 +90,7 @@ const profileActions: WorkspaceProfileAction[] = [
 ];
 
 export function TicketWorkspace({
+  addTicketCustomerReplyAction,
   addTicketInternalNoteAction,
   columns,
   communicationCapabilities,
@@ -127,6 +138,9 @@ export function TicketWorkspace({
         <UnavailableState reason={listResult.reason} />
       ) : (
         <TicketWorkspaceDisplay
+          addTicketCustomerReplyAction={
+            addTicketCustomerReplyAction ?? unavailableCustomerReplyAction
+          }
           addTicketInternalNoteAction={
             addTicketInternalNoteAction ?? unavailableInternalNoteAction
           }

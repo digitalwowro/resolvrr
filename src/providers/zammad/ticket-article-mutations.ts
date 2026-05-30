@@ -1,5 +1,8 @@
 import { ProviderError, type ProviderContext } from "@/core/providers";
-import type { TicketInternalNoteInput } from "@/core/tickets";
+import type {
+  TicketCustomerReplyInput,
+  TicketInternalNoteInput,
+} from "@/core/tickets";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
 import { zammadSendJson } from "./client";
 import { zammadArticleSchema } from "./schemas";
@@ -36,6 +39,21 @@ function internalNotePayload(ticketExternalId: string, input: TicketInternalNote
   };
 }
 
+function customerReplyPayload(
+  ticketExternalId: string,
+  input: TicketCustomerReplyInput,
+) {
+  return {
+    ticket_id: zammadTicketId(ticketExternalId),
+    subject: "Customer reply",
+    body: input.body.trim(),
+    content_type: "text/plain",
+    type: "email",
+    internal: false,
+    sender: "Agent",
+  };
+}
+
 export async function addZammadTicketInternalNote(
   context: ProviderContext,
   ticketExternalId: string,
@@ -61,6 +79,43 @@ export async function addZammadTicketInternalNote(
         "/api/v1/ticket_articles",
         "POST",
         internalNotePayload(ticketExternalId, input),
+      ),
+  );
+
+  const article = zammadArticleSchema.safeParse(response);
+  if (!article.success) {
+    throw new ProviderError(
+      "provider-data-mismatch",
+      "The helpdesk provider returned an unexpected response.",
+    );
+  }
+}
+
+export async function addZammadTicketCustomerReply(
+  context: ProviderContext,
+  ticketExternalId: string,
+  input: TicketCustomerReplyInput,
+): Promise<void> {
+  if (!input.body.trim()) {
+    throw new ProviderError(
+      "validation-failure",
+      "Customer reply body is required.",
+    );
+  }
+
+  const response = await measureTicketReadPhase(
+    "provider-metadata-mutation-request",
+    {
+      connectionId: context.connection.id,
+      operation: "mutation",
+      providerKey: context.connection.providerKey,
+    },
+    () =>
+      zammadSendJson(
+        context,
+        "/api/v1/ticket_articles",
+        "POST",
+        customerReplyPayload(ticketExternalId, input),
       ),
   );
 

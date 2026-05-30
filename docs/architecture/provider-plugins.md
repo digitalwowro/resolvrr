@@ -99,17 +99,17 @@ logs.
 
 ## Ticket Communication Mutations
 
-The approved communication write surface starts with internal notes only.
-Provider-neutral code passes `TicketInternalNoteInput.body` through the
-communication service/action path after one explicit `Add note` submit. Provider
-plugins map that input to provider-specific article/comment payloads inside
-their own folders.
+The approved communication write surface covers internal notes and customer
+replies. Provider-neutral code passes `TicketInternalNoteInput.body` and
+`TicketCustomerReplyInput.body` through the communication service/action path
+after one explicit submit. Provider plugins map those inputs to
+provider-specific article/comment payloads inside their own folders.
 
-Successful internal-note writes are followed by a service-layer refresh check
+Successful communication writes are followed by a service-layer refresh check
 for the selected ticket detail/thread. If the write succeeds but refresh fails,
 callers receive `saved-refresh-failed` so UI can present a non-destructive
-warning and keep provider source-of-truth semantics. Optimistic note rendering
-and customer replies are not part of this slice.
+warning and keep provider source-of-truth semantics. Optimistic rendering and
+attachment sends are not part of this slice.
 
 ## Ticket Read Observability
 
@@ -129,17 +129,17 @@ cache. UI components must not introduce provider fetch fan-out.
 ## Zammad Boundary
 
 Zammad ticket list, detail, thread DTO validation, endpoint construction,
-metadata write payload construction, internal-note article payload construction,
-and raw state/priority/assignment/tag/link/subscription normalization live under
-`src/providers/zammad`. Core, feature, UI, and provider-neutral tests consume
-only canonical ticket values and provider capabilities. Zammad currently
-advertises `ticket:list`,
+metadata write payload construction, internal-note/customer-reply article
+payload construction, and raw state/priority/assignment/tag/link/subscription
+normalization live under `src/providers/zammad`. Core, feature, UI, and
+provider-neutral tests consume only canonical ticket values and provider
+capabilities. Zammad currently advertises `ticket:list`,
 `ticket:count`, `ticket:sort`, `ticket:group`, `ticket:group-count`,
 `ticket:detail`, `ticket:links`, `ticket:subscription`,
 `ticket:update-state`, `ticket:update-priority`, `ticket:update-owner`,
 `ticket:update-group`, `ticket:update-tags`, `ticket:update-links`,
 `ticket:update-subscription`, `ticket:add-internal-note`,
-`lookup:assignable-users`, and `lookup:groups`.
+`ticket:add-customer-reply`, `lookup:assignable-users`, and `lookup:groups`.
 Subscription fields still use the stable empty canonical shapes documented in
 the ticket contract when their provider-neutral capabilities are not advertised.
 Zammad-backed sorting is implemented through the provider's ticket search

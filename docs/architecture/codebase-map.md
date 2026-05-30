@@ -40,7 +40,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   action.
 - `src/app/workspace/page.tsx`: protected authenticated workspace route that
   composes the active helpdesk connection ticket read path, controlled metadata
-  mutation action, and internal-note action into the real workspace.
+  mutation action, internal-note action, and customer-reply action into the real
+  workspace.
 - `src/app/workspace/connections/page.tsx`: protected helpdesk workspace
   connection list route.
 - `src/app/workspace/connections/new/page.tsx`: protected add-connection form
@@ -51,7 +52,7 @@ architecture folders or important files are added, moved, renamed, or removed.
   default plain-anchor color.
 - `src/core`: provider-neutral domain contracts and canonical values.
 - `src/core/tickets.ts`: canonical ticket values and provider-neutral
-  ticket/thread/link/subscription/mutation/internal-note types.
+  ticket/thread/link/subscription/mutation/communication types.
 - `src/core/ticket-list-query.ts`: provider-neutral list query, sort, count,
   grouping, pagination, result contracts, and normalization.
 - `src/core/ticket-lookups.ts`: provider-neutral lookup option, lookup result,
@@ -124,7 +125,7 @@ architecture folders or important files are added, moved, renamed, or removed.
   payload construction, state-transition guard, and endpoint call
   implementation.
 - `src/providers/zammad/ticket-article-mutations.ts`: Zammad-only ticket article
-  write helpers for internal note creation.
+  write helpers for internal note and customer reply creation.
 - `src/providers/zammad/participants.ts`: Zammad user/participant display-name,
   email fallback, recipient, and expanded asset mapping helpers.
 - `src/providers/zammad/plugin.ts`: provider plugin object, capabilities, and
@@ -203,15 +204,16 @@ architecture folders or important files are added, moved, renamed, or removed.
   database modules.
 - `src/features/tickets/actions.ts`: server action for staged selected-ticket
   metadata update payloads from `/workspace`.
-- `src/features/tickets/communication-actions.ts`: server action for explicit
-  selected-ticket internal-note submits from `/workspace`.
+- `src/features/tickets/communication-actions.ts`: server actions for explicit
+  selected-ticket internal-note and customer-reply submits from `/workspace`.
 - `src/features/tickets/communication-action-input.ts`: server-side parser and
-  validation for selected-ticket internal-note submit payloads.
+  validation for selected-ticket internal-note and customer-reply submit
+  payloads.
 - `src/features/tickets/communication-dispatch.ts`: capability-gated
-  internal-note provider dispatch plus provider error mapping.
-- `src/features/tickets/communication-model.ts`: provider-neutral internal-note
-  payload, capability, result, and action-state types.
-- `src/features/tickets/communication-service.ts`: internal-note write
+  internal-note/customer-reply provider dispatch plus provider error mapping.
+- `src/features/tickets/communication-model.ts`: provider-neutral
+  communication payload, capability, result, and action-state types.
+- `src/features/tickets/communication-service.ts`: communication write
   orchestration with selected-ticket detail refresh-after-write checks.
 - `src/features/tickets/metadata-action-input.ts`: server-side parser and
   validation for one selected-ticket update payload per explicit `Update`,
@@ -363,10 +365,12 @@ architecture folders or important files are added, moved, renamed, or removed.
   intentionally not exposed here.
 - `src/features/workspace/components/ticket-internal-note-composer.tsx`:
   capability-gated internal-note draft and explicit Add note submit UI.
+- `src/features/workspace/components/ticket-customer-reply-composer.tsx`:
+  capability-gated customer-reply draft and explicit Send reply submit UI.
 - `src/features/workspace/components/ticket-thread.tsx`: production read-only
   ticket article thread presentation with sanitized rich-text rendering,
   display-name-first From/To/Cc/Bcc metadata, attachment metadata display, and
-  no customer reply controls.
+  no provider-specific reply controls.
 - `src/features/workspace/components/ticket-tabs-merge.ts`: helper for merging
   initial selected-ticket tabs with row-derived tabs.
 - `src/features/workspace/components/ticket-tabs-panel.tsx`: production
@@ -510,10 +514,10 @@ architecture folders or important files are added, moved, renamed, or removed.
   selected-ticket update payload parsing, server-boundary validation, and
   pending date validation across primary and secondary metadata fields.
 - `tests/features/ticket-internal-note-action-input.test.ts`: verifies
-  selected-ticket internal-note payload parsing and unsupported-key rejection.
+  selected-ticket communication payload parsing and unsupported-key rejection.
 - `tests/features/ticket-internal-note-service.test.ts`: verifies
-  provider-neutral internal-note service dispatch, capability failures, and
-  refresh-after-write results.
+  provider-neutral internal-note and customer-reply service dispatch,
+  capability failures, and refresh-after-write results.
 - `tests/features/ticket-metadata-action-revalidation.test.ts`: verifies
   successful metadata writes invalidate the workspace for saved and
   saved-refresh-failed action results.
@@ -555,8 +559,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   related links, and subscription staged metadata controls submit through the
   shared Update action.
 - `tests/features/ticket-internal-notes-workspace.test.tsx`: verifies
-  explicit internal-note submit, pending/error behavior, and selected-detail
-  refresh after saved note writes.
+  explicit internal-note and customer-reply submits, pending/error behavior, and
+  selected-detail refresh after saved communication writes.
 - `tests/features/ticket-tab-metadata-sync.test.tsx`: verifies a successful
   staged state update immediately updates the active tab top-border state color
   before server refresh rehydrates the workspace.
@@ -593,7 +597,7 @@ architecture folders or important files are added, moved, renamed, or removed.
   owner, and group metadata write payload mapping, orphan pending-time
   rejection, and provider-safe request usage.
 - `tests/providers/zammad/internal-notes.test.ts`: verifies Zammad internal note
-  article payloads and provider-safe request usage.
+  and customer reply article payloads and provider-safe request usage.
 - `tests/providers/zammad/secondary-mutations.test.ts`: verifies Zammad tag,
   related-link, and subscription metadata write endpoint payloads.
 - `tests/providers/zammad/subscription-diagnostics.test.ts`: verifies Zammad

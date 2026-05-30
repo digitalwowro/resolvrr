@@ -105,9 +105,8 @@ The workspace sends one selected-ticket update payload for each explicit
 provider-neutral metadata slice; the server action parses and validates it
 before dispatching the existing provider-neutral mutation input. Server-side
 validation remains authoritative even when the client has already disabled
-invalid submits. Unsupported future slices such as customer replies are rejected
-at the action boundary until their provider-neutral contracts and capability
-checks are explicitly implemented.
+invalid submits. Unsupported future slices are rejected unless their
+provider-neutral contracts and capability checks are explicitly implemented.
 
 Provider plugins own mapping from those keys to provider-specific raw values.
 Zammad raw values such as `pending reminder`, `2 normal`, or `pending_time`
@@ -123,44 +122,49 @@ The provider-neutral mutation capabilities are:
 - `ticket:update-links`
 - `ticket:update-subscription`
 
-## Internal Notes
+## Ticket Communication Writes
 
-The approved communication write surface starts with internal notes only:
+The approved communication write surface covers internal notes and customer
+replies:
 
 - `TicketInternalNoteInput.body: string`
 - `TicketInternalNotePayload.ticketExternalId: string`
 - `TicketInternalNotePayload.body: string`
+- `TicketCustomerReplyInput.body: string`
+- `TicketCustomerReplyPayload.ticketExternalId: string`
+- `TicketCustomerReplyPayload.body: string`
 
-Internal notes use a separate explicit `Add note` submit path, not the staged
-metadata `Update` action. The server action trims and validates the ticket ID and
-body before dispatching provider-neutral `TicketInternalNoteInput`. Empty bodies,
-unsupported payload keys, provider raw fields, and customer-reply fields are
-rejected before provider dispatch.
+Internal notes and customer replies use separate explicit submit paths, not the
+staged metadata `Update` action. The server actions trim and validate the ticket
+ID and body before dispatching provider-neutral communication inputs. Empty
+bodies, unsupported payload keys, and provider raw fields are rejected before
+provider dispatch.
 
-The provider-neutral communication capability is:
+The provider-neutral communication capabilities are:
 
 - `ticket:add-internal-note`
+- `ticket:add-customer-reply`
 
-Internal note results distinguish write failure from refresh failure:
+Communication write results distinguish write failure from refresh failure:
 
-- `saved`: provider note write succeeded and the selected-ticket detail refresh
-  check succeeded.
+- `saved`: provider write succeeded and the selected-ticket detail refresh check
+  succeeded.
 - `failed`: provider write did not complete or was not allowed.
 - `saved-refresh-failed`: provider write succeeded, but the post-write detail
   refresh check failed. UI must present this as non-destructive and must not
-  pretend the note write failed.
+  pretend the communication write failed.
 
-The UI does not auto-send or optimistic-render note bodies. It keeps a local
-draft until the user explicitly submits, shows a pending state while saving,
-clears the draft after the provider write is confirmed (`saved` or
+The UI does not auto-send or optimistic-render note or reply bodies. It keeps a
+local draft until the user explicitly submits, shows a pending state while
+saving, clears the draft after the provider write is confirmed (`saved` or
 `saved-refresh-failed`), and shows a non-destructive refresh warning when a
 confirmed write cannot refresh the selected ticket detail. The UI reloads the
 selected ticket detail/thread after a checked `saved` result.
 
-Zammad internal notes are provider-specific article writes under
-`src/providers/zammad/**`. Zammad raw article payload fields such as `ticket_id`,
-`content_type`, `type`, `internal`, and `sender` must not escape the provider
-folder.
+Zammad internal notes and customer replies are provider-specific article writes
+under `src/providers/zammad/**`. Zammad raw article payload fields such as
+`ticket_id`, `content_type`, `type`, `internal`, and `sender` must not escape the
+provider folder.
 
 Mutation results distinguish write failure from refresh failure:
 
@@ -231,6 +235,8 @@ Mutation capabilities:
   follow/subscription state.
 - `ticket:add-internal-note`: provider can add an internal note article to the
   selected ticket.
+- `ticket:add-customer-reply`: provider can add a customer-visible reply article
+  to the selected ticket.
 
 Provider methods are capability-gated. Core features must check capability
 presence before calling optional provider methods.
@@ -327,6 +333,8 @@ Provider-backed reads stay coordinated at the service/provider boundary:
   layer after one explicit `Update` submit.
 - Internal note writes go through the ticket communication service/action layer
   after one explicit `Add note` submit.
+- Customer reply writes go through the ticket communication service/action layer
+  after one explicit `Send reply` submit.
 - Detail metadata, thread articles, tags, links, subscription, and lookup data
   must not be added as independent component-level fetches.
 
@@ -371,7 +379,7 @@ selected-ticket detail when a provider-neutral fallback is available.
 
 ## Non-Goals
 
-- Ticket create, merge, split, and customer reply mutations.
+- Ticket create, merge, and split mutations.
 - Attachment downloads or previews.
 - Provider-backed ticket caching policy.
 - Saved-view management, background sync, or AI workflows.

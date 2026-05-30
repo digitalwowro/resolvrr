@@ -21,6 +21,8 @@ import type {
 } from "@/features/tickets/mutation-model";
 import type {
   TicketCommunicationCapabilities,
+  TicketCustomerReplyActionState,
+  TicketCustomerReplyPayload,
   TicketInternalNoteActionState,
   TicketInternalNotePayload,
 } from "@/features/tickets/communication-model";
@@ -64,9 +66,8 @@ type TicketWorkspaceDisplayProps = {
   selectedTicketId?: string;
   tabs: WorkspaceTicketTab[];
   totalListCount?: number;
-  addTicketInternalNoteAction(
-    request: TicketInternalNotePayload,
-  ): Promise<TicketInternalNoteActionState>;
+  addTicketCustomerReplyAction(request: TicketCustomerReplyPayload): Promise<TicketCustomerReplyActionState>;
+  addTicketInternalNoteAction(request: TicketInternalNotePayload): Promise<TicketInternalNoteActionState>;
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
@@ -91,6 +92,7 @@ export function TicketWorkspaceDisplay({
   selectedTicketId,
   tabs: ticketTabs,
   totalListCount,
+  addTicketCustomerReplyAction,
   addTicketInternalNoteAction,
   updateTicketMetadataAction,
 }: TicketWorkspaceDisplayProps) {
@@ -221,6 +223,7 @@ export function TicketWorkspaceDisplay({
       <TicketDetail
         key="work-area"
         detail={activeDetail.detail}
+        addTicketCustomerReplyAction={addTicketCustomerReplyAction}
         addTicketInternalNoteAction={addTicketInternalNoteAction}
         communicationCapabilities={communicationCapabilities}
         metadataMutationCapabilities={metadataMutationCapabilities}

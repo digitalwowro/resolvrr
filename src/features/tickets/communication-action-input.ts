@@ -1,8 +1,21 @@
-import type { TicketInternalNoteInput } from "@/core/tickets";
+import type {
+  TicketCustomerReplyInput,
+  TicketInternalNoteInput,
+} from "@/core/tickets";
 
 export type TicketInternalNoteActionInput =
   | {
       input: TicketInternalNoteInput;
+      status: "valid";
+      ticketExternalId: string;
+    }
+  | {
+      status: "invalid";
+    };
+
+export type TicketCustomerReplyActionInput =
+  | {
+      input: TicketCustomerReplyInput;
       status: "valid";
       ticketExternalId: string;
     }
@@ -28,9 +41,11 @@ function hasUnsupportedKeys(
   return Object.keys(record).some((key) => !allowedKeys.includes(key));
 }
 
-export function ticketInternalNoteActionInput(
+function ticketBodyActionInput(
   request: unknown,
-): TicketInternalNoteActionInput {
+): { input: { body: string }; status: "valid"; ticketExternalId: string } | {
+  status: "invalid";
+} {
   const requestRecord = objectValue(request);
   if (
     !requestRecord ||
@@ -50,4 +65,16 @@ export function ticketInternalNoteActionInput(
     status: "valid",
     ticketExternalId,
   };
+}
+
+export function ticketInternalNoteActionInput(
+  request: unknown,
+): TicketInternalNoteActionInput {
+  return ticketBodyActionInput(request);
+}
+
+export function ticketCustomerReplyActionInput(
+  request: unknown,
+): TicketCustomerReplyActionInput {
+  return ticketBodyActionInput(request);
 }
