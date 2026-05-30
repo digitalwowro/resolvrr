@@ -139,6 +139,51 @@ describe("ticket read service", () => {
     });
   });
 
+  it("adds lookup data to ticket detail without failing detail on lookup errors", async () => {
+    const result = await loadWorkspaceTicketDetail(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([
+        provider({
+          capabilities: [
+            "ticket:list",
+            "ticket:detail",
+            "lookup:assignable-users",
+            "lookup:groups",
+          ],
+          listAssignableUsers: async () => [
+            { externalId: "user-1", label: "Agent Smith" },
+          ],
+          listGroups: async () => {
+            throw new ProviderError("temporary-provider-failure", "timeout", true);
+          },
+        }),
+      ]),
+      encryptionKey,
+      "user-1",
+      "ticket-1",
+    );
+
+    expect(result).toMatchObject({
+      status: "available",
+      detail: {
+        lookupData: {
+          assignableUsers: {
+            status: "available",
+            options: [{ externalId: "user-1", label: "Agent Smith" }],
+          },
+          groups: {
+            status: "unavailable",
+            reason: "provider-temporary-failure",
+            retryable: true,
+          },
+        },
+      },
+    });
+  });
+
   it.each([
     [
       new ProviderError("credential-auth-failure", "auth rejected"),

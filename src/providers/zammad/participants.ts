@@ -50,7 +50,7 @@ function userByEmail(
   }
 
   return Object.values(assets?.User ?? {}).find((user) => {
-    const userMail = userEmail(user)?.toLowerCase();
+    const userMail = zammadUserEmail(user)?.toLowerCase();
     return userMail === normalizedEmail;
   });
 }
@@ -72,7 +72,9 @@ export function namedAssetValue(
   return cleanString(assetById(assets, id)?.name);
 }
 
-function userDisplayName(user: ZammadUser | undefined): string | undefined {
+export function zammadUserDisplayName(
+  user: ZammadUser | undefined,
+): string | undefined {
   const explicitName =
     cleanString(user?.fullname) ??
     cleanString(user?.name) ??
@@ -92,7 +94,9 @@ function userDisplayName(user: ZammadUser | undefined): string | undefined {
   return undefined;
 }
 
-function userEmail(user: ZammadUser | undefined): string | undefined {
+export function zammadUserEmail(
+  user: ZammadUser | undefined,
+): string | undefined {
   const email = cleanString(user?.email);
   if (email) {
     return email;
@@ -106,7 +110,7 @@ function participantFromUser(
   user: ZammadUser | undefined,
   role: TicketParticipantRole,
 ): TicketParticipant | undefined {
-  const name = userDisplayName(user) ?? userEmail(user);
+  const name = zammadUserDisplayName(user) ?? zammadUserEmail(user);
   if (!name) {
     return undefined;
   }
@@ -114,7 +118,7 @@ function participantFromUser(
   return {
     externalId: relationId(user?.id),
     name,
-    email: userEmail(user),
+    email: zammadUserEmail(user),
     role,
   };
 }

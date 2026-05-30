@@ -1,3 +1,5 @@
+import type { TicketLookupData } from "./ticket-lookups";
+
 export const ticketStates = [
   "new",
   "open",
@@ -153,6 +155,7 @@ export type TicketDetail = {
   ticket: Ticket;
   thread: TicketThread;
   links: TicketLink[];
+  lookupData?: TicketLookupData;
   subscription: TicketSubscription;
   measuredAt: Date;
 };

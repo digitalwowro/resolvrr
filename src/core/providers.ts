@@ -1,4 +1,5 @@
 import type { HelpdeskConnection } from "./helpdesk-connections";
+import type { TicketLookupOption } from "./ticket-lookups";
 import type {
   TicketMetadataMutationInput,
   TicketDetail,
@@ -102,10 +103,7 @@ export type ProviderContext = {
   };
 };
 
-export type ProviderLookupOption = {
-  externalId: string;
-  label: string;
-};
+export type ProviderLookupOption = TicketLookupOption;
 
 export type HelpdeskProviderPlugin = {
   key: string;

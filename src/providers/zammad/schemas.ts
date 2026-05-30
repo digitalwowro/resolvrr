@@ -14,8 +14,12 @@ export const zammadUserSchema = z
     displayName: zammadNullableStringSchema,
     email: zammadNullableStringSchema,
     login: zammadNullableStringSchema,
+    active: z.boolean().optional(),
+    group_ids: z.record(z.string(), z.array(z.string())).optional(),
   })
   .passthrough();
+
+export const zammadUserListResponseSchema = z.array(zammadUserSchema);
 
 const zammadExpandedUserReferenceSchema = z
   .union([z.string(), zammadUserSchema])
@@ -101,6 +105,12 @@ export const zammadGenericNamedAssetListResponseSchema = z.array(
   zammadGenericNamedAssetSchema,
 );
 
+export const zammadGroupSchema = zammadGenericNamedAssetSchema.extend({
+  active: z.boolean().optional(),
+});
+
+export const zammadGroupListResponseSchema = z.array(zammadGroupSchema);
+
 export const zammadAssetsSchema = z
   .object({
     Ticket: z.record(z.string(), zammadTicketSchema).optional(),
@@ -135,5 +145,6 @@ export type ZammadTicket = z.infer<typeof zammadTicketSchema>;
 export type ZammadArticle = z.infer<typeof zammadArticleSchema>;
 export type ZammadAssets = z.infer<typeof zammadAssetsSchema>;
 export type ZammadGenericNamedAsset = z.infer<typeof zammadGenericNamedAssetSchema>;
+export type ZammadGroup = z.infer<typeof zammadGroupSchema>;
 export type ZammadUser = z.infer<typeof zammadUserSchema>;
 export type ZammadFullTicketPayload = z.infer<typeof zammadFullTicketPayloadSchema>;

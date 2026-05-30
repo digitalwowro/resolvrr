@@ -13,6 +13,10 @@ import {
 import { classifyZammadResponse } from "./errors";
 import { safeProviderFetch } from "@/security/provider-http";
 import { getZammadTicketDetail, listZammadTickets } from "./tickets";
+import {
+  listZammadAssignableUsers,
+  listZammadGroups,
+} from "./ticket-lookups";
 import { updateZammadTicketMetadata } from "./mutations";
 
 const defaultValidationTimeoutMs = 5000;
@@ -90,6 +94,8 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "ticket:links",
     "ticket:update-state",
     "ticket:update-priority",
+    "lookup:assignable-users",
+    "lookup:groups",
   ],
   credentialSchemes: [
     {
@@ -110,4 +116,6 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   listTickets: listZammadTickets,
   getTicketDetail: getZammadTicketDetail,
   updateTicketMetadata: updateZammadTicketMetadata,
+  listAssignableUsers: listZammadAssignableUsers,
+  listGroups: listZammadGroups,
 };
