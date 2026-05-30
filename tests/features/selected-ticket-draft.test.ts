@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   metadataDraftDirtyFields,
-  metadataDraftFormData,
   metadataDraftFromBaseline,
   metadataDraftFromDetail,
+  metadataDraftUpdatePayload,
 } from "@/features/workspace/components/metadata-draft";
 import { selectedDetailProps } from "./ticket-workspace-test-utils";
 
@@ -57,20 +57,22 @@ describe("selected ticket draft model", () => {
     );
   });
 
-  it("submits the existing provider-neutral metadata payload from the draft", () => {
+  it("creates one provider-neutral selected-ticket update payload from the draft", () => {
     const baseline = metadataDraftFromDetail(selectedDetailProps().detail);
     const draft = metadataDraftFromBaseline(baseline);
     draft.metadata.state = "pending_reminder";
     draft.metadata.priority = "high";
     draft.metadata.pendingDateTime = { date: "2099-01-02", time: "09:30" };
 
-    const formData = metadataDraftFormData(baseline, draft);
+    const payload = metadataDraftUpdatePayload(baseline, draft);
 
-    expect(formData?.get("ticketExternalId")).toBe("ticket-1");
-    expect(formData?.get("state")).toBe("pending_reminder");
-    expect(formData?.get("priority")).toBe("high");
-    expect(new Date(String(formData?.get("pendingUntil"))).toISOString()).toBe(
-      new Date("2099-01-02T09:30").toISOString(),
-    );
+    expect(payload).toEqual({
+      metadata: {
+        pendingUntil: new Date("2099-01-02T09:30").toISOString(),
+        priority: "high",
+        state: "pending_reminder",
+      },
+      ticketExternalId: "ticket-1",
+    });
   });
 });

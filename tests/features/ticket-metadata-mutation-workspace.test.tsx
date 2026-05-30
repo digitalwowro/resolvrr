@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   defaultWorkspaceTicketColumns,
+  type SelectedTicketUpdatePayload,
 } from "@/features/tickets";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import {
@@ -32,8 +33,8 @@ describe("TicketWorkspace metadata mutations", () => {
   it("stages state mutations and refreshes the workspace after Update", async () => {
     const user = userEvent.setup();
     const detailProps = selectedDetailProps();
-    const action = vi.fn(async (formData: FormData) => {
-      void formData;
+    const action = vi.fn(async (request: SelectedTicketUpdatePayload) => {
+      void request;
       return {
         status: "saved" as const,
         field: "state" as const,
@@ -68,10 +69,10 @@ describe("TicketWorkspace metadata mutations", () => {
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
-    const formData = action.mock.calls[0]?.[0] as FormData;
-    expect(formData.get("ticketExternalId")).toBe("ticket-1");
-    expect(formData.get("state")).toBe("closed");
-    expect(formData.get("priority")).toBeNull();
+    expect(action.mock.calls[0]?.[0]).toEqual({
+      metadata: { state: "closed" },
+      ticketExternalId: "ticket-1",
+    });
   });
 
   it("hides provider-supplied unavailable state options", async () => {
@@ -165,8 +166,8 @@ describe("TicketWorkspace metadata mutations", () => {
         pending_close: "Zammad pending states require a pending date.",
       },
     };
-    const action = vi.fn(async (formData: FormData) => {
-      void formData;
+    const action = vi.fn(async (request: SelectedTicketUpdatePayload) => {
+      void request;
       return {
         status: "saved" as const,
         field: "state" as const,
@@ -216,18 +217,20 @@ describe("TicketWorkspace metadata mutations", () => {
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
-    const formData = action.mock.calls[0]?.[0] as FormData;
-    expect(formData.get("state")).toBe("pending_reminder");
-    expect(new Date(String(formData.get("pendingUntil"))).toISOString()).toBe(
-      new Date("2099-01-02T08:00").toISOString(),
-    );
+    expect(action.mock.calls[0]?.[0]).toEqual({
+      metadata: {
+        pendingUntil: new Date("2099-01-02T08:00").toISOString(),
+        state: "pending_reminder",
+      },
+      ticketExternalId: "ticket-1",
+    });
   });
 
   it("shows mutation errors while keeping the staged draft editable", async () => {
     const user = userEvent.setup();
     const detailProps = selectedDetailProps();
-    const action = vi.fn(async (formData: FormData) => {
-      void formData;
+    const action = vi.fn(async (request: SelectedTicketUpdatePayload) => {
+      void request;
       return {
         status: "failed" as const,
         field: "priority" as const,

@@ -15,6 +15,7 @@ import type {
   WorkspaceTicketListGroup,
 } from "@/features/tickets/list-page-action-result";
 import type {
+  SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
@@ -57,7 +58,7 @@ type TicketWorkspaceDisplayProps = {
   tabs: WorkspaceTicketTab[];
   totalListCount?: number;
   updateTicketMetadataAction(
-    formData: FormData,
+    request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
 };
 

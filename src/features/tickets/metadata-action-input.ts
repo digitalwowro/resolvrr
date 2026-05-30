@@ -19,9 +19,19 @@ export type TicketMetadataMutationActionInput =
       status: "invalid";
     };
 
-function textValue(formData: FormData, name: string): string {
-  const value = formData.get(name);
+function objectValue(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function textValue(record: Record<string, unknown>, name: string): string {
+  const value = record[name];
   return typeof value === "string" ? value : "";
+}
+
+function hasOwnValue(record: Record<string, unknown>, name: string): boolean {
+  return Object.prototype.hasOwnProperty.call(record, name);
 }
 
 function isTicketState(value: string): value is TicketState {
@@ -53,16 +63,23 @@ function invalidField(
 }
 
 export function ticketMetadataMutationActionInput(
-  formData: FormData,
+  request: unknown,
   now = new Date(),
 ): TicketMetadataMutationActionInput {
-  const ticketExternalId = textValue(formData, "ticketExternalId");
-  const stateValue = textValue(formData, "state");
-  const priorityValue = textValue(formData, "priority");
-  const pendingUntilText = textValue(formData, "pendingUntil");
+  const requestRecord = objectValue(request);
+  const metadata = objectValue(requestRecord?.metadata) ?? {};
+  const ticketExternalId = requestRecord
+    ? textValue(requestRecord, "ticketExternalId")
+    : "";
+  const stateValue = textValue(metadata, "state");
+  const priorityValue = textValue(metadata, "priority");
+  const pendingUntilText = textValue(metadata, "pendingUntil");
   const input: TicketMetadataMutationInput = {};
   let field: TicketMetadataMutationField | undefined;
 
+  if (hasOwnValue(metadata, "state") && !stateValue) {
+    return { status: "invalid", field: "state" };
+  }
   if (stateValue) {
     if (!isTicketState(stateValue)) {
       return { status: "invalid", field: "state" };
@@ -71,6 +88,9 @@ export function ticketMetadataMutationActionInput(
     field = "state";
   }
 
+  if (hasOwnValue(metadata, "priority") && !priorityValue) {
+    return { status: "invalid", field: "priority" };
+  }
   if (priorityValue) {
     if (!isTicketPriority(priorityValue)) {
       return { status: "invalid", field: "priority" };
@@ -79,6 +99,9 @@ export function ticketMetadataMutationActionInput(
     field = field ?? "priority";
   }
 
+  if (hasOwnValue(metadata, "pendingUntil") && !pendingUntilText) {
+    return { status: "invalid", field: "state" };
+  }
   if (pendingUntilText) {
     const pendingUntil = pendingUntilValue(pendingUntilText);
     if (

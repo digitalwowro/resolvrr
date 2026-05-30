@@ -191,9 +191,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   not export server actions so component/test imports do not pull in env or
   database modules.
 - `src/features/tickets/actions.ts`: server action for staged selected-ticket
-  state/priority metadata mutations from `/workspace`.
-- `src/features/tickets/metadata-action-input.ts`: server-side FormData parser
-  and validation for staged single-ticket metadata update payloads.
+  state/priority update payloads from `/workspace`.
+- `src/features/tickets/metadata-action-input.ts`: server-side parser and
+  validation for one selected-ticket update payload per explicit `Update`.
 - `src/features/tickets/connection-context.ts`: active connection lookup,
   credential decryption, provider lookup, base URL revalidation, and setup
   timing for ticket reads and metadata mutations.
@@ -201,8 +201,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   state/priority metadata mutation dispatch plus provider error to
   unavailable-state mapping.
 - `src/features/tickets/mutation-model.ts`: provider-neutral state/priority
-  metadata mutation capabilities, pending-date validation, result/error model,
-  and action state types.
+  metadata mutation capabilities, selected-ticket update payload shape,
+  pending-date validation, result/error model, and action state types.
 - `src/features/tickets/list-query-guardrails.ts`: provider-neutral list query
   capability derivation and guardrail checks for unsupported or expensive query
   requests before provider dispatch.
@@ -464,8 +464,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-list-action-saved-views.test.ts`: verifies saved-view
   application, global/active connection scope, and rejected cross-connection
   workspace list page loads.
-- `tests/features/ticket-metadata-action-input.test.ts`: verifies staged
-  selected-ticket metadata update payload parsing and pending date validation.
+- `tests/features/ticket-metadata-action-input.test.ts`: verifies one
+  selected-ticket update payload parsing, server-boundary validation, and
+  pending date validation.
 - `tests/features/ticket-metadata-action-revalidation.test.ts`: verifies
   successful metadata writes invalidate the workspace for saved and
   saved-refresh-failed action results.

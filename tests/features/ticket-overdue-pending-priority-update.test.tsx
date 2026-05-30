@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   defaultWorkspaceTicketColumns,
+  type SelectedTicketUpdatePayload,
   type TicketMetadataMutationActionState,
 } from "@/features/tickets";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
@@ -24,7 +25,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 type MutationAction = (
-  formData: FormData,
+  request: SelectedTicketUpdatePayload,
 ) => Promise<TicketMetadataMutationActionState>;
 
 describe("TicketWorkspace overdue pending priority updates", () => {
@@ -86,9 +87,9 @@ describe("TicketWorkspace overdue pending priority updates", () => {
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() => expect(action).toHaveBeenCalledOnce());
-    const formData = action.mock.calls[0]?.[0] as FormData;
-    expect(formData.get("priority")).toBe("high");
-    expect(formData.get("state")).toBeNull();
-    expect(formData.get("pendingUntil")).toBeNull();
+    expect(action.mock.calls[0]?.[0]).toEqual({
+      metadata: { priority: "high" },
+      ticketExternalId: "ticket-1",
+    });
   });
 });

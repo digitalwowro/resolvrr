@@ -8,6 +8,7 @@ import {
   type WorkspaceSavedView,
 } from "@/features/saved-views";
 import type {
+  SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
@@ -44,7 +45,7 @@ type TicketWorkspaceProps = {
   setActiveConnectionAction(formData: FormData): void | Promise<void>;
   tabs: WorkspaceTicketTab[];
   updateTicketMetadataAction(
-    formData: FormData,
+    request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
   userEmail: string;
 };

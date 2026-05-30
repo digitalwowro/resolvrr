@@ -8,6 +8,7 @@ import { providerRegistry } from "@/providers";
 import { ticketMetadataMutationActionInput } from "./metadata-action-input";
 import { updateWorkspaceTicketMetadata } from "./service";
 import type {
+  SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
   TicketMetadataMutationErrorReason,
   TicketMetadataMutationField,
@@ -75,9 +76,9 @@ function actionStateForResult(
 }
 
 export async function updateTicketMetadataAction(
-  formData: FormData,
+  request: SelectedTicketUpdatePayload,
 ): Promise<TicketMetadataMutationActionState> {
-  const actionInput = ticketMetadataMutationActionInput(formData);
+  const actionInput = ticketMetadataMutationActionInput(request);
   if (actionInput.status === "invalid") {
     return {
       status: "failed",

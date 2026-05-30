@@ -5,6 +5,7 @@ import { Check, Copy, ExternalLink } from "lucide-react";
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
+  SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
@@ -24,7 +25,7 @@ type TicketDetailProps = {
   onReturnToListAfterUpdate(): void;
   roundedTop?: boolean;
   updateTicketMetadataAction(
-    formData: FormData,
+    request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
 };
 
