@@ -310,7 +310,10 @@ function auditPullRequests(limit) {
 }
 
 function markdownEscape(value) {
-  return String(value).replace(/\|/gu, "\\|").replace(/\n/gu, " ");
+  return String(value)
+    .replace(/\\/gu, "\\\\")
+    .replace(/\|/gu, "\\|")
+    .replace(/\n/gu, " ");
 }
 
 function historyMarkdown(rows) {
