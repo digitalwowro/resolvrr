@@ -162,9 +162,12 @@ confirmed write cannot refresh the selected ticket detail. The UI reloads the
 selected ticket detail/thread after a checked `saved` result.
 
 Zammad internal notes and customer replies are provider-specific article writes
-under `src/providers/zammad/**`. Zammad raw article payload fields such as
-`ticket_id`, `content_type`, `type`, `internal`, and `sender` must not escape the
-provider folder.
+under `src/providers/zammad/**`. Zammad customer replies derive the reply target
+from provider-owned ticket/customer data, include the resolved customer address
+as the provider article recipient, and fail before article creation when no safe
+customer address can be resolved. Zammad raw article payload fields such as
+`ticket_id`, `to`, `content_type`, `type`, `internal`, and `sender` must not
+escape the provider folder.
 
 Mutation results distinguish write failure from refresh failure:
 

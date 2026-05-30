@@ -111,6 +111,12 @@ callers receive `saved-refresh-failed` so UI can present a non-destructive
 warning and keep provider source-of-truth semantics. Optimistic rendering and
 attachment sends are not part of this slice.
 
+Provider implementations must not trust client-supplied reply recipients.
+Zammad customer replies resolve the customer recipient from provider-owned
+ticket/customer data and include the resolved address in the provider-local
+article payload. If the provider cannot resolve a safe customer address, the
+reply fails before the article is created.
+
 ## Ticket Read Observability
 
 Provider read and write implementations should measure their own upstream
@@ -130,10 +136,11 @@ cache. UI components must not introduce provider fetch fan-out.
 
 Zammad ticket list, detail, thread DTO validation, endpoint construction,
 metadata write payload construction, internal-note/customer-reply article
-payload construction, and raw state/priority/assignment/tag/link/subscription
-normalization live under `src/providers/zammad`. Core, feature, UI, and
-provider-neutral tests consume only canonical ticket values and provider
-capabilities. Zammad currently advertises `ticket:list`,
+payload construction, customer reply recipient resolution, and raw
+state/priority/assignment/tag/link/subscription normalization live under
+`src/providers/zammad`. Core, feature, UI, and provider-neutral tests consume
+only canonical ticket values and provider capabilities. Zammad currently
+advertises `ticket:list`,
 `ticket:count`, `ticket:sort`, `ticket:group`, `ticket:group-count`,
 `ticket:detail`, `ticket:links`, `ticket:subscription`,
 `ticket:update-state`, `ticket:update-priority`, `ticket:update-owner`,
