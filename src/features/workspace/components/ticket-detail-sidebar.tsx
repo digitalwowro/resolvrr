@@ -42,9 +42,6 @@ export function TicketDetailSidebar({
       <SidebarField label="Group options">
         <TicketLookupOptions lookup={detail.lookupData.groups} />
       </SidebarField>
-      <SidebarField label="Pending till">
-        <span>{detail.pendingTill}</span>
-      </SidebarField>
       <SidebarField label="Subscribed">
         <span>{subscriptionLabel(detail)}</span>
       </SidebarField>
