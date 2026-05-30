@@ -12,6 +12,7 @@ import { loadActiveTicketProviderContext } from "./connection-context";
 import {
   dispatchTicketDetailRead,
   dispatchTicketListRead,
+  dispatchTicketLookupDataRead,
   dispatchTicketMetadataMutation,
 } from "./provider-dispatch";
 import { guardTicketListQuery } from "./list-query-guardrails";
@@ -156,10 +157,10 @@ export async function loadWorkspaceTicketDetail(
     return providerContext;
   }
 
-  const result = await dispatchTicketDetailRead(
-    providerContext.value,
-    ticketExternalId,
-  );
+  const [result, lookupData] = await Promise.all([
+    dispatchTicketDetailRead(providerContext.value, ticketExternalId),
+    dispatchTicketLookupDataRead(providerContext.value),
+  ]);
   recordTicketReadTiming({
     connectionId: providerContext.value.context.connection.id,
     durationMs: ticketReadTimingDuration(totalStart),
@@ -170,7 +171,17 @@ export async function loadWorkspaceTicketDetail(
     retryable: result.status === "unavailable" ? result.retryable : undefined,
     status: result.status === "available" ? "ok" : "unavailable",
   });
-  return result;
+  if (result.status === "unavailable") {
+    return result;
+  }
+
+  return {
+    status: "available",
+    detail: {
+      ...result.detail,
+      lookupData,
+    },
+  };
 }
 
 export async function updateWorkspaceTicketMetadata(

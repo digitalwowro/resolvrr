@@ -4,6 +4,7 @@ import type {
   WorkspaceTicketDetailLoadResult,
   WorkspaceTicketRow,
 } from "@/features/tickets";
+import { unsupportedTicketLookupData } from "@/core/ticket-lookups";
 
 export async function noopAction() {}
 
@@ -70,6 +71,7 @@ export function detailPropsFor(
       pendingTill: ticket.pendingTill,
       updatedAt: ticket.updatedAt,
       links: [],
+      lookupData: unsupportedTicketLookupData(),
       subscription: { supported: false, following: false },
       tags: [],
       articles: [
@@ -105,6 +107,7 @@ export function detailPropsFor(
         pendingTill: ticket.pendingTill,
         updatedAt: ticket.updatedAt,
         links: [],
+        lookupData: unsupportedTicketLookupData(),
         subscription: { supported: false, following: false },
         tags: [],
         articles: [

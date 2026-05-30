@@ -34,6 +34,8 @@ describe("Zammad ticket reads", () => {
       "ticket:links",
       "ticket:update-state",
       "ticket:update-priority",
+      "lookup:assignable-users",
+      "lookup:groups",
     ]);
   });
 

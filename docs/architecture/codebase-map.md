@@ -54,6 +54,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   ticket/thread/link/subscription/mutation types.
 - `src/core/ticket-list-query.ts`: provider-neutral list query, sort, count,
   grouping, pagination, result contracts, and normalization.
+- `src/core/ticket-lookups.ts`: provider-neutral lookup option, lookup result,
+  and request-scoped lookup cache-policy contracts.
 - `src/core/saved-views.ts`: provider-neutral saved view filters, query
   defaults, storage helpers, and metadata.
 - `src/core/helpdesk-connections.ts`: explicit helpdesk connection domain types.
@@ -131,6 +133,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/providers/zammad/ticket-list.ts`: Zammad ticket list endpoint reads,
   search-backed list totals, list asset lookup, read-phase timing, and
   canonical list response assembly.
+- `src/providers/zammad/ticket-lookups.ts`: Zammad assignable-user and group
+  lookup reads mapped to provider-neutral lookup options.
 - `src/providers/zammad/ticket-secondary.ts`: optional Zammad selected-ticket
   secondary reads for tags, related ticket links, and missing group-name lookup.
 - `src/providers/zammad/tickets.ts`: Zammad ticket detail/thread endpoint reads
@@ -286,7 +290,10 @@ architecture folders or important files are added, moved, renamed, or removed.
   ticket detail header and layout.
 - `src/features/workspace/components/ticket-detail-sidebar.tsx`: production
   metadata sidebar shell for selected-ticket owner, group, pending time,
-  subscription, tags, and links.
+  subscription, tags, links, and lookup options.
+- `src/features/workspace/components/ticket-lookup-options.tsx`: compact
+  read-only provider-neutral lookup option list rendering for selected-ticket
+  sidebar fields.
 - `src/features/workspace/components/ticket-metadata-editor.tsx`: staged
   single-ticket metadata editor for state, priority, pending date/time,
   Update, Discard changes, pending/error states, and changed-field treatment.

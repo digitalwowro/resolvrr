@@ -1,4 +1,5 @@
 import type { TicketListBucket } from "@/core/providers";
+import { unsupportedTicketLookupData } from "@/core/ticket-lookups";
 import {
   ticketPriorityDefinitions,
   ticketStateDefinitions,
@@ -122,6 +123,7 @@ export type WorkspaceTicketDetail = {
   updatedAt: string;
   providerUrl?: string;
   links: WorkspaceTicketLink[];
+  lookupData: NonNullable<TicketDetail["lookupData"]>;
   subscription: TicketSubscription;
   tags: string[];
   metadataMutationConstraints?: TicketMetadataMutationConstraints;
@@ -275,6 +277,7 @@ export function workspaceTicketDetail(
   return {
     ...workspaceTicketRow(detail.ticket),
     links: detail.links.map(workspaceTicketLink),
+    lookupData: detail.lookupData ?? unsupportedTicketLookupData(),
     subscription: detail.subscription,
     tags: detail.ticket.tags,
     metadataMutationConstraints: detail.ticket.metadataMutationConstraints,

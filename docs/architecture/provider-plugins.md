@@ -98,8 +98,10 @@ request, metadata mutation current-ticket request, metadata mutation write
 request, user-lookup request, and mapping/parsing phases. If a provider requires
 additional upstream calls for future secondary data such as tags, links,
 subscription, or lookup lists, those calls must be orchestrated in the
-provider/read service layer and added as explicit measured phases. UI
-components must not introduce provider fetch fan-out.
+provider/read service layer and added as explicit measured phases. Lookup lists
+are request-scoped reads; the app may reuse them only through the existing
+active-session selected-ticket detail cache. UI components must not introduce
+provider fetch fan-out.
 
 ## Zammad Boundary
 
@@ -109,12 +111,13 @@ under `src/providers/zammad`. Core, feature, UI, and provider-neutral tests
 consume only canonical ticket values and provider capabilities. Zammad currently
 advertises `ticket:list`, `ticket:count`, `ticket:sort`, `ticket:group`,
 `ticket:group-count`, `ticket:detail`, `ticket:update-state`, and
-`ticket:update-priority`. Resolvrr has not implemented the provider-neutral
-subscription/following read or write contract yet, so the Zammad plugin must
-not advertise `ticket:subscription` until that contract and the exact Zammad
-API path are implemented under `src/providers/zammad/**`. Links and
-subscription fields still use the stable empty canonical shapes documented in
-the ticket contract when their provider-neutral capabilities are not advertised.
+`ticket:update-priority`, `ticket:links`, `lookup:assignable-users`, and
+`lookup:groups`. Resolvrr has not implemented the provider-neutral
+subscription/following read or write contract yet, so the Zammad plugin must not
+advertise `ticket:subscription` until that contract and the exact Zammad API
+path are implemented under `src/providers/zammad/**`. Subscription fields still
+use the stable empty canonical shapes documented in the ticket contract when
+their provider-neutral capabilities are not advertised.
 Zammad-backed sorting is implemented through the provider's ticket search
 endpoint with provider-neutral sort keys translated to Zammad sort fields.
 Zammad-backed total counts and state/priority grouped bucket counts use the

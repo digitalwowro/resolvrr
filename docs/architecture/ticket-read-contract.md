@@ -273,6 +273,7 @@ The read path logs sanitized timing metadata for these phases:
 - provider secondary tags request;
 - provider secondary links request;
 - provider secondary group lookup request;
+- provider lookup request;
 - provider user lookup request;
 - provider mapping/parsing;
 - total list load;
@@ -281,12 +282,18 @@ The read path logs sanitized timing metadata for these phases:
 - provider metadata mutation request;
 - total metadata mutation.
 
-Secondary data such as tags, links, subscription, and lookup lists must be
-added as explicit measured phases when they become part of the coordinated read
-path. Optional secondary read failures should not take down an otherwise
-available selected-ticket detail when a provider-neutral fallback is available.
-This contract does not introduce Redis, database caches, stale-while-revalidate,
-background sync, or cache abstractions.
+Lookup lists use provider-neutral `{ externalId, label }` options and are read
+through the selected-ticket detail service path. If supported lookup reads fail,
+the selected ticket detail remains available and the failed lookup list is
+marked unavailable. Lookup data uses request-scoped cache policy only; the
+workspace may reuse it through the existing active-session detail cache, but
+this contract does not introduce localStorage/sessionStorage, database caches,
+Redis, stale-while-revalidate, background sync, or cache abstractions.
+
+Secondary data such as tags, links, subscription, and lookup lists must be added
+as explicit measured phases when they become part of the coordinated read path.
+Optional secondary read failures should not take down an otherwise available
+selected-ticket detail when a provider-neutral fallback is available.
 
 ## Non-Goals
 
