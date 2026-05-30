@@ -21,7 +21,7 @@ import {
   metadataDraftHasChanges,
   metadataDraftSubmittedBaseline,
   validateMetadataDraft,
-  type TicketMetadataDraft,
+  type SelectedTicketDraft,
   type TicketMetadataSavedPatch,
 } from "./metadata-draft";
 import {
@@ -82,7 +82,7 @@ export function TicketMetadataEditorState({
   updateTicketMetadataAction,
 }: {
   detail: WorkspaceTicketDetail;
-  loadedBaseline: TicketMetadataDraft;
+  loadedBaseline: SelectedTicketDraft;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
   onMetadataSavedDetailRefresh?: (ticketId: string) => void;
@@ -94,8 +94,8 @@ export function TicketMetadataEditorState({
   const router = useRouter();
   const refreshSavedDetail =
     onMetadataSavedDetailRefresh ?? noopMetadataSavedDetailRefresh;
-  const [baseline, setBaseline] = useState<TicketMetadataDraft>(loadedBaseline);
-  const [draft, setDraft] = useState<TicketMetadataDraft>(
+  const [baseline, setBaseline] = useState<SelectedTicketDraft>(loadedBaseline);
+  const [draft, setDraft] = useState<SelectedTicketDraft>(
     metadataDraftFromBaseline(loadedBaseline),
   );
   const [saving, setSaving] = useState(false);
@@ -106,11 +106,11 @@ export function TicketMetadataEditorState({
   const hasChanges = metadataDraftHasChanges(dirtyFields);
   const validation = validateMetadataDraft(detail, dirtyFields, draft);
   const statusText = mutationStatusText(saving, mutationResult);
-  const stateDisplay = selectedStateDisplay(draft.state);
-  const showPendingDate = stateRequiresPendingDate(detail, draft.state);
+  const stateDisplay = selectedStateDisplay(draft.metadata.state);
+  const showPendingDate = stateRequiresPendingDate(detail, draft.metadata.state);
   const canUpdate = hasChanges && validation.valid && !saving;
 
-  function changeDraft(nextDraft: TicketMetadataDraft) {
+  function changeDraft(nextDraft: SelectedTicketDraft) {
     setDraft(nextDraft);
     setMutationResult({ status: "idle" });
   }
@@ -142,9 +142,11 @@ export function TicketMetadataEditorState({
         ) {
           const submittedBaseline = metadataDraftSubmittedBaseline(draft);
           onMetadataSaved({
-            priority: dirtyFields.priority ? submittedBaseline.priority : undefined,
+            priority: dirtyFields.priority
+              ? submittedBaseline.metadata.priority
+              : undefined,
             state: dirtyFields.state || dirtyFields.pendingUntil
-              ? submittedBaseline.state
+              ? submittedBaseline.metadata.state
               : undefined,
             ticketExternalId: submittedBaseline.ticketExternalId,
           });
@@ -155,7 +157,7 @@ export function TicketMetadataEditorState({
           setDraft(metadataDraftFromBaseline(submittedBaseline));
           if (
             shouldReturnToListAfterUpdate({
-              finalState: submittedBaseline.state,
+              finalState: submittedBaseline.metadata.state,
               navigation,
             })
           ) {
@@ -179,14 +181,17 @@ export function TicketMetadataEditorState({
             className="block w-full [&>div]:w-full"
             disabled={saving}
             onValueChange={(value) =>
-              changeDraft({ ...draft, state: value as TicketState })
+              changeDraft({
+                ...draft,
+                metadata: { ...draft.metadata, state: value as TicketState },
+              })
             }
             options={stateOptionsFor(detail)}
             selectedDisplay={stateDisplay}
             triggerClassName={
               dirtyFields.state ? `w-full ${changedControlClass}` : "w-full"
             }
-            value={draft.state}
+            value={draft.metadata.state}
           />
           {showPendingDate ? (
             <div className="mt-2">
@@ -194,11 +199,14 @@ export function TicketMetadataEditorState({
                 dateChanged={dirtyFields.pendingDate}
                 disabled={saving}
                 onChange={(pendingDateTime) =>
-                  changeDraft({ ...draft, pendingDateTime })
+                  changeDraft({
+                    ...draft,
+                    metadata: { ...draft.metadata, pendingDateTime },
+                  })
                 }
-                stateLabel={stateMutationLabel(draft.state)}
+                stateLabel={stateMutationLabel(draft.metadata.state)}
                 timeChanged={dirtyFields.pendingTime}
-                value={draft.pendingDateTime}
+                value={draft.metadata.pendingDateTime}
               />
             </div>
           ) : null}
@@ -215,13 +223,19 @@ export function TicketMetadataEditorState({
             className="block w-full [&>div]:w-full"
             disabled={saving}
             onValueChange={(value) =>
-              changeDraft({ ...draft, priority: value as TicketPriority })
+              changeDraft({
+                ...draft,
+                metadata: {
+                  ...draft.metadata,
+                  priority: value as TicketPriority,
+                },
+              })
             }
             options={priorityOptions}
             triggerClassName={
               dirtyFields.priority ? `w-full ${changedControlClass}` : "w-full"
             }
-            value={draft.priority}
+            value={draft.metadata.priority}
           />
         </EditableSidebarField>
       ) : (

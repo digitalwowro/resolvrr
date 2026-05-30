@@ -294,11 +294,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/ticket-lookup-options.tsx`: compact
   read-only provider-neutral lookup option list rendering for selected-ticket
   sidebar fields.
-- `src/features/workspace/components/ticket-metadata-editor.tsx`: staged
-  single-ticket metadata editor for state, priority, pending date/time,
+- `src/features/workspace/components/ticket-metadata-editor.tsx`: selected-
+  ticket draft editor for state, priority, pending date/time,
   Update, Discard changes, pending/error states, and changed-field treatment.
 - `src/features/workspace/components/ticket-metadata-editor-state.tsx`: stateful
-  staged metadata editor implementation used by the thin editor wrapper.
+  selected-ticket draft editor implementation used by the thin editor wrapper.
 - `src/features/workspace/components/ticket-metadata-action-bar.tsx`: sticky
   full-width selected-ticket metadata action row with Discard changes and
   Update controls plus post-update navigation selection.
@@ -310,9 +310,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/post-update-navigation-selector.tsx`:
   compact workspace selector for the persisted post-Update navigation
   preference.
-- `src/features/workspace/components/metadata-draft.ts`: selected-ticket
-  metadata draft diffing, validation, dirty-field detection, reset, and
-  FormData construction helpers.
+- `src/features/workspace/components/metadata-draft.ts`: selected-ticket draft
+  shell plus metadata-slice diffing, validation, dirty-field detection, reset,
+  and FormData construction helpers.
 - `src/features/workspace/components/ticket-sidebar-field.tsx`: shared
   sidebar read-only and editable field wrappers.
 - `src/features/workspace/components/ticket-pending-date-time.ts`: pending
@@ -487,6 +487,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-overdue-pending-priority-update.test.tsx`: verifies
   overdue pending tickets can still submit priority-only staged metadata
   updates without resubmitting stale pending dates.
+- `tests/features/selected-ticket-draft.test.ts`: verifies the selected-ticket
+  draft shell, metadata dirty-field tracking, discard/reset copy behavior, and
+  provider-neutral metadata submit payload construction.
 - `tests/features/ticket-staged-metadata-workspace.test.tsx`: verifies staged
   single-ticket metadata update behavior, changed-field treatment, discard,
   selected-ticket rebasing, and saved-refresh-failed UI handling.
