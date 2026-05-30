@@ -282,8 +282,8 @@ Provider-backed reads stay coordinated at the service/provider boundary:
 - Selected ticket detail/thread loading is one provider read path.
 - UI components do not fetch provider data directly.
 - UI components do not call provider code directly for mutations.
-- Staged single-ticket state and priority mutations go through the ticket
-  service/action layer after one explicit `Update` submit.
+- Staged single-ticket metadata mutations go through the ticket service/action
+  layer after one explicit `Update` submit.
 - Detail metadata, thread articles, tags, links, subscription, and lookup data
   must not be added as independent component-level fetches.
 
@@ -307,6 +307,12 @@ The read path logs sanitized timing metadata for these phases:
 - provider metadata mutation request;
 - total metadata mutation.
 
+Metadata mutation audit logs record only safe metadata: connection ID, provider
+key, mutation field names, field count, pending-date presence, final mutation
+status, retryability, and provider-neutral failure reason. They must not include
+ticket IDs, linked-ticket IDs, tag names, assignment IDs, provider request or
+response bodies, or customer message content.
+
 Lookup lists use provider-neutral `{ externalId, label }` options and are read
 through the selected-ticket detail service path. If supported lookup reads fail,
 the selected ticket detail remains available and the failed lookup list is
@@ -322,8 +328,7 @@ selected-ticket detail when a provider-neutral fallback is available.
 
 ## Non-Goals
 
-- Ticket create, merge, split, reply, note, tagging, link, and subscription
-  mutations.
+- Ticket create, merge, split, reply, and note mutations.
 - Attachment downloads or previews.
 - Provider-backed ticket caching policy.
 - Saved-view management, background sync, or AI workflows.

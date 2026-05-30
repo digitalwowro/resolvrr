@@ -21,7 +21,8 @@ conversation content.
 - Do not cache full provider responses by default.
 - If sensitive ticket/thread content must be cached, store sanitized normalized
   content and encrypt sensitive body fields at rest.
-- Logs may include safe metadata such as provider key, connection id, ticket id,
-  capability, status, and timing. Logs must not include credentials, tokens,
-  passwords, cookies, raw provider payloads, provider response bodies, mutation
-  request bodies, or customer message bodies.
+- Logs may include safe metadata such as provider key, connection id,
+  capability, mutation field names, field counts, status, retryability, and
+  timing. Logs must not include credentials, tokens, passwords, cookies, raw
+  provider payloads, provider response bodies, mutation request bodies,
+  provider-local ticket or linked-ticket IDs, or customer message bodies.
