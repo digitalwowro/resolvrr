@@ -14,6 +14,11 @@ export type TicketMetadataDraft = {
   state?: TicketState;
 };
 
+export const selectedTicketDraftEditableSlices = ["metadata"] as const;
+
+export type SelectedTicketDraftEditableSlice =
+  (typeof selectedTicketDraftEditableSlices)[number];
+
 export type SelectedTicketDraft = {
   metadata: TicketMetadataDraft;
   ticketExternalId: string;

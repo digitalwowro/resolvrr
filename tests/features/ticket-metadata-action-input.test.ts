@@ -94,4 +94,32 @@ describe("ticket metadata action input", () => {
       }),
     ).toEqual({ status: "invalid", field: "priority" });
   });
+
+  it("rejects unsupported future update slices until explicitly implemented", () => {
+    expect(
+      ticketMetadataMutationActionInput({
+        owner: { id: "agent-1" },
+        ticketExternalId: "ticket-1",
+      }),
+    ).toEqual({ status: "invalid", field: "state" });
+    expect(
+      ticketMetadataMutationActionInput({
+        metadata: { priority: "high" },
+        reply: { body: "Not implemented in this phase." },
+        ticketExternalId: "ticket-1",
+      }),
+    ).toEqual({ status: "invalid", field: "state" });
+  });
+
+  it("rejects raw or future metadata fields not in the provider-neutral contract", () => {
+    expect(
+      ticketMetadataMutationActionInput({
+        metadata: {
+          owner_id: 123,
+          priority: "high",
+        },
+        ticketExternalId: "ticket-1",
+      }),
+    ).toEqual({ status: "invalid", field: "state" });
+  });
 });
