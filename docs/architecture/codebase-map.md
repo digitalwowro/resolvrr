@@ -315,9 +315,14 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/ticket-state-mutation-options.tsx`: state
   dropdown option helpers for provider-supplied hidden states and selected-value
   display.
+- `src/features/workspace/components/ticket-article-attachments.tsx`: read-only
+  article attachment metadata presentation. It displays provider-neutral
+  filename, content type, and byte size values only; downloads and previews are
+  intentionally not exposed here.
 - `src/features/workspace/components/ticket-thread.tsx`: production read-only
   ticket article thread presentation with sanitized rich-text rendering,
-  display-name-first From/To/Cc/Bcc metadata, and no reply/composer controls.
+  display-name-first From/To/Cc/Bcc metadata, attachment metadata display, and
+  no reply/composer controls.
 - `src/features/workspace/components/ticket-tabs-panel.tsx`: production
   list/open-ticket tab panel composition.
 - `src/features/workspace/components/ticket-tabs`: split production ticket-tab

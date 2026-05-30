@@ -119,6 +119,14 @@ describe("TicketWorkspace", () => {
       ...detailProps.detail.articles[0]!,
       sanitizedHtml:
         '\n  <p>Explore these links:</p>\n  <ul>\n    <li><a href="https://example.com/docs" rel="noreferrer noopener" target="_blank">Docs</a></li>\n  </ul>\n',
+      attachments: [
+        {
+          id: "attachment-1",
+          fileName: "error-report.pdf",
+          contentType: "application/pdf",
+          byteSize: 3492,
+        },
+      ],
     };
     detailProps.detail.articles.push({
       id: "article-without-recipients",
@@ -132,6 +140,7 @@ describe("TicketWorkspace", () => {
       meta: "May 24, 08:40",
       sanitizedHtml: "<p>No recipient details available.</p>",
       visibility: "public",
+      attachments: [],
     });
 
     render(
@@ -167,6 +176,15 @@ describe("TicketWorkspace", () => {
       "href",
       "https://example.com/docs",
     );
+    expect(screen.getByText("Attachments (1)")).toBeInTheDocument();
+    expect(screen.getByText("error-report.pdf")).toBeInTheDocument();
+    expect(screen.getByText("application/pdf - 3.4 KB")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "error-report.pdf" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /error-report\.pdf/u }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Explore these links:").parentElement).toHaveClass(
       "whitespace-normal",
     );

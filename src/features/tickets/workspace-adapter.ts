@@ -3,6 +3,7 @@ import {
   ticketPriorityDefinitions,
   ticketStateDefinitions,
   type TicketArticle,
+  type TicketAttachment,
   type TicketDetail,
   type TicketLink,
   type TicketListItem,
@@ -75,6 +76,13 @@ export type WorkspaceArticleContact = {
   email?: string;
 };
 
+export type WorkspaceAttachment = {
+  id: string;
+  fileName: string;
+  contentType?: string;
+  byteSize?: number;
+};
+
 export type WorkspaceArticle = {
   id: string;
   author: string;
@@ -87,6 +95,7 @@ export type WorkspaceArticle = {
   meta: string;
   sanitizedHtml: string;
   visibility: string;
+  attachments: WorkspaceAttachment[];
 };
 
 export type WorkspaceTicketLink = {
@@ -188,6 +197,15 @@ function workspaceTicketLink(link: TicketLink): WorkspaceTicketLink {
   };
 }
 
+function workspaceAttachment(attachment: TicketAttachment): WorkspaceAttachment {
+  return {
+    id: attachment.externalId,
+    fileName: attachment.fileName,
+    contentType: attachment.contentType,
+    byteSize: attachment.byteSize,
+  };
+}
+
 export function workspaceTicketRow(ticket: TicketListItem): WorkspaceTicketRow {
   return {
     id: ticket.externalId,
@@ -272,6 +290,7 @@ export function workspaceTicketDetail(
       meta: articleMeta(article),
       sanitizedHtml: article.sanitizedHtml,
       visibility: article.visibility,
+      attachments: article.attachments.map(workspaceAttachment),
     })),
   };
 }

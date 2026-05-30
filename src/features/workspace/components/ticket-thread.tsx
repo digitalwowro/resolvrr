@@ -7,6 +7,7 @@ import type {
   WorkspaceArticle,
   WorkspaceArticleContact,
 } from "@/features/tickets/workspace-adapter";
+import { TicketArticleAttachments } from "./ticket-article-attachments";
 
 type TicketThreadProps = {
   articles: WorkspaceArticle[];
@@ -176,6 +177,7 @@ function ArticleCard({ article }: { article: WorkspaceArticle }) {
           )}
           dangerouslySetInnerHTML={{ __html: article.sanitizedHtml }}
         />
+        <TicketArticleAttachments attachments={article.attachments} />
       </div>
     </article>
   );
