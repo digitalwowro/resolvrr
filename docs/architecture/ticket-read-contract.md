@@ -85,11 +85,13 @@ provider HTML.
 
 ## Controlled Metadata Mutations
 
-The approved mutation contract is limited to state and priority. Core, service,
-and UI code use canonical Resolvrr keys:
+The approved mutation contract covers state, priority, owner assignment, and
+group assignment. Core, service, and UI code use provider-neutral keys:
 
 - `TicketMetadataMutationInput.state?: TicketState`
 - `TicketMetadataMutationInput.priority?: TicketPriority`
+- `TicketMetadataMutationInput.ownerExternalId?: string`
+- `TicketMetadataMutationInput.groupExternalId?: string`
 - `TicketMetadataMutationInput.pendingUntil?: Date`, used only as supporting
   data for state transitions that require a pending time.
 
@@ -98,7 +100,7 @@ The workspace sends one selected-ticket update payload for each explicit
 provider-neutral metadata slice; the server action parses and validates it
 before dispatching the existing provider-neutral mutation input. Server-side
 validation remains authoritative even when the client has already disabled
-invalid submits. Unsupported future slices such as owner, group, tags, links,
+invalid submits. Unsupported future slices such as tags, links, subscription,
 notes, or replies are rejected at the action boundary until their
 provider-neutral contracts and capability checks are explicitly implemented.
 
@@ -110,9 +112,11 @@ The provider-neutral mutation capabilities are:
 
 - `ticket:update-state`
 - `ticket:update-priority`
+- `ticket:update-owner`
+- `ticket:update-group`
 
-No owner, group, tag, reply, link, or subscription mutation capability is
-approved in this slice.
+No tag, reply, link, or subscription mutation capability is approved in this
+slice.
 
 Mutation results distinguish write failure from refresh failure:
 
@@ -174,6 +178,8 @@ Mutation capabilities:
 
 - `ticket:update-state`: provider can update the canonical ticket state.
 - `ticket:update-priority`: provider can update the canonical ticket priority.
+- `ticket:update-owner`: provider can update the ticket owner assignment.
+- `ticket:update-group`: provider can update the ticket group assignment.
 
 Provider methods are capability-gated. Core features must check capability
 presence before calling optional provider methods.
@@ -306,8 +312,8 @@ selected-ticket detail when a provider-neutral fallback is available.
 
 ## Non-Goals
 
-- Ticket create, merge, split, reply, note, owner/group assignment, tagging,
-  link, and subscription mutations.
+- Ticket create, merge, split, reply, note, tagging, link, and subscription
+  mutations.
 - Attachment downloads or previews.
 - Provider-backed ticket caching policy.
 - Saved-view management, background sync, or AI workflows.

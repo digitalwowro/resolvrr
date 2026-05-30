@@ -94,6 +94,8 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "ticket:links",
     "ticket:update-state",
     "ticket:update-priority",
+    "ticket:update-owner",
+    "ticket:update-group",
     "lookup:assignable-users",
     "lookup:groups",
   ],

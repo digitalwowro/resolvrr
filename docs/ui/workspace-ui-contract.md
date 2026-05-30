@@ -57,13 +57,13 @@ display names over email addresses, exposes email as secondary metadata when
 available, and only shows the expand/collapse affordance when recipient details
 exist.
 
-The metadata sidebar remains read-only except for state and priority when the
-active provider advertises the matching mutation capability. Editable state,
-priority, and provider-required pending date/time controls live in the local
-selected-ticket draft: changing a value does not call the provider until the
-agent clicks `Update`. Each `Update` click submits one provider-neutral
-selected-ticket payload. Owner, group, tags, links, subscription, notes, and
-replies remain read-only or absent until their own provider-neutral write
+The metadata sidebar remains read-only except for state, priority, owner, and
+group when the active provider advertises the matching mutation capability.
+Editable state, priority, owner, group, and provider-required pending date/time
+controls live in the local selected-ticket draft: changing a value does not
+call the provider until the agent clicks `Update`. Each `Update` click submits
+one provider-neutral selected-ticket payload. Tags, links, subscription, notes,
+and replies remain read-only or absent until their own provider-neutral write
 contracts are added. Changed controls are visually marked, `Discard changes`
 resets the selected-ticket draft to the loaded ticket values, and successful
 saves refresh the workspace after one checked mutation. The action row includes
@@ -71,7 +71,8 @@ a persisted local browser post-Update navigation preference: keep the ticket
 open, return to list, or return to list when the final canonical state is
 closed. Provider-supplied hidden state options are omitted from the state
 dropdown. If a provider lacks the capability, the field renders as ordinary
-read-only metadata.
+read-only metadata; owner and group editing also require available lookup
+options for the matching field.
 
 ## AI Status
 

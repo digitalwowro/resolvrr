@@ -158,12 +158,20 @@ export function useTicketWorkspaceDisplayState({
   }
 
   function updateOpenTicketTabMetadata({
+    group,
+    owner,
     priority,
     state,
     ticketExternalId,
   }: TicketMetadataSavedPatch) {
     setOpenTicketTabs((current) =>
-      patchTicketTabMetadata(current, { priority, state, ticketExternalId }),
+      patchTicketTabMetadata(current, {
+        group,
+        owner,
+        priority,
+        state,
+        ticketExternalId,
+      }),
     );
   }
 

@@ -17,7 +17,7 @@ import type {
 
 function errorMessage(reason: TicketMetadataMutationErrorReason): string {
   if (reason === "invalid-input") {
-    return "Choose a state or priority to save.";
+    return "Choose a metadata value to save.";
   }
   if (reason === "unsupported-capability") {
     return "This workspace cannot update that field.";

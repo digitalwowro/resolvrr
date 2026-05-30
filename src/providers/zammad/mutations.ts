@@ -35,6 +35,12 @@ const zammadPriorityByCanonical: Record<TicketPriority, string> = {
 
 function mutationPayload(input: TicketMetadataMutationInput) {
   return {
+    ...(input.ownerExternalId
+      ? { owner_id: zammadMutationId(input.ownerExternalId, "owner") }
+      : {}),
+    ...(input.groupExternalId
+      ? { group_id: zammadMutationId(input.groupExternalId, "group") }
+      : {}),
     ...(input.state ? { state: zammadStateByCanonical[input.state] } : {}),
     ...(input.state &&
     zammadStateRequiresPendingDate(input.state) &&
@@ -43,6 +49,25 @@ function mutationPayload(input: TicketMetadataMutationInput) {
       : {}),
     ...(input.priority ? { priority: zammadPriorityByCanonical[input.priority] } : {}),
   };
+}
+
+function zammadMutationId(value: string, field: string): number {
+  if (!/^\d+$/u.test(value)) {
+    throw new ProviderError(
+      "validation-failure",
+      `Invalid ${field} reference for the helpdesk provider.`,
+    );
+  }
+
+  const id = Number(value);
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    throw new ProviderError(
+      "validation-failure",
+      `Invalid ${field} reference for the helpdesk provider.`,
+    );
+  }
+
+  return id;
 }
 
 function assertNoOrphanPendingDate(input: TicketMetadataMutationInput) {

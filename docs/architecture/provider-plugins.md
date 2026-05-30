@@ -108,16 +108,17 @@ must not introduce provider fetch fan-out.
 ## Zammad Boundary
 
 Zammad ticket list, detail, thread DTO validation, endpoint construction,
-metadata write payload construction, and raw state/priority normalization live
-under `src/providers/zammad`. Core, feature, UI, and provider-neutral tests
-consume only canonical ticket values and provider capabilities. Zammad currently
-advertises `ticket:list`, `ticket:count`, `ticket:sort`, `ticket:group`,
-`ticket:group-count`, `ticket:detail`, `ticket:links`,
-`ticket:update-state`, `ticket:update-priority`,
-`lookup:assignable-users`, and `lookup:groups`. Resolvrr has not implemented
-the provider-neutral subscription/following read or write contract yet, so the
-Zammad plugin must not advertise `ticket:subscription` until that contract and
-the exact Zammad API path are implemented under `src/providers/zammad/**`.
+metadata write payload construction, and raw state/priority/assignment
+normalization live under `src/providers/zammad`. Core, feature, UI, and
+provider-neutral tests consume only canonical ticket values and provider
+capabilities. Zammad currently advertises `ticket:list`, `ticket:count`,
+`ticket:sort`, `ticket:group`, `ticket:group-count`, `ticket:detail`,
+`ticket:links`, `ticket:update-state`, `ticket:update-priority`,
+`ticket:update-owner`, `ticket:update-group`, `lookup:assignable-users`, and
+`lookup:groups`. Resolvrr has not implemented the provider-neutral
+subscription/following read or write contract yet, so the Zammad plugin must not
+advertise `ticket:subscription` until that contract and the exact Zammad API
+path are implemented under `src/providers/zammad/**`.
 Subscription fields still use the stable empty canonical shapes documented in
 the ticket contract when their provider-neutral capabilities are not advertised.
 Zammad-backed sorting is implemented through the provider's ticket search

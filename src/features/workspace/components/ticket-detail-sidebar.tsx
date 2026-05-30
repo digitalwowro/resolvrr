@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
-import { TicketLookupOptions } from "./ticket-lookup-options";
 import { SidebarField } from "./ticket-sidebar-field";
 
 function subscriptionLabel(detail: WorkspaceTicketDetail) {
@@ -30,18 +29,6 @@ export function TicketDetailSidebar({
   return (
     <aside className="w-56 shrink-0 space-y-4 overflow-y-auto border-l border-slate-200 px-3 py-3">
       {children}
-      <SidebarField label="Owner">
-        <span>{detail.owner}</span>
-      </SidebarField>
-      <SidebarField label="Group">
-        <span>{detail.group}</span>
-      </SidebarField>
-      <SidebarField label="Owner options">
-        <TicketLookupOptions lookup={detail.lookupData.assignableUsers} />
-      </SidebarField>
-      <SidebarField label="Group options">
-        <TicketLookupOptions lookup={detail.lookupData.groups} />
-      </SidebarField>
       <SidebarField label="Subscribed">
         <span>{subscriptionLabel(detail)}</span>
       </SidebarField>

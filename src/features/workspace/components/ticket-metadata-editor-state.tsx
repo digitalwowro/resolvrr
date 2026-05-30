@@ -2,13 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { DropdownSelect, type DropdownOption } from "@/components/ui";
-import {
-  ticketPriorities,
-  ticketPriorityDefinitions,
-  type TicketPriority,
-  type TicketState,
-} from "@/core/tickets";
+import { DropdownSelect } from "@/components/ui";
+import type { TicketPriority, TicketState } from "@/core/tickets";
 import type {
   SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
@@ -29,9 +24,14 @@ import {
   shouldReturnToListAfterUpdate,
   type PostUpdateNavigation,
 } from "./post-update-navigation";
+import {
+  assignmentLabel,
+  TicketAssignmentFields,
+} from "./ticket-assignment-fields";
 import { TicketMetadataActionBar } from "./ticket-metadata-action-bar";
 import { TicketDetailSidebar } from "./ticket-detail-sidebar";
-import { PriorityCell, PriorityIcon, StateCell } from "./ticket-table-cells";
+import { priorityOptions } from "./ticket-priority-mutation-options";
+import { PriorityCell, StateCell } from "./ticket-table-cells";
 import { TicketPendingStateForm } from "./ticket-pending-state-form";
 import { EditableSidebarField, SidebarField } from "./ticket-sidebar-field";
 import {
@@ -42,15 +42,7 @@ import {
 } from "./ticket-state-mutation-options";
 import { TicketThread } from "./ticket-thread";
 
-const priorityOptions: DropdownOption[] = ticketPriorities.map((priority) => ({
-  value: priority,
-  label: ticketPriorityDefinitions[priority].label,
-  icon: <PriorityIcon priority={priority} />,
-}));
-
-const changedControlClass =
-  "border-amber-500 bg-amber-50 focus-visible:outline-amber-500";
-
+const changedControlClass = "border-amber-500 bg-amber-50 focus-visible:outline-amber-500";
 function noopMetadataSavedDetailRefresh() {}
 
 function mutationStatusText(
@@ -143,6 +135,20 @@ export function TicketMetadataEditorState({
         ) {
           const submittedBaseline = metadataDraftSubmittedBaseline(draft);
           onMetadataSaved({
+            group: dirtyFields.group
+              ? assignmentLabel(
+                  detail.lookupData.groups,
+                  submittedBaseline.metadata.groupExternalId,
+                  detail.group,
+                )
+              : undefined,
+            owner: dirtyFields.owner
+              ? assignmentLabel(
+                  detail.lookupData.assignableUsers,
+                  submittedBaseline.metadata.ownerExternalId,
+                  detail.owner,
+                )
+              : undefined,
             priority: dirtyFields.priority
               ? submittedBaseline.metadata.priority
               : undefined,
@@ -244,6 +250,14 @@ export function TicketMetadataEditorState({
           <PriorityCell label={detail.priority} priority={detail.priorityKey} />
         </SidebarField>
       )}
+      <TicketAssignmentFields
+        detail={detail}
+        dirtyFields={dirtyFields}
+        draft={draft}
+        metadataMutationCapabilities={metadataMutationCapabilities}
+        onDraftChange={changeDraft}
+        saving={saving}
+      />
       {hasChanges && validation.message ? (
         <p className="text-xs text-amber-700" role="alert">
           {validation.message}

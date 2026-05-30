@@ -6,7 +6,11 @@ import type {
 } from "@/core/tickets";
 import type { TicketReadUnavailableReason } from "./read-model";
 
-export type TicketMetadataMutationField = "state" | "priority";
+export type TicketMetadataMutationField =
+  | "state"
+  | "priority"
+  | "owner"
+  | "group";
 
 export const selectedTicketUpdatePayloadKeys = [
   "metadata",
@@ -14,6 +18,8 @@ export const selectedTicketUpdatePayloadKeys = [
 ] as const;
 
 export const selectedTicketUpdateMetadataFields = [
+  "groupExternalId",
+  "ownerExternalId",
   "pendingUntil",
   "priority",
   "state",
@@ -26,6 +32,8 @@ export type SelectedTicketUpdateMetadataField =
   (typeof selectedTicketUpdateMetadataFields)[number];
 
 export type SelectedTicketUpdateMetadataPayload = {
+  groupExternalId?: string;
+  ownerExternalId?: string;
   pendingUntil?: string;
   priority?: TicketPriority;
   state?: TicketState;
@@ -37,8 +45,10 @@ export type SelectedTicketUpdatePayload = {
 };
 
 export type TicketMetadataMutationCapabilities = {
-  state: boolean;
+  group?: boolean;
+  owner?: boolean;
   priority: boolean;
+  state: boolean;
 };
 
 export type TicketMetadataMutationErrorReason =
@@ -66,6 +76,8 @@ export type TicketMetadataMutationActionState = {
 };
 
 export const noTicketMetadataMutationCapabilities: TicketMetadataMutationCapabilities = {
+  group: false,
+  owner: false,
   state: false,
   priority: false,
 };
@@ -74,6 +86,8 @@ export function ticketMetadataMutationCapabilities(
   capabilities: ProviderCapability[],
 ): TicketMetadataMutationCapabilities {
   return {
+    group: capabilities.includes("ticket:update-group"),
+    owner: capabilities.includes("ticket:update-owner"),
     state: capabilities.includes("ticket:update-state"),
     priority: capabilities.includes("ticket:update-priority"),
   };
@@ -82,7 +96,12 @@ export function ticketMetadataMutationCapabilities(
 export function hasTicketMetadataMutationInput(
   input: TicketMetadataMutationInput,
 ): boolean {
-  return Boolean(input.state || input.priority);
+  return Boolean(
+    input.state ||
+      input.priority ||
+      input.ownerExternalId ||
+      input.groupExternalId,
+  );
 }
 
 function isPendingState(state: TicketState | undefined): boolean {
