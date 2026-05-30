@@ -34,7 +34,14 @@ describe("workspace ticket adapter date formatting", () => {
           articles: [
             {
               externalId: "article-1",
-              attachments: [],
+              attachments: [
+                {
+                  externalId: "attachment-1",
+                  fileName: "invoice.pdf",
+                  contentType: "application/pdf",
+                  byteSize: 2048,
+                },
+              ],
               author: { email: "maya@example.com", name: "Maya Patel" },
               createdAt: new Date("2026-05-27T06:00:00"),
               direction: "inbound",
@@ -82,6 +89,14 @@ describe("workspace ticket adapter date formatting", () => {
       ]);
       expect(detail.articles[0]?.cc).toEqual([
         { email: "lead@example.com", label: "Team Lead" },
+      ]);
+      expect(detail.articles[0]?.attachments).toEqual([
+        {
+          id: "attachment-1",
+          fileName: "invoice.pdf",
+          contentType: "application/pdf",
+          byteSize: 2048,
+        },
       ]);
       expect(detail.links).toEqual([
         {

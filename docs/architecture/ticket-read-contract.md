@@ -72,7 +72,11 @@ Article fields include:
   as links, lists, headings, tables, and inline emphasis may be preserved by the
   sanitizer; scripts, unsafe attributes, and unsafe URL schemes are not part of
   the contract.
-- `attachments`: metadata only. Attachment download is outside this slice.
+- `attachments`: metadata only. The workspace may display provider-neutral
+  filename, content type, and byte size values. Attachment download, proxying,
+  previews, raw provider attachment URLs, and provider auth details are outside
+  this slice and must stay provider-bound until a separate attachment security
+  model is approved.
 
 Provider plugins must sanitize provider HTML before returning articles to core
 features. Raw provider article bodies are not part of the contract. UI code
