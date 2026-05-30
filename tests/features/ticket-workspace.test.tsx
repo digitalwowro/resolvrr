@@ -105,6 +105,16 @@ describe("TicketWorkspace", () => {
   it("renders selected detail through the production detail/thread components", async () => {
     const user = userEvent.setup();
     const detailProps = selectedDetailProps();
+    detailProps.detail.links = [
+      {
+        id: "ticket-2",
+        direction: "related",
+        label: "#1002 Webhook failed",
+        providerUrl: "https://helpdesk.example.com/#ticket/zoom/77",
+      },
+    ];
+    detailProps.detail.subscription = { supported: true, following: true };
+    detailProps.detail.tags = ["vip", "renewal"];
     detailProps.detail.articles[0] = {
       ...detailProps.detail.articles[0]!,
       sanitizedHtml:
@@ -147,6 +157,11 @@ describe("TicketWorkspace", () => {
       screen.getByRole("heading", { name: "Cannot log in" }),
     ).toBeInTheDocument();
     expect(screen.getAllByText("Maya Patel").length).toBeGreaterThan(0);
+    expect(screen.getByText("Following")).toBeInTheDocument();
+    expect(screen.getByText("vip, renewal")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "#1002 Webhook failed" }),
+    ).toHaveAttribute("href", "https://helpdesk.example.com/#ticket/zoom/77");
     expect(screen.getByText("Explore these links:")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Docs" })).toHaveAttribute(
       "href",

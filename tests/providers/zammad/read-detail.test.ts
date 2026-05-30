@@ -100,4 +100,92 @@ describe("Zammad ticket detail reads", () => {
       }),
     );
   });
+
+  it("reads secondary tags, links, and missing group names without writes", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          ...rawTicket,
+          group: undefined,
+          group_id: 2,
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [rawArticle],
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { tags: ["vip", "renewal"] },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          links: [
+            {
+              link_type: "normal",
+              link_object: "Ticket",
+              link_object_value: 77,
+            },
+          ],
+          assets: {
+            Ticket: {
+              77: {
+                ...rawTicket,
+                id: 77,
+                number: "77077",
+                title: "Parent issue",
+              },
+            },
+          },
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { id: 2, name: "2nd Level" },
+      });
+
+    const result = await zammadProviderPlugin.getTicketDetail?.(
+      providerContext(),
+      "42",
+    );
+
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      3,
+      "https://helpdesk.example.com/api/v1/tags?object=Ticket&o_id=42",
+      expect.any(Object),
+    );
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      4,
+      "https://helpdesk.example.com/api/v1/links?link_object=Ticket&link_object_value=42",
+      expect.any(Object),
+    );
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      5,
+      "https://helpdesk.example.com/api/v1/groups/2",
+      expect.any(Object),
+    );
+    expect(result?.ticket).toMatchObject({
+      group: { externalId: "2", name: "2nd Level" },
+      tags: ["vip", "renewal"],
+    });
+    expect(result?.links).toEqual([
+      {
+        direction: "related",
+        externalId: "77",
+        label: "#77077 Parent issue",
+        providerUrl: "https://helpdesk.example.com/#ticket/zoom/77",
+      },
+    ]);
+    expect(result?.subscription).toEqual({
+      supported: false,
+      following: false,
+    });
+  });
 });

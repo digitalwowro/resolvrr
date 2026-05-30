@@ -75,6 +75,7 @@ export type TicketLink = {
   externalId: string;
   direction: "parent" | "child" | "related";
   label: string;
+  providerUrl?: string;
 };
 
 export type TicketSubscription = {

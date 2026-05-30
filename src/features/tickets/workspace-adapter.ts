@@ -4,9 +4,11 @@ import {
   ticketStateDefinitions,
   type TicketArticle,
   type TicketDetail,
+  type TicketLink,
   type TicketListItem,
   type TicketMetadataMutationConstraints,
   type TicketPriority,
+  type TicketSubscription,
   type TicketState,
 } from "@/core/tickets";
 import { formatWorkspaceDateTime } from "./date-time-format";
@@ -87,6 +89,13 @@ export type WorkspaceArticle = {
   visibility: string;
 };
 
+export type WorkspaceTicketLink = {
+  id: string;
+  direction: TicketLink["direction"];
+  label: string;
+  providerUrl?: string;
+};
+
 export type WorkspaceTicketDetail = {
   id: string;
   number: string;
@@ -103,6 +112,8 @@ export type WorkspaceTicketDetail = {
   pendingUntilIso?: string;
   updatedAt: string;
   providerUrl?: string;
+  links: WorkspaceTicketLink[];
+  subscription: TicketSubscription;
   tags: string[];
   metadataMutationConstraints?: TicketMetadataMutationConstraints;
   articles: WorkspaceArticle[];
@@ -166,6 +177,15 @@ function articleRecipients(
   return article.recipients
     .filter((recipient) => recipient.channel === channel)
     .map((recipient) => participantContact(recipient));
+}
+
+function workspaceTicketLink(link: TicketLink): WorkspaceTicketLink {
+  return {
+    id: link.externalId,
+    direction: link.direction,
+    label: link.label,
+    providerUrl: link.providerUrl,
+  };
 }
 
 export function workspaceTicketRow(ticket: TicketListItem): WorkspaceTicketRow {
@@ -236,6 +256,8 @@ export function workspaceTicketDetail(
 ): WorkspaceTicketDetail {
   return {
     ...workspaceTicketRow(detail.ticket),
+    links: detail.links.map(workspaceTicketLink),
+    subscription: detail.subscription,
     tags: detail.ticket.tags,
     metadataMutationConstraints: detail.ticket.metadataMutationConstraints,
     articles: detail.thread.articles.map((article) => ({

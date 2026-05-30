@@ -13,6 +13,7 @@ import {
   type ZammadUser,
 } from "./schemas";
 import { zammadBaseUrl, zammadGetJson } from "./client";
+import { readZammadSecondaryTicketData } from "./ticket-secondary";
 export { listZammadTickets } from "./ticket-list";
 
 function providerDataMismatch(): ProviderError {
@@ -145,15 +146,22 @@ async function fetchZammadUsers(
   );
 }
 
-function mergeUserAssets(
+function mergeDetailAssets(
   assets: ZammadAssets | undefined,
   users: Record<string, ZammadUser>,
+  secondaryAssets: ZammadAssets | undefined,
 ): ZammadAssets {
   return {
     ...assets,
+    ...secondaryAssets,
     User: {
       ...assets?.User,
+      ...secondaryAssets?.User,
       ...users,
+    },
+    Group: {
+      ...assets?.Group,
+      ...secondaryAssets?.Group,
     },
   };
 }
@@ -210,27 +218,33 @@ export async function getZammadTicketDetail(
           ...rawArticlePayload.assets?.User,
         },
       };
-      const users = await fetchZammadUsers(
-        context,
-        missingUserIds(existingAssets, [
-          ...new Set([
-            ...collectUserIdsFromTickets([ticket.data]),
-            ...collectUserIdsFromArticles(rawArticlePayload.articles),
+      const [users, secondary] = await Promise.all([
+        fetchZammadUsers(
+          context,
+          missingUserIds(existingAssets, [
+            ...new Set([
+              ...collectUserIdsFromTickets([ticket.data]),
+              ...collectUserIdsFromArticles(rawArticlePayload.articles),
+            ]),
           ]),
-        ]),
-      );
-      const assets = mergeUserAssets(existingAssets, users);
+        ),
+        readZammadSecondaryTicketData(context, ticket.data, existingAssets),
+      ]);
+      const assets = mergeDetailAssets(existingAssets, users, secondary.assets);
 
       return {
-        ticket: mapTicket(ticket.data, zammadBaseUrl(context), assets),
+        ticket: {
+          ...mapTicket(ticket.data, zammadBaseUrl(context), assets),
+          tags: secondary.tags,
+        },
         thread: {
           ticketExternalId,
           articles: rawArticlePayload.articles.map((article) =>
             mapArticle(article, assets),
           ),
         },
-        links: [],
-        subscription: { supported: false, following: false },
+        links: secondary.links,
+        subscription: secondary.subscription,
         measuredAt: new Date(),
       };
     },
