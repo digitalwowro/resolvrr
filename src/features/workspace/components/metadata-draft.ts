@@ -11,6 +11,10 @@ export type TicketMetadataDraft = {
   pendingDateTime: PendingDateTimeParts;
   priority?: TicketPriority;
   state?: TicketState;
+};
+
+export type SelectedTicketDraft = {
+  metadata: TicketMetadataDraft;
   ticketExternalId: string;
 };
 
@@ -43,46 +47,51 @@ function normalizedPendingIso(value: PendingDateTimeParts): string | undefined {
 
 export function metadataDraftFromDetail(
   detail: WorkspaceTicketDetail,
-): TicketMetadataDraft {
+): SelectedTicketDraft {
   return {
-    pendingDateTime: pendingDateTimePartsFromIso(detail.pendingUntilIso),
-    priority: detail.priorityKey,
-    state: detail.stateKey,
+    metadata: {
+      pendingDateTime: pendingDateTimePartsFromIso(detail.pendingUntilIso),
+      priority: detail.priorityKey,
+      state: detail.stateKey,
+    },
     ticketExternalId: detail.id,
   };
 }
 
 export function metadataDraftFromBaseline(
-  baseline: TicketMetadataDraft,
-): TicketMetadataDraft {
+  baseline: SelectedTicketDraft,
+): SelectedTicketDraft {
   return {
-    pendingDateTime: { ...baseline.pendingDateTime },
-    priority: baseline.priority,
-    state: baseline.state,
+    metadata: {
+      pendingDateTime: { ...baseline.metadata.pendingDateTime },
+      priority: baseline.metadata.priority,
+      state: baseline.metadata.state,
+    },
     ticketExternalId: baseline.ticketExternalId,
   };
 }
 
-export function metadataDraftKey(draft: TicketMetadataDraft): string {
+export function metadataDraftKey(draft: SelectedTicketDraft): string {
   return [
     draft.ticketExternalId,
-    draft.state ?? "",
-    draft.priority ?? "",
-    normalizedPendingIso(draft.pendingDateTime) ?? "",
+    draft.metadata.state ?? "",
+    draft.metadata.priority ?? "",
+    normalizedPendingIso(draft.metadata.pendingDateTime) ?? "",
   ].join("|");
 }
 
 export function metadataDraftDirtyFields(
-  baseline: TicketMetadataDraft,
-  draft: TicketMetadataDraft,
+  baseline: SelectedTicketDraft,
+  draft: SelectedTicketDraft,
 ): TicketMetadataDraftDirtyFields {
-  const state = draft.state !== baseline.state;
-  const priority = draft.priority !== baseline.priority;
+  const state = draft.metadata.state !== baseline.metadata.state;
+  const priority = draft.metadata.priority !== baseline.metadata.priority;
   const pendingUntil =
-    isPendingState(draft.state) &&
-    normalizedPendingIso(draft.pendingDateTime) !==
-      normalizedPendingIso(baseline.pendingDateTime);
-  const pendingInputChanged = isPendingState(draft.state) && (state || pendingUntil);
+    isPendingState(draft.metadata.state) &&
+    normalizedPendingIso(draft.metadata.pendingDateTime) !==
+      normalizedPendingIso(baseline.metadata.pendingDateTime);
+  const pendingInputChanged =
+    isPendingState(draft.metadata.state) && (state || pendingUntil);
 
   return {
     pendingDate: pendingInputChanged,
@@ -101,23 +110,25 @@ export function metadataDraftHasChanges(
 
 export function metadataDraftRequiresPendingDate(
   detail: WorkspaceTicketDetail,
-  draft: TicketMetadataDraft,
+  draft: SelectedTicketDraft,
 ): boolean {
   return Boolean(
-    draft.state &&
-      detail.metadataMutationConstraints?.pendingDateRequiredStates?.[draft.state],
+    draft.metadata.state &&
+      detail.metadataMutationConstraints?.pendingDateRequiredStates?.[
+        draft.metadata.state
+      ],
   );
 }
 
 export function validateMetadataDraft(
   detail: WorkspaceTicketDetail,
   dirtyFields: TicketMetadataDraftDirtyFields,
-  draft: TicketMetadataDraft,
+  draft: SelectedTicketDraft,
 ): TicketMetadataDraftValidation {
   if (
     metadataDraftRequiresPendingDate(detail, draft) &&
     (dirtyFields.state || dirtyFields.pendingUntil) &&
-    !isFuturePendingDateTime(draft.pendingDateTime)
+    !isFuturePendingDateTime(draft.metadata.pendingDateTime)
   ) {
     return {
       message: "Choose a future pending date and time.",
@@ -129,14 +140,14 @@ export function validateMetadataDraft(
 }
 
 export function metadataDraftSubmittedBaseline(
-  draft: TicketMetadataDraft,
-): TicketMetadataDraft {
+  draft: SelectedTicketDraft,
+): SelectedTicketDraft {
   return metadataDraftFromBaseline(draft);
 }
 
 export function metadataDraftFormData(
-  baseline: TicketMetadataDraft,
-  draft: TicketMetadataDraft,
+  baseline: SelectedTicketDraft,
+  draft: SelectedTicketDraft,
 ): FormData | undefined {
   const dirtyFields = metadataDraftDirtyFields(baseline, draft);
   if (!metadataDraftHasChanges(dirtyFields)) {
@@ -146,12 +157,12 @@ export function metadataDraftFormData(
   const formData = new FormData();
   formData.set("ticketExternalId", draft.ticketExternalId);
   if (dirtyFields.state || dirtyFields.pendingUntil) {
-    if (!draft.state) {
+    if (!draft.metadata.state) {
       return undefined;
     }
-    formData.set("state", draft.state);
-    if (isPendingState(draft.state)) {
-      const pendingUntil = pendingDateTimeIso(draft.pendingDateTime);
+    formData.set("state", draft.metadata.state);
+    if (isPendingState(draft.metadata.state)) {
+      const pendingUntil = pendingDateTimeIso(draft.metadata.pendingDateTime);
       if (!pendingUntil) {
         return undefined;
       }
@@ -159,10 +170,10 @@ export function metadataDraftFormData(
     }
   }
   if (dirtyFields.priority) {
-    if (!draft.priority) {
+    if (!draft.metadata.priority) {
       return undefined;
     }
-    formData.set("priority", draft.priority);
+    formData.set("priority", draft.metadata.priority);
   }
 
   return formData;
