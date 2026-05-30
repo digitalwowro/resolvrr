@@ -148,6 +148,31 @@ describe("Zammad ticket detail reads", () => {
       .mockResolvedValueOnce({
         status: 200,
         headers: new Headers(),
+        data: { id: 4, email: "agent@example.com" },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          mentions: [
+            {
+              id: 9,
+              mentionable_type: "Ticket",
+              mentionable_id: 42,
+              user_id: 3,
+            },
+            {
+              id: 10,
+              mentionable_type: "Ticket",
+              mentionable_id: 42,
+              user_id: 4,
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
         data: { id: 2, name: "2nd Level" },
       });
 
@@ -168,6 +193,16 @@ describe("Zammad ticket detail reads", () => {
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
       5,
+      "https://helpdesk.example.com/api/v1/users/me",
+      expect.any(Object),
+    );
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      6,
+      "https://helpdesk.example.com/api/v1/mentions",
+      expect.any(Object),
+    );
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      7,
       "https://helpdesk.example.com/api/v1/groups/2",
       expect.any(Object),
     );
@@ -184,8 +219,9 @@ describe("Zammad ticket detail reads", () => {
       },
     ]);
     expect(result?.subscription).toEqual({
-      supported: false,
-      following: false,
+      externalId: "10",
+      supported: true,
+      following: true,
     });
   });
 });

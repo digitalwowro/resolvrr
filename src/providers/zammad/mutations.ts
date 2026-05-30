@@ -13,6 +13,11 @@ import {
   zammadStateRequiresPendingDate,
 } from "./mutation-policy";
 import {
+  updateZammadTicketLinks,
+  updateZammadTicketSubscription,
+  updateZammadTicketTags,
+} from "./ticket-secondary-mutations";
+import {
   zammadFullTicketPayloadSchema,
   zammadTicketSchema,
   type ZammadAssets,
@@ -117,13 +122,23 @@ function firstTicketPayloadRecord(raw: unknown): {
 async function currentTicketForMutation(
   context: ProviderContext,
   ticketExternalId: string,
-): Promise<Ticket> {
+): Promise<{ assets?: ZammadAssets; ticket: ZammadTicket }> {
   const ticketId = encodeURIComponent(ticketExternalId);
   const rawTicket = await zammadGetJson(
     context,
     `/api/v1/tickets/${ticketId}?expand=true&full=true`,
   );
-  const { assets, ticket } = firstTicketPayloadRecord(rawTicket);
+  return firstTicketPayloadRecord(rawTicket);
+}
+
+async function currentMappedTicketForMutation(
+  context: ProviderContext,
+  ticketExternalId: string,
+): Promise<Ticket> {
+  const { assets, ticket } = await currentTicketForMutation(
+    context,
+    ticketExternalId,
+  );
 
   return mapTicket(ticket, zammadBaseUrl(context), assets);
 }
@@ -144,7 +159,7 @@ async function assertZammadStateMutationAllowed(
       operation: "mutation",
       providerKey: context.connection.providerKey,
     },
-    () => currentTicketForMutation(context, ticketExternalId),
+    () => currentMappedTicketForMutation(context, ticketExternalId),
   );
   const unavailableReason = zammadStateMutationUnavailableReason(
     currentTicket,
@@ -165,13 +180,22 @@ async function assertZammadStateMutationAllowed(
   }
 }
 
+function hasSecondaryMutation(input: TicketMetadataMutationInput): boolean {
+  return (
+    input.tags !== undefined ||
+    Boolean(input.linkAddExternalId) ||
+    Boolean(input.linkRemoveExternalIds?.length) ||
+    input.subscriptionFollowing !== undefined
+  );
+}
+
 export async function updateZammadTicketMetadata(
   context: ProviderContext,
   ticketExternalId: string,
   input: TicketMetadataMutationInput,
 ): Promise<void> {
   const payload = mutationPayload(input);
-  if (Object.keys(payload).length === 0) {
+  if (Object.keys(payload).length === 0 && !hasSecondaryMutation(input)) {
     throw new ProviderError(
       "validation-failure",
       "No supported ticket metadata changes were provided.",
@@ -180,19 +204,32 @@ export async function updateZammadTicketMetadata(
   assertNoOrphanPendingDate(input);
   await assertZammadStateMutationAllowed(context, ticketExternalId, input);
 
-  await measureTicketReadPhase(
-    "provider-metadata-mutation-request",
-    {
-      connectionId: context.connection.id,
-      operation: "mutation",
-      providerKey: context.connection.providerKey,
-    },
-    () =>
-      zammadSendJson(
-        context,
-        `/api/v1/tickets/${encodeURIComponent(ticketExternalId)}`,
-        "PUT",
-        payload,
-      ),
+  if (Object.keys(payload).length > 0) {
+    await measureTicketReadPhase(
+      "provider-metadata-mutation-request",
+      {
+        connectionId: context.connection.id,
+        operation: "mutation",
+        providerKey: context.connection.providerKey,
+      },
+      () =>
+        zammadSendJson(
+          context,
+          `/api/v1/tickets/${encodeURIComponent(ticketExternalId)}`,
+          "PUT",
+          payload,
+        ),
+    );
+  }
+
+  await updateZammadTicketTags(context, ticketExternalId, input.tags);
+  if (input.linkAddExternalId || input.linkRemoveExternalIds?.length) {
+    const currentTicket = await currentTicketForMutation(context, ticketExternalId);
+    await updateZammadTicketLinks(context, currentTicket.ticket.number, input);
+  }
+  await updateZammadTicketSubscription(
+    context,
+    ticketExternalId,
+    input.subscriptionFollowing,
   );
 }

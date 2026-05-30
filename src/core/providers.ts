@@ -40,6 +40,9 @@ export type ProviderCapability =
   | "ticket:update-priority"
   | "ticket:update-owner"
   | "ticket:update-group"
+  | "ticket:update-tags"
+  | "ticket:update-links"
+  | "ticket:update-subscription"
   | "lookup:assignable-users"
   | "lookup:groups"
   | "search:full-text";
