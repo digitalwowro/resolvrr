@@ -109,8 +109,12 @@ under `src/providers/zammad`. Core, feature, UI, and provider-neutral tests
 consume only canonical ticket values and provider capabilities. Zammad currently
 advertises `ticket:list`, `ticket:count`, `ticket:sort`, `ticket:group`,
 `ticket:group-count`, `ticket:detail`, `ticket:update-state`, and
-`ticket:update-priority`; unsupported links and subscription data are returned
-as the required empty canonical shapes documented in the ticket contract.
+`ticket:update-priority`. Resolvrr has not implemented the provider-neutral
+subscription/following read or write contract yet, so the Zammad plugin must
+not advertise `ticket:subscription` until that contract and the exact Zammad
+API path are implemented under `src/providers/zammad/**`. Links and
+subscription fields still use the stable empty canonical shapes documented in
+the ticket contract when their provider-neutral capabilities are not advertised.
 Zammad-backed sorting is implemented through the provider's ticket search
 endpoint with provider-neutral sort keys translated to Zammad sort fields.
 Zammad-backed total counts and state/priority grouped bucket counts use the
