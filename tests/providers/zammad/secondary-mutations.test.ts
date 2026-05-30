@@ -58,6 +58,11 @@ describe("Zammad ticket secondary metadata mutations", () => {
       .mockResolvedValueOnce({
         status: 200,
         headers: new Headers(),
+        data: { id: 4, email: "agent@example.com" },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
         data: { mentions: [] },
       })
       .mockResolvedValueOnce({
@@ -137,11 +142,16 @@ describe("Zammad ticket secondary metadata mutations", () => {
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
       7,
-      "https://helpdesk.example.com/api/v1/mentions",
+      "https://helpdesk.example.com/api/v1/users/me",
       expect.any(Object),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
       8,
+      "https://helpdesk.example.com/api/v1/mentions",
+      expect.any(Object),
+    );
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      9,
       "https://helpdesk.example.com/api/v1/mentions",
       expect.objectContaining({
         body: JSON.stringify({
@@ -150,6 +160,103 @@ describe("Zammad ticket secondary metadata mutations", () => {
         }),
         method: "POST",
       }),
+    );
+  });
+
+  it("deletes only the current user's ticket mention when unfollowing", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { id: 4, email: "agent@example.com" },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          mentions: [
+            {
+              id: 9,
+              mentionable_type: "Ticket",
+              mentionable_id: 42,
+              user_id: 3,
+            },
+            {
+              id: 10,
+              mentionable_type: "Ticket",
+              mentionable_id: 42,
+              user_id: 4,
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {},
+      });
+
+    await zammadProviderPlugin.updateTicketMetadata?.(providerContext(), "42", {
+      subscriptionFollowing: false,
+    });
+
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      1,
+      "https://helpdesk.example.com/api/v1/users/me",
+      expect.any(Object),
+    );
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      2,
+      "https://helpdesk.example.com/api/v1/mentions",
+      expect.any(Object),
+    );
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      3,
+      "https://helpdesk.example.com/api/v1/mentions/10",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(mockedSafeProviderJson).not.toHaveBeenCalledWith(
+      "https://helpdesk.example.com/api/v1/mentions/9",
+      expect.any(Object),
+    );
+  });
+
+  it("does not delete another user's ticket mention when the current user is not following", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { id: 4, email: "agent@example.com" },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          mentions: [
+            {
+              id: 9,
+              mentionable_type: "Ticket",
+              mentionable_id: 42,
+              user_id: 3,
+            },
+          ],
+        },
+      });
+
+    await zammadProviderPlugin.updateTicketMetadata?.(providerContext(), "42", {
+      subscriptionFollowing: false,
+    });
+
+    expect(mockedSafeProviderJson).toHaveBeenCalledTimes(2);
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      1,
+      "https://helpdesk.example.com/api/v1/users/me",
+      expect.any(Object),
+    );
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      2,
+      "https://helpdesk.example.com/api/v1/mentions",
+      expect.any(Object),
     );
   });
 });

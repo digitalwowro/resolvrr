@@ -7,6 +7,7 @@ import { namedReferenceValue, relationId } from "./participants";
 import {
   zammadAssetsSchema,
   zammadGenericNamedAssetSchema,
+  zammadUserSchema,
   type ZammadAssets,
   type ZammadTicket,
 } from "./schemas";
@@ -35,6 +36,7 @@ const zammadMentionSchema = z
     id: z.union([z.number(), z.string()]),
     mentionable_type: z.string().nullish(),
     mentionable_id: z.union([z.number(), z.string()]).nullish(),
+    user_id: z.union([z.number(), z.string()]).nullish(),
   })
   .passthrough();
 
@@ -53,6 +55,13 @@ const unimplementedSubscription: TicketSubscription = {
   supported: false,
   following: false,
 };
+
+function providerDataMismatch(): ProviderError {
+  return new ProviderError(
+    "provider-data-mismatch",
+    "The helpdesk provider returned an unexpected response.",
+  );
+}
 
 function timingMetadata(context: ProviderContext) {
   return {
@@ -148,15 +157,26 @@ export async function readZammadTicketSubscription(
     "provider-secondary-subscription-request",
     { ...timingMetadata(context), operation: "detail" },
     async () => {
-      const raw = await zammadGetJson(context, "/api/v1/mentions");
-      const parsed = zammadMentionsResponseSchema.safeParse(raw);
+      const currentUserRequest = zammadGetJson(context, "/api/v1/users/me");
+      const mentionsRequest = zammadGetJson(context, "/api/v1/mentions");
+      const [rawCurrentUser, rawMentions] = await Promise.all([
+        currentUserRequest,
+        mentionsRequest,
+      ]);
+      const currentUser = zammadUserSchema.safeParse(rawCurrentUser);
+      if (!currentUser.success || currentUser.data.id === undefined) {
+        throw providerDataMismatch();
+      }
+      const currentUserId = String(currentUser.data.id);
+      const parsed = zammadMentionsResponseSchema.safeParse(rawMentions);
       if (!parsed.success) {
         return { supported: true, following: false };
       }
       const mention = parsed.data.mentions.find(
         (candidate) =>
           candidate.mentionable_type === "Ticket" &&
-          String(candidate.mentionable_id) === ticketId,
+          String(candidate.mentionable_id) === ticketId &&
+          String(candidate.user_id) === currentUserId,
       );
       return {
         externalId: mention ? String(mention.id) : undefined,
