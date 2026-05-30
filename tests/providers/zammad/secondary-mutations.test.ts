@@ -147,7 +147,7 @@ describe("Zammad ticket secondary metadata mutations", () => {
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
       8,
-      "https://helpdesk.example.com/api/v1/mentions",
+      "https://helpdesk.example.com/api/v1/mentions?mentionable_type=Ticket&mentionable_id=42",
       expect.any(Object),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
@@ -207,7 +207,7 @@ describe("Zammad ticket secondary metadata mutations", () => {
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
       2,
-      "https://helpdesk.example.com/api/v1/mentions",
+      "https://helpdesk.example.com/api/v1/mentions?mentionable_type=Ticket&mentionable_id=42",
       expect.any(Object),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
@@ -255,7 +255,7 @@ describe("Zammad ticket secondary metadata mutations", () => {
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
       2,
-      "https://helpdesk.example.com/api/v1/mentions",
+      "https://helpdesk.example.com/api/v1/mentions?mentionable_type=Ticket&mentionable_id=42",
       expect.any(Object),
     );
   });

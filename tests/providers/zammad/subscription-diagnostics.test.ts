@@ -57,7 +57,7 @@ describe("Zammad subscription diagnostics", () => {
     );
     expect(JSON.stringify(warn.mock.calls)).not.toContain("agent@example.com");
     expect(mockedSafeProviderJson).not.toHaveBeenCalledWith(
-      "https://helpdesk.example.com/api/v1/mentions",
+      "https://helpdesk.example.com/api/v1/mentions?mentionable_type=Ticket&mentionable_id=42",
       expect.any(Object),
     );
   });

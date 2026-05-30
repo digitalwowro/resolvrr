@@ -62,6 +62,14 @@ function timingMetadata(context: ProviderContext) {
   };
 }
 
+function ticketMentionsPath(ticketId: string) {
+  const params = new URLSearchParams({
+    mentionable_type: "Ticket",
+    mentionable_id: ticketId,
+  });
+  return `/api/v1/mentions?${params}`;
+}
+
 function subscriptionReadError(
   endpoint: ZammadSubscriptionDiagnosticEndpoint,
   issue: ZammadSubscriptionDiagnosticIssue,
@@ -134,7 +142,7 @@ export async function readZammadTicketSubscription(
       const currentUserId = String(currentUser.data.id);
       let rawMentions: unknown;
       try {
-        rawMentions = await zammadGetJson(context, "/api/v1/mentions");
+        rawMentions = await zammadGetJson(context, ticketMentionsPath(ticketId));
       } catch (error) {
         throw subscriptionReadError("mentions", "request-failed", error);
       }

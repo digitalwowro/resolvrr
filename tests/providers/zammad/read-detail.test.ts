@@ -197,7 +197,7 @@ describe("Zammad ticket detail reads", () => {
       expect.any(Object),
     );
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
-      "https://helpdesk.example.com/api/v1/mentions",
+      "https://helpdesk.example.com/api/v1/mentions?mentionable_type=Ticket&mentionable_id=42",
       expect.any(Object),
     );
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
