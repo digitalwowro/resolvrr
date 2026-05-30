@@ -66,7 +66,7 @@ describe("saved view persistence", () => {
             priorities: ["high"],
             ownerExternalIds: ["owner-1", "owner-1"],
             searchText: "  billing  ",
-            providerRawQuery: "state.name:open",
+            providerRawQuery: "raw-provider-query",
           } as never,
           group: { key: "state" },
           sort: { key: "priority", direction: "ascending" },
@@ -167,7 +167,7 @@ describe("saved view persistence", () => {
     expect(
       savedViewQueryFromStorage({
         states: ["closed", "provider_raw"],
-        providerRawQuery: "state.name:closed",
+        providerRawQuery: "raw-provider-query",
       }),
     ).toEqual({ filter: { states: ["closed"] } });
     expect(

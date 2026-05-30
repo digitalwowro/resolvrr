@@ -430,6 +430,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   can optionally stop/start a user service.
 - `scripts/check-docs.mjs`: checks required public docs exist and avoids
   disallowed process-origin wording.
+- `scripts/zammad-boundary-audit.mjs`: scans current source/docs or PR history
+  for direct Zammad imports and raw Zammad token leakage outside the provider
+  boundary allowlist.
 - `tests/unit`: unit tests for domain, provider registry, and security helpers.
 - `tests/unit/auth-service.test.ts`: verifies registration, login, session,
   logout, and expired-session cleanup use cases.
@@ -455,8 +458,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/unit/provider-http-json.test.ts`: verifies provider JSON requests use
   pinned validated addresses, bounded response parsing, and safe JSON write
   request handling.
-- `tests/unit/provider-boundary.test.ts`: verifies direct provider-specific
-  imports stay out of core, UI, and feature code.
+- `tests/unit/provider-boundary.test.ts`: verifies direct Zammad imports and raw
+  Zammad tokens stay out of core, UI, feature, and provider-neutral code.
 - `tests/unit/provider-registry.test.ts`: verifies provider registry lookup and
   duplicate-key protection.
 - `tests/unit/sanitize-html.test.ts`: verifies provider HTML sanitization.

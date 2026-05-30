@@ -78,7 +78,7 @@ describe("safe provider JSON reads", () => {
     mockJsonRequest({ body: "{\"tickets\":[1]}" });
 
     const response = await safeProviderJson(
-      "https://helpdesk.example.com/api/v1/tickets",
+      "https://helpdesk.example.com/provider/tickets",
       {
         allowedAddresses: ["93.184.216.34"],
         maxResponseBytes: 64,
@@ -90,7 +90,7 @@ describe("safe provider JSON reads", () => {
     expect(mockedRequest).toHaveBeenCalledWith(
       expect.objectContaining({
         agent: false,
-        path: "/api/v1/tickets",
+        path: "/provider/tickets",
       }),
       expect.any(Function),
     );
@@ -100,7 +100,7 @@ describe("safe provider JSON reads", () => {
     mockedLookup.mockResolvedValueOnce(dnsResult("10.0.0.10", 4));
 
     await expect(
-      safeProviderJson("https://helpdesk.example.com/api/v1/tickets", {
+      safeProviderJson("https://helpdesk.example.com/provider/tickets", {
         allowedAddresses: ["93.184.216.34"],
         maxResponseBytes: 64,
       }),
@@ -113,7 +113,7 @@ describe("safe provider JSON reads", () => {
     mockJsonRequest({ status: 401, body: "{\"secret\":\"body\"}" });
 
     const response = await safeProviderJson(
-      "https://helpdesk.example.com/api/v1/tickets",
+      "https://helpdesk.example.com/provider/tickets",
       {
         allowedAddresses: ["93.184.216.34"],
         maxResponseBytes: 64,
@@ -129,7 +129,7 @@ describe("safe provider JSON reads", () => {
     const writtenBody = mockJsonRequest({ body: "{\"id\":42}" });
 
     const response = await safeProviderJson(
-      "https://helpdesk.example.com/api/v1/tickets/42",
+      "https://helpdesk.example.com/provider/tickets/42",
       {
         allowedAddresses: ["93.184.216.34"],
         body: "{\"state\":\"open\"}",
@@ -150,7 +150,7 @@ describe("safe provider JSON reads", () => {
           "Content-Type": "application/json",
         }),
         method: "PUT",
-        path: "/api/v1/tickets/42",
+        path: "/provider/tickets/42",
       }),
       expect.any(Function),
     );
@@ -161,7 +161,7 @@ describe("safe provider JSON reads", () => {
     mockJsonRequest({ body: "{\"long\":\"0123456789\"}" });
 
     await expect(
-      safeProviderJson("https://helpdesk.example.com/api/v1/tickets", {
+      safeProviderJson("https://helpdesk.example.com/provider/tickets", {
         allowedAddresses: ["93.184.216.34"],
         maxResponseBytes: 8,
       }),
@@ -176,7 +176,7 @@ describe("safe provider JSON reads", () => {
     mockJsonRequest({ body: "{not json" });
 
     await expect(
-      safeProviderJson("https://helpdesk.example.com/api/v1/tickets", {
+      safeProviderJson("https://helpdesk.example.com/provider/tickets", {
         allowedAddresses: ["93.184.216.34"],
         maxResponseBytes: 64,
       }),

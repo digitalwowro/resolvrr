@@ -150,7 +150,7 @@ describe("safe provider fetch", () => {
     mockedLookup.mockResolvedValueOnce(dnsResult("10.0.0.10", 4));
 
     await expect(
-      safeProviderFetch(`${validated.canonicalUrl}/api/v1/users/me`, {
+      safeProviderFetch(`${validated.canonicalUrl}/provider/users/me`, {
         allowedAddresses: validated.addresses,
       }),
     ).rejects.toThrow("blocked");
@@ -161,7 +161,7 @@ describe("safe provider fetch", () => {
     mockedLookup.mockResolvedValueOnce(dnsResult("93.184.216.34", 4));
 
     await expect(
-      safeProviderFetch("https://helpdesk.example.com/api/v1/users/me", {
+      safeProviderFetch("https://helpdesk.example.com/provider/users/me", {
         allowedAddresses: ["93.184.216.35"],
       }),
     ).rejects.toThrow("validated address set");
@@ -173,7 +173,7 @@ describe("safe provider fetch", () => {
     const pinnedAddress = mockSuccessfulRequest();
 
     const response = await safeProviderFetch(
-      "https://helpdesk.example.com/api/v1/users/me",
+      "https://helpdesk.example.com/provider/users/me",
       {
         allowedAddresses: ["93.184.216.34"],
         headers: { Accept: "application/json" },
@@ -199,7 +199,7 @@ describe("safe provider fetch", () => {
     const pinnedAddress = mockSuccessfulRequest();
 
     const response = await safeProviderFetch(
-      "https://helpdesk.example.com/api/v1/users/me",
+      "https://helpdesk.example.com/provider/users/me",
       {
         allowedAddresses: ["2001:4860:4860::8888", "93.184.216.34"],
       },
@@ -219,7 +219,7 @@ describe("safe provider fetch", () => {
     const pinnedAddresses = mockFailThenSuccessfulRequest();
 
     const response = await safeProviderFetch(
-      "https://helpdesk.example.com/api/v1/users/me",
+      "https://helpdesk.example.com/provider/users/me",
       {
         allowedAddresses: ["93.184.216.34", "93.184.216.35"],
       },
@@ -235,7 +235,7 @@ describe("safe provider fetch", () => {
     mockSuccessfulRequest();
 
     const response = await safeProviderFetch(
-      "https://helpdesk.example.com/api/v1/users/me",
+      "https://helpdesk.example.com/provider/users/me",
       {
         allowedAddresses: ["93.184.216.34"],
       },
