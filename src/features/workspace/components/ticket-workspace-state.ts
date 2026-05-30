@@ -3,16 +3,8 @@
 import { useMemo, useState } from "react";
 import { useTableSort } from "@/components/ui";
 import type {
-  LoadWorkspaceTicketDetailAction,
-  WorkspaceTicketDetailLoadResult,
-} from "@/features/tickets/detail-action-result";
-import type { WorkspaceTicketListSort } from "@/features/tickets/list-page-action-result";
-import type {
-  WorkspaceTicketColumn,
   WorkspaceTicketColumnKey,
-  WorkspaceTicketDetail,
   WorkspaceTicketGroupKey,
-  WorkspaceTicketRow,
   WorkspaceTicketSortKey,
   WorkspaceTicketTab,
 } from "@/features/tickets/workspace-adapter";
@@ -23,24 +15,12 @@ import {
 } from "./ticket-table-grouping";
 import { patchTicketTabMetadata } from "./ticket-tab-metadata";
 import type { TicketTabOrientation } from "./ticket-tabs-panel";
+import type {
+  ActiveWorkspacePane,
+  TicketWorkspaceStateProps,
+} from "./ticket-workspace-state-types";
 import { useTicketDetailLoader } from "./use-ticket-detail-loader";
 import { replaceWorkspaceUrl } from "./workspace-url";
-
-type ActiveWorkspacePane = "list" | { ticketId: string };
-
-type TicketWorkspaceStateProps = {
-  columns: WorkspaceTicketColumn[];
-  detail?: WorkspaceTicketDetail;
-  detailResult?: WorkspaceTicketDetailLoadResult;
-  loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
-  localSortEnabled: boolean;
-  onProviderSortChange(sort: WorkspaceTicketListSort): void;
-  providerSortEnabled: boolean;
-  refreshTicketDetailAfterMetadataSave: boolean;
-  rows: WorkspaceTicketRow[];
-  selectedTicketId?: string;
-  ticketTabs: WorkspaceTicketTab[];
-};
 
 export function useTicketWorkspaceDisplayState({
   columns,

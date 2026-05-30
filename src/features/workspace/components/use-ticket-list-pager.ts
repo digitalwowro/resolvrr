@@ -2,27 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import type {
-  LoadWorkspaceTicketListPageAction,
-  WorkspaceTicketListPageLoadResult,
   WorkspaceTicketListGroup,
+  WorkspaceTicketListPageLoadResult,
   WorkspaceTicketListSort,
 } from "@/features/tickets/list-page-action-result";
-import { allTicketsSavedViewId } from "@/features/saved-views/workspace";
 import type { TicketReadUnavailableReason } from "@/features/tickets/read-model";
-import type {
-  WorkspaceTicketGroupKey,
-  WorkspaceTicketRow,
-} from "@/features/tickets/workspace-adapter";
-
-type TicketListPagerProps = {
-  initialSavedViewId: string;
-  initialRows: WorkspaceTicketRow[];
-  initialGroups?: WorkspaceTicketListGroup[];
-  initialNextCursor?: string;
-  initialTotalCount?: number;
-  loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
-};
-
+import type { WorkspaceTicketGroupKey } from "@/features/tickets/workspace-adapter";
+import {
+  appendUniqueRows,
+  mergeRefreshedBaselineRows,
+  savedViewListRequest,
+  ticketListIdentity,
+} from "./ticket-list-pager-rows";
+import type { TicketListPagerProps } from "./ticket-list-pager-types";
 export function useTicketListPager({
   initialSavedViewId,
   initialGroups,
@@ -39,12 +31,9 @@ export function useTicketListPager({
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [loading, setLoading] = useState(false);
   const [loadingGroupId, setLoadingGroupId] = useState<string>();
-  const [errorReason, setErrorReason] =
-    useState<TicketReadUnavailableReason>();
-  const [groupError, setGroupError] = useState<{
-    groupId: string;
-    reason: TicketReadUnavailableReason;
-  }>();
+  const [errorReason, setErrorReason] = useState<TicketReadUnavailableReason>();
+  const [groupError, setGroupError] =
+    useState<{ groupId: string; reason: TicketReadUnavailableReason }>();
   const [sort, setSort] = useState<WorkspaceTicketListSort>();
   const baselineIdentity = useRef(ticketListIdentity(initialRows));
   const hasClientLoadedRowsRef = useRef(false);
@@ -68,9 +57,7 @@ export function useTicketListPager({
     }
 
     setRows((current) => mergeRefreshedBaselineRows(current, initialRows));
-    setNextCursor((current) =>
-      hasClientLoadedRowsRef.current ? current : initialNextCursor,
-    );
+    setNextCursor((current) => hasClientLoadedRowsRef.current ? current : initialNextCursor);
     setTotalCount(initialTotalCount);
   }, [
     initialGroups,
@@ -79,10 +66,6 @@ export function useTicketListPager({
     initialSavedViewId,
     initialTotalCount,
   ]);
-
-  function savedViewRequest() {
-    return savedViewId === allTicketsSavedViewId ? {} : { savedViewId };
-  }
 
   async function loadMore() {
     if (!nextCursor || loading || !loadTicketListPageAction) {
@@ -95,7 +78,7 @@ export function useTicketListPager({
     try {
       result = await loadTicketListPageAction({
         cursor: nextCursor,
-        ...savedViewRequest(),
+        ...savedViewListRequest(savedViewId),
         ...(sort ? { sort } : {}),
       });
     } catch {
@@ -126,7 +109,7 @@ export function useTicketListPager({
     let result;
     try {
       result = await loadTicketListPageAction({
-        ...savedViewRequest(),
+        ...savedViewListRequest(savedViewId),
         ...(nextSort ? { sort: nextSort } : {}),
       });
     } catch {
@@ -163,7 +146,7 @@ export function useTicketListPager({
     try {
       result = await loadTicketListPageAction({
         group: nextGroupBy,
-        ...savedViewRequest(),
+        ...savedViewListRequest(savedViewId),
       });
     } catch {
       setLoading(false);
@@ -187,9 +170,7 @@ export function useTicketListPager({
     setTotalCount(result.totalCount);
   }
 
-  async function reloadSavedView(
-    nextSavedViewId: string,
-  ): Promise<
+  async function reloadSavedView(nextSavedViewId: string): Promise<
     | { status: "available"; groupBy?: WorkspaceTicketGroupKey }
     | Extract<WorkspaceTicketListPageLoadResult, { status: "unavailable" }>
   > {
@@ -207,9 +188,7 @@ export function useTicketListPager({
     let result;
     try {
       result = await loadTicketListPageAction({
-        ...(nextSavedViewId === allTicketsSavedViewId
-          ? {}
-          : { savedViewId: nextSavedViewId }),
+        ...savedViewListRequest(nextSavedViewId),
       });
     } catch {
       setLoading(false);
@@ -245,9 +224,7 @@ export function useTicketListPager({
     return { status: "available", groupBy: result.appliedGroupBy };
   }
 
-  async function loadMoreGroup(
-    group: Pick<WorkspaceTicketListGroup, "id" | "nextCursor" | "value">,
-  ) {
+  async function loadMoreGroup(group: Pick<WorkspaceTicketListGroup, "id" | "nextCursor" | "value">) {
     if (
       !groupBy ||
       !group.nextCursor ||
@@ -265,7 +242,7 @@ export function useTicketListPager({
         bucketValue: group.value,
         cursor: group.nextCursor,
         group: groupBy,
-        ...savedViewRequest(),
+        ...savedViewListRequest(savedViewId),
       });
     } catch {
       setLoadingGroupId(undefined);
@@ -319,36 +296,4 @@ export function useTicketListPager({
     sort,
     totalCount,
   };
-}
-
-function appendUniqueRows(
-  current: WorkspaceTicketRow[],
-  incoming: WorkspaceTicketRow[],
-) {
-  const existingIds = new Set(current.map((row) => row.id));
-  return [
-    ...current,
-    ...incoming.filter((row) => {
-      if (existingIds.has(row.id)) {
-        return false;
-      }
-      existingIds.add(row.id);
-      return true;
-    }),
-  ];
-}
-
-function ticketListIdentity(rows: WorkspaceTicketRow[]) {
-  return rows.map((row) => row.id).join("\0");
-}
-
-function mergeRefreshedBaselineRows(
-  current: WorkspaceTicketRow[],
-  baselineRows: WorkspaceTicketRow[],
-) {
-  const baselineIds = new Set(baselineRows.map((row) => row.id));
-  return [
-    ...baselineRows,
-    ...current.filter((row) => !baselineIds.has(row.id)),
-  ];
 }

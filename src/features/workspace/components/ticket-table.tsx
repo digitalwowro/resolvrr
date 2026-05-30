@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { Button, Checkbox } from "@/components/ui";
+import { Button } from "@/components/ui";
 import type { SortDirection } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
@@ -11,14 +11,15 @@ import type {
   WorkspaceTicketRow,
   WorkspaceTicketSortKey,
 } from "@/features/tickets/workspace-adapter";
-import { PriorityCell, StateCell } from "./ticket-table-cells";
 import {
   ticketGridTableClass,
   ticketGridTemplate,
-  TicketGridCell,
   TicketGridHeaderCell,
   TicketGridStaticHeaderCell,
 } from "./ticket-table-grid";
+import { TicketTableGroupHeader } from "./ticket-table-group-header";
+import { TicketTableRow } from "./ticket-table-row";
+import type { TicketTableGroup } from "./ticket-table-types";
 
 type TicketTableProps = {
   activeTicketId?: string;
@@ -45,35 +46,7 @@ type TicketTableProps = {
   visibleColumns: Set<WorkspaceTicketColumnKey>;
 };
 
-export type TicketTableGroup = {
-  id: string;
-  label: string;
-  value: string;
-  rows: WorkspaceTicketRow[];
-  loadedCount?: number;
-  totalCount?: number;
-  nextCursor?: string;
-};
-
-function cellValue(row: WorkspaceTicketRow, column: WorkspaceTicketColumnKey) {
-  if (column === "customer") {
-    return row.customer;
-  }
-  if (column === "owner") {
-    return row.owner;
-  }
-  if (column === "state") {
-    return <StateCell label={row.state} state={row.stateKey} />;
-  }
-  if (column === "priority") {
-    return <PriorityCell label={row.priority} priority={row.priorityKey} />;
-  }
-  if (column === "pendingTill") {
-    return row.pendingTill;
-  }
-
-  return row.updatedAt;
-}
+export type { TicketTableGroup } from "./ticket-table-types";
 
 export function TicketTable({
   activeTicketId,
@@ -113,99 +86,6 @@ export function TicketTable({
 
   function sortDirection(key: WorkspaceTicketSortKey) {
     return sortingEnabled && groupBy !== key ? sortDirectionFor(key) : undefined;
-  }
-
-  function groupLabel(group: TicketTableGroup) {
-    if (groupBy === "priority") {
-      return (
-        <PriorityCell
-          label={group.label}
-          monochrome
-          priority={group.value === "unknown" ? undefined : rowPriorityKey(group)}
-        />
-      );
-    }
-
-    if (groupBy === "state") {
-      return (
-        <StateCell
-          label={group.label}
-          monochrome
-          state={group.value === "unknown" ? undefined : rowStateKey(group)}
-        />
-      );
-    }
-
-    return group.label;
-  }
-
-  function groupCountLabel(group: TicketTableGroup) {
-    const loaded = group.loadedCount ?? group.rows.length;
-    return group.totalCount === undefined ? `${loaded}` : `${loaded}/${group.totalCount}`;
-  }
-
-  function renderRow(row: WorkspaceTicketRow, index: number) {
-    const active = row.id === activeTicketId;
-    const cellBorderClass = index === rowCount - 1 ? "border-b-0" : "";
-    const rowCellClass = active
-      ? "bg-slate-50"
-      : "bg-white group-hover:bg-slate-50";
-
-    return (
-      <div
-        aria-selected={active}
-        className="group contents cursor-pointer"
-        key={row.id}
-        onClick={() => onRowSelect(row.id)}
-        role="row"
-      >
-        <TicketGridCell
-          className={cn(rowCellClass, cellBorderClass)}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <Checkbox
-            checked={selectedRowIds.has(row.id)}
-            className="items-center"
-            hideLabel
-            label={`Select ${row.number}`}
-            name={`select-${row.id}`}
-            onChange={() => onToggleRow(row.id)}
-          />
-        </TicketGridCell>
-        <TicketGridCell
-          className={cn("whitespace-nowrap", rowCellClass, cellBorderClass)}
-        >
-          {row.number}
-        </TicketGridCell>
-        <TicketGridCell className={cn("min-w-0", rowCellClass, cellBorderClass)}>
-          <button
-            className="block w-full rounded-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            onClick={(event) => {
-              event.stopPropagation();
-              onRowSelect(row.id);
-            }}
-            type="button"
-          >
-            <span className="block truncate font-semibold">{row.title}</span>
-            {row.preview ? (
-              <span className="block truncate text-xs text-slate-500">
-                {row.preview}
-              </span>
-            ) : null}
-          </button>
-        </TicketGridCell>
-        {visibleColumnList.map((column) => (
-          <TicketGridCell
-            className={cn("min-w-0", rowCellClass, cellBorderClass)}
-            key={column.key}
-          >
-            <span className="block min-w-0 truncate whitespace-nowrap">
-              {cellValue(row, column.key)}
-            </span>
-          </TicketGridCell>
-        ))}
-      </div>
-    );
   }
 
   if (rows.length === 0) {
@@ -286,42 +166,29 @@ export function TicketTable({
               const firstGroup = groups[0]?.id === group.id;
               const groupHeader =
                 groupBy === "none" ? null : (
-                  <div className="contents" key={`group-${group.id}`} role="row">
-                    <div
-                      aria-label={`${group.label} ${groupCountLabel(group)}`}
-                      className={cn(
-                        "flex h-8 items-center gap-2 border-b border-slate-700 bg-slate-700 px-3 text-sm font-semibold text-white",
-                        firstGroup ? null : "border-t border-slate-700",
-                      )}
-                      role="cell"
-                      style={{ gridColumn: "1 / -1" }}
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        {groupLabel(group)}
-                      </span>
-                      <span className="text-white/75">{groupCountLabel(group)}</span>
-                      {groupLoadMoreError?.groupId === group.id ? (
-                        <span className="ml-auto text-xs text-red-100" role="alert">
-                          Could not load more tickets.
-                        </span>
-                      ) : null}
-                      {group.nextCursor && onLoadMoreGroup ? (
-                        <Button
-                          className="ml-auto h-6 border-white/30 bg-white/10 px-2 text-xs text-white hover:bg-white/20"
-                          loading={loadingGroupId === group.id}
-                          onClick={() => onLoadMoreGroup(group)}
-                          type="button"
-                          variant="secondary"
-                        >
-                          Load more
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
+                  <TicketTableGroupHeader
+                    firstGroup={firstGroup}
+                    group={group}
+                    groupBy={groupBy}
+                    groupLoadMoreError={groupLoadMoreError}
+                    key={`group-${group.id}`}
+                    loadingGroupId={loadingGroupId}
+                    onLoadMoreGroup={onLoadMoreGroup}
+                  />
                 );
-              const renderedRows = group.rows.map((row) =>
-                renderRow(row, rowIndex++),
-              );
+              const renderedRows = group.rows.map((row) => (
+                <TicketTableRow
+                  activeTicketId={activeTicketId}
+                  columns={visibleColumnList}
+                  index={rowIndex++}
+                  key={row.id}
+                  onRowSelect={onRowSelect}
+                  onToggleRow={onToggleRow}
+                  row={row}
+                  rowCount={rowCount}
+                  selectedRowIds={selectedRowIds}
+                />
+              ));
 
               return groupHeader ? [groupHeader, ...renderedRows] : renderedRows;
             })}
@@ -331,12 +198,4 @@ export function TicketTable({
       {loadMoreFooter}
     </section>
   );
-}
-
-function rowPriorityKey(group: TicketTableGroup) {
-  return group.rows.find((row) => row.priorityKey === group.value)?.priorityKey;
-}
-
-function rowStateKey(group: TicketTableGroup) {
-  return group.rows.find((row) => row.stateKey === group.value)?.stateKey;
 }
