@@ -22,8 +22,9 @@ conversation content.
 - If sensitive ticket/thread content must be cached, store sanitized normalized
   content and encrypt sensitive body fields at rest.
 - Logs may include safe metadata such as provider key, connection id,
-  capability, mutation field names, field counts, status, retryability, and
-  timing. Logs must not include credentials, tokens, passwords, cookies, raw
-  provider payloads, provider response bodies, mutation request bodies,
-  provider-local ticket or linked-ticket IDs, internal note bodies, customer
-  reply bodies, or customer message bodies.
+  capability, communication kind, mutation field names, field counts, status,
+  retryability, and timing. Logs must not include credentials, tokens,
+  passwords, cookies, raw provider payloads, provider response bodies, mutation
+  request bodies, provider-local ticket or linked-ticket IDs, article IDs,
+  recipient addresses, internal note bodies, customer reply bodies, or customer
+  message bodies.
