@@ -131,9 +131,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/providers/zammad/ticket-list.ts`: Zammad ticket list endpoint reads,
   search-backed list totals, list asset lookup, read-phase timing, and
   canonical list response assembly.
+- `src/providers/zammad/ticket-secondary.ts`: optional Zammad selected-ticket
+  secondary reads for tags, related ticket links, and missing group-name lookup.
 - `src/providers/zammad/tickets.ts`: Zammad ticket detail/thread endpoint reads
-  and canonical detail response assembly; list reads are re-exported from the
-  provider-local list module.
+  and canonical detail response assembly with provider-neutral secondary data;
+  list reads are re-exported from the provider-local list module.
 - `src/providers/zammad/index.ts`: provider plugin export.
 - `src/features`: product feature boundaries that compose core contracts into
   workflows.
@@ -283,7 +285,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/ticket-detail.tsx`: production selected-
   ticket detail header and layout.
 - `src/features/workspace/components/ticket-detail-sidebar.tsx`: production
-  metadata sidebar shell for selected tickets.
+  metadata sidebar shell for selected-ticket owner, group, pending time,
+  subscription, tags, and links.
 - `src/features/workspace/components/ticket-metadata-editor.tsx`: staged
   single-ticket metadata editor for state, priority, pending date/time,
   Update, Discard changes, pending/error states, and changed-field treatment.

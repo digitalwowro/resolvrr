@@ -56,8 +56,15 @@ describe("workspace ticket adapter date formatting", () => {
             },
           ],
         },
-        links: [],
-        subscription: { supported: false, following: false },
+        links: [
+          {
+            externalId: "ticket-2",
+            direction: "related",
+            label: "#1002 Webhook failed",
+            providerUrl: "https://helpdesk.example.com/#ticket/zoom/2",
+          },
+        ],
+        subscription: { supported: true, following: true },
         measuredAt: new Date("2026-05-25T12:00:00Z"),
       } satisfies TicketDetail);
 
@@ -76,6 +83,15 @@ describe("workspace ticket adapter date formatting", () => {
       expect(detail.articles[0]?.cc).toEqual([
         { email: "lead@example.com", label: "Team Lead" },
       ]);
+      expect(detail.links).toEqual([
+        {
+          direction: "related",
+          id: "ticket-2",
+          label: "#1002 Webhook failed",
+          providerUrl: "https://helpdesk.example.com/#ticket/zoom/2",
+        },
+      ]);
+      expect(detail.subscription).toEqual({ supported: true, following: true });
     } finally {
       vi.useRealTimers();
     }

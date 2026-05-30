@@ -69,6 +69,8 @@ export function detailPropsFor(
       priorityKey: ticket.priorityKey,
       pendingTill: ticket.pendingTill,
       updatedAt: ticket.updatedAt,
+      links: [],
+      subscription: { supported: false, following: false },
       tags: [],
       articles: [
         {
@@ -101,6 +103,8 @@ export function detailPropsFor(
         priorityKey: ticket.priorityKey,
         pendingTill: ticket.pendingTill,
         updatedAt: ticket.updatedAt,
+        links: [],
+        subscription: { supported: false, following: false },
         tags: [],
         articles: [
           {

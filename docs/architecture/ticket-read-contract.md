@@ -124,14 +124,16 @@ remain inside the provider plugin.
 
 - `ticket`: canonical `Ticket`.
 - `thread`: canonical `TicketThread`.
-- `links`: provider-neutral parent, child, or related ticket links.
+- `links`: provider-neutral parent, child, or related ticket links, with
+  optional provider URLs for linked tickets.
 - `subscription`: provider-neutral follow state.
 - `measuredAt`: server time when the provider read was measured.
 
-Unsupported optional provider features still use one stable detail shape:
+Optional provider-neutral features that are not advertised still use one stable
+detail shape:
 
-- If `ticket:links` is unsupported, `links` is always `[]`.
-- If `ticket:subscription` is unsupported, `subscription` is always
+- If `ticket:links` is not advertised, `links` is always `[]`.
+- If `ticket:subscription` is not advertised, `subscription` is always
   `{ supported: false, following: false }`.
 
 UI code must not infer capability support by checking for missing fields.
@@ -264,6 +266,9 @@ The read path logs sanitized timing metadata for these phases:
 - provider list request;
 - provider detail metadata request;
 - provider article/thread request;
+- provider secondary tags request;
+- provider secondary links request;
+- provider secondary group lookup request;
 - provider user lookup request;
 - provider mapping/parsing;
 - total list load;
@@ -272,10 +277,12 @@ The read path logs sanitized timing metadata for these phases:
 - provider metadata mutation request;
 - total metadata mutation.
 
-Future secondary data such as tags, links, subscription, and lookup lists must
-be added as explicit measured phases when they become part of the coordinated
-read path. This contract does not introduce Redis, database caches,
-stale-while-revalidate, background sync, or cache abstractions.
+Secondary data such as tags, links, subscription, and lookup lists must be
+added as explicit measured phases when they become part of the coordinated read
+path. Optional secondary read failures should not take down an otherwise
+available selected-ticket detail when a provider-neutral fallback is available.
+This contract does not introduce Redis, database caches, stale-while-revalidate,
+background sync, or cache abstractions.
 
 ## Non-Goals
 
