@@ -8,6 +8,23 @@ import type { TicketReadUnavailableReason } from "./read-model";
 
 export type TicketMetadataMutationField = "state" | "priority";
 
+export const selectedTicketUpdatePayloadKeys = [
+  "metadata",
+  "ticketExternalId",
+] as const;
+
+export const selectedTicketUpdateMetadataFields = [
+  "pendingUntil",
+  "priority",
+  "state",
+] as const;
+
+export type SelectedTicketUpdatePayloadKey =
+  (typeof selectedTicketUpdatePayloadKeys)[number];
+
+export type SelectedTicketUpdateMetadataField =
+  (typeof selectedTicketUpdateMetadataFields)[number];
+
 export type SelectedTicketUpdateMetadataPayload = {
   pendingUntil?: string;
   priority?: TicketPriority;

@@ -5,7 +5,11 @@ import {
   type TicketPriority,
   type TicketState,
 } from "@/core/tickets";
-import type { TicketMetadataMutationField } from "./mutation-model";
+import {
+  selectedTicketUpdateMetadataFields,
+  selectedTicketUpdatePayloadKeys,
+  type TicketMetadataMutationField,
+} from "./mutation-model";
 
 export type TicketMetadataMutationActionInput =
   | {
@@ -32,6 +36,13 @@ function textValue(record: Record<string, unknown>, name: string): string {
 
 function hasOwnValue(record: Record<string, unknown>, name: string): boolean {
   return Object.prototype.hasOwnProperty.call(record, name);
+}
+
+function hasUnsupportedKeys(
+  record: Record<string, unknown>,
+  allowedKeys: readonly string[],
+): boolean {
+  return Object.keys(record).some((key) => !allowedKeys.includes(key));
 }
 
 function isTicketState(value: string): value is TicketState {
@@ -67,10 +78,17 @@ export function ticketMetadataMutationActionInput(
   now = new Date(),
 ): TicketMetadataMutationActionInput {
   const requestRecord = objectValue(request);
+  if (
+    !requestRecord ||
+    hasUnsupportedKeys(requestRecord, selectedTicketUpdatePayloadKeys)
+  ) {
+    return { status: "invalid", field: "state" };
+  }
   const metadata = objectValue(requestRecord?.metadata) ?? {};
-  const ticketExternalId = requestRecord
-    ? textValue(requestRecord, "ticketExternalId")
-    : "";
+  if (hasUnsupportedKeys(metadata, selectedTicketUpdateMetadataFields)) {
+    return { status: "invalid", field: "state" };
+  }
+  const ticketExternalId = textValue(requestRecord, "ticketExternalId");
   const stateValue = textValue(metadata, "state");
   const priorityValue = textValue(metadata, "priority");
   const pendingUntilText = textValue(metadata, "pendingUntil");

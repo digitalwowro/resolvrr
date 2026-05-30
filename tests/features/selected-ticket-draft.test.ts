@@ -4,10 +4,15 @@ import {
   metadataDraftFromBaseline,
   metadataDraftFromDetail,
   metadataDraftUpdatePayload,
+  selectedTicketDraftEditableSlices,
 } from "@/features/workspace/components/metadata-draft";
 import { selectedDetailProps } from "./ticket-workspace-test-utils";
 
 describe("selected ticket draft model", () => {
+  it("keeps future editable areas behind explicit draft slices", () => {
+    expect(selectedTicketDraftEditableSlices).toEqual(["metadata"]);
+  });
+
   it("stores editable ticket metadata inside a selected-ticket draft", () => {
     const { detail } = selectedDetailProps();
 

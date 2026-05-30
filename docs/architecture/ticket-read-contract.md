@@ -98,7 +98,9 @@ The workspace sends one selected-ticket update payload for each explicit
 provider-neutral metadata slice; the server action parses and validates it
 before dispatching the existing provider-neutral mutation input. Server-side
 validation remains authoritative even when the client has already disabled
-invalid submits.
+invalid submits. Unsupported future slices such as owner, group, tags, links,
+notes, or replies are rejected at the action boundary until their
+provider-neutral contracts and capability checks are explicitly implemented.
 
 Provider plugins own mapping from those keys to provider-specific raw values.
 Zammad raw values such as `pending reminder`, `2 normal`, or `pending_time`
