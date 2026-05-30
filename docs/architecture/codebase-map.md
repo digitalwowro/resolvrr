@@ -102,6 +102,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   provider request/mapping phases.
 - `src/telemetry/ticket-mutation-audit.ts`: sanitized metadata mutation audit
   logger that records only mutation field names/counts and outcome metadata.
+- `src/telemetry/ticket-communication-audit.ts`: sanitized communication audit
+  logger that records only communication kind and outcome metadata.
 - `src/providers`: provider registry and provider plugin implementations.
 - `src/providers/available-providers.ts`: single documented provider assembly
   file allowed to import installed provider plugins directly before exporting
@@ -214,7 +216,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/tickets/communication-model.ts`: provider-neutral
   communication payload, capability, result, and action-state types.
 - `src/features/tickets/communication-service.ts`: communication write
-  orchestration with selected-ticket detail refresh-after-write checks.
+  orchestration with selected-ticket detail refresh-after-write checks and
+  metadata-only communication outcome audit logs.
 - `src/features/tickets/metadata-action-input.ts`: server-side parser and
   validation for one selected-ticket update payload per explicit `Update`,
   including tag, link, subscription, pending-date, and raw provider field
@@ -518,6 +521,10 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-internal-note-service.test.ts`: verifies
   provider-neutral internal-note and customer-reply service dispatch,
   capability failures, and refresh-after-write results.
+- `tests/features/ticket-communication-audit.test.ts`: verifies communication
+  audit logs preserve saved, saved-refresh-failed, and failed outcomes without
+  logging raw ticket IDs, note/reply bodies, provider bodies, or customer
+  content.
 - `tests/features/ticket-metadata-action-revalidation.test.ts`: verifies
   successful metadata writes invalidate the workspace for saved and
   saved-refresh-failed action results.

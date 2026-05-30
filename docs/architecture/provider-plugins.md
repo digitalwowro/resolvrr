@@ -91,10 +91,11 @@ ticket detail and list row. If the write succeeds but refresh fails, callers
 receive `saved-refresh-failed` so UI can present a non-destructive warning.
 Optimistic metadata updates are not part of this slice.
 
-Metadata mutation audit logs stay at the provider-neutral service boundary and
-record only field names, field counts, status, retryability, and safe provider
-metadata. Provider request payloads, response bodies, provider-local ticket IDs,
-assignment IDs, link IDs, tag values, and customer content must remain out of
+Metadata mutation and communication audit logs stay at the provider-neutral
+service boundary and record only outcome metadata such as operation kind, field
+names/counts, status, retryability, and safe provider metadata. Provider request
+payloads, response bodies, provider-local ticket IDs, assignment IDs, link IDs,
+tag values, note bodies, reply bodies, and customer content must remain out of
 logs.
 
 ## Ticket Communication Mutations
@@ -110,6 +111,13 @@ for the selected ticket detail/thread. If the write succeeds but refresh fails,
 callers receive `saved-refresh-failed` so UI can present a non-destructive
 warning and keep provider source-of-truth semantics. Optimistic rendering and
 attachment sends are not part of this slice.
+
+Communication audit logs record only the communication kind, final status,
+provider-neutral failure reason, retryability, and safe connection/provider
+metadata. They must not record selected ticket IDs, provider article IDs,
+recipient addresses, note bodies, reply bodies, provider request payloads, or
+provider response bodies. `saved-refresh-failed` is logged as its own uncertain
+send outcome, not as a failed provider write.
 
 Provider implementations must not trust client-supplied reply recipients.
 Zammad customer replies resolve the customer recipient from provider-owned

@@ -363,9 +363,12 @@ The read path logs sanitized timing metadata for these phases:
 
 Metadata mutation audit logs record only safe metadata: connection ID, provider
 key, mutation field names, field count, pending-date presence, final mutation
-status, retryability, and provider-neutral failure reason. They must not include
-ticket IDs, linked-ticket IDs, tag names, assignment IDs, provider request or
-response bodies, or customer message content.
+status, retryability, and provider-neutral failure reason. Communication audit
+logs record only safe metadata: connection ID, provider key, communication kind,
+final send status, retryability, and provider-neutral failure reason. Neither
+audit path may include ticket IDs, linked-ticket IDs, article IDs, recipient
+addresses, tag names, assignment IDs, provider request or response bodies, note
+bodies, reply bodies, or customer message content.
 
 Lookup lists use provider-neutral `{ externalId, label }` options and are read
 through the selected-ticket detail service path. If supported lookup reads fail,
