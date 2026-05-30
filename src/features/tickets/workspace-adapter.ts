@@ -31,10 +31,7 @@ export type WorkspaceTicketGroupKey =
   | "customer"
   | "group";
 
-export type WorkspaceTicketSortKey =
-  | "number"
-  | "title"
-  | WorkspaceTicketColumnKey;
+export type WorkspaceTicketSortKey = "number" | "title" | WorkspaceTicketColumnKey;
 
 export type WorkspaceTicketColumn = {
   key: WorkspaceTicketColumnKey;
@@ -47,7 +44,9 @@ export type WorkspaceTicketRow = {
   title: string;
   customer: string;
   owner: string;
+  ownerExternalId?: string;
   group: string;
+  groupExternalId?: string;
   state: string;
   stateKey?: TicketState;
   priority: string;
@@ -112,7 +111,9 @@ export type WorkspaceTicketDetail = {
   title: string;
   customer: string;
   owner: string;
+  ownerExternalId?: string;
   group: string;
+  groupExternalId?: string;
   state: string;
   stateKey?: TicketState;
   priority: string;
@@ -215,7 +216,9 @@ export function workspaceTicketRow(ticket: TicketListItem): WorkspaceTicketRow {
     title: ticket.title,
     customer: participantName(ticket.customer),
     owner: participantName(ticket.owner),
+    ownerExternalId: ticket.owner?.externalId,
     group: groupName(ticket.group),
+    groupExternalId: ticket.group?.externalId,
     state: stateLabel(ticket),
     stateKey: ticket.state,
     priority: priorityLabel(ticket),
@@ -229,9 +232,7 @@ export function workspaceTicketRow(ticket: TicketListItem): WorkspaceTicketRow {
   };
 }
 
-export function workspaceTicketRows(
-  tickets: TicketListItem[],
-): WorkspaceTicketRow[] {
+export function workspaceTicketRows(tickets: TicketListItem[]): WorkspaceTicketRow[] {
   return tickets.map(workspaceTicketRow);
 }
 
@@ -255,9 +256,7 @@ export function workspaceTicketListGroups(buckets: TicketListBucket[] = []) {
     }));
 }
 
-export function workspaceTicketTabs(
-  tickets: WorkspaceTicketRow[],
-): WorkspaceTicketTab[] {
+export function workspaceTicketTabs(tickets: WorkspaceTicketRow[]): WorkspaceTicketTab[] {
   return tickets.map((ticket) => ({
     id: ticket.id,
     number: ticket.number,

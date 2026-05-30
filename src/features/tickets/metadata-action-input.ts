@@ -67,9 +67,17 @@ function pendingUntilValue(value: string): Date | undefined {
 }
 
 function invalidField(
+  groupExternalId: string,
+  ownerExternalId: string,
   stateValue: string,
   priorityValue: string,
 ): TicketMetadataMutationField {
+  if (ownerExternalId) {
+    return "owner";
+  }
+  if (groupExternalId) {
+    return "group";
+  }
   return stateValue || !priorityValue ? "state" : "priority";
 }
 
@@ -89,11 +97,29 @@ export function ticketMetadataMutationActionInput(
     return { status: "invalid", field: "state" };
   }
   const ticketExternalId = textValue(requestRecord, "ticketExternalId");
+  const groupExternalId = textValue(metadata, "groupExternalId");
+  const ownerExternalId = textValue(metadata, "ownerExternalId");
   const stateValue = textValue(metadata, "state");
   const priorityValue = textValue(metadata, "priority");
   const pendingUntilText = textValue(metadata, "pendingUntil");
   const input: TicketMetadataMutationInput = {};
   let field: TicketMetadataMutationField | undefined;
+
+  if (hasOwnValue(metadata, "ownerExternalId") && !ownerExternalId) {
+    return { status: "invalid", field: "owner" };
+  }
+  if (ownerExternalId) {
+    input.ownerExternalId = ownerExternalId;
+    field = "owner";
+  }
+
+  if (hasOwnValue(metadata, "groupExternalId") && !groupExternalId) {
+    return { status: "invalid", field: "group" };
+  }
+  if (groupExternalId) {
+    input.groupExternalId = groupExternalId;
+    field = field ?? "group";
+  }
 
   if (hasOwnValue(metadata, "state") && !stateValue) {
     return { status: "invalid", field: "state" };
@@ -140,7 +166,12 @@ export function ticketMetadataMutationActionInput(
   if (!ticketExternalId || !field) {
     return {
       status: "invalid",
-      field: invalidField(stateValue, priorityValue),
+      field: invalidField(
+        groupExternalId,
+        ownerExternalId,
+        stateValue,
+        priorityValue,
+      ),
     };
   }
 

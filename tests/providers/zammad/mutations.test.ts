@@ -99,6 +99,43 @@ describe("Zammad ticket metadata mutations", () => {
     );
   });
 
+  it("maps owner and group external IDs to Zammad assignment fields", async () => {
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers(),
+      data: { id: 42 },
+    });
+
+    await zammadProviderPlugin.updateTicketMetadata?.(providerContext(), "42", {
+      ownerExternalId: "3",
+      groupExternalId: "7",
+    });
+
+    expect(mockedSafeProviderJson).toHaveBeenCalledOnce();
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
+      "https://helpdesk.example.com/api/v1/tickets/42",
+      expect.objectContaining({
+        body: JSON.stringify({
+          owner_id: 3,
+          group_id: 7,
+        }),
+        method: "PUT",
+      }),
+    );
+  });
+
+  it("rejects non-numeric Zammad assignment IDs before provider I/O", async () => {
+    await expect(
+      zammadProviderPlugin.updateTicketMetadata?.(providerContext(), "42", {
+        ownerExternalId: "agent-2",
+      }),
+    ).rejects.toMatchObject({
+      kind: "validation-failure",
+    });
+
+    expect(mockedSafeProviderJson).not.toHaveBeenCalled();
+  });
+
   it("rejects pending state transitions without a future pending time", async () => {
     mockedSafeProviderJson.mockResolvedValueOnce({
       status: 200,

@@ -7,9 +7,9 @@ import type { TicketMetadataSavedPatch } from "./metadata-draft";
 
 export function patchTicketTabMetadata(
   tabs: WorkspaceTicketTab[],
-  { priority, state, ticketExternalId }: TicketMetadataSavedPatch,
+  { group, owner, priority, state, ticketExternalId }: TicketMetadataSavedPatch,
 ): WorkspaceTicketTab[] {
-  if (!state && !priority) {
+  if (!state && !priority && !owner && !group) {
     return tabs;
   }
 
@@ -17,6 +17,8 @@ export function patchTicketTabMetadata(
     tab.id === ticketExternalId
       ? {
           ...tab,
+          ...(owner ? { owner } : {}),
+          ...(group ? { group } : {}),
           ...(state
             ? { state: ticketStateDefinitions[state].label, stateKey: state }
             : {}),

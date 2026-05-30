@@ -9,6 +9,8 @@ import {
 } from "./ticket-pending-date-time";
 
 export type TicketMetadataDraft = {
+  groupExternalId?: string;
+  ownerExternalId?: string;
   pendingDateTime: PendingDateTimeParts;
   priority?: TicketPriority;
   state?: TicketState;
@@ -28,6 +30,8 @@ export type TicketMetadataDraftDirtyFields = {
   pendingDate: boolean;
   pendingTime: boolean;
   pendingUntil: boolean;
+  group: boolean;
+  owner: boolean;
   priority: boolean;
   state: boolean;
 };
@@ -38,6 +42,8 @@ export type TicketMetadataDraftValidation = {
 };
 
 export type TicketMetadataSavedPatch = {
+  group?: string;
+  owner?: string;
   priority?: TicketPriority;
   state?: TicketState;
   ticketExternalId: string;
@@ -56,6 +62,8 @@ export function metadataDraftFromDetail(
 ): SelectedTicketDraft {
   return {
     metadata: {
+      groupExternalId: detail.groupExternalId,
+      ownerExternalId: detail.ownerExternalId,
       pendingDateTime: pendingDateTimePartsFromIso(detail.pendingUntilIso),
       priority: detail.priorityKey,
       state: detail.stateKey,
@@ -69,6 +77,8 @@ export function metadataDraftFromBaseline(
 ): SelectedTicketDraft {
   return {
     metadata: {
+      groupExternalId: baseline.metadata.groupExternalId,
+      ownerExternalId: baseline.metadata.ownerExternalId,
       pendingDateTime: { ...baseline.metadata.pendingDateTime },
       priority: baseline.metadata.priority,
       state: baseline.metadata.state,
@@ -80,6 +90,8 @@ export function metadataDraftFromBaseline(
 export function metadataDraftKey(draft: SelectedTicketDraft): string {
   return [
     draft.ticketExternalId,
+    draft.metadata.ownerExternalId ?? "",
+    draft.metadata.groupExternalId ?? "",
     draft.metadata.state ?? "",
     draft.metadata.priority ?? "",
     normalizedPendingIso(draft.metadata.pendingDateTime) ?? "",
@@ -92,6 +104,10 @@ export function metadataDraftDirtyFields(
 ): TicketMetadataDraftDirtyFields {
   const state = draft.metadata.state !== baseline.metadata.state;
   const priority = draft.metadata.priority !== baseline.metadata.priority;
+  const owner =
+    draft.metadata.ownerExternalId !== baseline.metadata.ownerExternalId;
+  const group =
+    draft.metadata.groupExternalId !== baseline.metadata.groupExternalId;
   const pendingUntil =
     isPendingState(draft.metadata.state) &&
     normalizedPendingIso(draft.metadata.pendingDateTime) !==
@@ -103,6 +119,8 @@ export function metadataDraftDirtyFields(
     pendingDate: pendingInputChanged,
     pendingTime: pendingInputChanged,
     pendingUntil,
+    group,
+    owner,
     priority,
     state,
   };
@@ -111,7 +129,13 @@ export function metadataDraftDirtyFields(
 export function metadataDraftHasChanges(
   dirtyFields: TicketMetadataDraftDirtyFields,
 ): boolean {
-  return dirtyFields.state || dirtyFields.priority || dirtyFields.pendingUntil;
+  return (
+    dirtyFields.state ||
+    dirtyFields.priority ||
+    dirtyFields.pendingUntil ||
+    dirtyFields.owner ||
+    dirtyFields.group
+  );
 }
 
 export function metadataDraftRequiresPendingDate(
@@ -179,6 +203,18 @@ export function metadataDraftUpdatePayload(
       return undefined;
     }
     metadata.priority = draft.metadata.priority;
+  }
+  if (dirtyFields.owner) {
+    if (!draft.metadata.ownerExternalId) {
+      return undefined;
+    }
+    metadata.ownerExternalId = draft.metadata.ownerExternalId;
+  }
+  if (dirtyFields.group) {
+    if (!draft.metadata.groupExternalId) {
+      return undefined;
+    }
+    metadata.groupExternalId = draft.metadata.groupExternalId;
   }
 
   return {

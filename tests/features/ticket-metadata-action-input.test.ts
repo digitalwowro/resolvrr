@@ -21,6 +21,23 @@ describe("ticket metadata action input", () => {
     });
   });
 
+  it("parses owner and group assignment updates as provider-neutral references", () => {
+    const result = ticketMetadataMutationActionInput({
+      metadata: {
+        groupExternalId: "group-2",
+        ownerExternalId: "agent-2",
+      },
+      ticketExternalId: "ticket-1",
+    });
+
+    expect(result).toMatchObject({
+      field: "owner",
+      input: { ownerExternalId: "agent-2", groupExternalId: "group-2" },
+      status: "valid",
+      ticketExternalId: "ticket-1",
+    });
+  });
+
   it("rejects orphan pendingUntil without a pending state", () => {
     const result = ticketMetadataMutationActionInput(
       {
@@ -121,5 +138,17 @@ describe("ticket metadata action input", () => {
         ticketExternalId: "ticket-1",
       }),
     ).toEqual({ status: "invalid", field: "state" });
+    expect(
+      ticketMetadataMutationActionInput({
+        metadata: { ownerExternalId: "" },
+        ticketExternalId: "ticket-1",
+      }),
+    ).toEqual({ status: "invalid", field: "owner" });
+    expect(
+      ticketMetadataMutationActionInput({
+        metadata: { groupExternalId: "" },
+        ticketExternalId: "ticket-1",
+      }),
+    ).toEqual({ status: "invalid", field: "group" });
   });
 });

@@ -92,6 +92,10 @@ function canUpdateTicketMetadata(
   input: TicketMetadataMutationInput,
 ): boolean {
   return (
+    (!input.ownerExternalId ||
+      hasCapability(providerContext, "ticket:update-owner")) &&
+    (!input.groupExternalId ||
+      hasCapability(providerContext, "ticket:update-group")) &&
     (!input.state || hasCapability(providerContext, "ticket:update-state")) &&
     (!input.priority || hasCapability(providerContext, "ticket:update-priority"))
   );

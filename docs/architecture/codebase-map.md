@@ -40,7 +40,7 @@ architecture folders or important files are added, moved, renamed, or removed.
   action.
 - `src/app/workspace/page.tsx`: protected authenticated workspace route that
   composes the active helpdesk connection ticket read path and controlled
-  state/priority mutation action into the real workspace.
+  metadata mutation action into the real workspace.
 - `src/app/workspace/connections/page.tsx`: protected helpdesk workspace
   connection list route.
 - `src/app/workspace/connections/new/page.tsx`: protected add-connection form
@@ -117,9 +117,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/providers/zammad/mutation-policy.ts`: Zammad-only state mutation
   availability rules, exposed to core/UI as canonical hidden state keys and
   pending-date requirements.
-- `src/providers/zammad/mutations.ts`: Zammad-only state/priority metadata
-  write payload mapping, pending-time payload construction, state-transition
-  guard, and endpoint call implementation.
+- `src/providers/zammad/mutations.ts`: Zammad-only state, priority, owner, and
+  group metadata write payload mapping, pending-time payload construction,
+  state-transition guard, and endpoint call implementation.
 - `src/providers/zammad/participants.ts`: Zammad user/participant display-name,
   email fallback, recipient, and expanded asset mapping helpers.
 - `src/providers/zammad/plugin.ts`: provider plugin object, capabilities, and
@@ -191,7 +191,7 @@ architecture folders or important files are added, moved, renamed, or removed.
   not export server actions so component/test imports do not pull in env or
   database modules.
 - `src/features/tickets/actions.ts`: server action for staged selected-ticket
-  state/priority update payloads from `/workspace`.
+  metadata update payloads from `/workspace`.
 - `src/features/tickets/metadata-action-input.ts`: server-side parser and
   validation for one selected-ticket update payload per explicit `Update`,
   including rejection of unsupported future slices and raw provider fields.
@@ -199,12 +199,11 @@ architecture folders or important files are added, moved, renamed, or removed.
   credential decryption, provider lookup, base URL revalidation, and setup
   timing for ticket reads and metadata mutations.
 - `src/features/tickets/provider-dispatch.ts`: capability-gated ticket read and
-  state/priority metadata mutation dispatch plus provider error to
-  unavailable-state mapping.
-- `src/features/tickets/mutation-model.ts`: provider-neutral state/priority
-  metadata mutation capabilities, selected-ticket update payload shape,
-  allowed update payload/slice keys, pending-date validation, result/error
-  model, and action state types.
+  metadata mutation dispatch plus provider error to unavailable-state mapping.
+- `src/features/tickets/mutation-model.ts`: provider-neutral metadata mutation
+  capabilities, selected-ticket update payload shape, allowed update
+  payload/slice keys, pending-date validation, result/error model, and action
+  state types.
 - `src/features/tickets/list-query-guardrails.ts`: provider-neutral list query
   capability derivation and guardrail checks for unsupported or expensive query
   requests before provider dispatch.
@@ -222,8 +221,7 @@ architecture folders or important files are added, moved, renamed, or removed.
   post-hydration ungrouped workspace list page loads. It returns adapted
   workspace rows and provider-neutral pagination metadata only.
 - `src/features/tickets/service.ts`: thin ticket read orchestration and
-  controlled state/priority metadata mutation entrypoints with refresh-after-
-  write checks.
+  controlled metadata mutation entrypoints with refresh-after-write checks.
 - `src/features/tickets/date-time-format.ts`: shared workspace date/time
   formatter for provider-backed ticket table, detail, thread, and metadata
   display strings.
@@ -236,8 +234,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   barrel exports production workspace UI only.
 - `src/features/workspace/components/ticket-workspace.tsx`: provider-backed
   workspace composition for the real `/workspace` route. It wires
-  provider-neutral read models and state/priority mutation capabilities into
-  approved production workspace components.
+  provider-neutral read models and metadata mutation capabilities into approved
+  production workspace components.
 - `src/features/workspace/components/ticket-workspace-display.tsx`: client-side
   production workspace display composition for controls, tabs, table, and
   selected-ticket detail surfaces.
@@ -291,16 +289,19 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/ticket-detail.tsx`: production selected-
   ticket detail header and layout.
 - `src/features/workspace/components/ticket-detail-sidebar.tsx`: production
-  metadata sidebar shell for selected-ticket owner, group, pending time,
-  subscription, tags, links, and lookup options.
+  metadata sidebar shell for selected-ticket subscription, tags, links, and
+  editor-provided metadata controls.
 - `src/features/workspace/components/ticket-lookup-options.tsx`: compact
   read-only provider-neutral lookup option list rendering for selected-ticket
   sidebar fields.
 - `src/features/workspace/components/ticket-metadata-editor.tsx`: selected-
-  ticket draft editor for state, priority, pending date/time,
+  ticket draft editor for state, priority, owner, group, pending date/time,
   Update, Discard changes, pending/error states, and changed-field treatment.
 - `src/features/workspace/components/ticket-metadata-editor-state.tsx`: stateful
   selected-ticket draft editor implementation used by the thin editor wrapper.
+- `src/features/workspace/components/ticket-assignment-fields.tsx`: owner/group
+  assignment sidebar controls that render editable dropdowns only when the
+  provider advertises write capabilities and lookup options are available.
 - `src/features/workspace/components/ticket-metadata-action-bar.tsx`: sticky
   full-width selected-ticket metadata action row with Discard changes and
   Update controls plus post-update navigation selection.
@@ -322,6 +323,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   date/time parsing, formatting, default, and future-date helpers.
 - `src/features/workspace/components/ticket-pending-state-form.tsx`: compact
   pending date/time input used by staged pending state transitions.
+- `src/features/workspace/components/ticket-priority-mutation-options.tsx`:
+  priority dropdown options for staged priority updates.
 - `src/features/workspace/components/ticket-state-mutation-options.tsx`: state
   dropdown option helpers for provider-supplied hidden states and selected-value
   display.
@@ -477,6 +480,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   provider-neutral metadata mutation service dispatch, capability failures,
   pending-date validation, unavailable-transition handling, and
   refresh-after-write results.
+- `tests/features/ticket-owner-group-metadata-service.test.ts`: verifies owner
+  and group metadata mutation dispatch and capability gating.
 - `tests/features/ticket-service-test-helpers.ts`: shared ticket service test
   repository, provider, connection, and encryption fixtures.
 - `tests/features/ticket-service-query.test.ts`: verifies ticket list query
@@ -497,6 +502,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-staged-metadata-workspace.test.tsx`: verifies staged
   single-ticket metadata update behavior, changed-field treatment, discard,
   selected-ticket rebasing, and saved-refresh-failed UI handling.
+- `tests/features/ticket-owner-group-metadata-workspace.test.tsx`: verifies
+  owner and group staged metadata controls submit through the shared Update
+  action.
 - `tests/features/ticket-tab-metadata-sync.test.tsx`: verifies a successful
   staged state update immediately updates the active tab top-border state color
   before server refresh rehydrates the workspace.
@@ -529,9 +537,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/providers/zammad/read-detail.test.ts`: verifies Zammad ticket detail
   and article-thread endpoint calls, optional feature defaults, sanitization,
   and detail read timing.
-- `tests/providers/zammad/mutations.test.ts`: verifies Zammad state/priority
-  metadata write payload mapping, orphan pending-time rejection, and
-  provider-safe request usage.
+- `tests/providers/zammad/mutations.test.ts`: verifies Zammad state, priority,
+  owner, and group metadata write payload mapping, orphan pending-time
+  rejection, and provider-safe request usage.
 - `tests/providers/zammad/read-assets.test.ts`: verifies Zammad attachment
   metadata mapping.
 - `tests/providers/zammad/read-lookup-assets.test.ts`: verifies Zammad expanded
@@ -544,8 +552,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `docs/architecture/provider-plugins.md`: provider plugin ownership and
   registration rules.
 - `docs/architecture/ticket-read-contract.md`: canonical provider-neutral
-  ticket read model, controlled state/priority metadata mutation contract,
-  thread article shape, capabilities, and non-goals.
+  ticket read model, controlled metadata mutation contract, thread article
+  shape, capabilities, and non-goals.
 - `docs/architecture/codebase-map.md`: this file-role map.
 - `docs/deploy`: environment and deployment docs, including `.env.example`.
 - `docs/deploy/.env.example`: committed environment template.

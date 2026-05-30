@@ -4,7 +4,7 @@ import type {
   WorkspaceTicketDetailLoadResult,
   WorkspaceTicketRow,
 } from "@/features/tickets";
-import { unsupportedTicketLookupData } from "@/core/ticket-lookups";
+import { availableTicketLookupList } from "@/core/ticket-lookups";
 
 export async function noopAction() {}
 
@@ -27,7 +27,9 @@ export const row = {
   title: "Cannot log in",
   customer: "Maya Patel",
   owner: "Agent Smith",
+  ownerExternalId: "agent-1",
   group: "Users",
+  groupExternalId: "group-1",
   state: "Open",
   stateKey: "open",
   priority: "Medium",
@@ -44,7 +46,9 @@ export const highRow = {
   title: "Webhook failed",
   customer: "Unassigned",
   owner: "Unassigned",
+  ownerExternalId: undefined,
   group: "Unassigned",
+  groupExternalId: undefined,
   priority: "High",
   priorityKey: "high",
 } satisfies WorkspaceTicketRow;
@@ -63,7 +67,9 @@ export function detailPropsFor(
       title: ticket.title,
       customer: ticket.customer,
       owner: ticket.owner,
+      ownerExternalId: ticket.ownerExternalId,
       group: ticket.group,
+      groupExternalId: ticket.groupExternalId,
       state: ticket.state,
       stateKey: ticket.stateKey,
       priority: ticket.priority,
@@ -71,7 +77,16 @@ export function detailPropsFor(
       pendingTill: ticket.pendingTill,
       updatedAt: ticket.updatedAt,
       links: [],
-      lookupData: unsupportedTicketLookupData(),
+      lookupData: {
+        assignableUsers: availableTicketLookupList([
+          { externalId: "agent-1", label: "Agent Smith" },
+          { externalId: "agent-2", label: "Priya Agent" },
+        ]),
+        groups: availableTicketLookupList([
+          { externalId: "group-1", label: "Users" },
+          { externalId: "group-2", label: "Billing" },
+        ]),
+      },
       subscription: { supported: false, following: false },
       tags: [],
       articles: [
@@ -99,7 +114,9 @@ export function detailPropsFor(
         title: ticket.title,
         customer: ticket.customer,
         owner: ticket.owner,
+        ownerExternalId: ticket.ownerExternalId,
         group: ticket.group,
+        groupExternalId: ticket.groupExternalId,
         state: ticket.state,
         stateKey: ticket.stateKey,
         priority: ticket.priority,
@@ -107,7 +124,16 @@ export function detailPropsFor(
         pendingTill: ticket.pendingTill,
         updatedAt: ticket.updatedAt,
         links: [],
-        lookupData: unsupportedTicketLookupData(),
+        lookupData: {
+          assignableUsers: availableTicketLookupList([
+            { externalId: "agent-1", label: "Agent Smith" },
+            { externalId: "agent-2", label: "Priya Agent" },
+          ]),
+          groups: availableTicketLookupList([
+            { externalId: "group-1", label: "Users" },
+            { externalId: "group-2", label: "Billing" },
+          ]),
+        },
         subscription: { supported: false, following: false },
         tags: [],
         articles: [

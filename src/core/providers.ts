@@ -38,6 +38,8 @@ export type ProviderCapability =
   | "ticket:subscription"
   | "ticket:update-state"
   | "ticket:update-priority"
+  | "ticket:update-owner"
+  | "ticket:update-group"
   | "lookup:assignable-users"
   | "lookup:groups"
   | "search:full-text";

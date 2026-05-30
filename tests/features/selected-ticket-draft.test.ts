@@ -20,6 +20,8 @@ describe("selected ticket draft model", () => {
 
     expect(draft).toEqual({
       metadata: {
+        groupExternalId: "group-1",
+        ownerExternalId: "agent-1",
         pendingDateTime: {
           date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
           time: "08:00",
@@ -36,9 +38,13 @@ describe("selected ticket draft model", () => {
     const draft = metadataDraftFromBaseline(baseline);
     draft.metadata.state = "pending_reminder";
     draft.metadata.priority = "high";
+    draft.metadata.ownerExternalId = "agent-2";
+    draft.metadata.groupExternalId = "group-2";
     draft.metadata.pendingDateTime = { date: "2099-01-02", time: "09:30" };
 
     expect(metadataDraftDirtyFields(baseline, draft)).toEqual({
+      group: true,
+      owner: true,
       pendingDate: true,
       pendingTime: true,
       pendingUntil: true,
@@ -67,12 +73,16 @@ describe("selected ticket draft model", () => {
     const draft = metadataDraftFromBaseline(baseline);
     draft.metadata.state = "pending_reminder";
     draft.metadata.priority = "high";
+    draft.metadata.ownerExternalId = "agent-2";
+    draft.metadata.groupExternalId = "group-2";
     draft.metadata.pendingDateTime = { date: "2099-01-02", time: "09:30" };
 
     const payload = metadataDraftUpdatePayload(baseline, draft);
 
     expect(payload).toEqual({
       metadata: {
+        groupExternalId: "group-2",
+        ownerExternalId: "agent-2",
         pendingUntil: new Date("2099-01-02T09:30").toISOString(),
         priority: "high",
         state: "pending_reminder",

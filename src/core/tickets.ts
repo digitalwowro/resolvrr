@@ -161,6 +161,8 @@ export type TicketDetail = {
 };
 
 export type TicketMetadataMutationInput = {
+  groupExternalId?: string;
+  ownerExternalId?: string;
   state?: TicketState;
   priority?: TicketPriority;
   pendingUntil?: Date;
