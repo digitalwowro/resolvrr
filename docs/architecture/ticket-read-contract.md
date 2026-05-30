@@ -152,8 +152,10 @@ Internal note results distinguish write failure from refresh failure:
 
 The UI does not auto-send or optimistic-render note bodies. It keeps a local
 draft until the user explicitly submits, shows a pending state while saving,
-clears the draft only after a checked `saved` result, and reloads the selected
-ticket detail/thread after success.
+clears the draft after the provider write is confirmed (`saved` or
+`saved-refresh-failed`), and shows a non-destructive refresh warning when a
+confirmed write cannot refresh the selected ticket detail. The UI reloads the
+selected ticket detail/thread after a checked `saved` result.
 
 Zammad internal notes are provider-specific article writes under
 `src/providers/zammad/**`. Zammad raw article payload fields such as `ticket_id`,

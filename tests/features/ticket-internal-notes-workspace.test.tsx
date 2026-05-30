@@ -115,4 +115,48 @@ describe("TicketWorkspace internal notes", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Internal note")).toHaveValue("Checked the logs.");
   });
+
+  it("clears the draft and shows a refresh warning for saved-refresh-failed", async () => {
+    const user = userEvent.setup();
+    const detailProps = selectedDetailProps();
+    const addTicketInternalNoteAction = vi.fn<InternalNoteAction>(async () => ({
+      status: "saved-refresh-failed",
+      message:
+        "Note added, but the ticket could not be refreshed. Refresh the workspace to verify the latest thread.",
+    }));
+    const loadTicketDetailAction = vi.fn(async () => detailProps.detailResult);
+
+    render(
+      <TicketWorkspace
+        addTicketInternalNoteAction={addTicketInternalNoteAction}
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={detailProps.detail}
+        detailResult={detailProps.detailResult}
+        listResult={{
+          ...availableList,
+          communicationCapabilities: { internalNotes: true },
+        }}
+        loadTicketDetailAction={loadTicketDetailAction}
+        logoutAction={noopAction}
+        rows={[row]}
+        selectedTicketId="ticket-1"
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await user.type(screen.getByLabelText("Internal note"), "Checked the logs.");
+    await user.click(screen.getByRole("button", { name: "Add note" }));
+
+    expect(
+      await screen.findByText(
+        "Note added, but the ticket could not be refreshed. Refresh the workspace to verify the latest thread.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Internal note")).toHaveValue("");
+    expect(loadTicketDetailAction).not.toHaveBeenCalled();
+  });
 });
