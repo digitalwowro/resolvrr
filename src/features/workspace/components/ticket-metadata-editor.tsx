@@ -1,6 +1,7 @@
 "use client";
 
 import type {
+  SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
@@ -26,7 +27,7 @@ export function TicketMetadataEditor({
   onMetadataSavedDetailRefresh?(ticketId: string): void;
   onReturnToListAfterUpdate(): void;
   updateTicketMetadataAction(
-    formData: FormData,
+    request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
 }) {
   const loadedBaseline = metadataDraftFromDetail(detail);

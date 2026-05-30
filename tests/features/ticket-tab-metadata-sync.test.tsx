@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   defaultWorkspaceTicketColumns,
+  type SelectedTicketUpdatePayload,
   type TicketMetadataMutationActionState,
 } from "@/features/tickets";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
@@ -24,7 +25,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 type MutationAction = (
-  formData: FormData,
+  request: SelectedTicketUpdatePayload,
 ) => Promise<TicketMetadataMutationActionState>;
 
 function renderWorkspace(action: MutationAction) {

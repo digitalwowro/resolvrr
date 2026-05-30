@@ -1,8 +1,23 @@
 import type { ProviderCapability } from "@/core/providers";
-import type { TicketMetadataMutationInput, TicketState } from "@/core/tickets";
+import type {
+  TicketMetadataMutationInput,
+  TicketPriority,
+  TicketState,
+} from "@/core/tickets";
 import type { TicketReadUnavailableReason } from "./read-model";
 
 export type TicketMetadataMutationField = "state" | "priority";
+
+export type SelectedTicketUpdateMetadataPayload = {
+  pendingUntil?: string;
+  priority?: TicketPriority;
+  state?: TicketState;
+};
+
+export type SelectedTicketUpdatePayload = {
+  metadata?: SelectedTicketUpdateMetadataPayload;
+  ticketExternalId: string;
+};
 
 export type TicketMetadataMutationCapabilities = {
   state: boolean;

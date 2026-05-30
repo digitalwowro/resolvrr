@@ -1,4 +1,5 @@
 import type { TicketPriority, TicketState } from "@/core/tickets";
+import type { SelectedTicketUpdatePayload } from "@/features/tickets/mutation-model";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import {
   isFuturePendingDateTime,
@@ -145,36 +146,38 @@ export function metadataDraftSubmittedBaseline(
   return metadataDraftFromBaseline(draft);
 }
 
-export function metadataDraftFormData(
+export function metadataDraftUpdatePayload(
   baseline: SelectedTicketDraft,
   draft: SelectedTicketDraft,
-): FormData | undefined {
+): SelectedTicketUpdatePayload | undefined {
   const dirtyFields = metadataDraftDirtyFields(baseline, draft);
   if (!metadataDraftHasChanges(dirtyFields)) {
     return undefined;
   }
 
-  const formData = new FormData();
-  formData.set("ticketExternalId", draft.ticketExternalId);
+  const metadata: NonNullable<SelectedTicketUpdatePayload["metadata"]> = {};
   if (dirtyFields.state || dirtyFields.pendingUntil) {
     if (!draft.metadata.state) {
       return undefined;
     }
-    formData.set("state", draft.metadata.state);
+    metadata.state = draft.metadata.state;
     if (isPendingState(draft.metadata.state)) {
       const pendingUntil = pendingDateTimeIso(draft.metadata.pendingDateTime);
       if (!pendingUntil) {
         return undefined;
       }
-      formData.set("pendingUntil", pendingUntil);
+      metadata.pendingUntil = pendingUntil;
     }
   }
   if (dirtyFields.priority) {
     if (!draft.metadata.priority) {
       return undefined;
     }
-    formData.set("priority", draft.metadata.priority);
+    metadata.priority = draft.metadata.priority;
   }
 
-  return formData;
+  return {
+    metadata,
+    ticketExternalId: draft.ticketExternalId,
+  };
 }

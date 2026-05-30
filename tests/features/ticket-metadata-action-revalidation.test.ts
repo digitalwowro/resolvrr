@@ -30,11 +30,11 @@ vi.mock("@/features/tickets/service", () => ({
 const mockedUpdateWorkspaceTicketMetadata = vi.mocked(updateWorkspaceTicketMetadata);
 const mockedRevalidatePath = vi.mocked(revalidatePath);
 
-function priorityFormData() {
-  const formData = new FormData();
-  formData.set("ticketExternalId", "ticket-1");
-  formData.set("priority", "high");
-  return formData;
+function priorityUpdatePayload() {
+  return {
+    metadata: { priority: "high" as const },
+    ticketExternalId: "ticket-1",
+  };
 }
 
 describe("updateTicketMetadataAction revalidation", () => {
@@ -55,7 +55,7 @@ describe("updateTicketMetadataAction revalidation", () => {
             },
       );
 
-      await updateTicketMetadataAction(priorityFormData());
+      await updateTicketMetadataAction(priorityUpdatePayload());
 
       expect(mockedRevalidatePath).toHaveBeenCalledWith("/workspace");
     },
@@ -68,7 +68,7 @@ describe("updateTicketMetadataAction revalidation", () => {
       retryable: true,
     });
 
-    const result = await updateTicketMetadataAction(priorityFormData());
+    const result = await updateTicketMetadataAction(priorityUpdatePayload());
 
     expect(result).toEqual({
       status: "saved-refresh-failed",
@@ -76,5 +76,34 @@ describe("updateTicketMetadataAction revalidation", () => {
       message:
         "Saved, but the ticket could not be refreshed. Refresh the workspace to verify the latest value.",
     });
+  });
+
+  it("passes one provider-neutral metadata input to the mutation service", async () => {
+    mockedUpdateWorkspaceTicketMetadata.mockResolvedValueOnce({
+      status: "saved",
+    });
+
+    await updateTicketMetadataAction({
+      metadata: {
+        pendingUntil: "2099-01-02T08:00:00.000Z",
+        priority: "high",
+        state: "pending_close",
+      },
+      ticketExternalId: "ticket-1",
+    });
+
+    expect(mockedUpdateWorkspaceTicketMetadata).toHaveBeenCalledOnce();
+    expect(mockedUpdateWorkspaceTicketMetadata.mock.calls[0]).toEqual([
+      {},
+      {},
+      "0123456789abcdef0123456789abcdef",
+      "user-1",
+      "ticket-1",
+      {
+        pendingUntil: new Date("2099-01-02T08:00:00.000Z"),
+        priority: "high",
+        state: "pending_close",
+      },
+    ]);
   });
 });

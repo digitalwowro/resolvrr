@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   defaultWorkspaceTicketColumns,
+  type SelectedTicketUpdatePayload,
   type TicketMetadataMutationActionState,
   type WorkspaceTicketDetailLoadResult,
 } from "@/features/tickets";
@@ -25,7 +26,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 type MutationAction = (
-  formData: FormData,
+  request: SelectedTicketUpdatePayload,
 ) => Promise<TicketMetadataMutationActionState>;
 
 describe("TicketWorkspace client detail cache", () => {

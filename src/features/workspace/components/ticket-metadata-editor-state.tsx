@@ -10,16 +10,17 @@ import {
   type TicketState,
 } from "@/core/tickets";
 import type {
+  SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import {
   metadataDraftDirtyFields,
-  metadataDraftFormData,
   metadataDraftFromBaseline,
   metadataDraftHasChanges,
   metadataDraftSubmittedBaseline,
+  metadataDraftUpdatePayload,
   validateMetadataDraft,
   type SelectedTicketDraft,
   type TicketMetadataSavedPatch,
@@ -88,7 +89,7 @@ export function TicketMetadataEditorState({
   onMetadataSavedDetailRefresh?: (ticketId: string) => void;
   onReturnToListAfterUpdate(): void;
   updateTicketMetadataAction(
-    formData: FormData,
+    request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
 }) {
   const router = useRouter();
@@ -125,15 +126,15 @@ export function TicketMetadataEditorState({
       return;
     }
 
-    const formData = metadataDraftFormData(baseline, draft);
-    if (!formData) {
+    const updatePayload = metadataDraftUpdatePayload(baseline, draft);
+    if (!updatePayload) {
       return;
     }
 
     setSaving(true);
     setMutationResult({ status: "idle" });
 
-    void updateTicketMetadataAction(formData)
+    void updateTicketMetadataAction(updatePayload)
       .then((result) => {
         setMutationResult(result);
         if (

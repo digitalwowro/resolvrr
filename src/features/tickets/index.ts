@@ -27,6 +27,8 @@ export {
 export {
   noTicketMetadataMutationCapabilities,
   ticketMetadataMutationCapabilities,
+  type SelectedTicketUpdateMetadataPayload,
+  type SelectedTicketUpdatePayload,
   type TicketMetadataMutationActionState,
   type TicketMetadataMutationCapabilities,
   type TicketMetadataMutationErrorReason,

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   defaultWorkspaceTicketColumns,
+  type SelectedTicketUpdatePayload,
   type TicketMetadataMutationActionState,
   type WorkspaceTicketRow,
 } from "@/features/tickets";
@@ -29,7 +30,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 type MutationAction = (
-  formData: FormData,
+  request: SelectedTicketUpdatePayload,
 ) => Promise<TicketMetadataMutationActionState>;
 
 function renderWorkspace({
@@ -89,12 +90,10 @@ describe("TicketWorkspace staged metadata updates", () => {
 
     await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
     expect(action).toHaveBeenCalledOnce();
-    const formData = action.mock.calls[0]?.[0] as FormData;
-    expect(formData.get("ticketExternalId")).toBe("ticket-1");
-    expect(formData.get("state")).toBe("closed");
-    expect(formData.get("priority")).toBe("high");
-    expect(formData.get("field")).toBeNull();
-    expect(formData.get("value")).toBeNull();
+    expect(action.mock.calls[0]?.[0]).toEqual({
+      metadata: { priority: "high", state: "closed" },
+      ticketExternalId: "ticket-1",
+    });
   });
 
   it("marks changed fields and clears them with Discard changes", async () => {

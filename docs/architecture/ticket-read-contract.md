@@ -93,6 +93,13 @@ and UI code use canonical Resolvrr keys:
 - `TicketMetadataMutationInput.pendingUntil?: Date`, used only as supporting
   data for state transitions that require a pending time.
 
+The workspace sends one selected-ticket update payload for each explicit
+`Update` click. That payload carries the selected ticket external ID and a
+provider-neutral metadata slice; the server action parses and validates it
+before dispatching the existing provider-neutral mutation input. Server-side
+validation remains authoritative even when the client has already disabled
+invalid submits.
+
 Provider plugins own mapping from those keys to provider-specific raw values.
 Zammad raw values such as `pending reminder`, `2 normal`, or `pending_time`
 must not escape `src/providers/zammad/**`.
