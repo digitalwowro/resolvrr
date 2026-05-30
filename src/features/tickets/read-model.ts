@@ -4,6 +4,7 @@ import type {
   TicketListQueryCapabilities,
   TicketListQueryRejection,
 } from "@/core/providers";
+import type { TicketCommunicationCapabilities } from "./communication-model";
 import type { TicketMetadataMutationCapabilities } from "./mutation-model";
 export { defaultTicketListQuery } from "@/core/ticket-list-query";
 
@@ -32,6 +33,7 @@ export type TicketReadUnavailable = {
 export type TicketListAvailable = {
   status: "available";
   connectionName: string;
+  communicationCapabilities: TicketCommunicationCapabilities;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
   queryCapabilities?: TicketListQueryCapabilities;
   tickets: TicketListItem[];

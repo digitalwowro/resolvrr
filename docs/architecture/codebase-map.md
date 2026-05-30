@@ -39,8 +39,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/app/register/page.tsx`: minimal registration form wired to a server
   action.
 - `src/app/workspace/page.tsx`: protected authenticated workspace route that
-  composes the active helpdesk connection ticket read path and controlled
-  metadata mutation action into the real workspace.
+  composes the active helpdesk connection ticket read path, controlled metadata
+  mutation action, and internal-note action into the real workspace.
 - `src/app/workspace/connections/page.tsx`: protected helpdesk workspace
   connection list route.
 - `src/app/workspace/connections/new/page.tsx`: protected add-connection form
@@ -51,7 +51,7 @@ architecture folders or important files are added, moved, renamed, or removed.
   default plain-anchor color.
 - `src/core`: provider-neutral domain contracts and canonical values.
 - `src/core/tickets.ts`: canonical ticket values and provider-neutral
-  ticket/thread/link/subscription/mutation types.
+  ticket/thread/link/subscription/mutation/internal-note types.
 - `src/core/ticket-list-query.ts`: provider-neutral list query, sort, count,
   grouping, pagination, result contracts, and normalization.
 - `src/core/ticket-lookups.ts`: provider-neutral lookup option, lookup result,
@@ -123,6 +123,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   group, tag, link, and subscription metadata write orchestration, pending-time
   payload construction, state-transition guard, and endpoint call
   implementation.
+- `src/providers/zammad/ticket-article-mutations.ts`: Zammad-only ticket article
+  write helpers for internal note creation.
 - `src/providers/zammad/participants.ts`: Zammad user/participant display-name,
   email fallback, recipient, and expanded asset mapping helpers.
 - `src/providers/zammad/plugin.ts`: provider plugin object, capabilities, and
@@ -198,6 +200,16 @@ architecture folders or important files are added, moved, renamed, or removed.
   database modules.
 - `src/features/tickets/actions.ts`: server action for staged selected-ticket
   metadata update payloads from `/workspace`.
+- `src/features/tickets/communication-actions.ts`: server action for explicit
+  selected-ticket internal-note submits from `/workspace`.
+- `src/features/tickets/communication-action-input.ts`: server-side parser and
+  validation for selected-ticket internal-note submit payloads.
+- `src/features/tickets/communication-dispatch.ts`: capability-gated
+  internal-note provider dispatch plus provider error mapping.
+- `src/features/tickets/communication-model.ts`: provider-neutral internal-note
+  payload, capability, result, and action-state types.
+- `src/features/tickets/communication-service.ts`: internal-note write
+  orchestration with selected-ticket detail refresh-after-write checks.
 - `src/features/tickets/metadata-action-input.ts`: server-side parser and
   validation for one selected-ticket update payload per explicit `Update`,
   including tag, link, subscription, pending-date, and raw provider field
@@ -215,8 +227,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   capability derivation and guardrail checks for unsupported or expensive query
   requests before provider dispatch.
 - `src/features/tickets/read-model.ts`: provider-neutral ticket read result,
-  unavailable-state, metadata mutation capability exposure, and default list
-  query types.
+  unavailable-state, metadata mutation and communication capability exposure,
+  and default list query types.
 - `src/features/tickets/detail-action-result.ts`: client-safe workspace ticket
   detail action result and loader action function types.
 - `src/features/tickets/detail-actions.ts`: authenticated server action for
@@ -241,8 +253,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   barrel exports production workspace UI only.
 - `src/features/workspace/components/ticket-workspace.tsx`: provider-backed
   workspace composition for the real `/workspace` route. It wires
-  provider-neutral read models and metadata mutation capabilities into approved
-  production workspace components.
+  provider-neutral read models, metadata mutation capabilities, and
+  communication capabilities into approved production workspace components.
 - `src/features/workspace/components/ticket-workspace-display.tsx`: client-side
   production workspace display composition for controls, tabs, table, and
   selected-ticket detail surfaces.
@@ -346,10 +358,14 @@ architecture folders or important files are added, moved, renamed, or removed.
   article attachment metadata presentation. It displays provider-neutral
   filename, content type, and byte size values only; downloads and previews are
   intentionally not exposed here.
+- `src/features/workspace/components/ticket-internal-note-composer.tsx`:
+  capability-gated internal-note draft and explicit Add note submit UI.
 - `src/features/workspace/components/ticket-thread.tsx`: production read-only
   ticket article thread presentation with sanitized rich-text rendering,
   display-name-first From/To/Cc/Bcc metadata, attachment metadata display, and
-  no reply/composer controls.
+  no customer reply controls.
+- `src/features/workspace/components/ticket-tabs-merge.ts`: helper for merging
+  initial selected-ticket tabs with row-derived tabs.
 - `src/features/workspace/components/ticket-tabs-panel.tsx`: production
   list/open-ticket tab panel composition.
 - `src/features/workspace/components/ticket-tabs`: split production ticket-tab
@@ -487,6 +503,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-metadata-action-input.test.ts`: verifies one
   selected-ticket update payload parsing, server-boundary validation, and
   pending date validation across primary and secondary metadata fields.
+- `tests/features/ticket-internal-note-action-input.test.ts`: verifies
+  selected-ticket internal-note payload parsing and unsupported-key rejection.
+- `tests/features/ticket-internal-note-service.test.ts`: verifies
+  provider-neutral internal-note service dispatch, capability failures, and
+  refresh-after-write results.
 - `tests/features/ticket-metadata-action-revalidation.test.ts`: verifies
   successful metadata writes invalidate the workspace for saved and
   saved-refresh-failed action results.
@@ -527,6 +548,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-secondary-metadata-workspace.test.tsx`: verifies tags,
   related links, and subscription staged metadata controls submit through the
   shared Update action.
+- `tests/features/ticket-internal-notes-workspace.test.tsx`: verifies
+  explicit internal-note submit, pending/error behavior, and selected-detail
+  refresh after saved note writes.
 - `tests/features/ticket-tab-metadata-sync.test.tsx`: verifies a successful
   staged state update immediately updates the active tab top-border state color
   before server refresh rehydrates the workspace.
@@ -562,6 +586,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/providers/zammad/mutations.test.ts`: verifies Zammad state, priority,
   owner, and group metadata write payload mapping, orphan pending-time
   rejection, and provider-safe request usage.
+- `tests/providers/zammad/internal-notes.test.ts`: verifies Zammad internal note
+  article payloads and provider-safe request usage.
 - `tests/providers/zammad/secondary-mutations.test.ts`: verifies Zammad tag,
   related-link, and subscription metadata write endpoint payloads.
 - `tests/providers/zammad/read-assets.test.ts`: verifies Zammad attachment

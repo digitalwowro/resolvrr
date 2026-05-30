@@ -12,6 +12,12 @@ import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
+import {
+  noTicketCommunicationCapabilities,
+  type TicketCommunicationCapabilities,
+  type TicketInternalNoteActionState,
+  type TicketInternalNotePayload,
+} from "@/features/tickets/communication-model";
 import type { TicketListReadResult } from "@/features/tickets/read-model";
 import type {
   WorkspaceTicketColumn,
@@ -29,7 +35,11 @@ import {
 import { UnavailableState } from "./workspace-states";
 
 type TicketWorkspaceProps = {
+  addTicketInternalNoteAction?(
+    request: TicketInternalNotePayload,
+  ): Promise<TicketInternalNoteActionState>;
   columns: WorkspaceTicketColumn[];
+  communicationCapabilities?: TicketCommunicationCapabilities;
   connections: WorkspaceMenuConnection[];
   detail?: WorkspaceTicketDetail;
   detailResult?: WorkspaceTicketDetailLoadResult;
@@ -56,6 +66,11 @@ const unavailableTicketDetailAction: LoadWorkspaceTicketDetailAction = async () 
   retryable: true,
 });
 
+const unavailableInternalNoteAction = async (): Promise<TicketInternalNoteActionState> => ({
+  status: "failed",
+  message: "This workspace cannot add internal notes.",
+});
+
 const profileActions: WorkspaceProfileAction[] = [
   {
     id: "manage-workspaces",
@@ -65,7 +80,9 @@ const profileActions: WorkspaceProfileAction[] = [
 ];
 
 export function TicketWorkspace({
+  addTicketInternalNoteAction,
   columns,
+  communicationCapabilities,
   connections,
   detail,
   detailResult,
@@ -91,6 +108,11 @@ export function TicketWorkspace({
     (listResult.status === "available"
       ? listResult.metadataMutationCapabilities
       : undefined);
+  const effectiveCommunicationCapabilities =
+    communicationCapabilities ??
+    (listResult.status === "available"
+      ? listResult.communicationCapabilities
+      : noTicketCommunicationCapabilities);
 
   return (
     <main className="flex h-screen min-h-screen flex-col overflow-hidden">
@@ -105,7 +127,11 @@ export function TicketWorkspace({
         <UnavailableState reason={listResult.reason} />
       ) : (
         <TicketWorkspaceDisplay
+          addTicketInternalNoteAction={
+            addTicketInternalNoteAction ?? unavailableInternalNoteAction
+          }
           columns={columns}
+          communicationCapabilities={effectiveCommunicationCapabilities}
           detail={detail}
           detailResult={detailResult}
           loadTicketDetailAction={effectiveLoadTicketDetailAction}

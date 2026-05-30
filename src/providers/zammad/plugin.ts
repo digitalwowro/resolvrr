@@ -18,6 +18,7 @@ import {
   listZammadGroups,
 } from "./ticket-lookups";
 import { updateZammadTicketMetadata } from "./mutations";
+import { addZammadTicketInternalNote } from "./ticket-article-mutations";
 
 const defaultValidationTimeoutMs = 5000;
 const zammadValidationUserAgent = "Resolvrr/1.0";
@@ -100,6 +101,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "ticket:update-tags",
     "ticket:update-links",
     "ticket:update-subscription",
+    "ticket:add-internal-note",
     "lookup:assignable-users",
     "lookup:groups",
   ],
@@ -122,6 +124,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   listTickets: listZammadTickets,
   getTicketDetail: getZammadTicketDetail,
   updateTicketMetadata: updateZammadTicketMetadata,
+  addTicketInternalNote: addZammadTicketInternalNote,
   listAssignableUsers: listZammadAssignableUsers,
   listGroups: listZammadGroups,
 };

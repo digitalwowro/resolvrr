@@ -74,6 +74,7 @@ describe("ticket read service", () => {
     expect(result).toMatchObject({
       status: "available",
       connectionName: "Support",
+      communicationCapabilities: { internalNotes: false },
       metadataMutationCapabilities: { state: false, priority: false },
     });
     expect(listTickets).toHaveBeenCalledWith(

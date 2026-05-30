@@ -2,6 +2,7 @@ export type {
   Ticket,
   TicketArticle,
   TicketDetail,
+  TicketInternalNoteInput,
   TicketListItem,
   TicketMetadataMutationInput,
   TicketPriority,
@@ -16,6 +17,18 @@ export {
   loadWorkspaceTicketList,
   updateWorkspaceTicketMetadata,
 } from "./service";
+export {
+  addWorkspaceTicketInternalNote,
+} from "./communication-service";
+export {
+  noTicketCommunicationCapabilities,
+  ticketCommunicationCapabilities,
+  type TicketCommunicationCapabilities,
+  type TicketCommunicationErrorReason,
+  type TicketInternalNoteActionState,
+  type TicketInternalNotePayload,
+  type TicketInternalNoteResult,
+} from "./communication-model";
 export {
   type LoadWorkspaceTicketDetailAction,
   type WorkspaceTicketDetailLoadResult,

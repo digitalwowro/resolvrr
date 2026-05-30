@@ -19,6 +19,7 @@ import {
   workspaceTicketTabs,
 } from "@/features/tickets";
 import { updateTicketMetadataAction } from "@/features/tickets/actions";
+import { addTicketInternalNoteAction } from "@/features/tickets/communication-actions";
 import { loadWorkspaceTicketDetailAction } from "@/features/tickets/detail-actions";
 import { loadWorkspaceTicketListPageAction } from "@/features/tickets/list-actions";
 import {
@@ -118,6 +119,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
 
   return (
     <TicketWorkspace
+      addTicketInternalNoteAction={addTicketInternalNoteAction}
       columns={defaultWorkspaceTicketColumns}
       connections={connections.map((connection) => ({
         id: connection.id,

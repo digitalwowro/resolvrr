@@ -67,6 +67,7 @@ describe("loadWorkspaceTicketListPageAction saved views", () => {
     mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
       status: "available",
       connectionName: "Support",
+      communicationCapabilities: { internalNotes: false },
       metadataMutationCapabilities: { state: false, priority: false },
       tickets: [],
       loadedCount: 0,
@@ -117,6 +118,7 @@ describe("loadWorkspaceTicketListPageAction saved views", () => {
     mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
       status: "available",
       connectionName: "Support",
+      communicationCapabilities: { internalNotes: false },
       metadataMutationCapabilities: { state: false, priority: false },
       tickets: [],
       loadedCount: 0,
