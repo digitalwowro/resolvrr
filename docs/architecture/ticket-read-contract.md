@@ -277,7 +277,7 @@ The read path logs sanitized timing metadata for these phases:
 - provider user lookup request;
 - provider mapping/parsing;
 - total list load;
-- total selected-ticket detail load.
+- total selected-ticket detail load;
 - provider metadata mutation current-ticket request;
 - provider metadata mutation request;
 - total metadata mutation.
