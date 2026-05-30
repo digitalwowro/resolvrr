@@ -38,6 +38,30 @@ describe("ticket metadata action input", () => {
     });
   });
 
+  it("parses tags, links, and subscription updates as provider-neutral metadata", () => {
+    const result = ticketMetadataMutationActionInput({
+      metadata: {
+        linkAddExternalId: "#77",
+        linkRemoveExternalIds: ["#88", "99"],
+        subscriptionFollowing: true,
+        tags: ["vip", " renewal ", "vip"],
+      },
+      ticketExternalId: "ticket-1",
+    });
+
+    expect(result).toMatchObject({
+      field: "tags",
+      input: {
+        linkAddExternalId: "77",
+        linkRemoveExternalIds: ["88", "99"],
+        subscriptionFollowing: true,
+        tags: ["vip", "renewal"],
+      },
+      status: "valid",
+      ticketExternalId: "ticket-1",
+    });
+  });
+
   it("rejects orphan pendingUntil without a pending state", () => {
     const result = ticketMetadataMutationActionInput(
       {
@@ -150,5 +174,23 @@ describe("ticket metadata action input", () => {
         ticketExternalId: "ticket-1",
       }),
     ).toEqual({ status: "invalid", field: "group" });
+    expect(
+      ticketMetadataMutationActionInput({
+        metadata: { tags: "vip" },
+        ticketExternalId: "ticket-1",
+      }),
+    ).toEqual({ status: "invalid", field: "tags" });
+    expect(
+      ticketMetadataMutationActionInput({
+        metadata: { linkRemoveExternalIds: [""] },
+        ticketExternalId: "ticket-1",
+      }),
+    ).toEqual({ status: "invalid", field: "links" });
+    expect(
+      ticketMetadataMutationActionInput({
+        metadata: { subscriptionFollowing: "true" },
+        ticketExternalId: "ticket-1",
+      }),
+    ).toEqual({ status: "invalid", field: "subscription" });
   });
 });

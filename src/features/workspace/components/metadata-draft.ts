@@ -10,10 +10,15 @@ import {
 
 export type TicketMetadataDraft = {
   groupExternalId?: string;
+  linkAddExternalId?: string;
+  linkRemoveExternalIds: string[];
   ownerExternalId?: string;
   pendingDateTime: PendingDateTimeParts;
   priority?: TicketPriority;
   state?: TicketState;
+  subscriptionFollowing?: boolean;
+  tagText: string;
+  tags: string[];
 };
 
 export const selectedTicketDraftEditableSlices = ["metadata"] as const;
@@ -31,9 +36,12 @@ export type TicketMetadataDraftDirtyFields = {
   pendingTime: boolean;
   pendingUntil: boolean;
   group: boolean;
+  links: boolean;
   owner: boolean;
   priority: boolean;
   state: boolean;
+  subscription: boolean;
+  tags: boolean;
 };
 
 export type TicketMetadataDraftValidation = {
@@ -46,6 +54,8 @@ export type TicketMetadataSavedPatch = {
   owner?: string;
   priority?: TicketPriority;
   state?: TicketState;
+  subscriptionFollowing?: boolean;
+  tags?: string[];
   ticketExternalId: string;
 };
 
@@ -63,10 +73,17 @@ export function metadataDraftFromDetail(
   return {
     metadata: {
       groupExternalId: detail.groupExternalId,
+      linkAddExternalId: "",
+      linkRemoveExternalIds: [],
       ownerExternalId: detail.ownerExternalId,
       pendingDateTime: pendingDateTimePartsFromIso(detail.pendingUntilIso),
       priority: detail.priorityKey,
       state: detail.stateKey,
+      subscriptionFollowing: detail.subscription.supported
+        ? detail.subscription.following
+        : undefined,
+      tagText: detail.tags.join(", "),
+      tags: [...detail.tags],
     },
     ticketExternalId: detail.id,
   };
@@ -78,10 +95,15 @@ export function metadataDraftFromBaseline(
   return {
     metadata: {
       groupExternalId: baseline.metadata.groupExternalId,
+      linkAddExternalId: baseline.metadata.linkAddExternalId,
+      linkRemoveExternalIds: [...baseline.metadata.linkRemoveExternalIds],
       ownerExternalId: baseline.metadata.ownerExternalId,
       pendingDateTime: { ...baseline.metadata.pendingDateTime },
       priority: baseline.metadata.priority,
       state: baseline.metadata.state,
+      subscriptionFollowing: baseline.metadata.subscriptionFollowing,
+      tagText: baseline.metadata.tagText,
+      tags: [...baseline.metadata.tags],
     },
     ticketExternalId: baseline.ticketExternalId,
   };
@@ -92,6 +114,12 @@ export function metadataDraftKey(draft: SelectedTicketDraft): string {
     draft.ticketExternalId,
     draft.metadata.ownerExternalId ?? "",
     draft.metadata.groupExternalId ?? "",
+    draft.metadata.tags.join(","),
+    draft.metadata.linkAddExternalId ?? "",
+    draft.metadata.linkRemoveExternalIds.join(","),
+    draft.metadata.subscriptionFollowing === undefined
+      ? ""
+      : String(draft.metadata.subscriptionFollowing),
     draft.metadata.state ?? "",
     draft.metadata.priority ?? "",
     normalizedPendingIso(draft.metadata.pendingDateTime) ?? "",
@@ -108,6 +136,14 @@ export function metadataDraftDirtyFields(
     draft.metadata.ownerExternalId !== baseline.metadata.ownerExternalId;
   const group =
     draft.metadata.groupExternalId !== baseline.metadata.groupExternalId;
+  const tags = !sameStringList(draft.metadata.tags, baseline.metadata.tags);
+  const links = Boolean(
+    draft.metadata.linkAddExternalId ||
+      draft.metadata.linkRemoveExternalIds.length > 0,
+  );
+  const subscription =
+    draft.metadata.subscriptionFollowing !==
+    baseline.metadata.subscriptionFollowing;
   const pendingUntil =
     isPendingState(draft.metadata.state) &&
     normalizedPendingIso(draft.metadata.pendingDateTime) !==
@@ -120,10 +156,20 @@ export function metadataDraftDirtyFields(
     pendingTime: pendingInputChanged,
     pendingUntil,
     group,
+    links,
     owner,
     priority,
     state,
+    subscription,
+    tags,
   };
+}
+
+function sameStringList(left: string[], right: string[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
 }
 
 export function metadataDraftHasChanges(
@@ -134,7 +180,10 @@ export function metadataDraftHasChanges(
     dirtyFields.priority ||
     dirtyFields.pendingUntil ||
     dirtyFields.owner ||
-    dirtyFields.group
+    dirtyFields.group ||
+    dirtyFields.tags ||
+    dirtyFields.links ||
+    dirtyFields.subscription
   );
 }
 
@@ -172,7 +221,16 @@ export function validateMetadataDraft(
 export function metadataDraftSubmittedBaseline(
   draft: SelectedTicketDraft,
 ): SelectedTicketDraft {
-  return metadataDraftFromBaseline(draft);
+  return {
+    metadata: {
+      ...draft.metadata,
+      linkAddExternalId: "",
+      linkRemoveExternalIds: [],
+      tagText: draft.metadata.tags.join(", "),
+      tags: [...draft.metadata.tags],
+    },
+    ticketExternalId: draft.ticketExternalId,
+  };
 }
 
 export function metadataDraftUpdatePayload(
@@ -215,6 +273,23 @@ export function metadataDraftUpdatePayload(
       return undefined;
     }
     metadata.groupExternalId = draft.metadata.groupExternalId;
+  }
+  if (dirtyFields.tags) {
+    metadata.tags = draft.metadata.tags;
+  }
+  if (dirtyFields.links) {
+    if (draft.metadata.linkAddExternalId) {
+      metadata.linkAddExternalId = draft.metadata.linkAddExternalId;
+    }
+    if (draft.metadata.linkRemoveExternalIds.length > 0) {
+      metadata.linkRemoveExternalIds = draft.metadata.linkRemoveExternalIds;
+    }
+  }
+  if (dirtyFields.subscription) {
+    if (draft.metadata.subscriptionFollowing === undefined) {
+      return undefined;
+    }
+    metadata.subscriptionFollowing = draft.metadata.subscriptionFollowing;
   }
 
   return {

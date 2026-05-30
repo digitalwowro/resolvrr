@@ -96,6 +96,12 @@ function canUpdateTicketMetadata(
       hasCapability(providerContext, "ticket:update-owner")) &&
     (!input.groupExternalId ||
       hasCapability(providerContext, "ticket:update-group")) &&
+    (!Object.prototype.hasOwnProperty.call(input, "tags") ||
+      hasCapability(providerContext, "ticket:update-tags")) &&
+    ((!input.linkAddExternalId && !input.linkRemoveExternalIds?.length) ||
+      hasCapability(providerContext, "ticket:update-links")) &&
+    (!Object.prototype.hasOwnProperty.call(input, "subscriptionFollowing") ||
+      hasCapability(providerContext, "ticket:update-subscription")) &&
     (!input.state || hasCapability(providerContext, "ticket:update-state")) &&
     (!input.priority || hasCapability(providerContext, "ticket:update-priority"))
   );

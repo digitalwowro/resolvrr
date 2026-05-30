@@ -77,12 +77,14 @@ provider-neutral unavailable state before provider code is called.
 
 ## Ticket Metadata Mutations
 
-The first approved mutation surface is state and priority only. Provider-neutral
-code passes canonical Resolvrr keys in `TicketMetadataMutationInput`; provider
-plugins map those keys to raw provider values inside their own folders. Pending
-state transitions may include a canonical `pendingUntil` timestamp as
-supporting data; provider-specific fields such as Zammad `pending_time` stay in
-the provider implementation.
+The approved mutation surface includes state, priority, owner, group, tags,
+related links, and subscription/following state. Provider-neutral code passes
+canonical Resolvrr keys in `TicketMetadataMutationInput`; provider plugins map
+those keys to raw provider values inside their own folders. Pending state
+transitions may include a canonical `pendingUntil` timestamp as supporting data;
+provider-specific fields such as Zammad `pending_time`, tag endpoint payloads,
+link endpoint payloads, and mention payloads stay in the provider
+implementation.
 
 Successful writes are followed by a service-layer refresh check for the affected
 ticket detail and list row. If the write succeeds but refresh fails, callers
@@ -95,30 +97,27 @@ Provider read and write implementations should measure their own upstream
 request and mapping phases through sanitized ticket-read timing events. Zammad
 currently measures list request, detail metadata request, article/thread
 request, metadata mutation current-ticket request, metadata mutation write
-request, secondary tags request, secondary links request, secondary group lookup
-request, assignable-user lookup request, group lookup request, user-lookup
-request, and mapping/parsing phases. Subscription/following remains
-unimplemented in Resolvrr's provider-neutral contract. If a provider requires
-additional upstream calls for future secondary data, those calls must be
-orchestrated in the provider/read service layer and added as explicit measured
-phases. Lookup lists are request-scoped reads; the app may reuse them only
-through the existing active-session selected-ticket detail cache. UI components
-must not introduce provider fetch fan-out.
+request, secondary tags request, secondary links request, secondary
+subscription request, secondary group lookup request, assignable-user lookup
+request, group lookup request, user-lookup request, and mapping/parsing phases.
+If a provider requires additional upstream calls for future secondary data,
+those calls must be orchestrated in the provider/read service layer and added as
+explicit measured phases. Lookup lists are request-scoped reads; the app may
+reuse them only through the existing active-session selected-ticket detail
+cache. UI components must not introduce provider fetch fan-out.
 
 ## Zammad Boundary
 
 Zammad ticket list, detail, thread DTO validation, endpoint construction,
-metadata write payload construction, and raw state/priority/assignment
-normalization live under `src/providers/zammad`. Core, feature, UI, and
-provider-neutral tests consume only canonical ticket values and provider
-capabilities. Zammad currently advertises `ticket:list`, `ticket:count`,
-`ticket:sort`, `ticket:group`, `ticket:group-count`, `ticket:detail`,
-`ticket:links`, `ticket:update-state`, `ticket:update-priority`,
-`ticket:update-owner`, `ticket:update-group`, `lookup:assignable-users`, and
-`lookup:groups`. Resolvrr has not implemented the provider-neutral
-subscription/following read or write contract yet, so the Zammad plugin must not
-advertise `ticket:subscription` until that contract and the exact Zammad API
-path are implemented under `src/providers/zammad/**`.
+metadata write payload construction, and raw state/priority/assignment/tag/link
+and subscription normalization live under `src/providers/zammad`. Core,
+feature, UI, and provider-neutral tests consume only canonical ticket values and
+provider capabilities. Zammad currently advertises `ticket:list`,
+`ticket:count`, `ticket:sort`, `ticket:group`, `ticket:group-count`,
+`ticket:detail`, `ticket:links`, `ticket:subscription`,
+`ticket:update-state`, `ticket:update-priority`, `ticket:update-owner`,
+`ticket:update-group`, `ticket:update-tags`, `ticket:update-links`,
+`ticket:update-subscription`, `lookup:assignable-users`, and `lookup:groups`.
 Subscription fields still use the stable empty canonical shapes documented in
 the ticket contract when their provider-neutral capabilities are not advertised.
 Zammad-backed sorting is implemented through the provider's ticket search

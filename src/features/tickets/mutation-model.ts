@@ -10,7 +10,10 @@ export type TicketMetadataMutationField =
   | "state"
   | "priority"
   | "owner"
-  | "group";
+  | "group"
+  | "tags"
+  | "links"
+  | "subscription";
 
 export const selectedTicketUpdatePayloadKeys = [
   "metadata",
@@ -19,10 +22,14 @@ export const selectedTicketUpdatePayloadKeys = [
 
 export const selectedTicketUpdateMetadataFields = [
   "groupExternalId",
+  "linkAddExternalId",
+  "linkRemoveExternalIds",
   "ownerExternalId",
   "pendingUntil",
   "priority",
   "state",
+  "subscriptionFollowing",
+  "tags",
 ] as const;
 
 export type SelectedTicketUpdatePayloadKey =
@@ -33,10 +40,14 @@ export type SelectedTicketUpdateMetadataField =
 
 export type SelectedTicketUpdateMetadataPayload = {
   groupExternalId?: string;
+  linkAddExternalId?: string;
+  linkRemoveExternalIds?: string[];
   ownerExternalId?: string;
   pendingUntil?: string;
   priority?: TicketPriority;
   state?: TicketState;
+  subscriptionFollowing?: boolean;
+  tags?: string[];
 };
 
 export type SelectedTicketUpdatePayload = {
@@ -46,9 +57,12 @@ export type SelectedTicketUpdatePayload = {
 
 export type TicketMetadataMutationCapabilities = {
   group?: boolean;
+  links?: boolean;
   owner?: boolean;
   priority: boolean;
   state: boolean;
+  subscription?: boolean;
+  tags?: boolean;
 };
 
 export type TicketMetadataMutationErrorReason =
@@ -77,8 +91,11 @@ export type TicketMetadataMutationActionState = {
 
 export const noTicketMetadataMutationCapabilities: TicketMetadataMutationCapabilities = {
   group: false,
+  links: false,
   owner: false,
   state: false,
+  subscription: false,
+  tags: false,
   priority: false,
 };
 
@@ -87,10 +104,17 @@ export function ticketMetadataMutationCapabilities(
 ): TicketMetadataMutationCapabilities {
   return {
     group: capabilities.includes("ticket:update-group"),
+    links: capabilities.includes("ticket:update-links"),
     owner: capabilities.includes("ticket:update-owner"),
     state: capabilities.includes("ticket:update-state"),
+    subscription: capabilities.includes("ticket:update-subscription"),
+    tags: capabilities.includes("ticket:update-tags"),
     priority: capabilities.includes("ticket:update-priority"),
   };
+}
+
+function hasOwnValue(record: object, name: string): boolean {
+  return Object.prototype.hasOwnProperty.call(record, name);
 }
 
 export function hasTicketMetadataMutationInput(
@@ -100,7 +124,11 @@ export function hasTicketMetadataMutationInput(
     input.state ||
       input.priority ||
       input.ownerExternalId ||
-      input.groupExternalId,
+      input.groupExternalId ||
+      hasOwnValue(input, "tags") ||
+      input.linkAddExternalId ||
+      (input.linkRemoveExternalIds && input.linkRemoveExternalIds.length > 0) ||
+      hasOwnValue(input, "subscriptionFollowing"),
   );
 }
 

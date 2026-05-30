@@ -85,8 +85,9 @@ provider HTML.
 
 ## Controlled Metadata Mutations
 
-The approved mutation contract covers state, priority, owner assignment, and
-group assignment. Core, service, and UI code use provider-neutral keys:
+The approved mutation contract covers state, priority, owner assignment, group
+assignment, tags, related ticket links, and subscription/following state. Core,
+service, and UI code use provider-neutral keys:
 
 - `TicketMetadataMutationInput.state?: TicketState`
 - `TicketMetadataMutationInput.priority?: TicketPriority`
@@ -94,15 +95,19 @@ group assignment. Core, service, and UI code use provider-neutral keys:
 - `TicketMetadataMutationInput.groupExternalId?: string`
 - `TicketMetadataMutationInput.pendingUntil?: Date`, used only as supporting
   data for state transitions that require a pending time.
+- `TicketMetadataMutationInput.tags?: string[]`
+- `TicketMetadataMutationInput.linkAddExternalId?: string`
+- `TicketMetadataMutationInput.linkRemoveExternalIds?: string[]`
+- `TicketMetadataMutationInput.subscriptionFollowing?: boolean`
 
 The workspace sends one selected-ticket update payload for each explicit
 `Update` click. That payload carries the selected ticket external ID and a
 provider-neutral metadata slice; the server action parses and validates it
 before dispatching the existing provider-neutral mutation input. Server-side
 validation remains authoritative even when the client has already disabled
-invalid submits. Unsupported future slices such as tags, links, subscription,
-notes, or replies are rejected at the action boundary until their
-provider-neutral contracts and capability checks are explicitly implemented.
+invalid submits. Unsupported future slices such as notes or replies are
+rejected at the action boundary until their provider-neutral contracts and
+capability checks are explicitly implemented.
 
 Provider plugins own mapping from those keys to provider-specific raw values.
 Zammad raw values such as `pending reminder`, `2 normal`, or `pending_time`
@@ -114,9 +119,9 @@ The provider-neutral mutation capabilities are:
 - `ticket:update-priority`
 - `ticket:update-owner`
 - `ticket:update-group`
-
-No tag, reply, link, or subscription mutation capability is approved in this
-slice.
+- `ticket:update-tags`
+- `ticket:update-links`
+- `ticket:update-subscription`
 
 Mutation results distinguish write failure from refresh failure:
 
@@ -180,6 +185,11 @@ Mutation capabilities:
 - `ticket:update-priority`: provider can update the canonical ticket priority.
 - `ticket:update-owner`: provider can update the ticket owner assignment.
 - `ticket:update-group`: provider can update the ticket group assignment.
+- `ticket:update-tags`: provider can replace the ticket tag set.
+- `ticket:update-links`: provider can add or remove related ticket links by
+  provider-local ticket ID.
+- `ticket:update-subscription`: provider can update the current user's
+  follow/subscription state.
 
 Provider methods are capability-gated. Core features must check capability
 presence before calling optional provider methods.

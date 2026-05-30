@@ -34,6 +34,24 @@ function textValue(record: Record<string, unknown>, name: string): string {
   return typeof value === "string" ? value : "";
 }
 
+function booleanValue(
+  record: Record<string, unknown>,
+  name: string,
+): boolean | undefined {
+  const value = record[name];
+  return typeof value === "boolean" ? value : undefined;
+}
+
+function stringArrayValue(
+  record: Record<string, unknown>,
+  name: string,
+): string[] | undefined {
+  const value = record[name];
+  return Array.isArray(value) && value.every((item) => typeof item === "string")
+    ? value
+    : undefined;
+}
+
 function hasOwnValue(record: Record<string, unknown>, name: string): boolean {
   return Object.prototype.hasOwnProperty.call(record, name);
 }
@@ -68,8 +86,12 @@ function pendingUntilValue(value: string): Date | undefined {
 
 function invalidField(
   groupExternalId: string,
+  linkAddExternalId: string,
+  linkRemoveExternalIds: string[] | undefined,
   ownerExternalId: string,
+  subscriptionFollowing: boolean | undefined,
   stateValue: string,
+  tags: string[] | undefined,
   priorityValue: string,
 ): TicketMetadataMutationField {
   if (ownerExternalId) {
@@ -78,7 +100,26 @@ function invalidField(
   if (groupExternalId) {
     return "group";
   }
+  if (tags) {
+    return "tags";
+  }
+  if (linkAddExternalId || linkRemoveExternalIds) {
+    return "links";
+  }
+  if (subscriptionFollowing !== undefined) {
+    return "subscription";
+  }
   return stateValue || !priorityValue ? "state" : "priority";
+}
+
+function normalizedTags(values: string[]): string[] {
+  return [
+    ...new Set(
+      values
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  ];
 }
 
 export function ticketMetadataMutationActionInput(
@@ -98,8 +139,15 @@ export function ticketMetadataMutationActionInput(
   }
   const ticketExternalId = textValue(requestRecord, "ticketExternalId");
   const groupExternalId = textValue(metadata, "groupExternalId");
+  const linkAddExternalId = textValue(metadata, "linkAddExternalId").trim().replace(
+    /^#/u,
+    "",
+  );
+  const linkRemoveExternalIds = stringArrayValue(metadata, "linkRemoveExternalIds");
   const ownerExternalId = textValue(metadata, "ownerExternalId");
   const stateValue = textValue(metadata, "state");
+  const subscriptionFollowing = booleanValue(metadata, "subscriptionFollowing");
+  const tags = stringArrayValue(metadata, "tags");
   const priorityValue = textValue(metadata, "priority");
   const pendingUntilText = textValue(metadata, "pendingUntil");
   const input: TicketMetadataMutationInput = {};
@@ -119,6 +167,46 @@ export function ticketMetadataMutationActionInput(
   if (groupExternalId) {
     input.groupExternalId = groupExternalId;
     field = field ?? "group";
+  }
+
+  if (hasOwnValue(metadata, "tags") && !tags) {
+    return { status: "invalid", field: "tags" };
+  }
+  if (tags) {
+    input.tags = normalizedTags(tags);
+    field = field ?? "tags";
+  }
+
+  if (hasOwnValue(metadata, "linkAddExternalId") && !linkAddExternalId) {
+    return { status: "invalid", field: "links" };
+  }
+  if (linkAddExternalId) {
+    input.linkAddExternalId = linkAddExternalId;
+    field = field ?? "links";
+  }
+
+  if (hasOwnValue(metadata, "linkRemoveExternalIds")) {
+    if (
+      !linkRemoveExternalIds ||
+      linkRemoveExternalIds.some((externalId) => !externalId.trim())
+    ) {
+      return { status: "invalid", field: "links" };
+    }
+    input.linkRemoveExternalIds = linkRemoveExternalIds.map((externalId) =>
+      externalId.trim().replace(/^#/u, ""),
+    );
+    field = field ?? "links";
+  }
+
+  if (
+    hasOwnValue(metadata, "subscriptionFollowing") &&
+    subscriptionFollowing === undefined
+  ) {
+    return { status: "invalid", field: "subscription" };
+  }
+  if (subscriptionFollowing !== undefined) {
+    input.subscriptionFollowing = subscriptionFollowing;
+    field = field ?? "subscription";
   }
 
   if (hasOwnValue(metadata, "state") && !stateValue) {
@@ -168,8 +256,12 @@ export function ticketMetadataMutationActionInput(
       status: "invalid",
       field: invalidField(
         groupExternalId,
+        linkAddExternalId,
+        linkRemoveExternalIds,
         ownerExternalId,
+        subscriptionFollowing,
         stateValue,
+        tags,
         priorityValue,
       ),
     };

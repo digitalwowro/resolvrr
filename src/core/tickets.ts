@@ -81,6 +81,7 @@ export type TicketLink = {
 };
 
 export type TicketSubscription = {
+  externalId?: string;
   supported: boolean;
   following: boolean;
 };
@@ -162,8 +163,12 @@ export type TicketDetail = {
 
 export type TicketMetadataMutationInput = {
   groupExternalId?: string;
+  linkAddExternalId?: string;
+  linkRemoveExternalIds?: string[];
   ownerExternalId?: string;
+  subscriptionFollowing?: boolean;
   state?: TicketState;
+  tags?: string[];
   priority?: TicketPriority;
   pendingUntil?: Date;
 };
