@@ -53,10 +53,18 @@ describe("TicketWorkspace vertical tabs", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
+
+    expect(
+      screen.queryByRole("checkbox", { name: "Select all tickets" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Refresh list" })).toBeDisabled();
+
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
 
     expect(screen.getByRole("table", { name: "Tickets" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Cannot log in/u })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Select all tickets" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Refresh list" })).toBeEnabled();
 
     await user.click(screen.getByRole("button", { name: "Horizontal tabs" }));
 

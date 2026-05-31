@@ -7,8 +7,8 @@ import { DropdownSelect } from "./dropdown-select";
 import { MenuDropdown } from "./menu-dropdown";
 import { SearchableDropdown } from "./searchable-dropdown";
 
-const toolbarControlClass = "!h-6 !gap-1 !px-2 !text-xs !font-normal";
-const toolbarDropdownChildrenClass = "!text-xs";
+const toolbarControlClass = "!h-8 !gap-1.5 !px-3 !text-sm !font-normal";
+const toolbarDropdownChildrenClass = "!text-sm";
 
 export function ToolbarButton({
   className,

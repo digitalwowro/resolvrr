@@ -45,7 +45,7 @@ function ToolbarSearchableHarness() {
 }
 
 describe("Toolbar controls", () => {
-  it("renders compact toolbar button and dropdown triggers", () => {
+  it("renders header-sized toolbar button and dropdown triggers", () => {
     render(
       <>
         <ToolbarButton>Refresh list</ToolbarButton>
@@ -77,10 +77,10 @@ describe("Toolbar controls", () => {
 
     for (const control of controls) {
       expect(control).toHaveClass(
-        "!h-6",
-        "!px-2",
-        "!text-xs",
-        "!gap-1",
+        "!h-8",
+        "!px-3",
+        "!text-sm",
+        "!gap-1.5",
         "!font-normal",
       );
     }
@@ -171,7 +171,7 @@ describe("Toolbar controls", () => {
     );
 
     await user.click(screen.getByRole("combobox", { name: "Toolbar select" }));
-    expect(screen.getByRole("listbox")).toHaveClass("!text-xs");
+    expect(screen.getByRole("listbox")).toHaveClass("!text-sm");
     expect(screen.getByRole("option", { name: "Open tickets" })).toHaveClass(
       "text-indigo-700",
     );
@@ -181,7 +181,7 @@ describe("Toolbar controls", () => {
 
     await user.keyboard("{Escape}");
     await user.click(screen.getByRole("combobox", { name: "Toolbar searchable" }));
-    expect(screen.getByRole("listbox")).toHaveClass("!text-xs");
+    expect(screen.getByRole("listbox")).toHaveClass("!text-sm");
     expect(screen.getByRole("option", { name: "Open tickets" })).toHaveClass(
       "text-indigo-700",
     );
@@ -191,7 +191,7 @@ describe("Toolbar controls", () => {
 
     await user.keyboard("{Escape}");
     await user.click(screen.getByRole("button", { name: "Toolbar menu" }));
-    expect(screen.getByRole("menu")).toHaveClass("!text-xs");
+    expect(screen.getByRole("menu")).toHaveClass("!text-sm");
     expect(screen.getByRole("menuitem", { name: "Assign owner" })).toHaveClass(
       "text-slate-800",
     );

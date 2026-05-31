@@ -103,6 +103,14 @@ export function TicketGridHeaderCell({
   );
 }
 
-export function TicketGridStaticHeaderCell() {
-  return <div className={headerCellClass} role="columnheader" />;
+export function TicketGridStaticHeaderCell({
+  children,
+}: {
+  children?: ReactNode;
+}) {
+  return (
+    <div className={headerCellClass} role="columnheader">
+      {children}
+    </div>
+  );
 }

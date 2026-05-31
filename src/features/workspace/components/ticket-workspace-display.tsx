@@ -41,6 +41,11 @@ import { useTicketWorkspaceDisplayState } from "./ticket-workspace-state";
 import { useTicketListPager } from "./use-ticket-list-pager";
 import { WorkspaceControls } from "./workspace-controls";
 import {
+  type WorkspaceMenuConnection,
+  type WorkspaceProfileAction,
+  WorkspaceHeader,
+} from "./workspace-header";
+import {
   DetailLoadingState,
   DetailUnavailableState,
   EmptyDetailState,
@@ -48,12 +53,15 @@ import {
 import { mergeTicketTabs } from "./ticket-tabs-merge";
 
 type TicketWorkspaceDisplayProps = {
+  actions: WorkspaceProfileAction[];
+  connections: WorkspaceMenuConnection[];
   columns: WorkspaceTicketColumn[];
   communicationCapabilities: TicketCommunicationCapabilities;
   detail?: WorkspaceTicketDetail;
   detailResult?: WorkspaceTicketDetailLoadResult;
   loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
+  logoutAction(formData: FormData): void | Promise<void>;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   initialListGroups?: WorkspaceTicketListGroup[];
   nextListCursor?: string;
@@ -64,6 +72,7 @@ type TicketWorkspaceDisplayProps = {
   savedViews: WorkspaceSavedView[];
   selectedSavedViewId: string;
   selectedTicketId?: string;
+  setActiveConnectionAction(formData: FormData): void | Promise<void>;
   tabs: WorkspaceTicketTab[];
   totalListCount?: number;
   addTicketCustomerReplyAction(request: TicketCustomerReplyPayload): Promise<TicketCustomerReplyActionState>;
@@ -71,15 +80,19 @@ type TicketWorkspaceDisplayProps = {
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
+  userEmail: string;
 };
 
 export function TicketWorkspaceDisplay({
+  actions,
+  connections,
   columns,
   communicationCapabilities,
   detail,
   detailResult,
   loadTicketDetailAction,
   loadTicketListPageAction,
+  logoutAction,
   metadataMutationCapabilities,
   initialListGroups,
   nextListCursor,
@@ -90,11 +103,13 @@ export function TicketWorkspaceDisplay({
   savedViews,
   selectedSavedViewId,
   selectedTicketId,
+  setActiveConnectionAction,
   tabs: ticketTabs,
   totalListCount,
   addTicketCustomerReplyAction,
   addTicketInternalNoteAction,
   updateTicketMetadataAction,
+  userEmail,
 }: TicketWorkspaceDisplayProps) {
   const listPager = useTicketListPager({
     initialSavedViewId: selectedSavedViewId,
@@ -195,12 +210,15 @@ export function TicketWorkspaceDisplay({
       <TicketTable
         key="work-area"
         activeTicketId={activeTicketId}
+        allSelected={allSelected}
         columns={columns}
         groupedRows={groupBy === "none" ? undefined : tableGroupedRows}
         groupBy={groupBy}
         onRowSelect={showTicketFromRow}
         onSort={toggleSort}
+        onSelectAll={toggleSelectAll}
         onToggleRow={toggleRow}
+        partiallySelected={partiallySelected}
         canLoadMore={!providerGroupedActive && listPager.canLoadMore}
         groupLoadMoreError={listPager.groupError}
         loadingGroupId={listPager.loadingGroupId}
@@ -242,22 +260,15 @@ export function TicketWorkspaceDisplay({
   const controls = (
     <WorkspaceControls
       key="controls"
-      allSelected={allSelected}
-      columns={columns}
       groupBy={groupBy}
       groupOptions={ticketGroupOptions(providerGroupingEnabled)}
       listControlsEnabled={listActive}
-      onColumnToggle={toggleColumn}
       onGroupByChange={handleWorkspaceGroupByChange}
-      onRefresh={refreshList}
       onSavedViewChange={handleSavedViewChange}
-      onSelectAll={toggleSelectAll}
       onTabOrientationChange={setTabOrientation}
-      partiallySelected={partiallySelected}
       savedViewOptions={savedViewOptions}
       selectedSavedViewId={listPager.savedViewId}
       tabOrientation={tabOrientation}
-      visibleColumns={visibleColumnSet}
     />
   );
 
@@ -265,32 +276,45 @@ export function TicketWorkspaceDisplay({
     <TicketTabsPanel
       key="tabs"
       activeTicketId={activeTicketId}
+      columns={columns}
       listActive={listActive}
       onCloseTicket={closeTicket}
+      onColumnToggle={toggleColumn}
+      onRefresh={refreshList}
       onSelectList={showList}
       onSelectTicket={showOpenTicket}
       orientation={tabOrientation}
       savedViewLabel={activeSavedView?.label ?? "All tickets"}
       tabs={openTicketTabs}
+      visibleColumns={visibleColumnSet}
     />
   );
 
   return (
-    <section
-      className={cn(
-        "flex min-h-0 flex-1 overflow-hidden",
-        tabOrientation === "horizontal" && "flex-col",
-      )}
-    >
-      {tabOrientation === "vertical" ? tabsPanel : null}
-      <div
-        key="workspace-content"
-        className="flex min-w-0 flex-1 flex-col overflow-hidden px-4"
+    <>
+      <WorkspaceHeader
+        actions={actions}
+        connections={connections}
+        controls={controls}
+        logoutAction={logoutAction}
+        setActiveConnectionAction={setActiveConnectionAction}
+        userEmail={userEmail}
+      />
+      <section
+        className={cn(
+          "flex min-h-0 flex-1 overflow-hidden pt-4",
+          tabOrientation === "horizontal" && "flex-col",
+        )}
       >
-        {controls}
-        {tabOrientation === "horizontal" ? tabsPanel : null}
-        {workArea}
-      </div>
-    </section>
+        {tabOrientation === "vertical" ? tabsPanel : null}
+        <div
+          key="workspace-content"
+          className="flex min-w-0 flex-1 flex-col overflow-hidden px-4"
+        >
+          {tabOrientation === "horizontal" ? tabsPanel : null}
+          {workArea}
+        </div>
+      </section>
+    </>
   );
 }

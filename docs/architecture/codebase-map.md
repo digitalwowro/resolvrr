@@ -289,13 +289,14 @@ architecture folders or important files are added, moved, renamed, or removed.
   URL path helper used by local tab navigation and explicit ticket link sharing,
   plus history replacement helpers for local tab navigation.
 - `src/features/workspace/components/workspace-header.tsx`: production
-  workspace header presentation with brand, search, status icon, and an
-  avatar/profile menu fed by real connection/action props.
+  workspace header presentation with brand, global search, merged view controls,
+  and an avatar/profile menu fed by real connection/action props.
 - `src/features/workspace/components/workspace-controls.tsx`: read-safe
-  workspace toolbar presentation for row selection, refresh, saved-view display,
-  local grouping, column visibility, and the always-available tab layout
-  segmented control. List-only controls remain mounted but disabled while a
-  ticket pane is active.
+  workspace view-control presentation for saved-view display, local grouping,
+  and the always-available tab layout segmented control. View controls remain
+  mounted but disabled while a ticket pane is active.
+- `src/features/workspace/components/ticket-column-visibility-action.tsx`:
+  icon-only column visibility menu used in the list tab action group.
 - `src/features/workspace/components/workspace-states.tsx`: provider-neutral
   unavailable, detail-unavailable, and empty-detail states.
 - `src/features/workspace/components/ticket-table-grid.tsx`: production
@@ -304,7 +305,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/ticket-table-cells.tsx`: production
   state and priority display cells driven by canonical ticket labels and keys.
 - `src/features/workspace/components/ticket-table.tsx`: production ticket list
-  table shell and row/header presentation for workspace ticket rows.
+  table shell, select-all header control, and row/header presentation for
+  workspace ticket rows.
 - `src/features/workspace/components/ticket-table-row.tsx`: production ticket
   table row rendering and row cell value mapping.
 - `src/features/workspace/components/ticket-table-group-header.tsx`: grouped
@@ -366,21 +368,26 @@ architecture folders or important files are added, moved, renamed, or removed.
   article attachment metadata presentation. It displays provider-neutral
   filename, content type, and byte size values only; downloads and previews are
   intentionally not exposed here.
-- `src/features/workspace/components/ticket-internal-note-composer.tsx`:
-  capability-gated internal-note draft and explicit Add note submit UI.
-- `src/features/workspace/components/ticket-customer-reply-composer.tsx`:
-  capability-gated customer-reply draft and explicit Send reply submit UI.
-- `src/features/workspace/components/ticket-thread.tsx`: production read-only
-  ticket article thread presentation with sanitized rich-text rendering,
+- `src/features/workspace/components/ticket-inline-communication-composer.tsx`:
+  capability-gated inline Reply/Comment composer shared by article cards. It
+  sends provider-neutral customer-reply and internal-note payloads only after an
+  article action is selected.
+- `src/features/workspace/components/ticket-thread-article.tsx`: production
+  article-card presentation with sanitized rich-text rendering,
   display-name-first From/To/Cc/Bcc metadata, attachment metadata display, and
-  no provider-specific reply controls.
+  provider-neutral inline Reply, disabled Reply all, and Comment actions.
+- `src/features/workspace/components/ticket-thread-article-styles.ts`: narrow
+  class-map companion for thread article variants and action selected states.
+- `src/features/workspace/components/ticket-thread.tsx`: production ticket
+  article thread state owner. It tracks one active inline composer by article
+  and mode, and does not render standalone bottom communication composers.
 - `src/features/workspace/components/ticket-tabs-merge.ts`: helper for merging
   initial selected-ticket tabs with row-derived tabs.
 - `src/features/workspace/components/ticket-tabs-panel.tsx`: production
   list/open-ticket tab panel composition.
 - `src/features/workspace/components/ticket-tabs`: split production ticket-tab
-  presentation helpers for horizontal tabs, vertical tabs, density calculation,
-  and shared tab link rendering.
+  presentation helpers for horizontal tabs, vertical tabs, list refresh and
+  column actions, density calculation, and shared tab link rendering.
 - `src/features/workspace/components/**`: production-safe presentational
   components extracted from approved workspace implementation decisions. They
   must not import provider services, repositories, server actions, or Zammad

@@ -5,9 +5,10 @@ operational, calm, and keyboard-accessible.
 
 ## Regions
 
-- Header: compact product identity, global search, and avatar/profile trigger.
-- Controls and tabs: ticket actions, saved view selector, column visibility,
-  tab layout segmented control, and open-ticket tabs.
+- Header: compact product identity, global search, saved view selector,
+  grouping, tab layout segmented control, and avatar/profile trigger.
+- Tabs: open-ticket navigation plus a list-scoped column visibility and Refresh
+  action group.
 - Work area: ticket table first, with selected-ticket detail/thread rendered
   read-only when the active provider supports ticket reads.
 - Initial table columns: select, `#`, `Title`, `Customer`, `Owner`, `State`,
@@ -25,15 +26,17 @@ Ticket tabs are navigation for open tickets. One ticket is active at a time. Do
 not add single, split, or compare mode selectors unless that workflow is approved
 later.
 
-Horizontal ticket tabs sit directly above the table. Vertical ticket tabs use a
-fixed left rail below the header while toolbar controls remain with the table
-side. The vertical rail and ticket table scroll independently.
+Horizontal ticket tabs sit directly above the table. The List tab starts the
+tab strip, and column visibility plus Refresh share an icon-only action group
+pinned at the row end. The Select all checkbox lives in the ticket table's first
+header cell. Vertical ticket tabs use a fixed left rail below the header. The
+vertical rail and ticket table scroll independently.
 
 The tab layout control is a two-button segmented control, not a dropdown. It is
-placed after column visibility and remains enabled in both List and selected
-ticket panes. List-only controls such as row selection, refresh, saved view,
-grouping, and column visibility remain visible but disabled while a selected
-ticket pane is active.
+placed after grouping in the merged header and remains enabled in both List and
+selected ticket panes. Saved view, grouping, column visibility, and refresh
+remain visible but disabled while a selected ticket pane is active. Row
+selection remains table-scoped and is only shown with the ticket table.
 
 ## URL And Sharing
 
@@ -50,23 +53,29 @@ current ticket's direct `/workspace?ticket=ID` URL to the clipboard.
 
 ## Ticket Detail
 
-Selected ticket detail keeps the approved dense layout. Thread articles render
-provider-sanitized rich HTML, use the shared global link color, and keep
-reply/reply-all/composer controls out of production. Article metadata prefers
-display names over email addresses, exposes email as secondary metadata when
-available, and only shows the expand/collapse affordance when recipient details
-exist.
+Selected ticket detail keeps the approved dense layout. The ticket title and
+summary metadata share one scrollable left pane with the article thread, so they
+scroll away together below the fixed tab/action row. Thread articles render
+provider-sanitized rich HTML and use the shared global link color. Public
+articles expose provider-neutral Reply when customer replies are supported. All
+articles expose provider-neutral Comment when internal notes are supported.
+Reply all is shown disabled until a provider-neutral recipient contract exists.
+Article metadata prefers display names over email addresses, exposes email as
+secondary metadata when available, and only shows the expand/collapse affordance
+when recipient details exist.
 
 The metadata sidebar remains read-only except for state, priority, owner,
 group, tags, links, and subscription when the active provider advertises the
-matching mutation capability. Editable metadata controls and provider-required
-pending date/time controls live in the local selected-ticket draft: changing a
-value does not call the provider until the agent clicks `Update`. Each `Update`
-click submits one provider-neutral selected-ticket payload. Tags are edited as
-the full tag set, link controls add related ticket IDs or remove existing links,
-and subscription controls update the current user's following state. Notes and
-replies remain read-only or absent until their own provider-neutral write
-contracts are added. Changed controls are visually marked, `Discard changes`
+matching mutation capability. It starts at the top of the selected-ticket pane,
+aligned beside the ticket detail header and thread. Editable metadata controls
+and provider-required pending date/time controls live in the local
+selected-ticket draft: changing a value does not call the provider until the
+agent clicks `Update`. Each `Update` click submits one provider-neutral
+selected-ticket payload. Tags are edited as the full tag set, link controls add
+related ticket IDs or remove existing links, and subscription controls update
+the current user's following state. Notes and replies remain read-only or absent
+until their own provider-neutral write contracts are added. Changed controls are
+visually marked, `Discard changes`
 resets the selected-ticket draft to the loaded ticket values, and successful
 saves refresh the workspace after one checked mutation. The action row includes
 a persisted local browser post-Update navigation preference: keep the ticket

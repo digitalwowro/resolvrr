@@ -255,11 +255,14 @@ describe("TicketWorkspace", () => {
       />,
     );
 
-    expect(screen.getByRole("checkbox", { name: "Select all tickets" })).toBeDisabled();
+    expect(
+      screen.queryByRole("checkbox", { name: "Select all tickets" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Refresh list" })).toBeDisabled();
     expect(screen.getByRole("combobox", { name: "Saved view" })).toBeDisabled();
     expect(screen.getByRole("combobox", { name: "Group tickets by" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Column visibility" })).toBeDisabled();
+    expect(screen.queryByLabelText("System status")).not.toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Tab layout" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Horizontal tabs" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Vertical tabs" })).toBeEnabled();
@@ -267,9 +270,26 @@ describe("TicketWorkspace", () => {
       "aria-pressed",
       "true",
     );
+    const tablist = screen.getByRole("tablist", { name: "Open tickets" });
+    expect(within(tablist).getAllByRole("tab")[0]).toHaveAccessibleName(
+      "Return to list: All tickets",
+    );
+    const listTabActions = screen.getByRole("group", { name: "List tab actions" });
+    expect(
+      tablist.compareDocumentPosition(listTabActions) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      within(listTabActions)
+        .getByRole("button", { name: "Column visibility" })
+        .compareDocumentPosition(
+          within(listTabActions).getByRole("button", { name: "Refresh list" }),
+        ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
 
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
 
+    expect(screen.getByRole("table", { name: "Tickets" })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Select all tickets" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Refresh list" })).toBeEnabled();
     expect(screen.getByRole("combobox", { name: "Saved view" })).toBeEnabled();

@@ -134,11 +134,14 @@ replies:
 - `TicketCustomerReplyPayload.ticketExternalId: string`
 - `TicketCustomerReplyPayload.body: string`
 
-Internal notes and customer replies use separate explicit submit paths, not the
-staged metadata `Update` action. The server actions trim and validate the ticket
-ID and body before dispatching provider-neutral communication inputs. Empty
-bodies, unsupported payload keys, and provider raw fields are rejected before
-provider dispatch.
+Internal notes and customer replies use separate explicit inline article actions,
+not the staged metadata `Update` action. `Comment` creates an internal note from
+the selected article card. `Reply` creates a customer reply from a public article
+card. `Reply all` is visible but disabled until a provider-neutral recipient
+contract exists. The server actions trim and validate the ticket ID and body
+before dispatching provider-neutral communication inputs. Empty bodies,
+unsupported payload keys, and provider raw fields are rejected before provider
+dispatch.
 
 The provider-neutral communication capabilities are:
 
@@ -335,9 +338,9 @@ Provider-backed reads stay coordinated at the service/provider boundary:
 - Staged single-ticket metadata mutations go through the ticket service/action
   layer after one explicit `Update` submit.
 - Internal note writes go through the ticket communication service/action layer
-  after one explicit `Add note` submit.
+  after one explicit inline `Comment` submit on an article card.
 - Customer reply writes go through the ticket communication service/action layer
-  after one explicit `Send reply` submit.
+  after one explicit inline `Reply` submit on a public article card.
 - Detail metadata, thread articles, tags, links, subscription, and lookup data
   must not be added as independent component-level fetches.
 

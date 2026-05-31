@@ -127,15 +127,17 @@ export function TicketWorkspace({
 
   return (
     <main className="flex h-screen min-h-screen flex-col overflow-hidden">
-      <WorkspaceHeader
-        actions={profileActions}
-        connections={connections}
-        logoutAction={logoutAction}
-        setActiveConnectionAction={setActiveConnectionAction}
-        userEmail={userEmail}
-      />
       {listResult.status === "unavailable" ? (
-        <UnavailableState reason={listResult.reason} />
+        <>
+          <WorkspaceHeader
+            actions={profileActions}
+            connections={connections}
+            logoutAction={logoutAction}
+            setActiveConnectionAction={setActiveConnectionAction}
+            userEmail={userEmail}
+          />
+          <UnavailableState reason={listResult.reason} />
+        </>
       ) : (
         <TicketWorkspaceDisplay
           addTicketCustomerReplyAction={
@@ -144,12 +146,15 @@ export function TicketWorkspace({
           addTicketInternalNoteAction={
             addTicketInternalNoteAction ?? unavailableInternalNoteAction
           }
+          actions={profileActions}
           columns={columns}
           communicationCapabilities={effectiveCommunicationCapabilities}
+          connections={connections}
           detail={detail}
           detailResult={detailResult}
           loadTicketDetailAction={effectiveLoadTicketDetailAction}
           loadTicketListPageAction={loadTicketListPageAction}
+          logoutAction={logoutAction}
           metadataMutationCapabilities={effectiveMetadataMutationCapabilities}
           providerGroupingEnabled={
             listResult.queryCapabilities?.providerGrouping === true
@@ -164,9 +169,11 @@ export function TicketWorkspace({
           }
           selectedSavedViewId={selectedSavedViewId ?? allTicketsSavedViewId}
           selectedTicketId={selectedTicketId}
+          setActiveConnectionAction={setActiveConnectionAction}
           tabs={tabs}
           totalListCount={listResult.totalCount}
           updateTicketMetadataAction={updateTicketMetadataAction}
+          userEmail={userEmail}
         />
       )}
     </main>
