@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type {
   SelectedTicketUpdatePayload,
@@ -33,10 +33,8 @@ import {
   assignmentLabel,
   TicketAssignmentFields,
 } from "./ticket-assignment-fields";
-import { TicketCustomerReplyComposer } from "./ticket-customer-reply-composer";
 import { TicketMetadataActionBar } from "./ticket-metadata-action-bar";
 import { TicketDetailSidebar } from "./ticket-detail-sidebar";
-import { TicketInternalNoteComposer } from "./ticket-internal-note-composer";
 import { TicketPrimaryMetadataFields } from "./ticket-primary-metadata-fields";
 import { TicketSecondaryMetadataFields } from "./ticket-secondary-metadata-fields";
 import { TicketThread } from "./ticket-thread";
@@ -68,6 +66,7 @@ export function TicketMetadataEditorState({
   addTicketInternalNoteAction,
   communicationCapabilities,
   detail,
+  header,
   loadedBaseline,
   metadataMutationCapabilities,
   onMetadataSaved,
@@ -83,6 +82,7 @@ export function TicketMetadataEditorState({
   ): Promise<TicketInternalNoteActionState>;
   communicationCapabilities: TicketCommunicationCapabilities;
   detail: WorkspaceTicketDetail;
+  header?: ReactNode;
   loadedBaseline: SelectedTicketDraft;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
@@ -235,18 +235,14 @@ export function TicketMetadataEditorState({
   return (
     <>
       <div className="flex min-h-0 flex-1">
-        <div className="flex min-w-0 flex-1 flex-col">
-          <TicketThread articles={detail.articles} />
-          <TicketCustomerReplyComposer
+        <div className="min-w-0 flex-1 overflow-y-auto">
+          {header}
+          <TicketThread
             addTicketCustomerReplyAction={addTicketCustomerReplyAction}
-            communicationCapabilities={communicationCapabilities}
-            onReplySaved={refreshSavedDetail}
-            ticketExternalId={detail.id}
-          />
-          <TicketInternalNoteComposer
             addTicketInternalNoteAction={addTicketInternalNoteAction}
+            articles={detail.articles}
             communicationCapabilities={communicationCapabilities}
-            onNoteSaved={refreshSavedDetail}
+            onCommunicationSaved={refreshSavedDetail}
             ticketExternalId={detail.id}
           />
         </div>

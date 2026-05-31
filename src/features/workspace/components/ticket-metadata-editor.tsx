@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type {
   SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
@@ -26,6 +27,7 @@ export function TicketMetadataEditor({
   addTicketInternalNoteAction = unavailableInternalNoteAction,
   communicationCapabilities = noTicketCommunicationCapabilities,
   detail,
+  header,
   metadataMutationCapabilities,
   onMetadataSaved,
   onMetadataSavedDetailRefresh,
@@ -40,6 +42,7 @@ export function TicketMetadataEditor({
   ) => Promise<TicketInternalNoteActionState>;
   communicationCapabilities?: TicketCommunicationCapabilities;
   detail: WorkspaceTicketDetail;
+  header?: ReactNode;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
   onMetadataSavedDetailRefresh?(ticketId: string): void;
@@ -56,6 +59,7 @@ export function TicketMetadataEditor({
       addTicketInternalNoteAction={addTicketInternalNoteAction}
       communicationCapabilities={communicationCapabilities}
       detail={detail}
+      header={header}
       key={metadataDraftKey(loadedBaseline)}
       loadedBaseline={loadedBaseline}
       metadataMutationCapabilities={metadataMutationCapabilities}
