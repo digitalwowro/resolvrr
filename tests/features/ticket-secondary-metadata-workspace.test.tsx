@@ -79,9 +79,21 @@ describe("TicketWorkspace secondary metadata updates", () => {
     }));
     renderWorkspace(action);
 
-    await user.click(screen.getByRole("checkbox", { name: "Subscribed" }));
-    await user.clear(screen.getByLabelText("Ticket tags"));
-    await user.type(screen.getByLabelText("Ticket tags"), "vip, renewal");
+    expect(screen.getByText("Subscribe to ticket")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remove tag vip" }))
+      .toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add link" })).toBeInTheDocument();
+    expect(screen.getByText("#88088")).toBeInTheDocument();
+    expect(screen.getByText("Linked ticket")).toBeInTheDocument();
+
+    const subscriptionToggle = screen
+      .getByRole("checkbox", { name: "Subscribed" })
+      .closest("label");
+    expect(subscriptionToggle).not.toBeNull();
+
+    await user.click(subscriptionToggle as HTMLLabelElement);
+    await user.type(screen.getByLabelText("Add tag"), "renewal{Enter}");
+    await user.click(screen.getByRole("button", { name: "Add link" }));
     await user.type(screen.getByLabelText("Related ticket ID"), "77");
     await user.click(
       screen.getByRole("button", { name: "Remove link #88088 Linked ticket" }),

@@ -25,9 +25,9 @@ export function EditableSidebarField({
   label: string;
 }) {
   return (
-    <label className="block w-full space-y-1">
+    <div className="block w-full space-y-1">
       <span className="block text-xs font-semibold">{label}</span>
       {children}
-    </label>
+    </div>
   );
 }

@@ -337,8 +337,16 @@ architecture folders or important files are added, moved, renamed, or removed.
   assignment sidebar controls that render editable dropdowns only when the
   provider advertises write capabilities and lookup options are available.
 - `src/features/workspace/components/ticket-secondary-metadata-fields.tsx`:
-  subscription, tag, and related-link sidebar controls that render editable
-  inputs only when the provider advertises matching write capabilities.
+  thin composition wrapper for selected-ticket subscription, tags, and related
+  links sidebar sections.
+- `src/features/workspace/components/ticket-secondary-subscription-field.tsx`:
+  compact subscription toggle sidebar section that renders editable state only
+  when the provider advertises subscription writes.
+- `src/features/workspace/components/ticket-secondary-tags-field.tsx`: tag chip
+  sidebar section with inline add-tag entry and removable chips when tag writes
+  are supported.
+- `src/features/workspace/components/ticket-secondary-links-field.tsx`: linked
+  ticket sidebar rows and Add link entry when related-link writes are supported.
 - `src/features/workspace/components/ticket-metadata-action-bar.tsx`: sticky
   full-width selected-ticket metadata action row with Discard changes and
   Update controls plus post-update navigation selection.
@@ -507,8 +515,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-workspace-test-utils.tsx`: shared provider-backed
   workspace fixtures and render helpers for feature tests.
 - `tests/features/ticket-workspace.test.tsx`: verifies provider-backed
-  workspace unavailable, table, profile menu, detail, read-only metadata, and
-  grouping behavior.
+  workspace unavailable, table, profile menu, read-only metadata, and list
+  controls behavior.
+- `tests/features/ticket-workspace-selected-detail.test.tsx`: verifies selected
+  ticket detail, thread rendering, secondary metadata chips/links, article
+  recipients, and attachment display.
 - `tests/features/ticket-workspace-paging-sort.test.tsx`: verifies
   post-hydration ungrouped list page loading, refreshed baseline row merging,
   provider-backed sorting, and grouped reload behavior.
