@@ -79,9 +79,13 @@ a visible inline add-tag entry, and provider-neutral suggestions when the active
 provider can supply them. The tag suggestion menu stays hidden on focus and only
 shows suggestions that contain the typed query after the agent enters text;
 unsupported or unavailable suggestions do not disable freeform tag editing.
-Link controls render linked-ticket rows with remove
-controls and an `Add link` entry for related ticket IDs, and subscription
-controls update the current user's following state. Notes and replies remain read-only or absent
+Link controls render linked-ticket rows with remove controls and an `Add link`
+entry that opens a focused modal for staging one normal/related ticket link by
+ID. The modal does not search provider tickets, does not fetch recent tickets,
+and does not expose parent/child relation choices until the mutation contract can
+persist those choices. Old link modal parity requires provider-neutral ticket
+search plus relation-kind mutation support. Subscription controls update the
+current user's following state. Notes and replies remain read-only or absent
 until their own provider-neutral write contracts are added. Changed controls are
 visually marked, `Discard changes`
 resets the selected-ticket draft to the loaded ticket values, and successful

@@ -1,7 +1,8 @@
 import { Link2, RotateCcw, X } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { cn } from "@/components/ui/classnames";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
+import { TicketAddLinkDialog } from "./ticket-add-link-dialog";
 import type {
   SelectedTicketDraft,
   TicketMetadataDraftDirtyFields,
@@ -51,10 +52,14 @@ export function TicketSecondaryLinksField({
   onDraftChange(nextDraft: SelectedTicketDraft): void;
   saving: boolean;
 }) {
-  const [showLinkInput, setShowLinkInput] = useState(
-    Boolean(draft.metadata.linkAddExternalId),
-  );
+  const addLinkButtonRef = useRef<HTMLButtonElement>(null);
+  const [addLinkDialogOpen, setAddLinkDialogOpen] = useState(false);
   const removedLinkIds = new Set(draft.metadata.linkRemoveExternalIds);
+
+  function closeAddLinkDialog() {
+    setAddLinkDialogOpen(false);
+    window.setTimeout(() => addLinkButtonRef.current?.focus(), 0);
+  }
 
   return (
     <section aria-label="Links" className="space-y-2">
@@ -62,38 +67,49 @@ export function TicketSecondaryLinksField({
         <span className="text-xs font-semibold">Links</span>
         {canEditLinks ? (
           <button
+            ref={addLinkButtonRef}
             className="text-xs font-normal text-indigo-600 hover:text-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             disabled={saving}
-            onClick={() => setShowLinkInput(true)}
+            onClick={() => setAddLinkDialogOpen(true)}
             type="button"
           >
-            Add link
+            {draft.metadata.linkAddExternalId ? "Edit link" : "Add link"}
           </button>
         ) : null}
       </div>
       <div className="space-y-2">
-        {canEditLinks && showLinkInput ? (
-          <input
-            aria-label="Related ticket ID"
+        {canEditLinks && draft.metadata.linkAddExternalId ? (
+          <div
             className={cn(
-              "h-10 w-full rounded-md border px-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
-              dirtyFields.links || draft.metadata.linkAddExternalId
-                ? changedControlClass
-                : "border-slate-200 bg-white focus-visible:outline-indigo-600",
+              "flex min-h-9 items-center gap-2 rounded-md border px-3 py-1.5 text-xs",
+              dirtyFields.links ? changedControlClass : "border-slate-200 bg-white",
             )}
-            disabled={saving}
-            onChange={(event) =>
-              onDraftChange({
-                ...draft,
-                metadata: {
-                  ...draft.metadata,
-                  linkAddExternalId: event.currentTarget.value.trim(),
-                },
-              })
-            }
-            placeholder="Related ticket ID"
-            value={draft.metadata.linkAddExternalId}
-          />
+          >
+            <Link2 aria-hidden="true" className="size-3.5 shrink-0 text-slate-600" />
+            <span className="min-w-0 flex-1 truncate">
+              <span className="font-semibold text-slate-900">Pending link </span>
+              <span className="text-slate-600">
+                #{draft.metadata.linkAddExternalId}
+              </span>
+            </span>
+            <button
+              aria-label={`Remove staged link ${draft.metadata.linkAddExternalId}`}
+              className="grid size-6 shrink-0 place-items-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={saving}
+              onClick={() =>
+                onDraftChange({
+                  ...draft,
+                  metadata: {
+                    ...draft.metadata,
+                    linkAddExternalId: "",
+                  },
+                })
+              }
+              type="button"
+            >
+              <X aria-hidden="true" className="size-3.5" />
+            </button>
+          </div>
         ) : null}
         {detail.links.length > 0 ? (
           <ul className="space-y-1">
@@ -167,6 +183,23 @@ export function TicketSecondaryLinksField({
           <span className="text-sm text-slate-500">No links yet</span>
         )}
       </div>
+      {addLinkDialogOpen ? (
+        <TicketAddLinkDialog
+          initialTicketId={draft.metadata.linkAddExternalId}
+          onAdd={(ticketId) => {
+            onDraftChange({
+              ...draft,
+              metadata: {
+                ...draft.metadata,
+                linkAddExternalId: ticketId,
+              },
+            });
+            closeAddLinkDialog();
+          }}
+          onClose={closeAddLinkDialog}
+          saving={saving}
+        />
+      ) : null}
     </section>
   );
 }

@@ -346,8 +346,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/ticket-secondary-tags-field.tsx`: tag chip
   combobox sidebar section with provider-neutral suggestions, inline add-tag
   entry, and removable chips when tag writes are supported.
+- `src/features/workspace/components/ticket-add-link-dialog.tsx`: minimal
+  workspace-local Add link modal for staging one normal/related ticket link ID.
 - `src/features/workspace/components/ticket-secondary-links-field.tsx`: linked
-  ticket sidebar rows and Add link entry when related-link writes are supported.
+  ticket sidebar rows, staged pending-link display, and Add link modal trigger
+  when related-link writes are supported.
 - `src/features/workspace/components/ticket-metadata-action-bar.tsx`: sticky
   full-width selected-ticket metadata action row with Discard changes and
   Update controls plus post-update navigation selection.
