@@ -19,12 +19,12 @@ const relationOptions: Array<{
     value: "related",
   },
   {
-    description: "Requires provider support for parent/child link writes.",
+    description: "Selected ticket will be linked as this ticket's parent.",
     label: "Parent",
     value: "parent",
   },
   {
-    description: "Requires provider support for parent/child link writes.",
+    description: "Selected ticket will be linked as this ticket's child.",
     label: "Child",
     value: "child",
   },
