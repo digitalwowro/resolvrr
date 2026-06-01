@@ -1,7 +1,7 @@
 "use client";
 
 import { Send } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
@@ -63,9 +63,27 @@ export function TicketInlineCommunicationComposer({
   const [result, setResult] = useState<
     TicketCustomerReplyActionState | TicketInternalNoteActionState
   >({ status: "idle" });
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const label = mode === "comment" ? "Comment" : "Reply";
   const canSubmit = body.trim().length > 0 && !saving;
   const message = statusText(saving, mode, result);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    textarea.focus({ preventScroll: true });
+    if (typeof textarea.scrollIntoView === "function") {
+      textarea.scrollIntoView({
+        block: "center",
+        inline: "nearest",
+        behavior: "smooth",
+      });
+    }
+  }, []);
 
   function submit() {
     if (!canSubmit) {
@@ -125,6 +143,7 @@ export function TicketInlineCommunicationComposer({
             setResult({ status: "idle" });
           }}
           placeholder={mode === "comment" ? "Write a comment..." : "Write a reply..."}
+          ref={textareaRef}
           value={body}
         />
         <div className="flex items-center justify-end gap-2 border-t border-slate-200 px-2 py-2">

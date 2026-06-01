@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -122,22 +122,47 @@ describe("TicketWorkspace inline communication composers", () => {
 
   it("opens an inline reply composer from a public article", async () => {
     const user = userEvent.setup();
-    renderWorkspace({ customerReplies: true, internalNotes: true });
-    const article = getCustomerArticle();
+    const scrollIntoView = vi.fn();
+    const htmlElementPrototype: {
+      scrollIntoView?: HTMLElement["scrollIntoView"];
+    } = window.HTMLElement.prototype;
+    const originalScrollIntoView = htmlElementPrototype.scrollIntoView;
+    htmlElementPrototype.scrollIntoView =
+      scrollIntoView as unknown as HTMLElement["scrollIntoView"];
 
-    await user.click(within(article).getByRole("button", { name: "Reply" }));
+    try {
+      renderWorkspace({ customerReplies: true, internalNotes: true });
+      const article = getCustomerArticle();
 
-    expect(
-      within(article).getByRole("form", {
-        name: "Reply composer for Maya Patel",
-      }),
-    ).toBeInTheDocument();
-    expect(within(article).getByRole("button", { name: "Reply" })).toHaveClass(
-      "bg-indigo-200",
-    );
-    expect(
-      within(article).getByRole("button", { name: "Reply all" }),
-    ).toBeDisabled();
+      await user.click(within(article).getByRole("button", { name: "Reply" }));
+      const textarea = within(article).getByLabelText("Reply");
+
+      expect(
+        within(article).getByRole("form", {
+          name: "Reply composer for Maya Patel",
+        }),
+      ).toBeInTheDocument();
+      expect(textarea).toHaveFocus();
+      await waitFor(() =>
+        expect(scrollIntoView).toHaveBeenCalledWith({
+          block: "center",
+          inline: "nearest",
+          behavior: "smooth",
+        }),
+      );
+      expect(within(article).getByRole("button", { name: "Reply" })).toHaveClass(
+        "bg-indigo-200",
+      );
+      expect(
+        within(article).getByRole("button", { name: "Reply all" }),
+      ).toBeDisabled();
+    } finally {
+      if (originalScrollIntoView) {
+        htmlElementPrototype.scrollIntoView = originalScrollIntoView;
+      } else {
+        delete htmlElementPrototype.scrollIntoView;
+      }
+    }
   });
 
   it("sends a reply, clears the draft, and refreshes detail on saved", async () => {
