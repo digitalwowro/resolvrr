@@ -1,8 +1,11 @@
 import { Link2, RotateCcw, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { cn } from "@/components/ui/classnames";
+import type {
+  SearchWorkspaceTicketLinkTargetsAction,
+  WorkspaceTicketLinkTarget,
+} from "@/features/tickets/link-target-search-action-result";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
-import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
 import { TicketAddLinkDialog } from "./ticket-add-link-dialog";
 import type {
   SelectedTicketDraft,
@@ -45,6 +48,7 @@ export function TicketSecondaryLinksField({
   dirtyFields,
   draft,
   onDraftChange,
+  recentlyViewedLinkTargets,
   searchTicketLinkTargetsAction,
   saving,
 }: {
@@ -54,6 +58,7 @@ export function TicketSecondaryLinksField({
   dirtyFields: TicketMetadataDraftDirtyFields;
   draft: SelectedTicketDraft;
   onDraftChange(nextDraft: SelectedTicketDraft): void;
+  recentlyViewedLinkTargets: WorkspaceTicketLinkTarget[];
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   saving: boolean;
 }) {
@@ -195,6 +200,7 @@ export function TicketSecondaryLinksField({
       {addLinkDialogOpen ? (
         <TicketAddLinkDialog
           canEditLinkRelations={canEditLinkRelations}
+          currentTicketCustomerExternalId={detail.customerExternalId}
           currentTicketExternalId={detail.id}
           initialTicketId={draft.metadata.linkAddExternalId}
           initialRelation={draft.metadata.linkAddRelation}
@@ -210,6 +216,7 @@ export function TicketSecondaryLinksField({
             closeAddLinkDialog();
           }}
           onClose={closeAddLinkDialog}
+          recentlyViewedTargets={recentlyViewedLinkTargets}
           searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
           saving={saving}
         />

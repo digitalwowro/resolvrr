@@ -185,7 +185,9 @@ export function participantFromReference({
 
   const parsed = addressParts(fallback);
   const name = parsed.name ?? parsed.email;
-  return name ? { name, email: parsed.email, role } : undefined;
+  return name
+    ? { externalId: relationId(id), name, email: parsed.email, role }
+    : undefined;
 }
 
 export function articleAuthor(

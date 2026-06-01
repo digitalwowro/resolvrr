@@ -9,14 +9,17 @@ import { searchWorkspaceTicketLinkTargets } from "./link-target-service";
 import { unavailableTicketRead } from "./read-model";
 
 export async function searchWorkspaceTicketLinkTargetsAction({
+  customerExternalId,
   excludeTicketExternalId,
   query,
 }: {
+  customerExternalId?: string;
   excludeTicketExternalId?: string;
-  query: string;
+  query?: string;
 }): Promise<WorkspaceTicketLinkTargetSearchResult> {
-  const normalizedQuery = query.trim();
-  if (!normalizedQuery) {
+  const normalizedQuery = query?.trim() ?? "";
+  const normalizedCustomerExternalId = customerExternalId?.trim();
+  if (!normalizedQuery && !normalizedCustomerExternalId) {
     return { status: "available", targets: [] };
   }
 
@@ -27,8 +30,11 @@ export async function searchWorkspaceTicketLinkTargetsAction({
     env.APP_ENCRYPTION_KEY,
     user.id,
     {
+      ...(normalizedCustomerExternalId
+        ? { customerExternalId: normalizedCustomerExternalId }
+        : {}),
       ...(excludeTicketExternalId ? { excludeTicketExternalId } : {}),
-      query: normalizedQuery,
+      ...(normalizedQuery ? { query: normalizedQuery } : {}),
     },
   );
 

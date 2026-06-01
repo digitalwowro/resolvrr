@@ -142,7 +142,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   search-backed list totals, list asset lookup, read-phase timing, and
   canonical list response assembly.
 - `src/providers/zammad/ticket-link-targets.ts`: Zammad provider-local ticket
-  search for Add link targets, mapped to provider-neutral link target summaries.
+  search for Add link targets, including provider-local same-customer query
+  mapping, mapped to provider-neutral link target summaries.
 - `src/providers/zammad/ticket-lookups.ts`: Zammad assignable-user, group, and
   global tag suggestion lookup reads mapped to provider-neutral lookup options.
 - `src/providers/zammad/ticket-secondary.ts`: optional Zammad selected-ticket
@@ -232,12 +233,14 @@ architecture folders or important files are added, moved, renamed, or removed.
   lookup, and metadata mutation dispatch plus provider error to
   unavailable-state mapping.
 - `src/features/tickets/link-target-actions.ts`: authenticated server action
-  for Add link modal target search, returning provider-neutral unavailable state
-  or link target summaries.
+  for Add link modal target search, passing provider-neutral query and
+  customer filters and returning unavailable state or link target summaries.
 - `src/features/tickets/link-target-search-action-result.ts`: client-safe Add
-  link target search request/result and action function types.
+  link target search request/result and action function types, including the
+  optional provider-neutral customer external ID filter.
 - `src/features/tickets/link-target-service.ts`: provider-neutral Add link
-  target search orchestration and provider-error mapping.
+  target search orchestration, capability-gated provider dispatch, and
+  provider-error mapping.
 - `src/features/tickets/mutation-model.ts`: provider-neutral metadata mutation
   capabilities, selected-ticket update payload shape, allowed update
   payload/slice keys, pending-date validation, result/error model, and action
@@ -278,9 +281,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   production workspace display composition for controls, tabs, table, and
   selected-ticket detail surfaces.
 - `src/features/workspace/components/ticket-workspace-state.ts`: client-side
-  workspace-only state for active pane, open ticket tabs, tab metadata patches
-  after successful staged updates, tab orientation, visible columns, row
-  selection, grouping, sorting, and route navigation.
+  workspace-only state for active pane, open ticket tabs, recently viewed tabs,
+  tab metadata patches after successful staged updates, tab orientation, visible
+  columns, row selection, grouping, sorting, and route navigation.
 - `src/features/workspace/components/ticket-workspace-state-types.ts`: shared
   workspace display state prop and active-pane types.
 - `src/features/workspace/components/use-ticket-detail-loader.ts`: in-memory
@@ -358,9 +361,11 @@ architecture folders or important files are added, moved, renamed, or removed.
   entry, and removable chips when tag writes are supported.
 - `src/features/workspace/components/ticket-add-link-dialog.tsx`: workspace-
   local Add link modal for searching/staging one ticket link target and relation
-  kind without provider writes.
+  kind without provider writes, including same-customer and session-recent
+  candidate sections.
 - `src/features/workspace/components/ticket-add-link-search-results.tsx`:
-  compact Add link modal result list and unavailable/empty/searching states.
+  compact Add link modal candidate/result list and unavailable/empty/searching
+  states.
 - `src/features/workspace/components/ticket-add-link-relation-options.tsx`: Add
   link modal relation radio choices with Parent/Child disabled when unsupported.
 - `src/features/workspace/components/ticket-secondary-links-field.tsx`: linked

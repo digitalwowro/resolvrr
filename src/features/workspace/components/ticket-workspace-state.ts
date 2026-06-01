@@ -63,6 +63,14 @@ export function useTicketWorkspaceDisplayState({
       return selectedTab ? [selectedTab] : [];
     },
   );
+  const [recentTicketTabs, setRecentTicketTabs] = useState<WorkspaceTicketTab[]>(
+    () => {
+      const selectedTab = selectedTicketId
+        ? ticketTabs.find((tab) => tab.id === selectedTicketId)
+        : undefined;
+      return selectedTab ? [selectedTab] : [];
+    },
+  );
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   const [visibleColumns, setVisibleColumns] = useState(
     () => new Set(columns.map((column) => column.key)),
@@ -173,6 +181,15 @@ export function useTicketWorkspaceDisplayState({
         ticketExternalId,
       }),
     );
+    setRecentTicketTabs((current) =>
+      patchTicketTabMetadata(current, {
+        group,
+        owner,
+        priority,
+        state,
+        ticketExternalId,
+      }),
+    );
   }
 
   function refreshSavedTicketDetail(ticketId: string) {
@@ -200,6 +217,12 @@ export function useTicketWorkspaceDisplayState({
       current.some((currentTab) => currentTab.id === ticketId)
         ? current
         : [...current, tab],
+    );
+    setRecentTicketTabs((current) =>
+      [tab, ...current.filter((currentTab) => currentTab.id !== ticketId)].slice(
+        0,
+        8,
+      ),
     );
   }
 
@@ -230,6 +253,7 @@ export function useTicketWorkspaceDisplayState({
 
   function showOpenTicket(ticketId: string) {
     cacheSelectedDetail();
+    rememberOpenTicket(ticketId);
     setActiveWorkspacePane({ ticketId });
     replaceWorkspaceUrl(ticketId);
   }
@@ -267,6 +291,7 @@ export function useTicketWorkspaceDisplayState({
     listActive,
     openTicketTabs,
     partiallySelected,
+    recentTicketTabs,
     refreshList,
     returnActiveTicketToList,
     selectedRowIds,

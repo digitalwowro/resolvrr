@@ -16,6 +16,13 @@ type TicketAddLinkSearchResultsProps = {
   onSelectTarget(target: WorkspaceTicketLinkTarget): void;
 };
 
+type TicketAddLinkCandidateListProps = {
+  emptyMessage: string;
+  selectedTarget?: WorkspaceTicketLinkTarget;
+  targets: WorkspaceTicketLinkTarget[];
+  onSelectTarget(target: WorkspaceTicketLinkTarget): void;
+};
+
 function unavailableMessage(result: WorkspaceTicketLinkTargetSearchResult) {
   if (result.status === "available") {
     return undefined;
@@ -38,6 +45,50 @@ function contextLine(target: WorkspaceTicketLinkTarget) {
     target.state ? ticketStateDefinitions[target.state].label : undefined,
     target.priority ? ticketPriorityDefinitions[target.priority].label : undefined,
   ].filter(Boolean).join(" · ");
+}
+
+export function TicketAddLinkCandidateList({
+  emptyMessage,
+  selectedTarget,
+  targets,
+  onSelectTarget,
+}: TicketAddLinkCandidateListProps) {
+  if (targets.length === 0) {
+    return (
+      <div className="rounded-md border border-slate-200 px-3 py-3 text-sm text-slate-500">
+        {emptyMessage}
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-md border border-slate-200">
+      {targets.map((target) => {
+        const selected = selectedTarget?.externalId === target.externalId;
+        return (
+          <button
+            aria-pressed={selected}
+            className={cn(
+              "block w-full border-b border-slate-200 px-3 py-2 text-left text-sm last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none",
+              selected && "bg-indigo-50",
+            )}
+            key={target.externalId}
+            onClick={() => onSelectTarget(target)}
+            type="button"
+          >
+            <span className="block font-semibold text-slate-950">
+              #{target.number} {target.title}
+            </span>
+            {contextLine(target) ? (
+              <span className="block text-xs text-slate-600">
+                {contextLine(target)}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export function TicketAddLinkSearchResults({
@@ -87,31 +138,11 @@ export function TicketAddLinkSearchResults({
   }
 
   return (
-    <div className="overflow-hidden rounded-md border border-slate-200">
-      {targets.map((target) => {
-        const selected = selectedTarget?.externalId === target.externalId;
-        return (
-          <button
-            aria-pressed={selected}
-            className={cn(
-              "block w-full border-b border-slate-200 px-3 py-2 text-left text-sm last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none",
-              selected && "bg-indigo-50",
-            )}
-            key={target.externalId}
-            onClick={() => onSelectTarget(target)}
-            type="button"
-          >
-            <span className="block font-semibold text-slate-950">
-              #{target.number} {target.title}
-            </span>
-            {contextLine(target) ? (
-              <span className="block text-xs text-slate-600">
-                {contextLine(target)}
-              </span>
-            ) : null}
-          </button>
-        );
-      })}
-    </div>
+    <TicketAddLinkCandidateList
+      emptyMessage="No matching tickets found. Enter a related ticket ID manually."
+      onSelectTarget={onSelectTarget}
+      selectedTarget={selectedTarget}
+      targets={targets}
+    />
   );
 }

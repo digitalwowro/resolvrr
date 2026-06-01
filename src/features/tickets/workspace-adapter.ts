@@ -43,6 +43,7 @@ export type WorkspaceTicketRow = {
   number: string;
   title: string;
   customer: string;
+  customerExternalId?: string;
   owner: string;
   ownerExternalId?: string;
   group: string;
@@ -64,11 +65,13 @@ export type WorkspaceTicketTab = {
   number: string;
   title: string;
   customer: string;
+  customerExternalId?: string;
   owner: string;
   group: string;
   state: string;
   stateKey?: TicketState;
   priority: string;
+  priorityKey?: TicketPriority;
 };
 
 export type WorkspaceArticleContact = {
@@ -110,6 +113,7 @@ export type WorkspaceTicketDetail = {
   number: string;
   title: string;
   customer: string;
+  customerExternalId?: string;
   owner: string;
   ownerExternalId?: string;
   group: string;
@@ -215,6 +219,7 @@ export function workspaceTicketRow(ticket: TicketListItem): WorkspaceTicketRow {
     number: displayTicketNumber(ticket.number),
     title: ticket.title,
     customer: participantName(ticket.customer),
+    customerExternalId: ticket.customer?.externalId,
     owner: participantName(ticket.owner),
     ownerExternalId: ticket.owner?.externalId,
     group: groupName(ticket.group),
@@ -262,11 +267,13 @@ export function workspaceTicketTabs(tickets: WorkspaceTicketRow[]): WorkspaceTic
     number: ticket.number,
     title: ticket.title,
     customer: ticket.customer,
+    customerExternalId: ticket.customerExternalId,
     owner: ticket.owner,
     group: ticket.group,
     state: ticket.state,
     stateKey: ticket.stateKey,
     priority: ticket.priority,
+    priorityKey: ticket.priorityKey,
   }));
 }
 

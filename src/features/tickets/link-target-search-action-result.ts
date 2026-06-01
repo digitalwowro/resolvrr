@@ -4,8 +4,9 @@ import type { TicketReadUnavailable } from "./read-model";
 export type WorkspaceTicketLinkTarget = TicketLinkTarget;
 
 export type WorkspaceTicketLinkTargetSearchRequest = {
+  customerExternalId?: string;
   excludeTicketExternalId?: string;
-  query: string;
+  query?: string;
 };
 
 export type WorkspaceTicketLinkTargetSearchResult =
