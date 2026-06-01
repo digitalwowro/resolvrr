@@ -6,18 +6,14 @@ import {
   Clock3,
   PauseCircle,
   List,
-  RefreshCw,
   type LucideIcon,
 } from "lucide-react";
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type { TicketState } from "@/core/tickets";
 import type {
-  WorkspaceTicketColumn,
-  WorkspaceTicketColumnKey,
   WorkspaceTicketTab,
 } from "@/features/tickets/workspace-adapter";
-import { TicketColumnVisibilityAction } from "../ticket-column-visibility-action";
 
 export const stateColor: Record<TicketState | "unknown", string> = {
   new: "text-rose-600",
@@ -66,9 +62,9 @@ export function ListTab({
         aria-label={`Return to list: ${savedViewLabel}`}
         aria-selected={active}
         className={cn(
-          "inline-flex h-9 min-w-16 items-center justify-center gap-2 rounded-t-md border border-b-0 border-slate-200 px-3 text-indigo-700",
+          "inline-flex h-9 min-w-16 translate-y-px items-center justify-center gap-2 rounded-t-md border border-slate-200 px-3 text-indigo-700",
           active
-            ? "relative z-10 translate-y-px bg-white"
+            ? "relative z-10 border-b-white bg-white"
             : "bg-indigo-50 hover:bg-white",
         )}
         onClick={onSelect}
@@ -84,20 +80,12 @@ export function ListTab({
 
 export function VerticalListTab({
   active,
-  columns,
-  onColumnToggle,
   onSelect,
-  onRefresh,
   savedViewLabel,
-  visibleColumns,
 }: {
   active: boolean;
-  columns: WorkspaceTicketColumn[];
-  onColumnToggle(column: WorkspaceTicketColumnKey): void;
   onSelect(): void;
-  onRefresh(): void;
   savedViewLabel: string;
-  visibleColumns: Set<WorkspaceTicketColumnKey>;
 }) {
   return (
     <div className="shrink-0">
@@ -126,34 +114,6 @@ export function VerticalListTab({
             {savedViewLabel}
           </span>
         </button>
-        <div
-          aria-label="List tab actions"
-          className="flex h-8 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-white"
-          role="group"
-        >
-          <TicketColumnVisibilityAction
-            columns={columns}
-            disabled={!active}
-            onColumnToggle={onColumnToggle}
-            triggerClassName="grid size-8 shrink-0 place-items-center text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-indigo-600"
-            visibleColumns={visibleColumns}
-          />
-          <Tooltip content="Refresh list" side="bottom">
-            <button
-              aria-label="Refresh list"
-              className={cn(
-                "grid size-8 shrink-0 place-items-center border-l border-slate-200 text-slate-700 hover:bg-slate-50",
-                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-indigo-600",
-                "disabled:cursor-not-allowed disabled:opacity-50",
-              )}
-              disabled={!active}
-              onClick={onRefresh}
-              type="button"
-            >
-              <RefreshCw aria-hidden="true" className="size-3.5" />
-            </button>
-          </Tooltip>
-        </div>
       </div>
     </div>
   );

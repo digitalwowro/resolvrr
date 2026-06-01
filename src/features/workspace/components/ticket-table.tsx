@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { Button, Checkbox } from "@/components/ui";
+import { Button } from "@/components/ui";
 import type { SortDirection } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
@@ -23,15 +23,12 @@ import type { TicketTableGroup } from "./ticket-table-types";
 
 type TicketTableProps = {
   activeTicketId?: string;
-  allSelected: boolean;
   columns: WorkspaceTicketColumn[];
   groupedRows?: TicketTableGroup[];
   groupBy: WorkspaceTicketGroupKey;
   onRowSelect(ticketId: string): void;
   onSort(key: WorkspaceTicketSortKey): void;
-  onSelectAll(): void;
   onToggleRow(ticketId: string): void;
-  partiallySelected: boolean;
   canLoadMore?: boolean;
   groupLoadMoreError?: { groupId: string; reason: string };
   loadedCount?: number;
@@ -53,15 +50,12 @@ export type { TicketTableGroup } from "./ticket-table-types";
 
 export function TicketTable({
   activeTicketId,
-  allSelected,
   columns,
   groupedRows,
   groupBy,
   onRowSelect,
   onSort,
-  onSelectAll,
   onToggleRow,
-  partiallySelected,
   canLoadMore = false,
   groupLoadMoreError,
   loadedCount,
@@ -146,17 +140,7 @@ export function TicketTable({
         <div className="grid w-full min-w-0" style={templateStyle}>
           <div className="contents" role="rowgroup">
             <div className="contents" role="row">
-              <TicketGridStaticHeaderCell>
-                <Checkbox
-                  checked={allSelected}
-                  className="items-center"
-                  hideLabel
-                  indeterminate={partiallySelected}
-                  label="Select all tickets"
-                  name="workspace-select-all"
-                  onChange={onSelectAll}
-                />
-              </TicketGridStaticHeaderCell>
+              <TicketGridStaticHeaderCell />
               <TicketGridHeaderCell
                 label="#"
                 onSort={sortHandler("number")}

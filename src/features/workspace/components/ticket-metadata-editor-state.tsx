@@ -235,18 +235,45 @@ export function TicketMetadataEditorState({
   return (
     <>
       <div className="flex min-h-0 flex-1">
-        <div className="min-w-0 flex-1 overflow-y-auto shadow-[inset_0_6px_8px_-10px_rgba(15,23,42,0.35)]">
-          <div className="pt-2">
-            {header}
-            <TicketThread
-              addTicketCustomerReplyAction={addTicketCustomerReplyAction}
-              addTicketInternalNoteAction={addTicketInternalNoteAction}
-              articles={detail.articles}
-              communicationCapabilities={communicationCapabilities}
-              onCommunicationSaved={refreshSavedDetail}
-              ticketExternalId={detail.id}
+        <div className="min-w-0 flex-1 overflow-hidden p-2">
+          <section
+            aria-label="Ticket conversation"
+            className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-slate-200 bg-white"
+          >
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 top-0 z-30 h-px bg-slate-200"
             />
-          </div>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-3 bg-gradient-to-t from-slate-200/45 to-transparent"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 z-20 w-3 bg-gradient-to-r from-slate-200/45 to-transparent"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 right-0 z-20 w-3 bg-gradient-to-l from-slate-200/45 to-transparent"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 top-px z-20 h-3 bg-gradient-to-b from-slate-200/45 to-transparent"
+            />
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="pt-2">
+                {header}
+                <TicketThread
+                  addTicketCustomerReplyAction={addTicketCustomerReplyAction}
+                  addTicketInternalNoteAction={addTicketInternalNoteAction}
+                  articles={detail.articles}
+                  communicationCapabilities={communicationCapabilities}
+                  onCommunicationSaved={refreshSavedDetail}
+                  ticketExternalId={detail.id}
+                />
+              </div>
+            </div>
+          </section>
         </div>
         <TicketDetailSidebar>{fields}</TicketDetailSidebar>
       </div>

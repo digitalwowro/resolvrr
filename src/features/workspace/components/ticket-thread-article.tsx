@@ -171,6 +171,7 @@ export function TicketThreadArticle({
       </div>
       {hasRecipientDetails && isExpanded ? (
         <div className="min-w-0 leading-tight">
+          <ContactLine contacts={[article.from]} label="From" />
           <ContactLine contacts={article.to} label="To" />
           <ContactLine contacts={article.cc} label="Cc" />
           <ContactLine contacts={article.bcc} label="Bcc" />

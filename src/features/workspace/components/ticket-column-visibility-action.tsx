@@ -17,6 +17,7 @@ type TicketColumnVisibilityActionProps = {
   columns: WorkspaceTicketColumn[];
   disabled: boolean;
   onColumnToggle(column: WorkspaceTicketColumnKey): void;
+  showLabel?: boolean;
   triggerClassName: string;
   tooltipSide?: "bottom" | "top";
   visibleColumns: Set<WorkspaceTicketColumnKey>;
@@ -26,6 +27,7 @@ export function TicketColumnVisibilityAction({
   columns,
   disabled,
   onColumnToggle,
+  showLabel = false,
   triggerClassName,
   tooltipSide = "bottom",
   visibleColumns,
@@ -50,7 +52,16 @@ export function TicketColumnVisibilityAction({
           triggerClassName,
           "disabled:cursor-not-allowed disabled:opacity-50",
         )}
-        triggerContent={<Columns3 aria-hidden="true" className="size-3.5" />}
+        triggerContent={
+          showLabel ? (
+            <>
+              <Columns3 aria-hidden="true" className="size-3.5" />
+              <span>Columns</span>
+            </>
+          ) : (
+            <Columns3 aria-hidden="true" className="size-3.5" />
+          )
+        }
         triggerLabel="Column visibility"
         unstyledTrigger
       />

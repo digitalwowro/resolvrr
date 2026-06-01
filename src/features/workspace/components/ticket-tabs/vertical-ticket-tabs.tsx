@@ -2,8 +2,6 @@ import { X } from "lucide-react";
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
-  WorkspaceTicketColumn,
-  WorkspaceTicketColumnKey,
   WorkspaceTicketTab,
 } from "@/features/tickets/workspace-adapter";
 import {
@@ -14,16 +12,12 @@ import {
 
 type VerticalTicketTabsProps = {
   activeTicketId?: string;
-  columns: WorkspaceTicketColumn[];
   listActive: boolean;
-  onColumnToggle(column: WorkspaceTicketColumnKey): void;
   onSelectList(): void;
   onSelectTicket(ticketId: string): void;
   onCloseTicket(ticketId: string): void;
-  onRefresh(): void;
   savedViewLabel: string;
   tabs: WorkspaceTicketTab[];
-  visibleColumns: Set<WorkspaceTicketColumnKey>;
 };
 
 function VerticalTicketTab({
@@ -90,16 +84,12 @@ function VerticalTicketTab({
 
 export function VerticalTicketTabs({
   activeTicketId,
-  columns,
   listActive,
-  onColumnToggle,
   onSelectList,
   onSelectTicket,
   onCloseTicket,
-  onRefresh,
   savedViewLabel,
   tabs,
-  visibleColumns,
 }: VerticalTicketTabsProps) {
   return (
     <aside
@@ -112,12 +102,8 @@ export function VerticalTicketTabs({
       >
         <VerticalListTab
           active={listActive}
-          columns={columns}
-          onColumnToggle={onColumnToggle}
-          onRefresh={onRefresh}
           onSelect={onSelectList}
           savedViewLabel={savedViewLabel}
-          visibleColumns={visibleColumns}
         />
         {tabs.map((tab) => (
           <VerticalTicketTab

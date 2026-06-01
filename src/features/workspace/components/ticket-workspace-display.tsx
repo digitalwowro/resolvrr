@@ -34,6 +34,7 @@ import {
   workspaceTicketTabs,
 } from "@/features/tickets/workspace-adapter";
 import { TicketDetail } from "./ticket-detail";
+import { TicketListToolbar } from "./ticket-list-toolbar";
 import { TicketTable } from "./ticket-table";
 import { TicketTabsPanel } from "./ticket-tabs-panel";
 import { ticketGroupOptions } from "./ticket-table-grouping";
@@ -207,34 +208,48 @@ export function TicketWorkspaceDisplay({
 
   const workArea =
     listActive ? (
-      <TicketTable
-        key="work-area"
-        activeTicketId={activeTicketId}
-        allSelected={allSelected}
-        columns={columns}
-        groupedRows={groupBy === "none" ? undefined : tableGroupedRows}
-        groupBy={groupBy}
-        onRowSelect={showTicketFromRow}
-        onSort={toggleSort}
-        onSelectAll={toggleSelectAll}
-        onToggleRow={toggleRow}
-        partiallySelected={partiallySelected}
-        canLoadMore={!providerGroupedActive && listPager.canLoadMore}
-        groupLoadMoreError={listPager.groupError}
-        loadingGroupId={listPager.loadingGroupId}
-        loadMoreError={listPager.errorReason}
-        loadedCount={listPager.loadedCount}
-        loadingMore={listPager.loading}
-        onLoadMoreGroup={listPager.loadMoreGroup}
-        onLoadMore={listPager.loadMore}
-        roundedTop={tabOrientation === "vertical"}
-        rows={tableRows}
-        selectedRowIds={selectedRowIds}
-        sortingEnabled={sortingEnabled && !providerGroupedActive}
-        sortDirectionFor={sortDirectionFor}
-        totalCount={listPager.totalCount}
-        visibleColumns={visibleColumnSet}
-      />
+      <div key="work-area" className="flex min-h-0 flex-1 flex-col">
+        <TicketListToolbar
+          allSelected={allSelected}
+          columns={columns}
+          groupBy={groupBy}
+          groupOptions={ticketGroupOptions(providerGroupingEnabled)}
+          onColumnToggle={toggleColumn}
+          onGroupByChange={handleWorkspaceGroupByChange}
+          onRefresh={refreshList}
+          onSavedViewChange={handleSavedViewChange}
+          onSelectAll={toggleSelectAll}
+          partiallySelected={partiallySelected}
+          roundedTop={tabOrientation === "vertical"}
+          savedViewOptions={savedViewOptions}
+          selectedSavedViewId={listPager.savedViewId}
+          visibleColumns={visibleColumnSet}
+        />
+        <TicketTable
+          activeTicketId={activeTicketId}
+          columns={columns}
+          groupedRows={groupBy === "none" ? undefined : tableGroupedRows}
+          groupBy={groupBy}
+          onRowSelect={showTicketFromRow}
+          onSort={toggleSort}
+          onToggleRow={toggleRow}
+          canLoadMore={!providerGroupedActive && listPager.canLoadMore}
+          groupLoadMoreError={listPager.groupError}
+          loadingGroupId={listPager.loadingGroupId}
+          loadMoreError={listPager.errorReason}
+          loadedCount={listPager.loadedCount}
+          loadingMore={listPager.loading}
+          onLoadMoreGroup={listPager.loadMoreGroup}
+          onLoadMore={listPager.loadMore}
+          roundedTop={false}
+          rows={tableRows}
+          selectedRowIds={selectedRowIds}
+          sortingEnabled={sortingEnabled && !providerGroupedActive}
+          sortDirectionFor={sortDirectionFor}
+          totalCount={listPager.totalCount}
+          visibleColumns={visibleColumnSet}
+        />
+      </div>
     ) : activeDetail?.status === "unavailable" ? (
       <DetailUnavailableState key="work-area" reason={activeDetail.reason} />
     ) : activeDetail?.status === "available" ? (
@@ -260,14 +275,7 @@ export function TicketWorkspaceDisplay({
   const controls = (
     <WorkspaceControls
       key="controls"
-      groupBy={groupBy}
-      groupOptions={ticketGroupOptions(providerGroupingEnabled)}
-      listControlsEnabled={listActive}
-      onGroupByChange={handleWorkspaceGroupByChange}
-      onSavedViewChange={handleSavedViewChange}
       onTabOrientationChange={setTabOrientation}
-      savedViewOptions={savedViewOptions}
-      selectedSavedViewId={listPager.savedViewId}
       tabOrientation={tabOrientation}
     />
   );
@@ -276,17 +284,13 @@ export function TicketWorkspaceDisplay({
     <TicketTabsPanel
       key="tabs"
       activeTicketId={activeTicketId}
-      columns={columns}
       listActive={listActive}
       onCloseTicket={closeTicket}
-      onColumnToggle={toggleColumn}
-      onRefresh={refreshList}
       onSelectList={showList}
       onSelectTicket={showOpenTicket}
       orientation={tabOrientation}
       savedViewLabel={activeSavedView?.label ?? "All tickets"}
       tabs={openTicketTabs}
-      visibleColumns={visibleColumnSet}
     />
   );
 

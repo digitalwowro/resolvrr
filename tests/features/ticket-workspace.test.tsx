@@ -119,6 +119,7 @@ describe("TicketWorkspace", () => {
       ...detailProps.detail.articles[0]!,
       sanitizedHtml:
         '\n  <p>Explore these links:</p>\n  <ul>\n    <li><a href="https://example.com/docs" rel="noreferrer noopener" target="_blank">Docs</a></li>\n  </ul>\n',
+      cc: [{ label: "Billing Team", email: "billing@example.com" }],
       attachments: [
         {
           id: "attachment-1",
@@ -204,6 +205,9 @@ describe("TicketWorkspace", () => {
     expect(screen.getByText("To:")).toBeInTheDocument();
     expect(screen.getByText("Support Team")).toBeInTheDocument();
     expect(screen.getByText("(support@example.com)")).toBeInTheDocument();
+    expect(screen.getByText("Cc:")).toBeInTheDocument();
+    expect(screen.getByText("Billing Team")).toBeInTheDocument();
+    expect(screen.getByText("(billing@example.com)")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Message details for Agent Smith" }),
     ).toBeNull();
@@ -258,10 +262,21 @@ describe("TicketWorkspace", () => {
     expect(
       screen.queryByRole("checkbox", { name: "Select all tickets" }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Refresh list" })).toBeDisabled();
-    expect(screen.getByRole("combobox", { name: "Saved view" })).toBeDisabled();
-    expect(screen.getByRole("combobox", { name: "Group tickets by" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Column visibility" })).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: "Refresh list" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("combobox", { name: "Saved view" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("combobox", { name: "Group tickets by" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Column visibility" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("toolbar", { name: "Ticket list controls" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByLabelText("System status")).not.toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Tab layout" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Horizontal tabs" })).toBeEnabled();
@@ -274,24 +289,16 @@ describe("TicketWorkspace", () => {
     expect(within(tablist).getAllByRole("tab")[0]).toHaveAccessibleName(
       "Return to list: All tickets",
     );
-    const listTabActions = screen.getByRole("group", { name: "List tab actions" });
-    expect(
-      tablist.compareDocumentPosition(listTabActions) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      within(listTabActions)
-        .getByRole("button", { name: "Column visibility" })
-        .compareDocumentPosition(
-          within(listTabActions).getByRole("button", { name: "Refresh list" }),
-        ) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
 
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
 
     expect(screen.getByRole("table", { name: "Tickets" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("toolbar", { name: "Ticket list controls" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Select all tickets" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Refresh list" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Bulk actions" })).toBeDisabled();
     expect(screen.getByRole("combobox", { name: "Saved view" })).toBeEnabled();
     expect(screen.getByRole("combobox", { name: "Group tickets by" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Column visibility" })).toBeEnabled();

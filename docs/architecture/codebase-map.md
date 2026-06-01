@@ -289,14 +289,15 @@ architecture folders or important files are added, moved, renamed, or removed.
   URL path helper used by local tab navigation and explicit ticket link sharing,
   plus history replacement helpers for local tab navigation.
 - `src/features/workspace/components/workspace-header.tsx`: production
-  workspace header presentation with brand, global search, merged view controls,
+  workspace header presentation with brand, global search, tab layout controls,
   and an avatar/profile menu fed by real connection/action props.
 - `src/features/workspace/components/workspace-controls.tsx`: read-safe
-  workspace view-control presentation for saved-view display, local grouping,
-  and the always-available tab layout segmented control. View controls remain
-  mounted but disabled while a ticket pane is active.
+  workspace presentation for the always-available tab layout segmented control.
+- `src/features/workspace/components/ticket-list-toolbar.tsx`: list-only
+  toolbar for Select all, Refresh, the disabled Bulk actions placeholder, saved
+  view selection, grouping, and column visibility above the ticket table.
 - `src/features/workspace/components/ticket-column-visibility-action.tsx`:
-  icon-only column visibility menu used in the list tab action group.
+  reusable column visibility menu used by the list toolbar.
 - `src/features/workspace/components/workspace-states.tsx`: provider-neutral
   unavailable, detail-unavailable, and empty-detail states.
 - `src/features/workspace/components/ticket-table-grid.tsx`: production

@@ -10,6 +10,8 @@ type CheckboxProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
   error?: string;
   indeterminate?: boolean;
   hideLabel?: boolean;
+  checkboxClassName?: string;
+  checkIconClassName?: string;
 };
 
 export function Checkbox({
@@ -18,6 +20,8 @@ export function Checkbox({
   error,
   indeterminate = false,
   hideLabel = false,
+  checkboxClassName,
+  checkIconClassName,
   className,
   id,
   ...props
@@ -35,19 +39,30 @@ export function Checkbox({
 
   return (
     <label className={cn("flex items-start gap-2", className)}>
-      <span className="relative mt-0.5 inline-grid size-5 place-items-center">
+      <span
+        className={cn(
+          "relative mt-0.5 inline-grid size-5 place-items-center",
+          checkboxClassName,
+        )}
+      >
         <input
           ref={inputRef}
           aria-describedby={[helpId, errorId].filter(Boolean).join(" ") || undefined}
           aria-invalid={error ? true : undefined}
-          className="peer size-5 appearance-none rounded-md border-1 border-slate-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className={cn(
+            "peer size-5 appearance-none rounded-md border-1 border-slate-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50",
+            checkboxClassName,
+          )}
           id={checkboxId}
           type="checkbox"
           {...props}
         />
         <Check
           aria-hidden="true"
-          className="pointer-events-none absolute size-3 text-white opacity-0 peer-checked:opacity-100"
+          className={cn(
+            "pointer-events-none absolute size-3 text-white opacity-0 peer-checked:opacity-100",
+            checkIconClassName,
+          )}
         />
       </span>
       <span className={cn(hideLabel && "sr-only")}>
