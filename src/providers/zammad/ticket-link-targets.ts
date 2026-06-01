@@ -87,11 +87,33 @@ function linkTarget(
   };
 }
 
+function zammadCustomerId(value: string): string {
+  const normalized = value.trim();
+  if (!/^\d+$/u.test(normalized)) {
+    throw new ProviderError(
+      "validation-failure",
+      "Invalid customer reference for the helpdesk provider.",
+    );
+  }
+
+  return normalized;
+}
+
+function zammadCustomerLinkTargetQuery(input: TicketLinkTargetSearchInput) {
+  const query = input.query?.trim() ?? "";
+  if (!input.customerExternalId) {
+    return query;
+  }
+
+  const customerQuery = `customer_id:${zammadCustomerId(input.customerExternalId)}`;
+  return query ? `(${query}) AND ${customerQuery}` : customerQuery;
+}
+
 export async function searchZammadLinkTargets(
   context: ProviderContext,
   input: TicketLinkTargetSearchInput,
 ): Promise<TicketLinkTarget[]> {
-  const query = input.query.trim();
+  const query = zammadCustomerLinkTargetQuery(input);
   if (!query) {
     return [];
   }

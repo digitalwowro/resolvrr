@@ -1,5 +1,8 @@
 import type { TicketMetadataMutationCapabilities } from "@/features/tickets/mutation-model";
-import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
+import type {
+  SearchWorkspaceTicketLinkTargetsAction,
+  WorkspaceTicketLinkTarget,
+} from "@/features/tickets/link-target-search-action-result";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import type {
   SelectedTicketDraft,
@@ -15,6 +18,7 @@ export function TicketSecondaryMetadataFields({
   draft,
   metadataMutationCapabilities,
   onDraftChange,
+  recentlyViewedLinkTargets,
   searchTicketLinkTargetsAction,
   saving,
 }: {
@@ -23,6 +27,7 @@ export function TicketSecondaryMetadataFields({
   draft: SelectedTicketDraft;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
   onDraftChange(nextDraft: SelectedTicketDraft): void;
+  recentlyViewedLinkTargets: WorkspaceTicketLinkTarget[];
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   saving: boolean;
 }) {
@@ -58,6 +63,7 @@ export function TicketSecondaryMetadataFields({
         dirtyFields={dirtyFields}
         draft={draft}
         onDraftChange={onDraftChange}
+        recentlyViewedLinkTargets={recentlyViewedLinkTargets}
         searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
         saving={saving}
       />

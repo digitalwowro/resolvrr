@@ -15,8 +15,9 @@ export async function searchWorkspaceTicketLinkTargets(
   userId: string,
   input: TicketLinkTargetSearchInput,
 ): Promise<WorkspaceTicketLinkTargetSearchResult> {
-  const normalizedQuery = input.query.trim();
-  if (!normalizedQuery) {
+  const normalizedQuery = input.query?.trim() ?? "";
+  const normalizedCustomerExternalId = input.customerExternalId?.trim();
+  if (!normalizedQuery && !normalizedCustomerExternalId) {
     return { status: "available", targets: [] };
   }
 
@@ -33,9 +34,14 @@ export async function searchWorkspaceTicketLinkTargets(
 
   try {
     const targets = await dispatchTicketLinkTargetSearch(providerContext.value, {
-      ...input,
+      ...(normalizedCustomerExternalId
+        ? { customerExternalId: normalizedCustomerExternalId }
+        : {}),
+      ...(input.excludeTicketExternalId
+        ? { excludeTicketExternalId: input.excludeTicketExternalId }
+        : {}),
       limit: input.limit ?? 8,
-      query: normalizedQuery,
+      ...(normalizedQuery ? { query: normalizedQuery } : {}),
     });
     return {
       status: "available",

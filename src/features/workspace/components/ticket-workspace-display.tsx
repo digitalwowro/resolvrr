@@ -14,7 +14,10 @@ import type {
   LoadWorkspaceTicketListPageAction,
   WorkspaceTicketListGroup,
 } from "@/features/tickets/list-page-action-result";
-import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
+import type {
+  SearchWorkspaceTicketLinkTargetsAction,
+  WorkspaceTicketLinkTarget,
+} from "@/features/tickets/link-target-search-action-result";
 import type {
   SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
@@ -86,6 +89,21 @@ type TicketWorkspaceDisplayProps = {
   userEmail: string;
 };
 
+function stripTicketNumberPrefix(number: string) {
+  return number.replace(/^#/u, "");
+}
+
+function tabLinkTarget(tab: WorkspaceTicketTab): WorkspaceTicketLinkTarget {
+  return {
+    customer: tab.customer,
+    externalId: tab.id,
+    number: stripTicketNumberPrefix(tab.number),
+    priority: tab.priorityKey,
+    state: tab.stateKey,
+    title: tab.title,
+  };
+}
+
 export function TicketWorkspaceDisplay({
   actions,
   connections,
@@ -138,6 +156,7 @@ export function TicketWorkspaceDisplay({
     listActive,
     openTicketTabs,
     partiallySelected,
+    recentTicketTabs,
     refreshList,
     refreshSavedTicketDetail,
     returnActiveTicketToList,
@@ -176,6 +195,7 @@ export function TicketWorkspaceDisplay({
     listPager.groups !== undefined;
   const tableGroupedRows = providerGroupedActive ? listPager.groups : groupedRows;
   const tableRows = providerGroupedActive ? listPager.rows : sortedRows;
+  const recentlyViewedLinkTargets = recentTicketTabs.map(tabLinkTarget);
   const savedViewOptions: DropdownOption[] = savedViews.map((savedView) => ({
     value: savedView.id,
     label: savedView.disabledReason
@@ -209,6 +229,18 @@ export function TicketWorkspaceDisplay({
     handleGroupByChange(result.groupBy ?? "none");
   }
 
+  function handleRefreshList() {
+    refreshList();
+    if (
+      providerGroupedActive &&
+      (groupBy === "state" || groupBy === "priority")
+    ) {
+      void listPager.reloadGroupedFirstPage(groupBy);
+      return;
+    }
+    void listPager.reloadFirstPage();
+  }
+
   const workArea =
     listActive ? (
       <div key="work-area" className="flex min-h-0 flex-1 flex-col">
@@ -219,7 +251,7 @@ export function TicketWorkspaceDisplay({
           groupOptions={ticketGroupOptions(providerGroupingEnabled)}
           onColumnToggle={toggleColumn}
           onGroupByChange={handleWorkspaceGroupByChange}
-          onRefresh={refreshList}
+          onRefresh={handleRefreshList}
           onSavedViewChange={handleSavedViewChange}
           onSelectAll={toggleSelectAll}
           partiallySelected={partiallySelected}
@@ -266,6 +298,7 @@ export function TicketWorkspaceDisplay({
         onMetadataSaved={updateOpenTicketTabMetadata}
         onMetadataSavedDetailRefresh={refreshSavedTicketDetail}
         onReturnToListAfterUpdate={returnActiveTicketToList}
+        recentlyViewedLinkTargets={recentlyViewedLinkTargets}
         roundedTop={tabOrientation === "vertical"}
         searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
         updateTicketMetadataAction={updateTicketMetadataAction}

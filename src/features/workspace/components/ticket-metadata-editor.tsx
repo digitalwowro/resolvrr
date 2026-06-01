@@ -6,7 +6,10 @@ import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
-import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
+import type {
+  SearchWorkspaceTicketLinkTargetsAction,
+  WorkspaceTicketLinkTarget,
+} from "@/features/tickets/link-target-search-action-result";
 import {
   noTicketCommunicationCapabilities,
   type TicketCommunicationCapabilities,
@@ -33,6 +36,7 @@ export function TicketMetadataEditor({
   onMetadataSaved,
   onMetadataSavedDetailRefresh,
   onReturnToListAfterUpdate,
+  recentlyViewedLinkTargets = [],
   searchTicketLinkTargetsAction = unavailableLinkTargetSearchAction,
   updateTicketMetadataAction,
 }: {
@@ -49,6 +53,7 @@ export function TicketMetadataEditor({
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
   onMetadataSavedDetailRefresh?(ticketId: string): void;
   onReturnToListAfterUpdate(): void;
+  recentlyViewedLinkTargets?: WorkspaceTicketLinkTarget[];
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
@@ -69,6 +74,7 @@ export function TicketMetadataEditor({
       onMetadataSaved={onMetadataSaved}
       onMetadataSavedDetailRefresh={onMetadataSavedDetailRefresh}
       onReturnToListAfterUpdate={onReturnToListAfterUpdate}
+      recentlyViewedLinkTargets={recentlyViewedLinkTargets}
       searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
       updateTicketMetadataAction={updateTicketMetadataAction}
     />

@@ -129,10 +129,14 @@ The provider-neutral mutation capabilities are:
 Link target lookup is a separate read capability:
 
 - `lookup:link-targets`: provider can search candidate tickets for the Add link
-  modal. The lookup accepts a non-empty query, an optional selected-ticket
-  external ID to exclude, and an optional limit. Results return provider-neutral
-  ticket number, title, external ID, and optional customer, state, and priority
-  context. Empty queries must return no provider results.
+  modal. The lookup accepts an optional non-empty query, an optional same
+  provider customer external ID, an optional selected-ticket external ID to
+  exclude, and an optional limit. Results return provider-neutral ticket number,
+  title, external ID, and optional customer, state, and priority context. A
+  request with neither query nor customer external ID must return no provider
+  results. A customer external ID means "same provider customer external ID";
+  provider-specific customer fields or search syntax remain owned by the
+  provider plugin.
 
 ## Ticket Communication Writes
 

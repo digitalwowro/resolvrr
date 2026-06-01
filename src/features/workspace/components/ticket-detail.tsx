@@ -9,7 +9,10 @@ import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
-import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
+import type {
+  SearchWorkspaceTicketLinkTargetsAction,
+  WorkspaceTicketLinkTarget,
+} from "@/features/tickets/link-target-search-action-result";
 import type {
   TicketCommunicationCapabilities,
   TicketCustomerReplyActionState,
@@ -17,9 +20,7 @@ import type {
   TicketInternalNoteActionState,
   TicketInternalNotePayload,
 } from "@/features/tickets/communication-model";
-import type {
-  WorkspaceTicketDetail,
-} from "@/features/tickets/workspace-adapter";
+import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import type { TicketMetadataSavedPatch } from "./metadata-draft";
 import { StateIcon } from "./ticket-table-cells";
 import { TicketMetadataEditor } from "./ticket-metadata-editor";
@@ -38,6 +39,7 @@ type TicketDetailProps = {
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
   onMetadataSavedDetailRefresh(ticketId: string): void;
   onReturnToListAfterUpdate(): void;
+  recentlyViewedLinkTargets: WorkspaceTicketLinkTarget[];
   roundedTop?: boolean;
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   updateTicketMetadataAction(
@@ -54,6 +56,7 @@ export function TicketDetail({
   onMetadataSaved,
   onMetadataSavedDetailRefresh,
   onReturnToListAfterUpdate,
+  recentlyViewedLinkTargets,
   roundedTop = true,
   searchTicketLinkTargetsAction,
   updateTicketMetadataAction,
@@ -177,6 +180,7 @@ export function TicketDetail({
         onMetadataSaved={onMetadataSaved}
         onMetadataSavedDetailRefresh={onMetadataSavedDetailRefresh}
         onReturnToListAfterUpdate={onReturnToListAfterUpdate}
+        recentlyViewedLinkTargets={recentlyViewedLinkTargets}
         searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
         updateTicketMetadataAction={updateTicketMetadataAction}
       />

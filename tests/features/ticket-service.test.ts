@@ -182,6 +182,49 @@ describe("ticket read service", () => {
     });
   });
 
+  it("passes provider-neutral customer filters through link target lookup dispatch", async () => {
+    const searchLinkTargets = vi.fn(async () => [
+      {
+        customer: "Maya Patel",
+        externalId: "ticket-77",
+        number: "77",
+        title: "Same customer ticket",
+      },
+    ]);
+
+    const result = await searchWorkspaceTicketLinkTargets(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([
+        provider({
+          capabilities: ["lookup:link-targets"],
+          searchLinkTargets,
+        }),
+      ]),
+      encryptionKey,
+      "user-1",
+      {
+        customerExternalId: "customer-1",
+        excludeTicketExternalId: "ticket-1",
+      },
+    );
+
+    expect(result).toMatchObject({
+      status: "available",
+      targets: [{ externalId: "ticket-77" }],
+    });
+    expect(searchLinkTargets).toHaveBeenCalledWith(
+      expect.any(Object),
+      {
+        customerExternalId: "customer-1",
+        excludeTicketExternalId: "ticket-1",
+        limit: 8,
+      },
+    );
+  });
+
   it("adds lookup data to ticket detail without failing detail on lookup errors", async () => {
     const result = await loadWorkspaceTicketDetail(
       repository({

@@ -15,13 +15,18 @@ import type {
   WorkspaceTicketLinkTargetSearchResult,
 } from "@/features/tickets/link-target-search-action-result";
 import { TicketAddLinkRelationOptions } from "./ticket-add-link-relation-options";
-import { TicketAddLinkSearchResults } from "./ticket-add-link-search-results";
+import {
+  TicketAddLinkCandidateList,
+  TicketAddLinkSearchResults,
+} from "./ticket-add-link-search-results";
 
 type TicketAddLinkDialogProps = {
   canEditLinkRelations: boolean;
+  currentTicketCustomerExternalId?: string;
   currentTicketExternalId: string;
   initialRelation: TicketLinkRelationKind;
   initialTicketId?: string;
+  recentlyViewedTargets: WorkspaceTicketLinkTarget[];
   saving: boolean;
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   onAdd(input: {
@@ -34,9 +39,11 @@ type TicketAddLinkDialogProps = {
 
 export function TicketAddLinkDialog({
   canEditLinkRelations,
+  currentTicketCustomerExternalId,
   currentTicketExternalId,
   initialRelation,
   initialTicketId = "",
+  recentlyViewedTargets,
   saving,
   searchTicketLinkTargetsAction,
   onAdd,
@@ -55,6 +62,14 @@ export function TicketAddLinkDialog({
       status: "available",
       targets: [],
     });
+  const [customerSearching, setCustomerSearching] = useState(
+    Boolean(currentTicketCustomerExternalId),
+  );
+  const [customerSearchResult, setCustomerSearchResult] =
+    useState<WorkspaceTicketLinkTargetSearchResult>({
+      status: "available",
+      targets: [],
+    });
   const [selectedTarget, setSelectedTarget] =
     useState<WorkspaceTicketLinkTarget | undefined>();
   const trimmedManualTicketId = manualTicketId.trim();
@@ -67,11 +82,57 @@ export function TicketAddLinkDialog({
       Boolean(trimmedQuery) &&
       !searching &&
       searchResult.targets.length === 0);
+  const selectedOrManualExternalId =
+    selectedTarget?.externalId ?? trimmedManualTicketId;
+  const visibleRecentlyViewedTargets = recentlyViewedTargets.filter(
+    (target) =>
+      target.externalId !== currentTicketExternalId &&
+      target.externalId !== selectedOrManualExternalId,
+  );
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => inputRef.current?.focus(), 0);
     return () => window.clearTimeout(timeoutId);
   }, []);
+
+  useEffect(() => {
+    if (!currentTicketCustomerExternalId) {
+      return;
+    }
+
+    let canceled = false;
+    void searchTicketLinkTargetsAction({
+      customerExternalId: currentTicketCustomerExternalId,
+      excludeTicketExternalId: currentTicketExternalId,
+    })
+      .then((result) => {
+        if (!canceled) {
+          setCustomerSearchResult(result);
+        }
+      })
+      .catch(() => {
+        if (!canceled) {
+          setCustomerSearchResult({
+            status: "unavailable",
+            reason: "provider-temporary-failure",
+            retryable: true,
+          });
+        }
+      })
+      .finally(() => {
+        if (!canceled) {
+          setCustomerSearching(false);
+        }
+      });
+
+    return () => {
+      canceled = true;
+    };
+  }, [
+    currentTicketCustomerExternalId,
+    currentTicketExternalId,
+    searchTicketLinkTargetsAction,
+  ]);
 
   function updateQuery(nextQuery: string) {
     setQuery(nextQuery);
@@ -199,6 +260,40 @@ export function TicketAddLinkDialog({
               searching={searching}
               searchResult={searchResult}
               selectedTarget={selectedTarget}
+            />
+          </section>
+          {currentTicketCustomerExternalId ? (
+            <section aria-label="From this customer" className="space-y-2">
+              <div className="text-xs font-semibold text-slate-700">
+                From this customer
+              </div>
+              {customerSearching ? (
+                <div className="rounded-md border border-slate-200 px-3 py-3 text-sm text-slate-500">
+                  Loading tickets from this customer...
+                </div>
+              ) : customerSearchResult.status === "unavailable" ? (
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800">
+                  Customer ticket lookup is unavailable.
+                </div>
+              ) : (
+                <TicketAddLinkCandidateList
+                  emptyMessage="No other tickets from this customer."
+                  onSelectTarget={selectTarget}
+                  selectedTarget={selectedTarget}
+                  targets={customerSearchResult.targets}
+                />
+              )}
+            </section>
+          ) : null}
+          <section aria-label="Recently viewed" className="space-y-2">
+            <div className="text-xs font-semibold text-slate-700">
+              Recently viewed
+            </div>
+            <TicketAddLinkCandidateList
+              emptyMessage="No recently viewed tickets in this session."
+              onSelectTarget={selectTarget}
+              selectedTarget={selectedTarget}
+              targets={visibleRecentlyViewedTargets}
             />
           </section>
           {showManualTicketId ? (

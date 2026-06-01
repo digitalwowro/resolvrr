@@ -85,9 +85,10 @@ export const ticketLinkRelationKinds = ["related", "parent", "child"] as const;
 export type TicketLinkRelationKind = (typeof ticketLinkRelationKinds)[number];
 
 export type TicketLinkTargetSearchInput = {
+  customerExternalId?: string;
   excludeTicketExternalId?: TicketExternalId;
   limit?: number;
-  query: string;
+  query?: string;
 };
 
 export type TicketLinkTarget = {

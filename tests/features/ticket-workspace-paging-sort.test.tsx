@@ -61,6 +61,43 @@ describe("TicketWorkspace paging and sort", () => {
     expect(loadTicketDetailAction).not.toHaveBeenCalled();
   });
 
+  it("refreshes the first ungrouped list page from the provider", async () => {
+    const user = userEvent.setup();
+    const newRow = {
+      ...highRow,
+      id: "ticket-3",
+      number: "#1003",
+      title: "New Zammad ticket",
+    };
+    const loadTicketListPageAction = vi.fn(async () => ({
+      status: "available" as const,
+      rows: [newRow, row],
+      loadedCount: 2,
+    }));
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        listResult={{ ...availableList, loadedCount: 1 }}
+        loadTicketListPageAction={loadTicketListPageAction}
+        logoutAction={noopAction}
+        rows={[row]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    expect(screen.queryByText("New Zammad ticket")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Refresh list" }));
+
+    expect(loadTicketListPageAction).toHaveBeenCalledWith({});
+    expect(await screen.findByText("New Zammad ticket")).toBeInTheDocument();
+  });
+
   it("reloads the first page through provider sort and keeps the sort for next pages", async () => {
     const user = userEvent.setup();
     const loadTicketListPageAction = vi

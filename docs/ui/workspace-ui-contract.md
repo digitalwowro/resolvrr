@@ -85,11 +85,17 @@ provider writes staged until the workspace `Update` action, shows no arbitrary
 provider results for an empty search, and searches provider-neutral link targets
 only when the active provider advertises `lookup:link-targets`. Search results
 show ticket number, title, customer, state, and priority when available. If
-search is unavailable, the modal keeps the manual related-ticket ID fallback.
+search is unavailable or returns no matches for an explicit query, the modal
+keeps the manual related-ticket ID fallback. When the selected-ticket detail
+has a provider-neutral customer external ID, the modal may show a `From this
+customer` section populated by the same provider-neutral link-target lookup
+using that customer external ID. The modal may also show a `Recently viewed`
+section derived only from tickets opened in the current browser session; it
+does not perform provider reads. Recently viewed candidates exclude the active
+ticket and the currently selected or manually staged target.
 The default relation is Normal/Related; Parent and Child are selectable only
 when the provider advertises `ticket:update-link-relations`, otherwise those
-options remain visibly unavailable. The modal does not fetch from-this-customer
-or recently-viewed candidates. Subscription controls update the current user's
+options remain visibly unavailable. Subscription controls update the current user's
 following state. Notes and replies remain read-only or absent until their own
 provider-neutral write contracts are added. Changed controls are
 visually marked, `Discard changes`

@@ -87,4 +87,27 @@ describe("Zammad link target search", () => {
     ).resolves.toEqual([]);
     expect(mockedSafeProviderJson).not.toHaveBeenCalled();
   });
+
+  it("maps provider-neutral customer filters to Zammad search syntax", async () => {
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers(),
+      data: {
+        record_ids: [],
+        assets: {},
+      },
+    });
+
+    await expect(
+      zammadProviderPlugin.searchLinkTargets?.(providerContext(), {
+        customerExternalId: "5",
+        excludeTicketExternalId: "42",
+      }),
+    ).resolves.toEqual([]);
+
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
+      "https://helpdesk.example.com/api/v1/tickets/search?full=true&limit=8&query=customer_id%3A5",
+      expect.any(Object),
+    );
+  });
 });
