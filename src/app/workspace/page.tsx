@@ -25,6 +25,7 @@ import {
 } from "@/features/tickets/communication-actions";
 import { loadWorkspaceTicketDetailAction } from "@/features/tickets/detail-actions";
 import { loadWorkspaceTicketListPageAction } from "@/features/tickets/list-actions";
+import { searchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-actions";
 import {
   defaultWorkspaceSavedViewId,
   workspaceSavedViews,
@@ -142,6 +143,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           : undefined
       }
       rows={rows}
+      searchTicketLinkTargetsAction={searchWorkspaceTicketLinkTargetsAction}
       savedViews={workspaceSavedViews(
         savedViews,
         listResult.status === "available"

@@ -18,6 +18,7 @@ import {
   listZammadGroups,
   listZammadTags,
 } from "./ticket-lookups";
+import { searchZammadLinkTargets } from "./ticket-link-targets";
 import { updateZammadTicketMetadata } from "./mutations";
 import {
   addZammadTicketCustomerReply,
@@ -104,9 +105,11 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "ticket:update-group",
     "ticket:update-tags",
     "ticket:update-links",
+    "ticket:update-link-relations",
     "ticket:update-subscription",
     "ticket:add-internal-note",
     "ticket:add-customer-reply",
+    "lookup:link-targets",
     "lookup:assignable-users",
     "lookup:groups",
     "lookup:tags",
@@ -135,4 +138,5 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   listAssignableUsers: listZammadAssignableUsers,
   listGroups: listZammadGroups,
   listTags: listZammadTags,
+  searchLinkTargets: searchZammadLinkTargets,
 };

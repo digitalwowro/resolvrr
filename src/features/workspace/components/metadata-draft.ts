@@ -1,4 +1,8 @@
-import type { TicketPriority, TicketState } from "@/core/tickets";
+import type {
+  TicketLinkRelationKind,
+  TicketPriority,
+  TicketState,
+} from "@/core/tickets";
 import type { SelectedTicketUpdatePayload } from "@/features/tickets/mutation-model";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import {
@@ -11,6 +15,7 @@ import {
 export type TicketMetadataDraft = {
   groupExternalId?: string;
   linkAddExternalId?: string;
+  linkAddRelation: TicketLinkRelationKind;
   linkRemoveExternalIds: string[];
   ownerExternalId?: string;
   pendingDateTime: PendingDateTimeParts;
@@ -74,6 +79,7 @@ export function metadataDraftFromDetail(
     metadata: {
       groupExternalId: detail.groupExternalId,
       linkAddExternalId: "",
+      linkAddRelation: "related",
       linkRemoveExternalIds: [],
       ownerExternalId: detail.ownerExternalId,
       pendingDateTime: pendingDateTimePartsFromIso(detail.pendingUntilIso),
@@ -96,6 +102,7 @@ export function metadataDraftFromBaseline(
     metadata: {
       groupExternalId: baseline.metadata.groupExternalId,
       linkAddExternalId: baseline.metadata.linkAddExternalId,
+      linkAddRelation: baseline.metadata.linkAddRelation,
       linkRemoveExternalIds: [...baseline.metadata.linkRemoveExternalIds],
       ownerExternalId: baseline.metadata.ownerExternalId,
       pendingDateTime: { ...baseline.metadata.pendingDateTime },
@@ -116,6 +123,7 @@ export function metadataDraftKey(draft: SelectedTicketDraft): string {
     draft.metadata.groupExternalId ?? "",
     draft.metadata.tags.join(","),
     draft.metadata.linkAddExternalId ?? "",
+    draft.metadata.linkAddRelation,
     draft.metadata.linkRemoveExternalIds.join(","),
     draft.metadata.subscriptionFollowing === undefined
       ? ""
@@ -225,6 +233,7 @@ export function metadataDraftSubmittedBaseline(
     metadata: {
       ...draft.metadata,
       linkAddExternalId: "",
+      linkAddRelation: "related",
       linkRemoveExternalIds: [],
       tagText: draft.metadata.tags.join(", "),
       tags: [...draft.metadata.tags],
@@ -280,6 +289,7 @@ export function metadataDraftUpdatePayload(
   if (dirtyFields.links) {
     if (draft.metadata.linkAddExternalId) {
       metadata.linkAddExternalId = draft.metadata.linkAddExternalId;
+      metadata.linkAddRelation = draft.metadata.linkAddRelation;
     }
     if (draft.metadata.linkRemoveExternalIds.length > 0) {
       metadata.linkRemoveExternalIds = draft.metadata.linkRemoveExternalIds;

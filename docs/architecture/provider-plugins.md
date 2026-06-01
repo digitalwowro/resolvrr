@@ -153,8 +153,9 @@ advertises `ticket:list`,
 `ticket:detail`, `ticket:links`, `ticket:subscription`,
 `ticket:update-state`, `ticket:update-priority`, `ticket:update-owner`,
 `ticket:update-group`, `ticket:update-tags`, `ticket:update-links`,
-`ticket:update-subscription`, `ticket:add-internal-note`,
-`ticket:add-customer-reply`, `lookup:assignable-users`, `lookup:groups`, and
+`ticket:update-link-relations`, `ticket:update-subscription`,
+`ticket:add-internal-note`, `ticket:add-customer-reply`,
+`lookup:link-targets`, `lookup:assignable-users`, `lookup:groups`, and
 `lookup:tags`.
 Subscription fields still use the stable empty canonical shapes documented in
 the ticket contract when their provider-neutral capabilities are not advertised.

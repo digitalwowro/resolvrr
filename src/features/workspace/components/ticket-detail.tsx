@@ -9,6 +9,7 @@ import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
+import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
 import type {
   TicketCommunicationCapabilities,
   TicketCustomerReplyActionState,
@@ -38,6 +39,7 @@ type TicketDetailProps = {
   onMetadataSavedDetailRefresh(ticketId: string): void;
   onReturnToListAfterUpdate(): void;
   roundedTop?: boolean;
+  searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
@@ -53,6 +55,7 @@ export function TicketDetail({
   onMetadataSavedDetailRefresh,
   onReturnToListAfterUpdate,
   roundedTop = true,
+  searchTicketLinkTargetsAction,
   updateTicketMetadataAction,
 }: TicketDetailProps) {
   const [ticketLinkCopied, setTicketLinkCopied] = useState(false);
@@ -174,6 +177,7 @@ export function TicketDetail({
         onMetadataSaved={onMetadataSaved}
         onMetadataSavedDetailRefresh={onMetadataSavedDetailRefresh}
         onReturnToListAfterUpdate={onReturnToListAfterUpdate}
+        searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
         updateTicketMetadataAction={updateTicketMetadataAction}
       />
     </section>

@@ -12,7 +12,12 @@ import {
   type TicketLookupList,
   type TicketLookupUnavailableReason,
 } from "@/core/ticket-lookups";
-import type { TicketExternalId, TicketMetadataMutationInput } from "@/core/tickets";
+import type {
+  TicketExternalId,
+  TicketLinkTarget,
+  TicketLinkTargetSearchInput,
+  TicketMetadataMutationInput,
+} from "@/core/tickets";
 import type { TicketProviderContext } from "./connection-context";
 import { readUnavailableForProviderError } from "./connection-context";
 import { ticketCommunicationCapabilities } from "./communication-model";
@@ -92,6 +97,11 @@ function canUpdateTicketMetadata(
   providerContext: TicketProviderContext,
   input: TicketMetadataMutationInput,
 ): boolean {
+  const relationSupported =
+    !input.linkAddRelation ||
+    input.linkAddRelation === "related" ||
+    hasCapability(providerContext, "ticket:update-link-relations");
+
   return (
     (!input.ownerExternalId ||
       hasCapability(providerContext, "ticket:update-owner")) &&
@@ -101,11 +111,32 @@ function canUpdateTicketMetadata(
       hasCapability(providerContext, "ticket:update-tags")) &&
     ((!input.linkAddExternalId && !input.linkRemoveExternalIds?.length) ||
       hasCapability(providerContext, "ticket:update-links")) &&
+    relationSupported &&
     (!Object.prototype.hasOwnProperty.call(input, "subscriptionFollowing") ||
       hasCapability(providerContext, "ticket:update-subscription")) &&
     (!input.state || hasCapability(providerContext, "ticket:update-state")) &&
     (!input.priority || hasCapability(providerContext, "ticket:update-priority"))
   );
+}
+
+export async function dispatchTicketLinkTargetSearch(
+  providerContext: TicketProviderContext,
+  input: TicketLinkTargetSearchInput,
+): Promise<TicketLinkTarget[]> {
+  if (!hasCapability(providerContext, "lookup:link-targets")) {
+    throw new ProviderError(
+      "unsupported-capability",
+      "This helpdesk provider cannot search ticket link targets.",
+    );
+  }
+  if (!providerContext.plugin.searchLinkTargets) {
+    throw new ProviderError(
+      "unsupported-capability",
+      "This helpdesk provider cannot search ticket link targets.",
+    );
+  }
+
+  return providerContext.plugin.searchLinkTargets(providerContext.context, input);
 }
 
 export async function dispatchTicketListRead(

@@ -3,6 +3,8 @@ import type { TicketLookupOption } from "./ticket-lookups";
 import type {
   TicketCustomerReplyInput,
   TicketInternalNoteInput,
+  TicketLinkTarget,
+  TicketLinkTargetSearchInput,
   TicketMetadataMutationInput,
   TicketDetail,
   TicketExternalId,
@@ -44,9 +46,11 @@ export type ProviderCapability =
   | "ticket:update-group"
   | "ticket:update-tags"
   | "ticket:update-links"
+  | "ticket:update-link-relations"
   | "ticket:update-subscription"
   | "ticket:add-internal-note"
   | "ticket:add-customer-reply"
+  | "lookup:link-targets"
   | "lookup:assignable-users"
   | "lookup:groups"
   | "lookup:tags"
@@ -151,4 +155,8 @@ export type HelpdeskProviderPlugin = {
   listAssignableUsers?(context: ProviderContext): Promise<ProviderLookupOption[]>;
   listGroups?(context: ProviderContext): Promise<ProviderLookupOption[]>;
   listTags?(context: ProviderContext): Promise<ProviderLookupOption[]>;
+  searchLinkTargets?(
+    context: ProviderContext,
+    input: TicketLinkTargetSearchInput,
+  ): Promise<TicketLinkTarget[]>;
 };

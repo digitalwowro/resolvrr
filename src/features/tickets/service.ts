@@ -1,4 +1,7 @@
-import type { TicketExternalId, TicketMetadataMutationInput } from "@/core/tickets";
+import type {
+  TicketExternalId,
+  TicketMetadataMutationInput,
+} from "@/core/tickets";
 import type { ProviderCapability, TicketListQueryInput } from "@/core/providers";
 import { normalizeTicketListQuery } from "@/core/ticket-list-query";
 import type { ProviderRegistry } from "@/providers";

@@ -14,6 +14,7 @@ import type {
   LoadWorkspaceTicketListPageAction,
   WorkspaceTicketListGroup,
 } from "@/features/tickets/list-page-action-result";
+import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
 import type {
   SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
@@ -70,6 +71,7 @@ type TicketWorkspaceDisplayProps = {
   providerSortEnabled: boolean;
   refreshTicketDetailAfterMetadataSave: boolean;
   rows: WorkspaceTicketRow[];
+  searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   savedViews: WorkspaceSavedView[];
   selectedSavedViewId: string;
   selectedTicketId?: string;
@@ -101,6 +103,7 @@ export function TicketWorkspaceDisplay({
   providerSortEnabled,
   refreshTicketDetailAfterMetadataSave,
   rows,
+  searchTicketLinkTargetsAction,
   savedViews,
   selectedSavedViewId,
   selectedTicketId,
@@ -264,6 +267,7 @@ export function TicketWorkspaceDisplay({
         onMetadataSavedDetailRefresh={refreshSavedTicketDetail}
         onReturnToListAfterUpdate={returnActiveTicketToList}
         roundedTop={tabOrientation === "vertical"}
+        searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
         updateTicketMetadataAction={updateTicketMetadataAction}
       />
     ) : activeTicketId ? (

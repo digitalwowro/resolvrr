@@ -141,13 +141,16 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/providers/zammad/ticket-list.ts`: Zammad ticket list endpoint reads,
   search-backed list totals, list asset lookup, read-phase timing, and
   canonical list response assembly.
+- `src/providers/zammad/ticket-link-targets.ts`: Zammad provider-local ticket
+  search for Add link targets, mapped to provider-neutral link target summaries.
 - `src/providers/zammad/ticket-lookups.ts`: Zammad assignable-user, group, and
   global tag suggestion lookup reads mapped to provider-neutral lookup options.
 - `src/providers/zammad/ticket-secondary.ts`: optional Zammad selected-ticket
   secondary reads for tags, related ticket links, subscription state, and
   missing group-name lookup.
 - `src/providers/zammad/ticket-secondary-mutations.ts`: Zammad selected-ticket
-  secondary metadata writes for tags, related links, and subscription state.
+  secondary metadata writes for tags, related links, relation-kind link adds,
+  and subscription state.
 - `src/providers/zammad/ticket-subscription.ts`: Zammad subscription/following
   reads through `/users/me` and `/mentions`, with provider-safe unavailable
   diagnostics for optional detail fallback behavior.
@@ -220,14 +223,21 @@ architecture folders or important files are added, moved, renamed, or removed.
   metadata-only communication outcome audit logs.
 - `src/features/tickets/metadata-action-input.ts`: server-side parser and
   validation for one selected-ticket update payload per explicit `Update`,
-  including tag, link, subscription, pending-date, and raw provider field
-  validation.
+  including tag, link relation, subscription, pending-date, and raw provider
+  field validation.
 - `src/features/tickets/connection-context.ts`: active connection lookup,
   credential decryption, provider lookup, base URL revalidation, and setup
   timing for ticket reads and metadata mutations.
 - `src/features/tickets/provider-dispatch.ts`: capability-gated ticket read,
   lookup, and metadata mutation dispatch plus provider error to
   unavailable-state mapping.
+- `src/features/tickets/link-target-actions.ts`: authenticated server action
+  for Add link modal target search, returning provider-neutral unavailable state
+  or link target summaries.
+- `src/features/tickets/link-target-search-action-result.ts`: client-safe Add
+  link target search request/result and action function types.
+- `src/features/tickets/link-target-service.ts`: provider-neutral Add link
+  target search orchestration and provider-error mapping.
 - `src/features/tickets/mutation-model.ts`: provider-neutral metadata mutation
   capabilities, selected-ticket update payload shape, allowed update
   payload/slice keys, pending-date validation, result/error model, and action
@@ -346,8 +356,16 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/components/ticket-secondary-tags-field.tsx`: tag chip
   combobox sidebar section with provider-neutral suggestions, inline add-tag
   entry, and removable chips when tag writes are supported.
+- `src/features/workspace/components/ticket-add-link-dialog.tsx`: workspace-
+  local Add link modal for searching/staging one ticket link target and relation
+  kind without provider writes.
+- `src/features/workspace/components/ticket-add-link-search-results.tsx`:
+  compact Add link modal result list and unavailable/empty/searching states.
+- `src/features/workspace/components/ticket-add-link-relation-options.tsx`: Add
+  link modal relation radio choices with Parent/Child disabled when unsupported.
 - `src/features/workspace/components/ticket-secondary-links-field.tsx`: linked
-  ticket sidebar rows and Add link entry when related-link writes are supported.
+  ticket sidebar rows, staged pending-link display, and Add link modal trigger
+  when related-link writes are supported.
 - `src/features/workspace/components/ticket-metadata-action-bar.tsx`: sticky
   full-width selected-ticket metadata action row with Discard changes and
   Update controls plus post-update navigation selection.

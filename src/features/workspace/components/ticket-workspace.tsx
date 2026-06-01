@@ -3,6 +3,7 @@ import type {
   WorkspaceTicketDetailLoadResult,
 } from "@/features/tickets/detail-action-result";
 import type { LoadWorkspaceTicketListPageAction } from "@/features/tickets/list-page-action-result";
+import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
 import {
   allTicketsSavedViewId,
   type WorkspaceSavedView,
@@ -51,6 +52,7 @@ type TicketWorkspaceProps = {
   listResult: TicketListReadResult;
   loadTicketDetailAction?: LoadWorkspaceTicketDetailAction;
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
+  searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
   logoutAction(formData: FormData): void | Promise<void>;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   rows: WorkspaceTicketRow[];
@@ -81,6 +83,13 @@ const unavailableCustomerReplyAction = async (): Promise<TicketCustomerReplyActi
   message: "This workspace cannot send customer replies.",
 });
 
+const unavailableLinkTargetSearchAction: SearchWorkspaceTicketLinkTargetsAction =
+  async () => ({
+    status: "unavailable",
+    reason: "unsupported-capability",
+    retryable: false,
+  });
+
 const profileActions: WorkspaceProfileAction[] = [
   {
     id: "manage-workspaces",
@@ -103,6 +112,7 @@ export function TicketWorkspace({
   logoutAction,
   metadataMutationCapabilities,
   rows,
+  searchTicketLinkTargetsAction,
   savedViews,
   selectedSavedViewId,
   selectedTicketId,
@@ -170,6 +180,9 @@ export function TicketWorkspace({
           selectedSavedViewId={selectedSavedViewId ?? allTicketsSavedViewId}
           selectedTicketId={selectedTicketId}
           setActiveConnectionAction={setActiveConnectionAction}
+          searchTicketLinkTargetsAction={
+            searchTicketLinkTargetsAction ?? unavailableLinkTargetSearchAction
+          }
           tabs={tabs}
           totalListCount={listResult.totalCount}
           updateTicketMetadataAction={updateTicketMetadataAction}

@@ -97,6 +97,9 @@ service, and UI code use provider-neutral keys:
   data for state transitions that require a pending time.
 - `TicketMetadataMutationInput.tags?: string[]`
 - `TicketMetadataMutationInput.linkAddExternalId?: string`
+- `TicketMetadataMutationInput.linkAddRelation?: "related" | "parent" | "child"`,
+  defaulted to `related` when a link target is staged without an explicit
+  relation.
 - `TicketMetadataMutationInput.linkRemoveExternalIds?: string[]`
 - `TicketMetadataMutationInput.subscriptionFollowing?: boolean`
 
@@ -120,7 +123,16 @@ The provider-neutral mutation capabilities are:
 - `ticket:update-group`
 - `ticket:update-tags`
 - `ticket:update-links`
+- `ticket:update-link-relations`
 - `ticket:update-subscription`
+
+Link target lookup is a separate read capability:
+
+- `lookup:link-targets`: provider can search candidate tickets for the Add link
+  modal. The lookup accepts a non-empty query, an optional selected-ticket
+  external ID to exclude, and an optional limit. Results return provider-neutral
+  ticket number, title, external ID, and optional customer, state, and priority
+  context. Empty queries must return no provider results.
 
 ## Ticket Communication Writes
 
@@ -226,6 +238,10 @@ Read-path capabilities:
 - `ticket:subscription`: detail includes follow/subscription state.
 - `lookup:assignable-users`: provider can list assignable users.
 - `lookup:groups`: provider can list assignment groups.
+- `lookup:link-targets`: provider can search candidate tickets for explicit
+  Add link staging. Unsupported lookup must leave the manual related-ticket ID
+  fallback usable for Normal/Related links when `ticket:update-links` is
+  available.
 - `lookup:tags`: provider can list global tag suggestions. This is separate
   from ticket tag reads/writes; unavailable suggestions must not disable
   freeform `ticket:update-tags` editing.
@@ -240,6 +256,9 @@ Mutation capabilities:
 - `ticket:update-tags`: provider can replace the ticket tag set.
 - `ticket:update-links`: provider can add or remove related ticket links by
   provider-local ticket ID.
+- `ticket:update-link-relations`: provider can persist non-default parent/child
+  link relation kinds. Without this capability, Parent and Child choices must be
+  disabled in the UI and rejected before provider dispatch if submitted.
 - `ticket:update-subscription`: provider can update the current user's
   follow/subscription state.
 - `ticket:add-internal-note`: provider can add an internal note article to the

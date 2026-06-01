@@ -6,6 +6,7 @@ import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
+import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
 import {
   noTicketCommunicationCapabilities,
   type TicketCommunicationCapabilities,
@@ -32,6 +33,7 @@ export function TicketMetadataEditor({
   onMetadataSaved,
   onMetadataSavedDetailRefresh,
   onReturnToListAfterUpdate,
+  searchTicketLinkTargetsAction = unavailableLinkTargetSearchAction,
   updateTicketMetadataAction,
 }: {
   addTicketCustomerReplyAction?: (
@@ -47,6 +49,7 @@ export function TicketMetadataEditor({
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
   onMetadataSavedDetailRefresh?(ticketId: string): void;
   onReturnToListAfterUpdate(): void;
+  searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
@@ -66,6 +69,7 @@ export function TicketMetadataEditor({
       onMetadataSaved={onMetadataSaved}
       onMetadataSavedDetailRefresh={onMetadataSavedDetailRefresh}
       onReturnToListAfterUpdate={onReturnToListAfterUpdate}
+      searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
       updateTicketMetadataAction={updateTicketMetadataAction}
     />
   );
@@ -77,6 +81,13 @@ async function unavailableCustomerReplyAction(): Promise<TicketCustomerReplyActi
     message: "This workspace cannot send customer replies.",
   };
 }
+
+const unavailableLinkTargetSearchAction: SearchWorkspaceTicketLinkTargetsAction =
+  async () => ({
+    status: "unavailable",
+    reason: "unsupported-capability",
+    retryable: false,
+  });
 
 async function unavailableInternalNoteAction(): Promise<TicketInternalNoteActionState> {
   return {

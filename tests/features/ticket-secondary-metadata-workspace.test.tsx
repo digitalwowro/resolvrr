@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import {
   defaultWorkspaceTicketColumns,
+  type SearchWorkspaceTicketLinkTargetsAction,
   type SelectedTicketUpdatePayload,
   type TicketMetadataMutationActionState,
 } from "@/features/tickets";
@@ -30,7 +31,11 @@ type MutationAction = (
 
 function renderWorkspace(
   action: MutationAction,
-  options: { tagSuggestions?: "available" | "unsupported" } = {},
+  options: {
+    linkRelations?: boolean;
+    searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
+    tagSuggestions?: "available" | "unsupported";
+  } = {},
 ) {
   const detailProps = selectedDetailProps();
   const detail = {
@@ -63,6 +68,7 @@ function renderWorkspace(
         ...availableList,
         metadataMutationCapabilities: {
           links: true,
+          linkRelations: options.linkRelations ?? true,
           priority: false,
           state: false,
           subscription: true,
@@ -71,6 +77,10 @@ function renderWorkspace(
       }}
       logoutAction={noopAction}
       rows={[row]}
+      searchTicketLinkTargetsAction={
+        options.searchTicketLinkTargetsAction ??
+        (async () => ({ status: "available" as const, targets: [] }))
+      }
       selectedTicketId="ticket-1"
       setActiveConnectionAction={noopAction}
       tabs={[row]}
@@ -114,7 +124,11 @@ describe("TicketWorkspace secondary metadata updates", () => {
     await user.click(screen.getByRole("option", { name: "hello" }));
     await user.type(screen.getByLabelText("Add tag"), "renewal{Enter}");
     await user.click(screen.getByRole("button", { name: "Add link" }));
-    await user.type(screen.getByLabelText("Related ticket ID"), "77");
+    const linkDialog = screen.getByRole("dialog", { name: "Add ticket link" });
+    const linkInput = within(linkDialog).getByLabelText("Search tickets");
+    await waitFor(() => expect(linkInput).toHaveFocus());
+    await user.type(within(linkDialog).getByLabelText("Manual related ticket ID"), "77");
+    await user.click(within(linkDialog).getByRole("button", { name: "Add link" }));
     await user.click(
       screen.getByRole("button", { name: "Remove link #88088 Linked ticket" }),
     );
@@ -127,12 +141,61 @@ describe("TicketWorkspace secondary metadata updates", () => {
     expect(action.mock.calls[0]?.[0]).toEqual({
       metadata: {
         linkAddExternalId: "77",
+        linkAddRelation: "related",
         linkRemoveExternalIds: ["88"],
         subscriptionFollowing: true,
         tags: ["vip", "hello", "renewal"],
       },
       ticketExternalId: "ticket-1",
     });
+  });
+
+  it("closes the add link modal without staging a link when canceled or closed", async () => {
+    const user = userEvent.setup();
+    const action = vi.fn<MutationAction>(async () => ({
+      status: "saved" as const,
+      field: "links" as const,
+      message: "Saved.",
+    }));
+    renderWorkspace(action);
+
+    await user.click(screen.getByRole("button", { name: "Add link" }));
+    const cancelDialog = screen.getByRole("dialog", { name: "Add ticket link" });
+    const cancelInput = within(cancelDialog).getByLabelText("Search tickets");
+    await waitFor(() => expect(cancelInput).toHaveFocus());
+    await user.type(within(cancelDialog).getByLabelText("Manual related ticket ID"), "77");
+    await user.click(within(cancelDialog).getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog", { name: "Add ticket link" }))
+      .not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Update" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Add link" }));
+    const closeDialog = screen.getByRole("dialog", { name: "Add ticket link" });
+    const closeInput = within(closeDialog).getByLabelText("Search tickets");
+    await waitFor(() => expect(closeInput).toHaveFocus());
+    await user.type(within(closeDialog).getByLabelText("Manual related ticket ID"), "88");
+    await user.click(
+      within(closeDialog).getByRole("button", {
+        name: "Close add link dialog",
+      }),
+    );
+
+    expect(screen.queryByRole("dialog", { name: "Add ticket link" }))
+      .not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Update" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Add link" }));
+    const escapeDialog = screen.getByRole("dialog", { name: "Add ticket link" });
+    const escapeInput = within(escapeDialog).getByLabelText("Search tickets");
+    await waitFor(() => expect(escapeInput).toHaveFocus());
+    await user.type(within(escapeDialog).getByLabelText("Manual related ticket ID"), "99");
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog", { name: "Add ticket link" }))
+      .not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Update" })).toBeDisabled();
+    expect(action).not.toHaveBeenCalled();
   });
 
   it("keeps freeform tag editing available when suggestions are unsupported", async () => {

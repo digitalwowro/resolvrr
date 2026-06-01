@@ -1,5 +1,8 @@
 import { ProviderError, type ProviderContext } from "@/core/providers";
-import type { TicketMetadataMutationInput } from "@/core/tickets";
+import type {
+  TicketLinkRelationKind,
+  TicketMetadataMutationInput,
+} from "@/core/tickets";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
 import { zammadSendJson } from "./client";
 import { readZammadTicketTags } from "./ticket-secondary";
@@ -43,6 +46,16 @@ function zammadTicketNumber(value: string): string {
   }
 
   return normalized;
+}
+
+function zammadLinkType(relation: TicketLinkRelationKind | undefined): string {
+  if (relation === "parent") {
+    return "child";
+  }
+  if (relation === "child") {
+    return "parent";
+  }
+  return "normal";
 }
 
 async function sendSecondaryMutation(
@@ -99,7 +112,7 @@ export async function updateZammadTicketLinks(
   ticketNumber: string,
   input: Pick<
     TicketMetadataMutationInput,
-    "linkAddExternalId" | "linkRemoveExternalIds"
+    "linkAddExternalId" | "linkAddRelation" | "linkRemoveExternalIds"
   >,
 ): Promise<void> {
   const sourceNumber = zammadTicketNumber(ticketNumber);
@@ -116,7 +129,7 @@ export async function updateZammadTicketLinks(
 
   if (input.linkAddExternalId) {
     await sendSecondaryMutation(context, "/api/v1/links/add", "POST", {
-      link_type: "normal",
+      link_type: zammadLinkType(input.linkAddRelation),
       link_object_target: "Ticket",
       link_object_target_value: zammadTicketId(input.linkAddExternalId, "linked"),
       link_object_source: "Ticket",

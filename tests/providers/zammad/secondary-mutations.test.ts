@@ -73,6 +73,7 @@ describe("Zammad ticket secondary metadata mutations", () => {
 
     await zammadProviderPlugin.updateTicketMetadata?.(providerContext(), "42", {
       linkAddExternalId: "77",
+      linkAddRelation: "related",
       linkRemoveExternalIds: ["88"],
       subscriptionFollowing: true,
       tags: ["vip", "renewal"],
@@ -157,6 +158,68 @@ describe("Zammad ticket secondary metadata mutations", () => {
         body: JSON.stringify({
           mentionable_type: "Ticket",
           mentionable_id: 42,
+        }),
+        method: "POST",
+      }),
+    );
+  });
+
+  it("maps provider-neutral parent and child relation writes to Zammad link types", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: rawTicket,
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {},
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: rawTicket,
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {},
+      });
+
+    await zammadProviderPlugin.updateTicketMetadata?.(providerContext(), "42", {
+      linkAddExternalId: "77",
+      linkAddRelation: "parent",
+    });
+    await zammadProviderPlugin.updateTicketMetadata?.(providerContext(), "42", {
+      linkAddExternalId: "78",
+      linkAddRelation: "child",
+    });
+
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      2,
+      "https://helpdesk.example.com/api/v1/links/add",
+      expect.objectContaining({
+        body: JSON.stringify({
+          link_type: "child",
+          link_object_target: "Ticket",
+          link_object_target_value: 77,
+          link_object_source: "Ticket",
+          link_object_source_number: "42042",
+        }),
+        method: "POST",
+      }),
+    );
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      4,
+      "https://helpdesk.example.com/api/v1/links/add",
+      expect.objectContaining({
+        body: JSON.stringify({
+          link_type: "parent",
+          link_object_target: "Ticket",
+          link_object_target_value: 78,
+          link_object_source: "Ticket",
+          link_object_source_number: "42042",
         }),
         method: "POST",
       }),

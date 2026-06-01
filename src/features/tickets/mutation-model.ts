@@ -1,5 +1,6 @@
 import type { ProviderCapability } from "@/core/providers";
 import type {
+  TicketLinkRelationKind,
   TicketMetadataMutationInput,
   TicketPriority,
   TicketState,
@@ -23,6 +24,7 @@ export const selectedTicketUpdatePayloadKeys = [
 export const selectedTicketUpdateMetadataFields = [
   "groupExternalId",
   "linkAddExternalId",
+  "linkAddRelation",
   "linkRemoveExternalIds",
   "ownerExternalId",
   "pendingUntil",
@@ -41,6 +43,7 @@ export type SelectedTicketUpdateMetadataField =
 export type SelectedTicketUpdateMetadataPayload = {
   groupExternalId?: string;
   linkAddExternalId?: string;
+  linkAddRelation?: TicketLinkRelationKind;
   linkRemoveExternalIds?: string[];
   ownerExternalId?: string;
   pendingUntil?: string;
@@ -58,6 +61,7 @@ export type SelectedTicketUpdatePayload = {
 export type TicketMetadataMutationCapabilities = {
   group?: boolean;
   links?: boolean;
+  linkRelations?: boolean;
   owner?: boolean;
   priority: boolean;
   state: boolean;
@@ -92,6 +96,7 @@ export type TicketMetadataMutationActionState = {
 export const noTicketMetadataMutationCapabilities: TicketMetadataMutationCapabilities = {
   group: false,
   links: false,
+  linkRelations: false,
   owner: false,
   state: false,
   subscription: false,
@@ -105,6 +110,7 @@ export function ticketMetadataMutationCapabilities(
   return {
     group: capabilities.includes("ticket:update-group"),
     links: capabilities.includes("ticket:update-links"),
+    linkRelations: capabilities.includes("ticket:update-link-relations"),
     owner: capabilities.includes("ticket:update-owner"),
     state: capabilities.includes("ticket:update-state"),
     subscription: capabilities.includes("ticket:update-subscription"),
