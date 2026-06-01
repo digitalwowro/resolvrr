@@ -110,6 +110,7 @@ export function TicketSecondaryLinksField({
                   metadata: {
                     ...draft.metadata,
                     linkAddExternalId: "",
+                    linkAddRelation: "related",
                   },
                 })
               }

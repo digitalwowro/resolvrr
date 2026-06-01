@@ -177,4 +177,27 @@ describe("TicketWorkspace Add link modal", () => {
       },
     });
   });
+
+  it("resets the relation after removing a staged pending link", async () => {
+    const user = userEvent.setup();
+    renderWorkspace(vi.fn<MutationAction>());
+
+    await user.click(screen.getByRole("button", { name: "Add link" }));
+    const dialog = screen.getByRole("dialog", { name: "Add ticket link" });
+    await user.click(within(dialog).getByRole("radio", { name: /Child/u }));
+    await user.type(within(dialog).getByLabelText("Manual related ticket ID"), "77");
+    await user.click(within(dialog).getByRole("button", { name: "Add link" }));
+
+    expect(screen.getByText(/#77 · Child/u)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Remove staged link 77" }));
+
+    await user.click(screen.getByRole("button", { name: "Add link" }));
+    const reopenedDialog = screen.getByRole("dialog", { name: "Add ticket link" });
+
+    expect(
+      within(reopenedDialog).getByRole("radio", { name: /Normal \/ Related/u }),
+    ).toBeChecked();
+    expect(within(reopenedDialog).getByRole("radio", { name: /Child/u }))
+      .not.toBeChecked();
+  });
 });
