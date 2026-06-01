@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   availableTicketLookupList,
+  unsupportedTicketLookupList,
   unavailableTicketLookupList,
 } from "@/core/ticket-lookups";
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
@@ -38,6 +39,7 @@ describe("TicketWorkspace lookup data", () => {
         { externalId: "user-2", label: "Zara Lane" },
       ]),
       groups: unavailableTicketLookupList("provider-temporary-failure", true),
+      tags: unsupportedTicketLookupList(),
     };
 
     render(

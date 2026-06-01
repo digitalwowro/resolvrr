@@ -16,6 +16,7 @@ import { getZammadTicketDetail, listZammadTickets } from "./tickets";
 import {
   listZammadAssignableUsers,
   listZammadGroups,
+  listZammadTags,
 } from "./ticket-lookups";
 import { updateZammadTicketMetadata } from "./mutations";
 import {
@@ -108,6 +109,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "ticket:add-customer-reply",
     "lookup:assignable-users",
     "lookup:groups",
+    "lookup:tags",
   ],
   credentialSchemes: [
     {
@@ -132,4 +134,5 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   addTicketCustomerReply: addZammadTicketCustomerReply,
   listAssignableUsers: listZammadAssignableUsers,
   listGroups: listZammadGroups,
+  listTags: listZammadTags,
 };

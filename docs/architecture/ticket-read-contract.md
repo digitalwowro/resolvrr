@@ -226,6 +226,9 @@ Read-path capabilities:
 - `ticket:subscription`: detail includes follow/subscription state.
 - `lookup:assignable-users`: provider can list assignable users.
 - `lookup:groups`: provider can list assignment groups.
+- `lookup:tags`: provider can list global tag suggestions. This is separate
+  from ticket tag reads/writes; unavailable suggestions must not disable
+  freeform `ticket:update-tags` editing.
 - `search:full-text`: provider can compile saved-view full-text search.
 
 Mutation capabilities:
@@ -357,6 +360,7 @@ The read path logs sanitized timing metadata for these phases:
 - provider secondary group lookup request;
 - provider lookup request;
 - provider user lookup request;
+- provider tag lookup request;
 - provider mapping/parsing;
 - total list load;
 - total selected-ticket detail load;
@@ -380,6 +384,10 @@ marked unavailable. Lookup data uses request-scoped cache policy only; the
 workspace may reuse it through the existing active-session detail cache, but
 this contract does not introduce localStorage/sessionStorage, database caches,
 Redis, stale-while-revalidate, background sync, or cache abstractions.
+Zammad global tag suggestions are read through the admin-only global tag list
+endpoint, while Zammad ticket tag reads and writes remain ticket-scope endpoints
+requiring `ticket.agent` or `admin.tag`. A missing global tag suggestion
+permission must not disable staged freeform tag editing.
 
 Secondary data such as tags, links, subscription, and lookup lists must be added
 as explicit measured phases when they become part of the coordinated read path.

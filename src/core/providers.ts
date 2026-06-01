@@ -49,6 +49,7 @@ export type ProviderCapability =
   | "ticket:add-customer-reply"
   | "lookup:assignable-users"
   | "lookup:groups"
+  | "lookup:tags"
   | "search:full-text";
 
 export type ProviderErrorKind =
@@ -149,4 +150,5 @@ export type HelpdeskProviderPlugin = {
   ): Promise<void>;
   listAssignableUsers?(context: ProviderContext): Promise<ProviderLookupOption[]>;
   listGroups?(context: ProviderContext): Promise<ProviderLookupOption[]>;
+  listTags?(context: ProviderContext): Promise<ProviderLookupOption[]>;
 };

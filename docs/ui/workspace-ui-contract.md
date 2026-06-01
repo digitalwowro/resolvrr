@@ -74,10 +74,12 @@ aligned beside the ticket detail header and thread. Editable metadata controls
 and provider-required pending date/time controls live in the local
 selected-ticket draft: changing a value does not call the provider until the
 agent clicks `Update`. Each `Update` click submits one provider-neutral
-selected-ticket payload. Tags render as removable chips with an inline add-tag
-entry, link controls render linked-ticket rows with remove controls and an
-`Add link` entry for related ticket IDs, and subscription controls update
-the current user's following state. Notes and replies remain read-only or absent
+selected-ticket payload. Tags render as a chip combobox with removable chips,
+a visible inline add-tag entry, and provider-neutral suggestions when the active
+provider can supply them; unsupported or unavailable suggestions do not disable
+freeform tag editing. Link controls render linked-ticket rows with remove
+controls and an `Add link` entry for related ticket IDs, and subscription
+controls update the current user's following state. Notes and replies remain read-only or absent
 until their own provider-neutral write contracts are added. Changed controls are
 visually marked, `Discard changes`
 resets the selected-ticket draft to the loaded ticket values, and successful

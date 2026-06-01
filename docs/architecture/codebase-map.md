@@ -141,8 +141,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/providers/zammad/ticket-list.ts`: Zammad ticket list endpoint reads,
   search-backed list totals, list asset lookup, read-phase timing, and
   canonical list response assembly.
-- `src/providers/zammad/ticket-lookups.ts`: Zammad assignable-user and group
-  lookup reads mapped to provider-neutral lookup options.
+- `src/providers/zammad/ticket-lookups.ts`: Zammad assignable-user, group, and
+  global tag suggestion lookup reads mapped to provider-neutral lookup options.
 - `src/providers/zammad/ticket-secondary.ts`: optional Zammad selected-ticket
   secondary reads for tags, related ticket links, subscription state, and
   missing group-name lookup.
@@ -225,8 +225,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/tickets/connection-context.ts`: active connection lookup,
   credential decryption, provider lookup, base URL revalidation, and setup
   timing for ticket reads and metadata mutations.
-- `src/features/tickets/provider-dispatch.ts`: capability-gated ticket read and
-  metadata mutation dispatch plus provider error to unavailable-state mapping.
+- `src/features/tickets/provider-dispatch.ts`: capability-gated ticket read,
+  lookup, and metadata mutation dispatch plus provider error to
+  unavailable-state mapping.
 - `src/features/tickets/mutation-model.ts`: provider-neutral metadata mutation
   capabilities, selected-ticket update payload shape, allowed update
   payload/slice keys, pending-date validation, result/error model, and action
@@ -343,8 +344,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   compact subscription toggle sidebar section that renders editable state only
   when the provider advertises subscription writes.
 - `src/features/workspace/components/ticket-secondary-tags-field.tsx`: tag chip
-  sidebar section with inline add-tag entry and removable chips when tag writes
-  are supported.
+  combobox sidebar section with provider-neutral suggestions, inline add-tag
+  entry, and removable chips when tag writes are supported.
 - `src/features/workspace/components/ticket-secondary-links-field.tsx`: linked
   ticket sidebar rows and Add link entry when related-link writes are supported.
 - `src/features/workspace/components/ticket-metadata-action-bar.tsx`: sticky

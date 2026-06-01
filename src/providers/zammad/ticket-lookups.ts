@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   ProviderError,
   type ProviderContext,
@@ -19,6 +20,12 @@ import {
 import { zammadGetJson } from "./client";
 
 const lookupPageSize = 50;
+const zammadTagListResponseSchema = z.array(
+  z.object({
+    id: z.union([z.number(), z.string()]).optional(),
+    name: z.string().optional(),
+  }).passthrough(),
+);
 
 function providerDataMismatch(): ProviderError {
   return new ProviderError(
@@ -54,6 +61,18 @@ function groupLookupOption(group: ZammadGroup): ProviderLookupOption | undefined
   const label = cleanString(group.name);
 
   return externalId && label ? { externalId, label } : undefined;
+}
+
+function tagLookupOption(tag: {
+  id?: number | string;
+  name?: string;
+}): ProviderLookupOption | undefined {
+  const label = cleanString(tag.name);
+  if (!label) {
+    return undefined;
+  }
+
+  return { externalId: relationId(tag.id) ?? label, label };
 }
 
 function uniqueOptions(options: ProviderLookupOption[]): ProviderLookupOption[] {
@@ -105,6 +124,27 @@ export async function listZammadGroups(
         parsed.data
           .filter((group) => group.active !== false)
           .map(groupLookupOption)
+          .filter((option): option is ProviderLookupOption => Boolean(option)),
+      );
+    },
+  );
+}
+
+export async function listZammadTags(
+  context: ProviderContext,
+): Promise<ProviderLookupOption[]> {
+  return measureTicketReadPhase(
+    "provider-tag-lookup-request",
+    { ...timingMetadata(context), operation: "detail" },
+    async () => {
+      const raw = await zammadGetJson(context, "/api/v1/tag_list");
+      const parsed = zammadTagListResponseSchema.safeParse(raw);
+      if (!parsed.success) {
+        throw providerDataMismatch();
+      }
+      return uniqueOptions(
+        parsed.data
+          .map(tagLookupOption)
           .filter((option): option is ProviderLookupOption => Boolean(option)),
       );
     },

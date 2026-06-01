@@ -35,6 +35,7 @@ export type TicketLookupList =
 export type TicketLookupData = {
   assignableUsers: TicketLookupList;
   groups: TicketLookupList;
+  tags: TicketLookupList;
 };
 
 export const ticketLookupCachePolicy: TicketLookupCachePolicy = "request";
@@ -66,5 +67,6 @@ export function unsupportedTicketLookupData(): TicketLookupData {
   return {
     assignableUsers: unsupportedTicketLookupList(),
     groups: unsupportedTicketLookupList(),
+    tags: unsupportedTicketLookupList(),
   };
 }

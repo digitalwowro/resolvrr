@@ -181,11 +181,12 @@ export async function dispatchTicketLookupDataRead(
     "lookup:assignable-users",
   );
   const canListGroups = hasCapability(providerContext, "lookup:groups");
-  if (!canListAssignableUsers && !canListGroups) {
+  const canListTags = hasCapability(providerContext, "lookup:tags");
+  if (!canListAssignableUsers && !canListGroups && !canListTags) {
     return unsupportedTicketLookupData();
   }
 
-  const [assignableUsers, groups] = await Promise.all([
+  const [assignableUsers, groups, tags] = await Promise.all([
     dispatchLookupListRead({
       read: canListAssignableUsers && providerContext.plugin.listAssignableUsers
         ? () => providerContext.plugin.listAssignableUsers!(
@@ -198,9 +199,14 @@ export async function dispatchTicketLookupDataRead(
         ? () => providerContext.plugin.listGroups!(providerContext.context)
         : undefined,
     }),
+    dispatchLookupListRead({
+      read: canListTags && providerContext.plugin.listTags
+        ? () => providerContext.plugin.listTags!(providerContext.context)
+        : undefined,
+    }),
   ]);
 
-  return { assignableUsers, groups };
+  return { assignableUsers, groups, tags };
 }
 
 export async function dispatchTicketMetadataMutation(

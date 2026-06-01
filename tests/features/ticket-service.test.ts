@@ -153,12 +153,16 @@ describe("ticket read service", () => {
             "ticket:detail",
             "lookup:assignable-users",
             "lookup:groups",
+            "lookup:tags",
           ],
           listAssignableUsers: async () => [
             { externalId: "user-1", label: "Agent Smith" },
           ],
           listGroups: async () => {
             throw new ProviderError("temporary-provider-failure", "timeout", true);
+          },
+          listTags: async () => {
+            throw new ProviderError("permission-denied", "global tag denied");
           },
         }),
       ]),
@@ -179,6 +183,11 @@ describe("ticket read service", () => {
             status: "unavailable",
             reason: "provider-temporary-failure",
             retryable: true,
+          },
+          tags: {
+            status: "unavailable",
+            reason: "provider-permission-denied",
+            retryable: false,
           },
         },
       },

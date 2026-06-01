@@ -1,11 +1,13 @@
 import { X } from "lucide-react";
 import {
+  useMemo,
   useRef,
   useState,
   type KeyboardEvent,
   type MouseEvent,
 } from "react";
 import { cn } from "@/components/ui/classnames";
+import type { TicketLookupList } from "@/core/ticket-lookups";
 import type {
   SelectedTicketDraft,
   TicketMetadataDraftDirtyFields,
@@ -36,43 +38,94 @@ function tagsDraft(nextTags: string[], draft: SelectedTicketDraft) {
   };
 }
 
+function normalizedTag(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function tagSuggestionLabels(
+  tagLookup: TicketLookupList,
+  selectedTags: string[],
+  query: string,
+) {
+  if (tagLookup.status !== "available") {
+    return [];
+  }
+
+  const selected = new Set(selectedTags.map(normalizedTag));
+  const normalizedQuery = normalizedTag(query);
+  return tagLookup.options
+    .map((option) => option.label.trim())
+    .filter((label) => {
+      const normalizedLabel = normalizedTag(label);
+      return (
+        normalizedLabel &&
+        !selected.has(normalizedLabel) &&
+        (!normalizedQuery || normalizedLabel.includes(normalizedQuery))
+      );
+    })
+    .sort((left, right) => left.localeCompare(right));
+}
+
 export function TicketSecondaryTagsField({
   canEditTags,
   dirtyFields,
   draft,
+  tagLookup,
   onDraftChange,
   saving,
 }: {
   canEditTags: boolean;
   dirtyFields: TicketMetadataDraftDirtyFields;
   draft: SelectedTicketDraft;
+  tagLookup: TicketLookupList;
   onDraftChange(nextDraft: SelectedTicketDraft): void;
   saving: boolean;
 }) {
   const tagInputRef = useRef<HTMLInputElement>(null);
   const [pendingTagText, setPendingTagText] = useState("");
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const suggestions = useMemo(
+    () => tagSuggestionLabels(tagLookup, draft.metadata.tags, pendingTagText),
+    [draft.metadata.tags, pendingTagText, tagLookup],
+  );
+  const showSuggestions =
+    canEditTags && suggestionsOpen && suggestions.length > 0;
 
   function commitPendingTags(value: string) {
     const nextTags = [...new Set([...draft.metadata.tags, ...parseTags(value)])];
-    if (nextTags.length === draft.metadata.tags.length) {
-      setPendingTagText("");
-      return;
+    if (nextTags.length !== draft.metadata.tags.length) {
+      onDraftChange(tagsDraft(nextTags, draft));
     }
-    onDraftChange(tagsDraft(nextTags, draft));
     setPendingTagText("");
   }
 
+  function addTag(tag: string) {
+    const nextTags = [...new Set([...draft.metadata.tags, tag.trim()])].filter(
+      Boolean,
+    );
+    onDraftChange(tagsDraft(nextTags, draft));
+    setPendingTagText("");
+    setSuggestionsOpen(false);
+    tagInputRef.current?.focus();
+  }
+
   function handlePendingTagKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Escape") {
+      setSuggestionsOpen(false);
+      return;
+    }
     if (event.key !== "Enter" && event.key !== ",") {
       return;
     }
     event.preventDefault();
     commitPendingTags(event.currentTarget.value);
+    setSuggestionsOpen(false);
   }
 
   function focusTagInput() {
     if (!saving) {
       tagInputRef.current?.focus();
+      setSuggestionsOpen(true);
     }
   }
 
@@ -90,7 +143,7 @@ export function TicketSecondaryTagsField({
   }
 
   return (
-    <section aria-label="Tags" className="space-y-2">
+    <section aria-label="Tags" className="relative space-y-2">
       <span className="block text-xs font-semibold">Tags</span>
       <div
         className={cn(
@@ -123,19 +176,26 @@ export function TicketSecondaryTagsField({
             </span>
           ))
         ) : (
-          <span className="text-sm text-slate-500">No tags</span>
+          !canEditTags ? (
+            <span className="text-sm text-slate-500">No tags</span>
+          ) : null
         )}
         {canEditTags ? (
           <input
             aria-label="Add tag"
+            aria-expanded={showSuggestions}
+            aria-haspopup="listbox"
             className={cn(
-              "h-6 bg-transparent text-xs caret-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed",
-              pendingTagText ? "w-24 px-1" : "w-px shrink-0 p-0",
-              draft.metadata.tags.length === 0 && "min-w-20 flex-1 px-1",
+              "h-6 min-w-14 flex-1 bg-transparent px-1 text-xs caret-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed",
+              pendingTagText && "min-w-24",
             )}
             disabled={saving}
-            onBlur={(event) => commitPendingTags(event.currentTarget.value)}
+            onBlur={(event) => {
+              commitPendingTags(event.currentTarget.value);
+              setSuggestionsOpen(false);
+            }}
             onChange={(event) => setPendingTagText(event.currentTarget.value)}
+            onFocus={() => setSuggestionsOpen(true)}
             onKeyDown={handlePendingTagKeyDown}
             placeholder={draft.metadata.tags.length > 0 ? "" : "Add tag"}
             ref={tagInputRef}
@@ -143,6 +203,27 @@ export function TicketSecondaryTagsField({
           />
         ) : null}
       </div>
+      {showSuggestions ? (
+        <div
+          className="absolute inset-x-0 top-full z-40 mt-1 max-h-52 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-md"
+          role="listbox"
+        >
+          {suggestions.map((tag) => (
+            <button
+              className="block w-full px-3 py-1.5 text-left text-sm text-slate-900 hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none"
+              key={tag}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                addTag(tag);
+              }}
+              role="option"
+              type="button"
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }

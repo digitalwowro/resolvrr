@@ -88,4 +88,28 @@ describe("Zammad lookup reads", () => {
       }),
     );
   });
+
+  it("lists global tags as provider-neutral lookup options", async () => {
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers(),
+      data: [
+        { id: 1, name: "high-priority" },
+        { id: 2, name: "channel-operations" },
+        { id: 3, name: "" },
+      ],
+    });
+
+    await expect(zammadProviderPlugin.listTags?.(providerContext())).resolves
+      .toEqual([
+        { externalId: "1", label: "high-priority" },
+        { externalId: "2", label: "channel-operations" },
+      ]);
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
+      "https://helpdesk.example.com/api/v1/tag_list",
+      expect.objectContaining({
+        allowedAddresses: ["93.184.216.34"],
+      }),
+    );
+  });
 });

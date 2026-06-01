@@ -6,6 +6,7 @@ import {
   type SelectedTicketUpdatePayload,
   type TicketMetadataMutationActionState,
 } from "@/features/tickets";
+import { unsupportedTicketLookupList } from "@/core/ticket-lookups";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import {
   availableList,
@@ -27,10 +28,20 @@ type MutationAction = (
   request: SelectedTicketUpdatePayload,
 ) => Promise<TicketMetadataMutationActionState>;
 
-function renderWorkspace(action: MutationAction) {
+function renderWorkspace(
+  action: MutationAction,
+  options: { tagSuggestions?: "available" | "unsupported" } = {},
+) {
   const detailProps = selectedDetailProps();
   const detail = {
     ...detailProps.detail,
+    lookupData: {
+      ...detailProps.detail.lookupData,
+      tags:
+        options.tagSuggestions === "unsupported"
+          ? unsupportedTicketLookupList()
+          : detailProps.detail.lookupData.tags,
+    },
     links: [
       {
         id: "88",
@@ -92,6 +103,14 @@ describe("TicketWorkspace secondary metadata updates", () => {
     expect(subscriptionToggle).not.toBeNull();
 
     await user.click(subscriptionToggle as HTMLLabelElement);
+    await user.click(screen.getByLabelText("Add tag"));
+    await user.type(screen.getByLabelText("Add tag"), "h");
+    expect(screen.getByRole("option", { name: "channel-operations" }))
+      .toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "hello" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "high-priority" }))
+      .toBeInTheDocument();
+    await user.click(screen.getByRole("option", { name: "hello" }));
     await user.type(screen.getByLabelText("Add tag"), "renewal{Enter}");
     await user.click(screen.getByRole("button", { name: "Add link" }));
     await user.type(screen.getByLabelText("Related ticket ID"), "77");
@@ -109,8 +128,29 @@ describe("TicketWorkspace secondary metadata updates", () => {
         linkAddExternalId: "77",
         linkRemoveExternalIds: ["88"],
         subscriptionFollowing: true,
-        tags: ["vip", "renewal"],
+        tags: ["vip", "hello", "renewal"],
       },
+      ticketExternalId: "ticket-1",
+    });
+  });
+
+  it("keeps freeform tag editing available when suggestions are unsupported", async () => {
+    const user = userEvent.setup();
+    const action = vi.fn<MutationAction>(async () => ({
+      status: "saved" as const,
+      field: "tags" as const,
+      message: "Saved.",
+    }));
+    renderWorkspace(action, { tagSuggestions: "unsupported" });
+
+    await user.click(screen.getByLabelText("Add tag"));
+    await user.type(screen.getByLabelText("Add tag"), "custom-tag{Enter}");
+
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Update" }));
+
+    expect(action).toHaveBeenCalledWith({
+      metadata: { tags: ["vip", "custom-tag"] },
       ticketExternalId: "ticket-1",
     });
   });

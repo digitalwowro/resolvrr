@@ -42,6 +42,7 @@ export function TicketSecondaryMetadataFields({
         canEditTags={canEditTags}
         dirtyFields={dirtyFields}
         draft={draft}
+        tagLookup={detail.lookupData.tags}
         onDraftChange={onDraftChange}
         saving={saving}
       />

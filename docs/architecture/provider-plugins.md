@@ -154,9 +154,16 @@ advertises `ticket:list`,
 `ticket:update-state`, `ticket:update-priority`, `ticket:update-owner`,
 `ticket:update-group`, `ticket:update-tags`, `ticket:update-links`,
 `ticket:update-subscription`, `ticket:add-internal-note`,
-`ticket:add-customer-reply`, `lookup:assignable-users`, and `lookup:groups`.
+`ticket:add-customer-reply`, `lookup:assignable-users`, `lookup:groups`, and
+`lookup:tags`.
 Subscription fields still use the stable empty canonical shapes documented in
 the ticket contract when their provider-neutral capabilities are not advertised.
+Zammad global tag suggestions use the admin-only global tag list endpoint;
+ticket tag reads/writes continue to use ticket-scope endpoints requiring
+`ticket.agent` or `admin.tag`, and freeform tag editing remains available when
+global suggestions are unavailable. Freeform tag application or creation may
+still be denied by instance policy at mutation time; that surfaces through the
+provider-safe metadata mutation error path.
 Zammad-backed sorting is implemented through the provider's ticket search
 endpoint with provider-neutral sort keys translated to Zammad sort fields.
 Zammad-backed total counts and state/priority grouped bucket counts use the

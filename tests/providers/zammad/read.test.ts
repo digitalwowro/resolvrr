@@ -44,6 +44,7 @@ describe("Zammad ticket reads", () => {
       "ticket:add-customer-reply",
       "lookup:assignable-users",
       "lookup:groups",
+      "lookup:tags",
     ]);
   });
 

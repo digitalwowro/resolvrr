@@ -87,6 +87,13 @@ export function detailPropsFor(
           { externalId: "group-1", label: "Users" },
           { externalId: "group-2", label: "Billing" },
         ]),
+        tags: availableTicketLookupList([
+          { externalId: "tag-1", label: "channel-operations" },
+          { externalId: "tag-2", label: "channel-support" },
+          { externalId: "tag-3", label: "hello" },
+          { externalId: "tag-4", label: "high-priority" },
+          { externalId: "tag-5", label: "high-priority-review" },
+        ]),
       },
       subscription: { supported: false, following: false },
       tags: [],
@@ -133,6 +140,13 @@ export function detailPropsFor(
           groups: availableTicketLookupList([
             { externalId: "group-1", label: "Users" },
             { externalId: "group-2", label: "Billing" },
+          ]),
+          tags: availableTicketLookupList([
+            { externalId: "tag-1", label: "channel-operations" },
+            { externalId: "tag-2", label: "channel-support" },
+            { externalId: "tag-3", label: "hello" },
+            { externalId: "tag-4", label: "high-priority" },
+            { externalId: "tag-5", label: "high-priority-review" },
           ]),
         },
         subscription: { supported: false, following: false },
