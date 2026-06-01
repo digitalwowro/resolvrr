@@ -19,9 +19,11 @@ export {
 export {
   loadWorkspaceTicketDetail,
   loadWorkspaceTicketList,
-  searchWorkspaceTicketLinkTargets,
   updateWorkspaceTicketMetadata,
 } from "./service";
+export {
+  searchWorkspaceTicketLinkTargets,
+} from "./link-target-service";
 export {
   addWorkspaceTicketCustomerReply,
   addWorkspaceTicketInternalNote,

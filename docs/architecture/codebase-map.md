@@ -236,6 +236,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   or link target summaries.
 - `src/features/tickets/link-target-search-action-result.ts`: client-safe Add
   link target search request/result and action function types.
+- `src/features/tickets/link-target-service.ts`: provider-neutral Add link
+  target search orchestration and provider-error mapping.
 - `src/features/tickets/mutation-model.ts`: provider-neutral metadata mutation
   capabilities, selected-ticket update payload shape, allowed update
   payload/slice keys, pending-date validation, result/error model, and action
@@ -256,9 +258,8 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/tickets/list-actions.ts`: authenticated server action for
   post-hydration ungrouped workspace list page loads. It returns adapted
   workspace rows and provider-neutral pagination metadata only.
-- `src/features/tickets/service.ts`: thin ticket read orchestration, Add link
-  target search orchestration, and controlled metadata mutation entrypoints with
-  refresh-after-write checks.
+- `src/features/tickets/service.ts`: thin ticket read orchestration and
+  controlled metadata mutation entrypoints with refresh-after-write checks.
 - `src/features/tickets/date-time-format.ts`: shared workspace date/time
   formatter for provider-backed ticket table, detail, thread, and metadata
   display strings.

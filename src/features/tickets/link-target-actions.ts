@@ -5,8 +5,8 @@ import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { providerRegistry } from "@/providers";
 import type { WorkspaceTicketLinkTargetSearchResult } from "./link-target-search-action-result";
+import { searchWorkspaceTicketLinkTargets } from "./link-target-service";
 import { unavailableTicketRead } from "./read-model";
-import { searchWorkspaceTicketLinkTargets } from "./service";
 
 export async function searchWorkspaceTicketLinkTargetsAction({
   excludeTicketExternalId,

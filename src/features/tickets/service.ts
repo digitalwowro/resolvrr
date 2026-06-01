@@ -1,6 +1,5 @@
 import type {
   TicketExternalId,
-  TicketLinkTargetSearchInput,
   TicketMetadataMutationInput,
 } from "@/core/tickets";
 import type { ProviderCapability, TicketListQueryInput } from "@/core/providers";
@@ -13,13 +12,9 @@ import {
   ticketReadTimingStart,
 } from "@/telemetry/ticket-read-timing";
 import { recordTicketMetadataMutationAudit } from "@/telemetry/ticket-mutation-audit";
-import {
-  loadActiveTicketProviderContext,
-  readUnavailableForProviderError,
-} from "./connection-context";
+import { loadActiveTicketProviderContext } from "./connection-context";
 import {
   dispatchTicketDetailRead,
-  dispatchTicketLinkTargetSearch,
   dispatchTicketListRead,
   dispatchTicketLookupDataRead,
   dispatchTicketMetadataMutation,
@@ -36,7 +31,6 @@ import {
   type TicketListReadResult,
   type TicketReadUnavailable,
 } from "./read-model";
-import type { WorkspaceTicketLinkTargetSearchResult } from "./link-target-search-action-result";
 
 function failedMutation(
   result: TicketReadUnavailable,
@@ -192,44 +186,6 @@ export async function loadWorkspaceTicketDetail(
       lookupData,
     },
   };
-}
-
-export async function searchWorkspaceTicketLinkTargets(
-  repository: HelpdeskConnectionsRepository,
-  registry: ProviderRegistry,
-  encryptionKey: string,
-  userId: string,
-  input: TicketLinkTargetSearchInput,
-): Promise<WorkspaceTicketLinkTargetSearchResult> {
-  const normalizedQuery = input.query.trim();
-  if (!normalizedQuery) {
-    return { status: "available", targets: [] };
-  }
-
-  const providerContext = await loadActiveTicketProviderContext(
-    repository,
-    registry,
-    encryptionKey,
-    userId,
-    "lookup",
-  );
-  if (providerContext.status === "unavailable") {
-    return providerContext;
-  }
-
-  try {
-    const targets = await dispatchTicketLinkTargetSearch(providerContext.value, {
-      ...input,
-      limit: input.limit ?? 8,
-      query: normalizedQuery,
-    });
-    return {
-      status: "available",
-      targets,
-    };
-  } catch (error) {
-    return readUnavailableForProviderError(error);
-  }
 }
 
 export async function updateWorkspaceTicketMetadata(
