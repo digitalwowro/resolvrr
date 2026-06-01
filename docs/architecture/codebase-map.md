@@ -84,6 +84,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/data/prisma.ts`: Prisma Client singleton with PostgreSQL driver adapter.
 - `src/data/saved-views-repository.ts`: Prisma-backed saved view/preference
   repository.
+- `src/data/workspace-tabs-repository.ts`: Prisma-backed user and active
+  helpdesk-connection scoped `UiPreference` repository for persisted workspace
+  open tabs.
 - `src/security`: security-sensitive helpers shared by server-side code.
 - `src/security/encryption.ts`: AES-256-GCM secret envelope encryption.
 - `src/security/base-url-validation.ts`: provider-neutral HTTPS and SSRF
@@ -209,9 +212,11 @@ architecture folders or important files are added, moved, renamed, or removed.
   not export server actions so component/test imports do not pull in env or
   database modules.
 - `src/features/tickets/actions.ts`: server action for staged selected-ticket
-  metadata update payloads from `/workspace`.
-- `src/features/tickets/communication-actions.ts`: server actions for explicit
-  selected-ticket internal-note and customer-reply submits from `/workspace`.
+  metadata and communication update payloads from `/workspace`.
+- `src/features/tickets/communication-actions.ts`: standalone server actions
+  for selected-ticket internal-note and customer-reply submits. The production
+  workspace currently stages these writes through the shared selected-ticket
+  `Update` action instead.
 - `src/features/tickets/communication-action-input.ts`: server-side parser and
   validation for selected-ticket internal-note and customer-reply submit
   payloads.
@@ -224,8 +229,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   metadata-only communication outcome audit logs.
 - `src/features/tickets/metadata-action-input.ts`: server-side parser and
   validation for one selected-ticket update payload per explicit `Update`,
-  including tag, link relation, subscription, pending-date, and raw provider
-  field validation.
+  including communication, tag, link relation, subscription, pending-date, and
+  raw provider field validation.
 - `src/features/tickets/connection-context.ts`: active connection lookup,
   credential decryption, provider lookup, base URL revalidation, and setup
   timing for ticket reads and metadata mutations.
@@ -273,6 +278,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `src/features/workspace/index.ts`: workspace feature boundary. UI copy may say
   workspace, but persisted domain concepts remain helpdesk connections. This
   barrel exports production workspace UI only.
+- `src/features/workspace/actions.ts`: server actions for workspace-owned UI
+  state, including active-connection scoped persisted open tabs.
+- `src/features/workspace/workspace-tab-state.ts`: provider-neutral persisted
+  workspace tab state parser, serializer, cap, and ticket-detail tab adapter
+  helpers.
 - `src/features/workspace/components/ticket-workspace.tsx`: provider-backed
   workspace composition for the real `/workspace` route. It wires
   provider-neutral read models, metadata mutation capabilities, and
@@ -284,6 +294,9 @@ architecture folders or important files are added, moved, renamed, or removed.
   workspace-only state for active pane, open ticket tabs, recently viewed tabs,
   tab metadata patches after successful staged updates, tab orientation, visible
   columns, row selection, grouping, sorting, and route navigation.
+- `src/features/workspace/components/ticket-workspace-persisted-tabs.ts`:
+  focused helper for deriving initial open, recent, and active workspace tabs
+  from saved server UI state and direct selected-ticket detail.
 - `src/features/workspace/components/ticket-workspace-state-types.ts`: shared
   workspace display state prop and active-pane types.
 - `src/features/workspace/components/use-ticket-detail-loader.ts`: in-memory
@@ -402,9 +415,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   filename, content type, and byte size values only; downloads and previews are
   intentionally not exposed here.
 - `src/features/workspace/components/ticket-inline-communication-composer.tsx`:
-  capability-gated inline Reply/Comment composer shared by article cards. It
-  sends provider-neutral customer-reply and internal-note payloads only after an
-  article action is selected.
+  capability-gated inline Reply/Comment textarea shared by article cards. It
+  stages text in the selected-ticket draft and has no local Send/Cancel footer.
 - `src/features/workspace/components/ticket-thread-article.tsx`: production
   article-card presentation with sanitized rich-text rendering,
   display-name-first From/To/Cc/Bcc metadata, attachment metadata display, and
@@ -413,7 +425,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   class-map companion for thread article variants and action selected states.
 - `src/features/workspace/components/ticket-thread.tsx`: production ticket
   article thread state owner. It tracks one active inline composer by article
-  and mode, and does not render standalone bottom communication composers.
+  and mode, writes composer text into the selected-ticket draft, and does not
+  render standalone bottom communication composers.
 - `src/features/workspace/components/ticket-tabs-merge.ts`: helper for merging
   initial selected-ticket tabs with row-derived tabs.
 - `src/features/workspace/components/ticket-tabs-panel.tsx`: production
@@ -558,7 +571,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   workspace list page loads.
 - `tests/features/ticket-metadata-action-input.test.ts`: verifies one
   selected-ticket update payload parsing, server-boundary validation, and
-  pending date validation across primary and secondary metadata fields.
+  pending date validation across primary metadata, secondary metadata, and
+  staged communication fields.
 - `tests/features/ticket-internal-note-action-input.test.ts`: verifies
   selected-ticket communication payload parsing and unsupported-key rejection.
 - `tests/features/ticket-internal-note-service.test.ts`: verifies
@@ -617,8 +631,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/workspace-adapter.test.ts`: verifies ticket-to-workspace
   adapter display formatting for table/detail/thread date strings.
 - `tests/features/ticket-workspace-horizontal-tabs.test.tsx`: verifies local
-  horizontal ticket tab sizing, open/close/activation behavior, and route
-  navigation without persistence.
+  horizontal ticket tab sizing, open/close/activation behavior, route
+  navigation, restored saved tabs, direct-link tab merge, and persisted tab
+  state writes.
 - `tests/features/ticket-workspace-vertical-tabs.test.tsx`: verifies local
   vertical ticket tab orientation, open/activation behavior, and route
   navigation without persistence.
@@ -629,6 +644,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features/ticket-workspace-client-detail-cache.test.tsx`: verifies
   selected-ticket detail cache refresh after metadata saves and cached-detail
   reuse when returning to an open ticket.
+- `tests/features/workspace-tab-actions.test.ts`: verifies the workspace tab
+  server action validates state and writes through the active helpdesk
+  connection.
+- `tests/features/workspace-tab-state.test.ts`: verifies persisted workspace tab
+  state parsing guardrails, dedupe, and cap behavior.
 - `tests/providers`: provider-specific tests.
 - `tests/providers/zammad/credentials.test.ts`: verifies provider-specific Basic
   Auth credential helpers.

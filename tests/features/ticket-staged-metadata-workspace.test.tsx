@@ -96,6 +96,33 @@ describe("TicketWorkspace staged metadata updates", () => {
     });
   });
 
+  it("does not show visible saving metadata copy while Update is pending", async () => {
+    const user = userEvent.setup();
+    let resolveAction: ((value: TicketMetadataMutationActionState) => void) | undefined;
+    const action = vi.fn<MutationAction>(
+      () =>
+        new Promise((resolve) => {
+          resolveAction = resolve;
+        }),
+    );
+    renderWorkspace({ action });
+
+    await user.click(screen.getByRole("combobox", { name: "Ticket priority" }));
+    await user.click(screen.getByRole("option", { name: "High" }));
+    await user.click(screen.getByRole("button", { name: "Update" }));
+
+    expect(action).toHaveBeenCalledOnce();
+    expect(screen.queryByText("Saving metadata...")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Update" })).toBeDisabled();
+
+    resolveAction?.({
+      status: "saved",
+      field: "priority",
+      message: "Saved.",
+    });
+    await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
+  });
+
   it("marks changed fields and clears them with Discard changes", async () => {
     const user = userEvent.setup();
     const action = vi.fn<MutationAction>(noopMutationAction);

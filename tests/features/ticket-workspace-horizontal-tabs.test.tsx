@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -6,6 +6,11 @@ import {
   type WorkspaceTicketDetailLoadResult,
 } from "@/features/tickets";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
+import {
+  workspaceOpenTabsStateVersion,
+  type SaveWorkspaceOpenTabsStateAction,
+  type WorkspaceOpenTabsState,
+} from "@/features/workspace/workspace-tab-state";
 import {
   availableList,
   detailPropsFor,
@@ -77,6 +82,220 @@ describe("TicketWorkspace horizontal tabs", () => {
     expect(screen.queryByRole("tab", { name: /#1001/u })).not.toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Tickets" })).toBeInTheDocument();
     expect(replaceState).toHaveBeenLastCalledWith(null, "", "/workspace");
+  });
+
+  it("restores saved open tabs with List active", () => {
+    const initialWorkspaceOpenTabsState = {
+      activePane: "list",
+      openTabs: [row, highRow],
+      recentTabs: [highRow, row],
+      tabOrientation: "horizontal",
+      updatedAt: "2026-06-02T00:00:00.000Z",
+      version: workspaceOpenTabsStateVersion,
+    } satisfies WorkspaceOpenTabsState;
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row, highRow]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    expect(screen.getByRole("table", { name: "Tickets" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /#1001/u })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /#1002/u })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Return to list: All tickets" }))
+      .toHaveAttribute("aria-selected", "true");
+  });
+
+  it("merges a direct linked ticket into saved tabs and activates it", () => {
+    const detail = detailPropsFor(highRow);
+    const initialWorkspaceOpenTabsState = {
+      activePane: "ticket-1",
+      openTabs: [row],
+      recentTabs: [row],
+      tabOrientation: "horizontal",
+      updatedAt: "2026-06-02T00:00:00.000Z",
+      version: workspaceOpenTabsStateVersion,
+    } satisfies WorkspaceOpenTabsState;
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={detail.detail}
+        detailResult={detail.detailResult}
+        initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        selectedTicketId="ticket-2"
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs[1]).toHaveTextContent("#1002");
+    expect(tabs[2]).toHaveTextContent("#1001");
+    expect(screen.getByRole("tab", { name: /#1001/u })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /#1002/u })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    const selectedDetail = screen.getByLabelText("Ticket detail #1002");
+    expect(selectedDetail).toBeInTheDocument();
+    expect(within(selectedDetail).getByText("Webhook failed")).toBeInTheDocument();
+  });
+
+  it("activates an already-open direct linked ticket without reordering tabs", () => {
+    const detail = detailPropsFor(highRow);
+    const initialWorkspaceOpenTabsState = {
+      activePane: "ticket-1",
+      openTabs: [row, highRow],
+      recentTabs: [row, highRow],
+      tabOrientation: "horizontal",
+      updatedAt: "2026-06-02T00:00:00.000Z",
+      version: workspaceOpenTabsStateVersion,
+    } satisfies WorkspaceOpenTabsState;
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={detail.detail}
+        detailResult={detail.detailResult}
+        initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row, highRow]}
+        selectedTicketId="ticket-2"
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs[1]).toHaveTextContent("#1001");
+    expect(tabs[2]).toHaveTextContent("#1002");
+    expect(screen.getByRole("tab", { name: /#1002/u })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("persists tab state changes to the save action", async () => {
+    const user = userEvent.setup();
+    const saveWorkspaceOpenTabsStateAction = vi.fn<
+      SaveWorkspaceOpenTabsStateAction
+    >(async () => undefined);
+    const detailProps = selectedDetailProps();
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={detailProps.detail}
+        detailResult={detailProps.detailResult}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
+        selectedTicketId="ticket-1"
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(saveWorkspaceOpenTabsStateAction).toHaveBeenCalled(),
+    );
+    saveWorkspaceOpenTabsStateAction.mockClear();
+
+    await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
+    await waitFor(() =>
+      expect(saveWorkspaceOpenTabsStateAction).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          activePane: "list",
+          openTabs: [expect.objectContaining({ id: "ticket-1" })],
+        }),
+      ),
+    );
+
+    await user.click(screen.getByRole("tab", { name: /#1001/u }));
+    await waitFor(() =>
+      expect(saveWorkspaceOpenTabsStateAction).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          activePane: "ticket-1",
+          openTabs: [expect.objectContaining({ id: "ticket-1" })],
+        }),
+      ),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
+    await waitFor(() =>
+      expect(saveWorkspaceOpenTabsStateAction).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          activePane: "ticket-1",
+          tabOrientation: "vertical",
+        }),
+      ),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Close #1001" }));
+    await waitFor(() =>
+      expect(saveWorkspaceOpenTabsStateAction).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          activePane: "list",
+          openTabs: [],
+        }),
+      ),
+    );
+  });
+
+  it("falls back to List when a saved active ticket is no longer open", () => {
+    const initialWorkspaceOpenTabsState = {
+      activePane: "missing-ticket",
+      openTabs: [row],
+      recentTabs: [],
+      tabOrientation: "horizontal",
+      updatedAt: "2026-06-02T00:00:00.000Z",
+      version: workspaceOpenTabsStateVersion,
+    } satisfies WorkspaceOpenTabsState;
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    expect(screen.getByRole("table", { name: "Tickets" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /#1001/u })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Return to list: All tickets" }))
+      .toHaveAttribute("aria-selected", "true");
   });
 
   it("caps full ticket tab width and keeps the close button visible", () => {
@@ -153,7 +372,9 @@ describe("TicketWorkspace horizontal tabs", () => {
       "",
       "/workspace?ticket=ticket-2",
     );
-    expect(screen.getByText("Loading ticket thread...")).toBeInTheDocument();
+    expect(screen.getByLabelText("Ticket detail #1002")).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Loading ticket thread" }))
+      .toBeInTheDocument();
     expect(loadTicketDetailAction).toHaveBeenCalledWith("ticket-2");
 
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));

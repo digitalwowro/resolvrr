@@ -35,7 +35,7 @@ describe("TicketWorkspace client detail cache", () => {
     window.history.replaceState(null, "", "/workspace");
   });
 
-  it("refreshes the initial selected ticket cache after a saved metadata update", async () => {
+  it("keeps the initial selected ticket detail loaded after a saved metadata-only update", async () => {
     const user = userEvent.setup();
     const initialDetail = detailPropsFor(row, "Initial ticket thread");
     const refreshedDetail = detailPropsFor(
@@ -81,13 +81,12 @@ describe("TicketWorkspace client detail cache", () => {
     await user.click(screen.getByRole("option", { name: "High" }));
     await user.click(screen.getByRole("button", { name: "Update" }));
 
-    expect(await screen.findByText("Refreshed ticket thread")).toBeInTheDocument();
-    expect(screen.queryByText("Initial ticket thread")).toBeNull();
-    expect(loadTicketDetailAction).toHaveBeenCalledOnce();
-    expect(loadTicketDetailAction).toHaveBeenCalledWith("ticket-1");
+    expect(await screen.findByText("Initial ticket thread")).toBeInTheDocument();
+    expect(screen.queryByText("Refreshed ticket thread")).toBeNull();
+    expect(loadTicketDetailAction).not.toHaveBeenCalled();
   });
 
-  it("reuses refreshed cached detail when switching back to an open ticket", async () => {
+  it("reuses the existing cached detail after metadata-only updates", async () => {
     const user = userEvent.setup();
     const initialDetail = detailPropsFor(highRow, "Original loaded thread");
     const refreshedDetail = detailPropsFor(
@@ -134,11 +133,12 @@ describe("TicketWorkspace client detail cache", () => {
     await user.click(screen.getByRole("option", { name: "Low" }));
     await user.click(screen.getByRole("button", { name: "Update" }));
 
-    expect(await screen.findByText("Refreshed cached thread")).toBeInTheDocument();
+    expect(await screen.findByText("Original loaded thread")).toBeInTheDocument();
+    expect(screen.queryByText("Refreshed cached thread")).toBeNull();
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
     await user.click(screen.getByRole("tab", { name: /#1002/u }));
 
-    expect(screen.getByText("Refreshed cached thread")).toBeInTheDocument();
-    expect(loadTicketDetailAction).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("Original loaded thread")).toBeInTheDocument();
+    expect(loadTicketDetailAction).toHaveBeenCalledOnce();
   });
 });

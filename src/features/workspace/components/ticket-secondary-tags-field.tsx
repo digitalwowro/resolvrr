@@ -153,7 +153,7 @@ export function TicketSecondaryTagsField({
       <span className="block text-xs font-semibold">Tags</span>
       <div
         className={cn(
-          "flex min-h-10 flex-wrap items-center gap-2 rounded-md border bg-white px-2.5 py-2",
+          "flex min-h-9 flex-wrap items-center rounded-md border bg-white px-2.5 py-1",
           canEditTags &&
             !saving &&
             "cursor-text focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100",
@@ -164,7 +164,7 @@ export function TicketSecondaryTagsField({
         {draft.metadata.tags.length > 0 ? (
           draft.metadata.tags.map((tag) => (
             <span
-              className="inline-flex h-6 max-w-full items-center gap-1.5 rounded-md bg-slate-100 px-2 text-xs text-slate-900"
+              className="mb-1 mr-1 inline-flex h-6 max-w-full items-center gap-1.5 rounded-md bg-slate-100 px-2 text-xs text-slate-900"
               key={tag}
             >
               <span className="min-w-0 truncate">{tag}</span>

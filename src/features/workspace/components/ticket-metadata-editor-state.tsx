@@ -13,10 +13,6 @@ import type {
 } from "@/features/tickets/link-target-search-action-result";
 import type {
   TicketCommunicationCapabilities,
-  TicketCustomerReplyActionState,
-  TicketCustomerReplyPayload,
-  TicketInternalNoteActionState,
-  TicketInternalNotePayload,
 } from "@/features/tickets/communication-model";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import {
@@ -50,7 +46,7 @@ function mutationStatusText(
   result: TicketMetadataMutationActionState,
 ) {
   if (saving) {
-    return "Saving metadata...";
+    return undefined;
   }
   if (result.status === "failed" || result.status === "saved-refresh-failed") {
     return result.message;
@@ -65,9 +61,16 @@ function actionErrorState(): TicketMetadataMutationActionState {
   };
 }
 
+function updatePayloadNeedsDetailRefresh(payload: SelectedTicketUpdatePayload) {
+  return Boolean(
+    payload.communication?.commentBody ||
+      payload.communication?.replyBody ||
+      payload.metadata?.linkAddExternalId ||
+      payload.metadata?.linkRemoveExternalIds?.length,
+  );
+}
+
 export function TicketMetadataEditorState({
-  addTicketCustomerReplyAction,
-  addTicketInternalNoteAction,
   communicationCapabilities,
   detail,
   header,
@@ -80,12 +83,6 @@ export function TicketMetadataEditorState({
   searchTicketLinkTargetsAction,
   updateTicketMetadataAction,
 }: {
-  addTicketCustomerReplyAction(
-    request: TicketCustomerReplyPayload,
-  ): Promise<TicketCustomerReplyActionState>;
-  addTicketInternalNoteAction(
-    request: TicketInternalNotePayload,
-  ): Promise<TicketInternalNoteActionState>;
   communicationCapabilities: TicketCommunicationCapabilities;
   detail: WorkspaceTicketDetail;
   header?: ReactNode;
@@ -110,6 +107,9 @@ export function TicketMetadataEditorState({
   const [saving, setSaving] = useState(false);
   const [mutationResult, setMutationResult] =
     useState<TicketMetadataMutationActionState>({ status: "idle" });
+  const [threadComposerResetKey, setThreadComposerResetKey] = useState(0);
+  const [scrollAfterArticleCount, setScrollAfterArticleCount] =
+    useState<number>();
 
   const dirtyFields = metadataDraftDirtyFields(baseline, draft);
   const hasChanges = metadataDraftHasChanges(dirtyFields);
@@ -136,6 +136,11 @@ export function TicketMetadataEditorState({
     if (!updatePayload) {
       return;
     }
+    const submittedCommunication = Boolean(
+      updatePayload.communication?.commentBody ||
+        updatePayload.communication?.replyBody,
+    );
+    const submittedArticleCount = detail.articles.length;
 
     setSaving(true);
     setMutationResult({ status: "idle" });
@@ -172,7 +177,15 @@ export function TicketMetadataEditorState({
             ticketExternalId: submittedBaseline.ticketExternalId,
           });
           if (result.status === "saved") {
-            refreshSavedDetail(submittedBaseline.ticketExternalId);
+            if (submittedCommunication) {
+              setScrollAfterArticleCount(submittedArticleCount);
+            }
+            if (updatePayloadNeedsDetailRefresh(updatePayload)) {
+              refreshSavedDetail(submittedBaseline.ticketExternalId);
+            }
+          }
+          if (submittedCommunication) {
+            setThreadComposerResetKey((current) => current + 1);
           }
           setBaseline(submittedBaseline);
           setDraft(metadataDraftFromBaseline(submittedBaseline));
@@ -234,7 +247,7 @@ export function TicketMetadataEditorState({
               ? "text-xs text-amber-700"
               : "text-xs text-slate-600"
           }
-          role={saving ? "status" : "alert"}
+          role="alert"
         >
           {statusText}
         </p>
@@ -245,7 +258,7 @@ export function TicketMetadataEditorState({
   return (
     <>
       <div className="flex min-h-0 flex-1">
-        <div className="min-w-0 flex-1 overflow-hidden p-2">
+        <div className="min-w-0 flex-1 overflow-hidden py-4 pl-4 pr-2">
           <section
             aria-label="Ticket conversation"
             className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-slate-200 bg-white"
@@ -274,12 +287,16 @@ export function TicketMetadataEditorState({
               <div className="pt-2">
                 {header}
                 <TicketThread
-                  addTicketCustomerReplyAction={addTicketCustomerReplyAction}
-                  addTicketInternalNoteAction={addTicketInternalNoteAction}
                   articles={detail.articles}
+                  communicationDraft={draft.communication}
                   communicationCapabilities={communicationCapabilities}
-                  onCommunicationSaved={refreshSavedDetail}
-                  ticketExternalId={detail.id}
+                  disabled={saving}
+                  key={threadComposerResetKey}
+                  onCommunicationDraftChange={(communication) =>
+                    changeDraft({ ...draft, communication })
+                  }
+                  onScrolledToLatest={() => setScrollAfterArticleCount(undefined)}
+                  scrollAfterArticleCount={scrollAfterArticleCount}
                 />
               </div>
             </div>

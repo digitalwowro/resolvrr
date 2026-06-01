@@ -10,6 +10,24 @@ import type {
   TicketInternalNoteResult,
 } from "./communication-model";
 
+function normalizedInternalNoteInput(
+  input: TicketInternalNoteInput,
+): TicketInternalNoteInput {
+  return {
+    body: input.body.trim(),
+    ...(input.bodyFormat ? { bodyFormat: input.bodyFormat } : {}),
+  };
+}
+
+function normalizedCustomerReplyInput(
+  input: TicketCustomerReplyInput,
+): TicketCustomerReplyInput {
+  return {
+    body: input.body.trim(),
+    ...(input.bodyFormat ? { bodyFormat: input.bodyFormat } : {}),
+  };
+}
+
 export async function dispatchTicketInternalNote(
   providerContext: TicketProviderContext,
   ticketExternalId: string,
@@ -33,7 +51,7 @@ export async function dispatchTicketInternalNote(
     await providerContext.plugin.addTicketInternalNote(
       providerContext.context,
       ticketExternalId,
-      { body: input.body.trim() },
+      normalizedInternalNoteInput(input),
     );
     return { status: "saved" };
   } catch (error) {
@@ -73,7 +91,7 @@ export async function dispatchTicketCustomerReply(
     await providerContext.plugin.addTicketCustomerReply(
       providerContext.context,
       ticketExternalId,
-      { body: input.body.trim() },
+      normalizedCustomerReplyInput(input),
     );
     return { status: "saved" };
   } catch (error) {

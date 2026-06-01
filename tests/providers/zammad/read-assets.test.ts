@@ -23,7 +23,7 @@ describe("Zammad ticket read assets", () => {
     vi.clearAllMocks();
   });
 
-  it("accepts real Zammad attachment metadata shapes", async () => {
+  it("filters Zammad message body alternatives from visible attachments", async () => {
     mockedSafeProviderJson
       .mockResolvedValueOnce({
         status: 200,
@@ -45,7 +45,16 @@ describe("Zammad ticket read assets", () => {
                   "Mime-Type": "text/html",
                   Charset: "utf-8",
                   "content-alternative": true,
-                  "original-format": false,
+                  "original-format": true,
+                },
+              },
+              {
+                id: 502,
+                filename: "report.html",
+                size: "8192",
+                preferences: {
+                  "Mime-Type": "text/html",
+                  Charset: "utf-8",
                 },
               },
             ],
@@ -60,10 +69,10 @@ describe("Zammad ticket read assets", () => {
 
     expect(result?.thread.articles[0]?.attachments).toEqual([
       {
-        externalId: "501",
-        fileName: "message.html",
+        externalId: "502",
+        fileName: "report.html",
         contentType: "text/html",
-        byteSize: 3492,
+        byteSize: 8192,
       },
     ]);
   });

@@ -146,6 +146,8 @@ export type TicketArticle = {
   attachments: TicketAttachment[];
 };
 
+export type TicketCommunicationBodyFormat = "plain" | "html";
+
 export type TicketThread = {
   ticketExternalId: TicketExternalId;
   articles: TicketArticle[];
@@ -196,10 +198,12 @@ export type TicketMetadataMutationInput = {
 
 export type TicketInternalNoteInput = {
   body: string;
+  bodyFormat?: TicketCommunicationBodyFormat;
 };
 
 export type TicketCustomerReplyInput = {
   body: string;
+  bodyFormat?: TicketCommunicationBodyFormat;
 };
 
 export type TicketMetadataMutationConstraints = {

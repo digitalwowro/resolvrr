@@ -52,3 +52,22 @@ export function sanitizeProviderHtml(html: string): string {
     },
   });
 }
+
+export function sanitizeComposerHtml(html: string): string {
+  return sanitizeHtml(html, {
+    allowedTags: ["a", "br", "b", "em", "i", "li", "ol", "p", "strong", "u", "ul"],
+    allowedAttributes: {
+      a: ["href", "rel", "target"],
+    },
+    allowedSchemes: ["http", "https", "mailto"],
+    transformTags: {
+      a: sanitizeHtml.simpleTransform("a", {
+        rel: "noreferrer noopener",
+        target: "_blank",
+      }),
+      div: "p",
+    },
+  })
+    .replace(/<a(?![^>]*\shref=)[^>]*>(.*?)<\/a>/giu, "$1")
+    .trim();
+}

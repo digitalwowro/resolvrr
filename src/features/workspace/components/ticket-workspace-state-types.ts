@@ -7,6 +7,10 @@ import type {
   WorkspaceTicketTab,
 } from "@/features/tickets/workspace-adapter";
 import type { LoadWorkspaceTicketDetailAction } from "@/features/tickets/detail-action-result";
+import type {
+  SaveWorkspaceOpenTabsStateAction,
+  WorkspaceOpenTabsState,
+} from "@/features/workspace/workspace-tab-state";
 
 export type ActiveWorkspacePane = "list" | { ticketId: string };
 
@@ -20,6 +24,8 @@ export type TicketWorkspaceStateProps = {
   providerSortEnabled: boolean;
   refreshTicketDetailAfterMetadataSave: boolean;
   rows: WorkspaceTicketRow[];
+  initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
+  saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
   selectedTicketId?: string;
   ticketTabs: WorkspaceTicketTab[];
 };

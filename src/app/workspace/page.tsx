@@ -2,6 +2,7 @@ import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
+import { prismaWorkspaceTabsRepository } from "@/data/workspace-tabs-repository";
 import type { TicketListQueryInput } from "@/core/providers";
 import { logoutAction } from "@/features/auth/actions";
 import {
@@ -19,13 +20,10 @@ import {
   workspaceTicketTabs,
 } from "@/features/tickets";
 import { updateTicketMetadataAction } from "@/features/tickets/actions";
-import {
-  addTicketCustomerReplyAction,
-  addTicketInternalNoteAction,
-} from "@/features/tickets/communication-actions";
 import { loadWorkspaceTicketDetailAction } from "@/features/tickets/detail-actions";
 import { loadWorkspaceTicketListPageAction } from "@/features/tickets/list-actions";
 import { searchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-actions";
+import { saveWorkspaceOpenTabsStateAction } from "@/features/workspace/actions";
 import {
   defaultWorkspaceSavedViewId,
   workspaceSavedViews,
@@ -69,6 +67,9 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     user.id,
   );
   const activeConnection = connections.find((connection) => connection.active);
+  const initialWorkspaceOpenTabsState = activeConnection
+    ? await prismaWorkspaceTabsRepository.getForUser(user.id, activeConnection.id)
+    : undefined;
   const savedViews = await prismaSavedViewsRepository.listForUser(
     user.id,
     activeConnection?.id,
@@ -123,8 +124,6 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
 
   return (
     <TicketWorkspace
-      addTicketCustomerReplyAction={addTicketCustomerReplyAction}
-      addTicketInternalNoteAction={addTicketInternalNoteAction}
       columns={defaultWorkspaceTicketColumns}
       connections={connections.map((connection) => ({
         id: connection.id,
@@ -143,6 +142,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           : undefined
       }
       rows={rows}
+      initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
+      saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
       searchTicketLinkTargetsAction={searchWorkspaceTicketLinkTargetsAction}
       savedViews={workspaceSavedViews(
         savedViews,

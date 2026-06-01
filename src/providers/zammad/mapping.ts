@@ -140,13 +140,21 @@ function recipients(
   ];
 }
 
+function isContentAlternativeAttachment(
+  attachment: ZammadArticle["attachments"][number],
+): boolean {
+  return attachment.preferences?.["content-alternative"] === true;
+}
+
 function attachments(article: ZammadArticle): TicketAttachment[] {
-  return article.attachments.map((attachment) => ({
-    externalId: String(attachment.id),
-    fileName: attachment.filename ?? attachment.name ?? "attachment",
-    contentType: attachmentContentType(attachment.preferences),
-    byteSize: attachmentByteSize(attachment.size),
-  }));
+  return article.attachments
+    .filter((attachment) => !isContentAlternativeAttachment(attachment))
+    .map((attachment) => ({
+      externalId: String(attachment.id),
+      fileName: attachment.filename ?? attachment.name ?? "attachment",
+      contentType: attachmentContentType(attachment.preferences),
+      byteSize: attachmentByteSize(attachment.size),
+    }));
 }
 
 function attachmentContentType(

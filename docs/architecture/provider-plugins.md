@@ -101,10 +101,13 @@ logs.
 ## Ticket Communication Mutations
 
 The approved communication write surface covers internal notes and customer
-replies. Provider-neutral code passes `TicketInternalNoteInput.body` and
-`TicketCustomerReplyInput.body` through the communication service/action path
-after one explicit submit. Provider plugins map those inputs to
-provider-specific article/comment payloads inside their own folders.
+replies. Provider-neutral code passes `TicketInternalNoteInput.body`,
+`TicketInternalNoteInput.bodyFormat`, `TicketCustomerReplyInput.body`, and
+`TicketCustomerReplyInput.bodyFormat` through the communication service path
+after one explicit selected-ticket `Update` submit. Provider plugins map those
+inputs to provider-specific article/comment payloads inside their own folders;
+Zammad owns the mapping from `bodyFormat: "html"` to its article
+`content_type`.
 
 Successful communication writes are followed by a service-layer refresh check
 for the selected ticket detail/thread. If the write succeeds but refresh fails,

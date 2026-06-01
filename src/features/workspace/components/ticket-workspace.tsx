@@ -9,6 +9,10 @@ import {
   type WorkspaceSavedView,
 } from "@/features/saved-views";
 import type {
+  SaveWorkspaceOpenTabsStateAction,
+  WorkspaceOpenTabsState,
+} from "@/features/workspace/workspace-tab-state";
+import type {
   SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
@@ -16,10 +20,6 @@ import type {
 import {
   noTicketCommunicationCapabilities,
   type TicketCommunicationCapabilities,
-  type TicketCustomerReplyActionState,
-  type TicketCustomerReplyPayload,
-  type TicketInternalNoteActionState,
-  type TicketInternalNotePayload,
 } from "@/features/tickets/communication-model";
 import type { TicketListReadResult } from "@/features/tickets/read-model";
 import type {
@@ -38,12 +38,6 @@ import {
 import { UnavailableState } from "./workspace-states";
 
 type TicketWorkspaceProps = {
-  addTicketCustomerReplyAction?(
-    request: TicketCustomerReplyPayload,
-  ): Promise<TicketCustomerReplyActionState>;
-  addTicketInternalNoteAction?(
-    request: TicketInternalNotePayload,
-  ): Promise<TicketInternalNoteActionState>;
   columns: WorkspaceTicketColumn[];
   communicationCapabilities?: TicketCommunicationCapabilities;
   connections: WorkspaceMenuConnection[];
@@ -57,6 +51,8 @@ type TicketWorkspaceProps = {
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   rows: WorkspaceTicketRow[];
   savedViews?: WorkspaceSavedView[];
+  initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
+  saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
   selectedSavedViewId?: string;
   selectedTicketId?: string;
   setActiveConnectionAction(formData: FormData): void | Promise<void>;
@@ -71,16 +67,6 @@ const unavailableTicketDetailAction: LoadWorkspaceTicketDetailAction = async () 
   status: "unavailable",
   reason: "provider-temporary-failure",
   retryable: true,
-});
-
-const unavailableInternalNoteAction = async (): Promise<TicketInternalNoteActionState> => ({
-  status: "failed",
-  message: "This workspace cannot add internal notes.",
-});
-
-const unavailableCustomerReplyAction = async (): Promise<TicketCustomerReplyActionState> => ({
-  status: "failed",
-  message: "This workspace cannot send customer replies.",
 });
 
 const unavailableLinkTargetSearchAction: SearchWorkspaceTicketLinkTargetsAction =
@@ -99,8 +85,6 @@ const profileActions: WorkspaceProfileAction[] = [
 ];
 
 export function TicketWorkspace({
-  addTicketCustomerReplyAction,
-  addTicketInternalNoteAction,
   columns,
   communicationCapabilities,
   connections,
@@ -114,6 +98,8 @@ export function TicketWorkspace({
   rows,
   searchTicketLinkTargetsAction,
   savedViews,
+  initialWorkspaceOpenTabsState,
+  saveWorkspaceOpenTabsStateAction,
   selectedSavedViewId,
   selectedTicketId,
   setActiveConnectionAction,
@@ -150,12 +136,6 @@ export function TicketWorkspace({
         </>
       ) : (
         <TicketWorkspaceDisplay
-          addTicketCustomerReplyAction={
-            addTicketCustomerReplyAction ?? unavailableCustomerReplyAction
-          }
-          addTicketInternalNoteAction={
-            addTicketInternalNoteAction ?? unavailableInternalNoteAction
-          }
           actions={profileActions}
           columns={columns}
           communicationCapabilities={effectiveCommunicationCapabilities}
@@ -177,6 +157,8 @@ export function TicketWorkspace({
           savedViews={
             savedViews ?? [{ id: allTicketsSavedViewId, label: "All tickets" }]
           }
+          initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
+          saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
           selectedSavedViewId={selectedSavedViewId ?? allTicketsSavedViewId}
           selectedTicketId={selectedTicketId}
           setActiveConnectionAction={setActiveConnectionAction}

@@ -64,6 +64,49 @@ describe("ticket metadata action input", () => {
     });
   });
 
+  it("parses staged reply and comment text as provider-neutral communication", () => {
+    const result = ticketMetadataMutationActionInput({
+      communication: {
+        commentBody: "  Checked the logs.  ",
+        replyBody: "  Thanks for the report.  ",
+      },
+      ticketExternalId: "ticket-1",
+    });
+
+    expect(result).toMatchObject({
+      bodyFormat: "plain",
+      commentBody: "Checked the logs.",
+      field: "communication",
+      input: {},
+      replyBody: "Thanks for the report.",
+      status: "valid",
+      ticketExternalId: "ticket-1",
+    });
+  });
+
+  it("parses staged rich reply and comment html as provider-neutral communication", () => {
+    const result = ticketMetadataMutationActionInput({
+      communication: {
+        bodyFormat: "html",
+        commentBody:
+          ' <p><strong>Checked</strong> <script>alert(1)</script><a href="javascript:alert(1)">bad</a></p> ',
+        replyBody: '<div>See <a href="https://example.com/docs">docs</a>.</div>',
+      },
+      ticketExternalId: "ticket-1",
+    });
+
+    expect(result).toMatchObject({
+      bodyFormat: "html",
+      commentBody: "<p><strong>Checked</strong> bad</p>",
+      field: "communication",
+      input: {},
+      replyBody:
+        '<p>See <a href="https://example.com/docs" rel="noreferrer noopener" target="_blank">docs</a>.</p>',
+      status: "valid",
+      ticketExternalId: "ticket-1",
+    });
+  });
+
   it("rejects unsupported or orphan link relation values", () => {
     expect(
       ticketMetadataMutationActionInput({
@@ -168,6 +211,18 @@ describe("ticket metadata action input", () => {
         ticketExternalId: "ticket-1",
       }),
     ).toEqual({ status: "invalid", field: "state" });
+    expect(
+      ticketMetadataMutationActionInput({
+        communication: { commentBody: "" },
+        ticketExternalId: "ticket-1",
+      }),
+    ).toEqual({ status: "invalid", field: "communication" });
+    expect(
+      ticketMetadataMutationActionInput({
+        communication: { body: "raw provider shape" },
+        ticketExternalId: "ticket-1",
+      }),
+    ).toEqual({ status: "invalid", field: "communication" });
   });
 
   it("rejects raw or future metadata fields not in the provider-neutral contract", () => {

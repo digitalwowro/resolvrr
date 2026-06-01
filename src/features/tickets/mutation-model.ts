@@ -1,5 +1,6 @@
 import type { ProviderCapability } from "@/core/providers";
 import type {
+  TicketCommunicationBodyFormat,
   TicketLinkRelationKind,
   TicketMetadataMutationInput,
   TicketPriority,
@@ -8,6 +9,7 @@ import type {
 import type { TicketReadUnavailableReason } from "./read-model";
 
 export type TicketMetadataMutationField =
+  | "communication"
   | "state"
   | "priority"
   | "owner"
@@ -17,8 +19,15 @@ export type TicketMetadataMutationField =
   | "subscription";
 
 export const selectedTicketUpdatePayloadKeys = [
+  "communication",
   "metadata",
   "ticketExternalId",
+] as const;
+
+export const selectedTicketUpdateCommunicationFields = [
+  "bodyFormat",
+  "commentBody",
+  "replyBody",
 ] as const;
 
 export const selectedTicketUpdateMetadataFields = [
@@ -40,6 +49,15 @@ export type SelectedTicketUpdatePayloadKey =
 export type SelectedTicketUpdateMetadataField =
   (typeof selectedTicketUpdateMetadataFields)[number];
 
+export type SelectedTicketUpdateCommunicationField =
+  (typeof selectedTicketUpdateCommunicationFields)[number];
+
+export type SelectedTicketUpdateCommunicationPayload = {
+  bodyFormat?: TicketCommunicationBodyFormat;
+  commentBody?: string;
+  replyBody?: string;
+};
+
 export type SelectedTicketUpdateMetadataPayload = {
   groupExternalId?: string;
   linkAddExternalId?: string;
@@ -54,6 +72,7 @@ export type SelectedTicketUpdateMetadataPayload = {
 };
 
 export type SelectedTicketUpdatePayload = {
+  communication?: SelectedTicketUpdateCommunicationPayload;
   metadata?: SelectedTicketUpdateMetadataPayload;
   ticketExternalId: string;
 };

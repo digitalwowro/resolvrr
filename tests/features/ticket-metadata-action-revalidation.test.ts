@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { updateTicketMetadataAction } from "@/features/tickets/actions";
+import {
+  addWorkspaceTicketCustomerReply,
+  addWorkspaceTicketInternalNote,
+} from "@/features/tickets/communication-service";
 import { updateWorkspaceTicketMetadata } from "@/features/tickets/service";
 import { revalidatePath } from "next/cache";
 
@@ -27,7 +31,18 @@ vi.mock("@/features/tickets/service", () => ({
   updateWorkspaceTicketMetadata: vi.fn(),
 }));
 
+vi.mock("@/features/tickets/communication-service", () => ({
+  addWorkspaceTicketCustomerReply: vi.fn(),
+  addWorkspaceTicketInternalNote: vi.fn(),
+}));
+
 const mockedUpdateWorkspaceTicketMetadata = vi.mocked(updateWorkspaceTicketMetadata);
+const mockedAddWorkspaceTicketCustomerReply = vi.mocked(
+  addWorkspaceTicketCustomerReply,
+);
+const mockedAddWorkspaceTicketInternalNote = vi.mocked(
+  addWorkspaceTicketInternalNote,
+);
 const mockedRevalidatePath = vi.mocked(revalidatePath);
 
 function priorityUpdatePayload() {
@@ -105,5 +120,47 @@ describe("updateTicketMetadataAction revalidation", () => {
         state: "pending_close",
       },
     ]);
+  });
+
+  it("sends staged comment and reply bodies through the update action", async () => {
+    mockedAddWorkspaceTicketInternalNote.mockResolvedValueOnce({
+      status: "saved",
+    });
+    mockedAddWorkspaceTicketCustomerReply.mockResolvedValueOnce({
+      status: "saved",
+    });
+
+    const result = await updateTicketMetadataAction({
+      communication: {
+        bodyFormat: "html",
+        commentBody: "<p>Checked the logs.</p>",
+        replyBody: "<p>Thanks for the report.</p>",
+      },
+      ticketExternalId: "ticket-1",
+    });
+
+    expect(result).toEqual({
+      status: "saved",
+      field: "communication",
+      message: "Saved.",
+    });
+    expect(mockedUpdateWorkspaceTicketMetadata).not.toHaveBeenCalled();
+    expect(mockedAddWorkspaceTicketInternalNote).toHaveBeenCalledWith(
+      {},
+      {},
+      "0123456789abcdef0123456789abcdef",
+      "user-1",
+      "ticket-1",
+      { body: "<p>Checked the logs.</p>", bodyFormat: "html" },
+    );
+    expect(mockedAddWorkspaceTicketCustomerReply).toHaveBeenCalledWith(
+      {},
+      {},
+      "0123456789abcdef0123456789abcdef",
+      "user-1",
+      "ticket-1",
+      { body: "<p>Thanks for the report.</p>", bodyFormat: "html" },
+    );
+    expect(mockedRevalidatePath).toHaveBeenCalledWith("/workspace");
   });
 });

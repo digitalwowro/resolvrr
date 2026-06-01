@@ -127,6 +127,10 @@ describe("TicketWorkspace secondary metadata updates", () => {
     const linkDialog = screen.getByRole("dialog", { name: "Add ticket link" });
     const linkInput = within(linkDialog).getByLabelText("Search tickets");
     await waitFor(() => expect(linkInput).toHaveFocus());
+    await user.type(linkInput, "missing");
+    expect(
+      await within(linkDialog).findByText(/No matching tickets found/u),
+    ).toBeInTheDocument();
     await user.type(within(linkDialog).getByLabelText("Manual related ticket ID"), "77");
     await user.click(within(linkDialog).getByRole("button", { name: "Add link" }));
     await user.click(
@@ -163,6 +167,10 @@ describe("TicketWorkspace secondary metadata updates", () => {
     const cancelDialog = screen.getByRole("dialog", { name: "Add ticket link" });
     const cancelInput = within(cancelDialog).getByLabelText("Search tickets");
     await waitFor(() => expect(cancelInput).toHaveFocus());
+    await user.type(cancelInput, "missing");
+    expect(
+      await within(cancelDialog).findByText(/No matching tickets found/u),
+    ).toBeInTheDocument();
     await user.type(within(cancelDialog).getByLabelText("Manual related ticket ID"), "77");
     await user.click(within(cancelDialog).getByRole("button", { name: "Cancel" }));
 
@@ -174,6 +182,10 @@ describe("TicketWorkspace secondary metadata updates", () => {
     const closeDialog = screen.getByRole("dialog", { name: "Add ticket link" });
     const closeInput = within(closeDialog).getByLabelText("Search tickets");
     await waitFor(() => expect(closeInput).toHaveFocus());
+    await user.type(closeInput, "missing");
+    expect(
+      await within(closeDialog).findByText(/No matching tickets found/u),
+    ).toBeInTheDocument();
     await user.type(within(closeDialog).getByLabelText("Manual related ticket ID"), "88");
     await user.click(
       within(closeDialog).getByRole("button", {
@@ -189,6 +201,10 @@ describe("TicketWorkspace secondary metadata updates", () => {
     const escapeDialog = screen.getByRole("dialog", { name: "Add ticket link" });
     const escapeInput = within(escapeDialog).getByLabelText("Search tickets");
     await waitFor(() => expect(escapeInput).toHaveFocus());
+    await user.type(escapeInput, "missing");
+    expect(
+      await within(escapeDialog).findByText(/No matching tickets found/u),
+    ).toBeInTheDocument();
     await user.type(within(escapeDialog).getByLabelText("Manual related ticket ID"), "99");
     await user.keyboard("{Escape}");
 

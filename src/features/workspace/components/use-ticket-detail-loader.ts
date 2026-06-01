@@ -79,10 +79,12 @@ export function useTicketDetailLoader({
     }
 
     setDetailCacheState((current) => {
-      if (!force && current[ticketId]) {
+      const currentEntry = current[ticketId];
+      if (!force && currentEntry) {
         return current;
       }
-      if (force && current[ticketId]?.status === "available") {
+
+      if (force && currentEntry && currentEntry.status !== "loading") {
         return current;
       }
 
@@ -100,10 +102,16 @@ export function useTicketDetailLoader({
         }));
       })
       .catch(() => {
-        setDetailCacheState((current) => ({
-          ...current,
-          [ticketId]: clientLoadFailure,
-        }));
+        setDetailCacheState((current) => {
+          const currentEntry = current[ticketId];
+          return {
+            ...current,
+            [ticketId]:
+              force && currentEntry && currentEntry.status !== "loading"
+                ? currentEntry
+                : clientLoadFailure,
+          };
+        });
       });
   }
 

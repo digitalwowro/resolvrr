@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTableSort } from "@/components/ui";
 import type {
   WorkspaceTicketColumnKey,
@@ -15,12 +15,21 @@ import {
 } from "./ticket-table-grouping";
 import { patchTicketTabMetadata } from "./ticket-tab-metadata";
 import type { TicketTabOrientation } from "./ticket-tabs-panel";
+import {
+  initialActiveWorkspacePane,
+  initialOpenTicketTabs,
+  initialRecentTicketTabs,
+} from "./ticket-workspace-persisted-tabs";
 import type {
   ActiveWorkspacePane,
   TicketWorkspaceStateProps,
 } from "./ticket-workspace-state-types";
 import { useTicketDetailLoader } from "./use-ticket-detail-loader";
 import { replaceWorkspaceUrl } from "./workspace-url";
+import {
+  cappedWorkspaceTabs,
+  workspaceOpenTabsStateVersion,
+} from "@/features/workspace/workspace-tab-state";
 
 export function useTicketWorkspaceDisplayState({
   columns,
@@ -32,6 +41,8 @@ export function useTicketWorkspaceDisplayState({
   providerSortEnabled,
   refreshTicketDetailAfterMetadataSave,
   rows,
+  initialWorkspaceOpenTabsState,
+  saveWorkspaceOpenTabsStateAction,
   selectedTicketId,
   ticketTabs,
 }: TicketWorkspaceStateProps) {
@@ -50,27 +61,35 @@ export function useTicketWorkspaceDisplayState({
     selectedTicketId,
   });
   const [tabOrientation, setTabOrientation] =
-    useState<TicketTabOrientation>("horizontal");
-  const [activeWorkspacePane, setActiveWorkspacePane] =
-    useState<ActiveWorkspacePane>(
-      selectedTicketId ? { ticketId: selectedTicketId } : "list",
+    useState<TicketTabOrientation>(
+      initialWorkspaceOpenTabsState?.tabOrientation ?? "horizontal",
     );
   const [openTicketTabs, setOpenTicketTabs] = useState<WorkspaceTicketTab[]>(
-    () => {
-      const selectedTab = selectedTicketId
-        ? ticketTabs.find((tab) => tab.id === selectedTicketId)
-        : undefined;
-      return selectedTab ? [selectedTab] : [];
-    },
+    () =>
+      initialOpenTicketTabs({
+        detail,
+        initialWorkspaceOpenTabsState,
+        selectedTicketId,
+        ticketTabs,
+      }),
   );
   const [recentTicketTabs, setRecentTicketTabs] = useState<WorkspaceTicketTab[]>(
-    () => {
-      const selectedTab = selectedTicketId
-        ? ticketTabs.find((tab) => tab.id === selectedTicketId)
-        : undefined;
-      return selectedTab ? [selectedTab] : [];
-    },
+    () =>
+      initialRecentTicketTabs({
+        detail,
+        initialWorkspaceOpenTabsState,
+        selectedTicketId,
+        ticketTabs,
+      }),
   );
+  const [activeWorkspacePane, setActiveWorkspacePane] =
+    useState<ActiveWorkspacePane>(() =>
+      initialActiveWorkspacePane({
+        initialWorkspaceOpenTabsState,
+        openTicketTabs,
+        selectedTicketId,
+      }),
+    );
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   const [visibleColumns, setVisibleColumns] = useState(
     () => new Set(columns.map((column) => column.key)),
@@ -116,6 +135,33 @@ export function useTicketWorkspaceDisplayState({
     () => new Set<WorkspaceTicketColumnKey>(visibleColumns),
     [visibleColumns],
   );
+
+  useEffect(() => {
+    if (activeTicketId && !activeDetail) {
+      ensureTicketDetail(activeTicketId);
+    }
+  }, [activeDetail, activeTicketId, ensureTicketDetail]);
+
+  useEffect(() => {
+    if (!saveWorkspaceOpenTabsStateAction) {
+      return;
+    }
+
+    void saveWorkspaceOpenTabsStateAction({
+      activePane: activeTicketId ?? "list",
+      openTabs: cappedWorkspaceTabs(openTicketTabs),
+      recentTabs: cappedWorkspaceTabs(recentTicketTabs),
+      tabOrientation,
+      updatedAt: new Date().toISOString(),
+      version: workspaceOpenTabsStateVersion,
+    }).catch(() => undefined);
+  }, [
+    activeTicketId,
+    openTicketTabs,
+    recentTicketTabs,
+    saveWorkspaceOpenTabsStateAction,
+    tabOrientation,
+  ]);
 
   function toggleSelectAll() {
     setSelectedRowIds(
@@ -208,7 +254,8 @@ export function useTicketWorkspaceDisplayState({
   }
 
   function rememberOpenTicket(ticketId: string) {
-    const tab = ticketTabs.find((ticketTab) => ticketTab.id === ticketId);
+    const tab = ticketTabs.find((ticketTab) => ticketTab.id === ticketId) ??
+      openTicketTabs.find((ticketTab) => ticketTab.id === ticketId);
     if (!tab) {
       return;
     }

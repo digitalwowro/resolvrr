@@ -28,6 +28,14 @@ Ticket tabs are navigation for open tickets. One ticket is active at a time. Do
 not add single, split, or compare mode selectors unless that workflow is approved
 later.
 
+Open ticket tabs are long-lived user UI state. The workspace stores them under
+the active helpdesk connection in `UiPreference` as `workspace.openTabs`,
+including open tabs, recent tabs, active pane (`list` or ticket ID), tab
+orientation, and an update timestamp. This state is user-scoped and
+connection-scoped so it survives browser restarts and syncs across devices.
+The stored tab list is capped to the supported workspace limit and latest
+server write wins.
+
 Horizontal ticket tabs sit directly above the list toolbar or selected-ticket
 pane. The List tab starts the tab strip; horizontal tabs stay constrained to the
 available tab area and remain navigation-only. Vertical ticket tabs use a fixed
@@ -49,6 +57,12 @@ activation, List activation, post-update return-to-list behavior, and close-tab
 fallbacks update the address bar with `window.history.replaceState()` instead
 of App Router navigation.
 
+When a direct link opens with saved workspace tabs, the linked ticket is merged
+into the saved tab set, activated, and preserved with the user's existing open
+tabs. When no ticket query is present, the saved active pane is restored; `list`
+is a first-class persisted active state. If a saved active ticket is no longer
+available in the saved open-tab set, the workspace falls back to List.
+
 The browser URL is kept aligned with the active ticket or List view. The ticket
 detail header also exposes an icon-only copy-link control that writes the
 current ticket's direct `/workspace?ticket=ID` URL to the clipboard.
@@ -63,6 +77,14 @@ articles render provider-sanitized rich HTML and use the shared global link colo
 articles expose provider-neutral Reply when customer replies are supported. All
 articles expose provider-neutral Comment when internal notes are supported.
 Reply all is shown disabled until a provider-neutral recipient contract exists.
+Reply and Comment open inline rich-text editors only; they do not render their
+own Cancel/Send footer. The editor toolbar is scoped to basic formatting:
+bold, italic, underline, ordered list, unordered list, and link, with undo/redo
+controls in the toolbar chrome. Staged communication HTML is part of the
+selected-ticket draft and is sent by the main workspace `Update` action
+alongside metadata.
+After a successful communication update, the inline editor closes and the
+thread scrolls to the refreshed newest article.
 Article metadata prefers display names over email addresses, exposes email as
 secondary metadata when available, and only shows the expand/collapse affordance
 when recipient details exist.
@@ -96,9 +118,8 @@ ticket and the currently selected or manually staged target.
 The default relation is Normal/Related; Parent and Child are selectable only
 when the provider advertises `ticket:update-link-relations`, otherwise those
 options remain visibly unavailable. Subscription controls update the current user's
-following state. Notes and replies remain read-only or absent until their own
-provider-neutral write contracts are added. Changed controls are
-visually marked, `Discard changes`
+following state. Changed controls and staged communication body content are visually
+treated as one selected-ticket draft; `Discard changes`
 resets the selected-ticket draft to the loaded ticket values, and successful
 saves refresh the workspace after one checked mutation. The action row includes
 a persisted local browser post-Update navigation preference: keep the ticket

@@ -144,20 +144,25 @@ The approved communication write surface covers internal notes and customer
 replies:
 
 - `TicketInternalNoteInput.body: string`
-- `TicketInternalNotePayload.ticketExternalId: string`
-- `TicketInternalNotePayload.body: string`
+- `TicketInternalNoteInput.bodyFormat?: "plain" | "html"`
+- `SelectedTicketUpdatePayload.communication.bodyFormat?: "plain" | "html"`
+- `SelectedTicketUpdatePayload.communication.commentBody?: string`
 - `TicketCustomerReplyInput.body: string`
-- `TicketCustomerReplyPayload.ticketExternalId: string`
-- `TicketCustomerReplyPayload.body: string`
+- `TicketCustomerReplyInput.bodyFormat?: "plain" | "html"`
+- `SelectedTicketUpdatePayload.communication.replyBody?: string`
 
-Internal notes and customer replies use separate explicit inline article actions,
-not the staged metadata `Update` action. `Comment` creates an internal note from
-the selected article card. `Reply` creates a customer reply from a public article
-card. `Reply all` is visible but disabled until a provider-neutral recipient
-contract exists. The server actions trim and validate the ticket ID and body
-before dispatching provider-neutral communication inputs. Empty bodies,
-unsupported payload keys, and provider raw fields are rejected before provider
-dispatch.
+Internal notes and customer replies are staged in the same selected-ticket draft
+as metadata. `Comment` opens an internal-note rich editor from an article card.
+`Reply` opens a customer-reply rich editor from a public article card. Neither
+composer has its own Send action. The main workspace `Update` action submits
+metadata plus staged communication body content in one provider-neutral
+selected-ticket payload. The workspace rich editor submits sanitized HTML with
+`bodyFormat: "html"`; plain text remains the default for older/direct service
+callers. `Reply all` is visible but disabled until a provider-neutral recipient
+contract exists. The server action trims, sanitizes, and validates the ticket ID
+and staged bodies before dispatching provider-neutral communication inputs. Empty
+bodies, unsupported payload keys, and provider raw fields are rejected before
+provider dispatch.
 
 The provider-neutral communication capabilities are:
 
@@ -173,12 +178,13 @@ Communication write results distinguish write failure from refresh failure:
   refresh check failed. UI must present this as non-destructive and must not
   pretend the communication write failed.
 
-The UI does not auto-send or optimistic-render note or reply bodies. It keeps a
-local draft until the user explicitly submits, shows a pending state while
-saving, clears the draft after the provider write is confirmed (`saved` or
-`saved-refresh-failed`), and shows a non-destructive refresh warning when a
-confirmed write cannot refresh the selected ticket detail. The UI reloads the
-selected ticket detail/thread after a checked `saved` result.
+The UI does not auto-send or optimistic-render note or reply bodies. It keeps
+local communication text in the selected-ticket draft until the user clicks
+`Update`, shows the shared update pending state while saving, clears the draft
+after the provider write is confirmed (`saved` or `saved-refresh-failed`), and
+shows a non-destructive refresh warning when a confirmed write cannot refresh
+the selected ticket detail. The workspace reloads through the shared
+post-update refresh path after a checked `saved` result.
 
 Zammad internal notes and customer replies are provider-specific article writes
 under `src/providers/zammad/**`. Zammad customer replies derive the reply target
@@ -361,12 +367,11 @@ Provider-backed reads stay coordinated at the service/provider boundary:
 - Selected ticket detail/thread loading is one provider read path.
 - UI components do not fetch provider data directly.
 - UI components do not call provider code directly for mutations.
-- Staged single-ticket metadata mutations go through the ticket service/action
-  layer after one explicit `Update` submit.
-- Internal note writes go through the ticket communication service/action layer
-  after one explicit inline `Comment` submit on an article card.
-- Customer reply writes go through the ticket communication service/action layer
-  after one explicit inline `Reply` submit on a public article card.
+- Staged single-ticket metadata and communication writes go through the ticket
+  service/action layer after one explicit `Update` submit.
+- Internal note and customer reply provider dispatch still use the
+  provider-neutral communication service layer, but the workspace UI reaches
+  that layer only through the selected-ticket `Update` action.
 - Detail metadata, thread articles, tags, links, subscription, and lookup data
   must not be added as independent component-level fetches.
 

@@ -25,11 +25,11 @@ import type {
 } from "@/features/tickets/mutation-model";
 import type {
   TicketCommunicationCapabilities,
-  TicketCustomerReplyActionState,
-  TicketCustomerReplyPayload,
-  TicketInternalNoteActionState,
-  TicketInternalNotePayload,
 } from "@/features/tickets/communication-model";
+import type {
+  SaveWorkspaceOpenTabsStateAction,
+  WorkspaceOpenTabsState,
+} from "@/features/workspace/workspace-tab-state";
 import {
   type WorkspaceTicketColumn,
   type WorkspaceTicketDetail,
@@ -37,7 +37,7 @@ import {
   type WorkspaceTicketTab,
   workspaceTicketTabs,
 } from "@/features/tickets/workspace-adapter";
-import { TicketDetail } from "./ticket-detail";
+import { TicketDetail, TicketDetailLoadingShell } from "./ticket-detail";
 import { TicketListToolbar } from "./ticket-list-toolbar";
 import { TicketTable } from "./ticket-table";
 import { TicketTabsPanel } from "./ticket-tabs-panel";
@@ -76,13 +76,13 @@ type TicketWorkspaceDisplayProps = {
   rows: WorkspaceTicketRow[];
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   savedViews: WorkspaceSavedView[];
+  initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
+  saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
   selectedSavedViewId: string;
   selectedTicketId?: string;
   setActiveConnectionAction(formData: FormData): void | Promise<void>;
   tabs: WorkspaceTicketTab[];
   totalListCount?: number;
-  addTicketCustomerReplyAction(request: TicketCustomerReplyPayload): Promise<TicketCustomerReplyActionState>;
-  addTicketInternalNoteAction(request: TicketInternalNotePayload): Promise<TicketInternalNoteActionState>;
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
@@ -123,13 +123,13 @@ export function TicketWorkspaceDisplay({
   rows,
   searchTicketLinkTargetsAction,
   savedViews,
+  initialWorkspaceOpenTabsState,
+  saveWorkspaceOpenTabsStateAction,
   selectedSavedViewId,
   selectedTicketId,
   setActiveConnectionAction,
   tabs: ticketTabs,
   totalListCount,
-  addTicketCustomerReplyAction,
-  addTicketInternalNoteAction,
   updateTicketMetadataAction,
   userEmail,
 }: TicketWorkspaceDisplayProps) {
@@ -185,6 +185,8 @@ export function TicketWorkspaceDisplay({
     providerSortEnabled,
     refreshTicketDetailAfterMetadataSave,
     rows: listPager.rows,
+    initialWorkspaceOpenTabsState,
+    saveWorkspaceOpenTabsStateAction,
     selectedTicketId,
     ticketTabs: pagedTicketTabs,
   });
@@ -196,6 +198,10 @@ export function TicketWorkspaceDisplay({
   const tableGroupedRows = providerGroupedActive ? listPager.groups : groupedRows;
   const tableRows = providerGroupedActive ? listPager.rows : sortedRows;
   const recentlyViewedLinkTargets = recentTicketTabs.map(tabLinkTarget);
+  const activeTicketSummary = activeTicketId
+    ? tableRows.find((ticket) => ticket.id === activeTicketId) ??
+      openTicketTabs.find((ticket) => ticket.id === activeTicketId)
+    : undefined;
   const savedViewOptions: DropdownOption[] = savedViews.map((savedView) => ({
     value: savedView.id,
     label: savedView.disabledReason
@@ -291,8 +297,6 @@ export function TicketWorkspaceDisplay({
       <TicketDetail
         key="work-area"
         detail={activeDetail.detail}
-        addTicketCustomerReplyAction={addTicketCustomerReplyAction}
-        addTicketInternalNoteAction={addTicketInternalNoteAction}
         communicationCapabilities={communicationCapabilities}
         metadataMutationCapabilities={metadataMutationCapabilities}
         onMetadataSaved={updateOpenTicketTabMetadata}
@@ -304,7 +308,15 @@ export function TicketWorkspaceDisplay({
         updateTicketMetadataAction={updateTicketMetadataAction}
       />
     ) : activeTicketId ? (
-      <DetailLoadingState key="work-area" />
+      activeTicketSummary ? (
+        <TicketDetailLoadingShell
+          key="work-area"
+          roundedTop={tabOrientation === "vertical"}
+          ticket={activeTicketSummary}
+        />
+      ) : (
+        <DetailLoadingState key="work-area" />
+      )
     ) : (
       <EmptyDetailState key="work-area" />
     );

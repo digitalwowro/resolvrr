@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
@@ -118,11 +118,12 @@ describe("TicketWorkspace selected detail", () => {
     expect(screen.queryByRole("button", { name: /^Reply$/u })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Reply all$/u })).toBeNull();
 
-    await user.click(
-      screen.getByRole("button", { name: "Message details for Maya Patel" }),
-    );
+    const mayaDetails = screen.getByRole("button", {
+      name: "Message details for Maya Patel",
+    });
+    await user.click(mayaDetails);
 
-    expect(screen.getAllByText("From:").length).toBeGreaterThan(0);
+    expect(within(mayaDetails).getAllByText("From:")).toHaveLength(1);
     expect(screen.getByText("<maya@example.com>")).toBeInTheDocument();
     expect(screen.getByText("To:")).toBeInTheDocument();
     expect(screen.getByText("Support Team")).toBeInTheDocument();

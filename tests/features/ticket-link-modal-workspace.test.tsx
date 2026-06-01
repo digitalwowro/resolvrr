@@ -84,6 +84,15 @@ function renderWorkspace(
   );
 }
 
+async function chooseRelation(
+  user: ReturnType<typeof userEvent.setup>,
+  dialog: HTMLElement,
+  relation: "Parent" | "Child" | "Normal / Related",
+) {
+  await user.click(within(dialog).getByRole("combobox", { name: "Relationship" }));
+  await user.click(within(dialog).getByRole("option", { name: relation }));
+}
+
 describe("TicketWorkspace Add link modal", () => {
   it("searches link targets, renders context, and stages a selected parent link", async () => {
     const user = userEvent.setup();
@@ -132,7 +141,7 @@ describe("TicketWorkspace Add link modal", () => {
       query: expect.stringContaining("16004"),
     });
     await user.click(within(dialog).getByText("#16004 Open"));
-    await user.click(within(dialog).getByRole("radio", { name: /Parent/u }));
+    await chooseRelation(user, dialog, "Parent");
     await user.click(within(dialog).getByRole("button", { name: "Add link" }));
 
     expect(action).not.toHaveBeenCalled();
@@ -264,11 +273,12 @@ describe("TicketWorkspace Add link modal", () => {
     await user.click(screen.getByRole("button", { name: "Add link" }));
     const dialog = screen.getByRole("dialog", { name: "Add ticket link" });
 
-    expect(within(dialog).getByRole("radio", { name: /Normal \/ Related/u }))
-      .toBeChecked();
-    expect(within(dialog).getByRole("radio", { name: /Parent/u }))
+    expect(within(dialog).getByRole("combobox", { name: "Relationship" }))
+      .toHaveTextContent("Normal / Related");
+    await user.click(within(dialog).getByRole("combobox", { name: "Relationship" }));
+    expect(within(dialog).getByRole("option", { name: "Parent" }))
       .toBeDisabled();
-    expect(within(dialog).getByRole("radio", { name: /Child/u })).toBeDisabled();
+    expect(within(dialog).getByRole("option", { name: "Child" })).toBeDisabled();
   });
 
   it("allows manual normal link staging when provider search is unsupported", async () => {
@@ -345,7 +355,7 @@ describe("TicketWorkspace Add link modal", () => {
 
     await user.click(screen.getByRole("button", { name: "Add link" }));
     const dialog = screen.getByRole("dialog", { name: "Add ticket link" });
-    await user.click(within(dialog).getByRole("radio", { name: /Child/u }));
+    await chooseRelation(user, dialog, "Child");
     await user.type(within(dialog).getByLabelText("Search tickets"), "missing");
     expect(
       await within(dialog).findByText(/No matching tickets found/u),
@@ -360,9 +370,7 @@ describe("TicketWorkspace Add link modal", () => {
     const reopenedDialog = screen.getByRole("dialog", { name: "Add ticket link" });
 
     expect(
-      within(reopenedDialog).getByRole("radio", { name: /Normal \/ Related/u }),
-    ).toBeChecked();
-    expect(within(reopenedDialog).getByRole("radio", { name: /Child/u }))
-      .not.toBeChecked();
+      within(reopenedDialog).getByRole("combobox", { name: "Relationship" }),
+    ).toHaveTextContent("Normal / Related");
   });
 });

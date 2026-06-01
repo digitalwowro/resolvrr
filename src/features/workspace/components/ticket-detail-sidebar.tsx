@@ -6,7 +6,7 @@ export function TicketDetailSidebar({
   children: ReactNode;
 }) {
   return (
-    <aside className="w-56 shrink-0 space-y-4 overflow-y-auto border-l border-slate-200 px-3 py-3">
+    <aside className="w-56 shrink-0 space-y-4 overflow-y-auto py-4 pl-2 pr-4">
       {children}
     </aside>
   );

@@ -5,7 +5,12 @@ import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { providerRegistry } from "@/providers";
+import {
+  addWorkspaceTicketCustomerReply,
+  addWorkspaceTicketInternalNote,
+} from "./communication-service";
 import { ticketMetadataMutationActionInput } from "./metadata-action-input";
+import { hasTicketMetadataMutationInput } from "./mutation-model";
 import { updateWorkspaceTicketMetadata } from "./service";
 import type {
   SelectedTicketUpdatePayload,
@@ -52,6 +57,16 @@ function errorMessage(reason: TicketMetadataMutationErrorReason): string {
   return "The helpdesk returned an unexpected response.";
 }
 
+function communicationErrorMessage(reason: TicketMetadataMutationErrorReason): string {
+  if (reason === "invalid-input") {
+    return "Enter a reply or comment before updating.";
+  }
+  if (reason === "unsupported-capability") {
+    return "This workspace cannot add that message.";
+  }
+  return errorMessage(reason);
+}
+
 function actionStateForResult(
   field: TicketMetadataMutationField,
   result: TicketMetadataMutationResult,
@@ -75,6 +90,34 @@ function actionStateForResult(
   };
 }
 
+function communicationActionStateForResult(
+  result: TicketMetadataMutationResult,
+): TicketMetadataMutationActionState {
+  if (result.status === "saved") {
+    return { status: "saved", field: "communication", message: "Saved." };
+  }
+  if (result.status === "saved-refresh-failed") {
+    return {
+      status: "saved-refresh-failed",
+      field: "communication",
+      message:
+        "Saved, but the ticket could not be refreshed. Refresh the workspace to verify the latest value.",
+    };
+  }
+
+  return {
+    status: "failed",
+    field: "communication",
+    message: communicationErrorMessage(result.reason),
+  };
+}
+
+function metadataResultFromCommunicationResult(
+  result: Awaited<ReturnType<typeof addWorkspaceTicketInternalNote>>,
+): TicketMetadataMutationResult {
+  return result;
+}
+
 export async function updateTicketMetadataAction(
   request: SelectedTicketUpdatePayload,
 ): Promise<TicketMetadataMutationActionState> {
@@ -88,14 +131,64 @@ export async function updateTicketMetadataAction(
   }
 
   const user = await requireCurrentUser();
-  const result = await updateWorkspaceTicketMetadata(
-    prismaHelpdeskConnectionsRepository,
-    providerRegistry,
-    env.APP_ENCRYPTION_KEY,
-    user.id,
-    actionInput.ticketExternalId,
-    actionInput.input,
-  );
+  let finalResult: TicketMetadataMutationResult | undefined;
+
+  if (hasTicketMetadataMutationInput(actionInput.input)) {
+    const result = await updateWorkspaceTicketMetadata(
+      prismaHelpdeskConnectionsRepository,
+      providerRegistry,
+      env.APP_ENCRYPTION_KEY,
+      user.id,
+      actionInput.ticketExternalId,
+      actionInput.input,
+    );
+
+    if (result.status === "failed") {
+      return actionStateForResult(actionInput.field, result);
+    }
+    finalResult = result;
+  }
+
+  if (actionInput.commentBody) {
+    const result = metadataResultFromCommunicationResult(
+      await addWorkspaceTicketInternalNote(
+        prismaHelpdeskConnectionsRepository,
+        providerRegistry,
+        env.APP_ENCRYPTION_KEY,
+        user.id,
+        actionInput.ticketExternalId,
+        { body: actionInput.commentBody, bodyFormat: actionInput.bodyFormat },
+      ),
+    );
+    if (result.status === "failed") {
+      return communicationActionStateForResult(result);
+    }
+    finalResult = finalResult?.status === "saved-refresh-failed"
+      ? finalResult
+      : result;
+  }
+
+  if (actionInput.replyBody) {
+    const result = metadataResultFromCommunicationResult(
+      await addWorkspaceTicketCustomerReply(
+        prismaHelpdeskConnectionsRepository,
+        providerRegistry,
+        env.APP_ENCRYPTION_KEY,
+        user.id,
+        actionInput.ticketExternalId,
+        { body: actionInput.replyBody, bodyFormat: actionInput.bodyFormat },
+      ),
+    );
+    if (result.status === "failed") {
+      return communicationActionStateForResult(result);
+    }
+    finalResult = finalResult?.status === "saved-refresh-failed"
+      ? finalResult
+      : result;
+  }
+
+  const result =
+    finalResult ?? { status: "failed", reason: "invalid-input", retryable: false };
 
   if (result.status === "saved" || result.status === "saved-refresh-failed") {
     revalidatePath("/workspace");

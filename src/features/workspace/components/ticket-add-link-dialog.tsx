@@ -317,20 +317,22 @@ export function TicketAddLinkDialog({
               />
             </div>
           ) : null}
+        </div>
+        <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-3">
           <TicketAddLinkRelationOptions
             canEditLinkRelations={canEditLinkRelations}
             onRelationChange={setRelation}
             relation={relation}
             saving={saving}
           />
-        </div>
-        <div className="flex justify-end gap-2 border-t border-slate-200 px-4 py-3">
-          <Button disabled={saving} onClick={onClose} type="button">
-            Cancel
-          </Button>
-          <Button disabled={!canSubmit} type="submit" variant="primary">
-            Add link
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button disabled={saving} onClick={onClose} type="button">
+              Cancel
+            </Button>
+            <Button disabled={!canSubmit} type="submit" variant="primary">
+              Add link
+            </Button>
+          </div>
         </div>
       </form>
     </div>

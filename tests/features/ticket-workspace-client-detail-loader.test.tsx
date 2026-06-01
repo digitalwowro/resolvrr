@@ -67,7 +67,9 @@ describe("TicketWorkspace client detail loader", () => {
       "aria-selected",
       "true",
     );
-    expect(screen.getByText("Loading ticket thread...")).toBeInTheDocument();
+    expect(screen.getByLabelText("Ticket detail #1002")).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Loading ticket thread" }))
+      .toBeInTheDocument();
     expect(routerPush).not.toHaveBeenCalled();
     expect(replaceState).toHaveBeenLastCalledWith(
       null,

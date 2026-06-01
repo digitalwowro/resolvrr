@@ -10,7 +10,10 @@ import { selectedDetailProps } from "./ticket-workspace-test-utils";
 
 describe("selected ticket draft model", () => {
   it("keeps future editable areas behind explicit draft slices", () => {
-    expect(selectedTicketDraftEditableSlices).toEqual(["metadata"]);
+    expect(selectedTicketDraftEditableSlices).toEqual([
+      "metadata",
+      "communication",
+    ]);
   });
 
   it("stores editable ticket metadata inside a selected-ticket draft", () => {
@@ -19,6 +22,10 @@ describe("selected ticket draft model", () => {
     const draft = metadataDraftFromDetail(detail);
 
     expect(draft).toEqual({
+      communication: {
+        commentBody: "",
+        replyBody: "",
+      },
       metadata: {
         groupExternalId: "group-1",
         linkAddExternalId: "",
@@ -31,6 +38,7 @@ describe("selected ticket draft model", () => {
         },
         priority: "medium",
         state: "open",
+        subscriptionFollowing: undefined,
         tagText: "",
         tags: [],
       },
@@ -53,6 +61,7 @@ describe("selected ticket draft model", () => {
     draft.metadata.pendingDateTime = { date: "2099-01-02", time: "09:30" };
 
     expect(metadataDraftDirtyFields(baseline, draft)).toEqual({
+      communication: false,
       group: true,
       links: true,
       owner: true,
@@ -108,6 +117,45 @@ describe("selected ticket draft model", () => {
         state: "pending_reminder",
         subscriptionFollowing: true,
         tags: ["vip", "renewal"],
+      },
+      ticketExternalId: "ticket-1",
+    });
+  });
+
+  it("adds staged reply and comment text to the selected-ticket update payload", () => {
+    const baseline = metadataDraftFromDetail(selectedDetailProps().detail);
+    const draft = metadataDraftFromBaseline(baseline);
+    draft.communication.commentBody = "  Checked the logs.  ";
+    draft.communication.replyBody = "  Thanks for the report.  ";
+
+    const payload = metadataDraftUpdatePayload(baseline, draft);
+
+    expect(metadataDraftDirtyFields(baseline, draft).communication).toBe(true);
+    expect(payload).toEqual({
+      communication: {
+        bodyFormat: "html",
+        commentBody: "Checked the logs.",
+        replyBody: "Thanks for the report.",
+      },
+      ticketExternalId: "ticket-1",
+    });
+  });
+
+  it("combines staged metadata and communication text in one update payload", () => {
+    const baseline = metadataDraftFromDetail(selectedDetailProps().detail);
+    const draft = metadataDraftFromBaseline(baseline);
+    draft.metadata.priority = "high";
+    draft.communication.replyBody = "Thanks for the report.";
+
+    const payload = metadataDraftUpdatePayload(baseline, draft);
+
+    expect(payload).toEqual({
+      communication: {
+        bodyFormat: "html",
+        replyBody: "Thanks for the report.",
+      },
+      metadata: {
+        priority: "high",
       },
       ticketExternalId: "ticket-1",
     });

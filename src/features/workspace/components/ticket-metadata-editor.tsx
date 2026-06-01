@@ -13,10 +13,6 @@ import type {
 import {
   noTicketCommunicationCapabilities,
   type TicketCommunicationCapabilities,
-  type TicketCustomerReplyActionState,
-  type TicketCustomerReplyPayload,
-  type TicketInternalNoteActionState,
-  type TicketInternalNotePayload,
 } from "@/features/tickets/communication-model";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import {
@@ -27,8 +23,6 @@ import {
 import { TicketMetadataEditorState } from "./ticket-metadata-editor-state";
 
 export function TicketMetadataEditor({
-  addTicketCustomerReplyAction = unavailableCustomerReplyAction,
-  addTicketInternalNoteAction = unavailableInternalNoteAction,
   communicationCapabilities = noTicketCommunicationCapabilities,
   detail,
   header,
@@ -40,12 +34,6 @@ export function TicketMetadataEditor({
   searchTicketLinkTargetsAction = unavailableLinkTargetSearchAction,
   updateTicketMetadataAction,
 }: {
-  addTicketCustomerReplyAction?: (
-    request: TicketCustomerReplyPayload,
-  ) => Promise<TicketCustomerReplyActionState>;
-  addTicketInternalNoteAction?: (
-    request: TicketInternalNotePayload,
-  ) => Promise<TicketInternalNoteActionState>;
   communicationCapabilities?: TicketCommunicationCapabilities;
   detail: WorkspaceTicketDetail;
   header?: ReactNode;
@@ -63,8 +51,6 @@ export function TicketMetadataEditor({
 
   return (
     <TicketMetadataEditorState
-      addTicketCustomerReplyAction={addTicketCustomerReplyAction}
-      addTicketInternalNoteAction={addTicketInternalNoteAction}
       communicationCapabilities={communicationCapabilities}
       detail={detail}
       header={header}
@@ -81,23 +67,9 @@ export function TicketMetadataEditor({
   );
 }
 
-async function unavailableCustomerReplyAction(): Promise<TicketCustomerReplyActionState> {
-  return {
-    status: "failed",
-    message: "This workspace cannot send customer replies.",
-  };
-}
-
 const unavailableLinkTargetSearchAction: SearchWorkspaceTicketLinkTargetsAction =
   async () => ({
     status: "unavailable",
     reason: "unsupported-capability",
     retryable: false,
   });
-
-async function unavailableInternalNoteAction(): Promise<TicketInternalNoteActionState> {
-  return {
-    status: "failed",
-    message: "This workspace cannot add internal notes.",
-  };
-}

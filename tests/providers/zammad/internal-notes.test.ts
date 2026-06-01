@@ -64,6 +64,48 @@ describe("Zammad ticket article mutations", () => {
     );
   });
 
+  it("creates an internal html note article for rich staged comments", async () => {
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 201,
+      headers: new Headers(),
+      data: {
+        id: 77,
+        ticket_id: 42,
+        type: "note",
+        sender: "Agent",
+        internal: true,
+        body: "<p><strong>Checked</strong> the logs.</p>",
+        created_at: "2026-05-30T12:00:00.000Z",
+        attachments: [],
+      },
+    });
+
+    await zammadProviderPlugin.addTicketInternalNote?.(
+      providerContext(),
+      "42",
+      {
+        body: "  <p><strong>Checked</strong> the logs.</p>  ",
+        bodyFormat: "html",
+      },
+    );
+
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
+      "https://helpdesk.example.com/api/v1/ticket_articles",
+      expect.objectContaining({
+        body: JSON.stringify({
+          ticket_id: 42,
+          subject: "Internal note",
+          body: "<p><strong>Checked</strong> the logs.</p>",
+          content_type: "text/html",
+          type: "note",
+          internal: true,
+          sender: "Agent",
+        }),
+        method: "POST",
+      }),
+    );
+  });
+
   it("rejects invalid ticket references before provider I/O", async () => {
     await expect(
       zammadProviderPlugin.addTicketInternalNote?.(
@@ -150,6 +192,74 @@ describe("Zammad ticket article mutations", () => {
           subject: "Customer reply",
           body: "Thanks for the report.",
           content_type: "text/plain",
+          type: "email",
+          internal: false,
+          sender: "Agent",
+        }),
+        method: "POST",
+      }),
+    );
+  });
+
+  it("creates a public html email reply article for rich staged replies", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          id: 42,
+          number: "42042",
+          title: "Cannot log in",
+          customer_id: 10,
+          customer: "Maya Patel",
+          updated_at: "2026-05-24T08:30:00Z",
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          id: 10,
+          firstname: "Maya",
+          lastname: "Patel",
+          email: "maya@example.com",
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 201,
+        headers: new Headers(),
+        data: {
+          id: 78,
+          ticket_id: 42,
+          type: "email",
+          sender: "Agent",
+          internal: false,
+          to: "Maya Patel <maya@example.com>",
+          body: '<p>See <a href="https://example.com/docs">docs</a>.</p>',
+          created_at: "2026-05-30T12:00:00.000Z",
+          attachments: [],
+        },
+      });
+
+    await zammadProviderPlugin.addTicketCustomerReply?.(
+      providerContext(),
+      "42",
+      {
+        body: '  <p>See <a href="https://example.com/docs">docs</a>.</p>  ',
+        bodyFormat: "html",
+      },
+    );
+
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      3,
+      "https://helpdesk.example.com/api/v1/ticket_articles",
+      expect.objectContaining({
+        body: JSON.stringify({
+          ticket_id: 42,
+          to: "Maya Patel <maya@example.com>",
+          subject: "Customer reply",
+          body: '<p>See <a href="https://example.com/docs">docs</a>.</p>',
+          content_type: "text/html",
           type: "email",
           internal: false,
           sender: "Agent",

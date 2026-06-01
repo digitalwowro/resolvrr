@@ -3,17 +3,12 @@
 import { ChevronDown, CornerUpLeft, MessageSquarePlus, UsersRound } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/components/ui/classnames";
-import type {
-  TicketCommunicationCapabilities,
-  TicketCustomerReplyActionState,
-  TicketCustomerReplyPayload,
-  TicketInternalNoteActionState,
-  TicketInternalNotePayload,
-} from "@/features/tickets/communication-model";
+import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type {
   WorkspaceArticle,
   WorkspaceArticleContact,
 } from "@/features/tickets/workspace-adapter";
+import type { TicketCommunicationDraft } from "./metadata-draft";
 import { TicketArticleAttachments } from "./ticket-article-attachments";
 import {
   TicketInlineCommunicationComposer,
@@ -32,18 +27,13 @@ import {
 
 type TicketThreadArticleProps = {
   activeMode: InlineCommunicationMode | null;
-  addTicketCustomerReplyAction(
-    request: TicketCustomerReplyPayload,
-  ): Promise<TicketCustomerReplyActionState>;
-  addTicketInternalNoteAction(
-    request: TicketInternalNotePayload,
-  ): Promise<TicketInternalNoteActionState>;
   article: WorkspaceArticle;
+  communicationDraft: TicketCommunicationDraft;
   communicationCapabilities: TicketCommunicationCapabilities;
-  onCancelComposer(): void;
+  disabled: boolean;
+  onCommunicationDraftChange(draft: TicketCommunicationDraft): void;
+  onCloseComposer(): void;
   onOpenComposer(mode: InlineCommunicationMode): void;
-  onSaved(ticketId: string): void;
-  ticketExternalId: string;
 };
 
 function initials(name: string) {
@@ -132,14 +122,13 @@ function isPublicReplyableArticle(article: WorkspaceArticle) {
 
 export function TicketThreadArticle({
   activeMode,
-  addTicketCustomerReplyAction,
-  addTicketInternalNoteAction,
   article,
+  communicationDraft,
   communicationCapabilities,
-  onCancelComposer,
+  disabled,
+  onCommunicationDraftChange,
+  onCloseComposer,
   onOpenComposer,
-  onSaved,
-  ticketExternalId,
 }: TicketThreadArticleProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const hasRecipientDetails =
@@ -171,7 +160,6 @@ export function TicketThreadArticle({
       </div>
       {hasRecipientDetails && isExpanded ? (
         <div className="min-w-0 leading-tight">
-          <ContactLine contacts={[article.from]} label="From" />
           <ContactLine contacts={article.to} label="To" />
           <ContactLine contacts={article.cc} label="Cc" />
           <ContactLine contacts={article.bcc} label="Bcc" />
@@ -269,16 +257,26 @@ export function TicketThreadArticle({
       ) : null}
       {activeMode ? (
         <TicketInlineCommunicationComposer
-          addTicketCustomerReplyAction={addTicketCustomerReplyAction}
-          addTicketInternalNoteAction={addTicketInternalNoteAction}
           article={article}
           articleClassName={articleClass[article.direction]}
+          body={
+            activeMode === "comment"
+              ? communicationDraft.commentBody
+              : communicationDraft.replyBody
+          }
+          disabled={disabled}
           panelClassName={composerPanelClass[article.direction]}
           key={`${article.id}-${activeMode}`}
           mode={activeMode}
-          onCancel={onCancelComposer}
-          onSaved={onSaved}
-          ticketExternalId={ticketExternalId}
+          onBodyChange={(body) =>
+            onCommunicationDraftChange({
+              ...communicationDraft,
+              ...(activeMode === "comment"
+                ? { commentBody: body }
+                : { replyBody: body }),
+            })
+          }
+          onClose={onCloseComposer}
         />
       ) : null}
     </article>

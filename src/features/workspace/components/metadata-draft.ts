@@ -3,7 +3,9 @@ import type {
   TicketPriority,
   TicketState,
 } from "@/core/tickets";
+import { normalizedCommunicationBody } from "@/features/tickets/communication-body";
 import type { SelectedTicketUpdatePayload } from "@/features/tickets/mutation-model";
+import { sanitizeComposerHtml } from "@/security/sanitize-html";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import {
   isFuturePendingDateTime,
@@ -26,17 +28,27 @@ export type TicketMetadataDraft = {
   tags: string[];
 };
 
-export const selectedTicketDraftEditableSlices = ["metadata"] as const;
+export type TicketCommunicationDraft = {
+  commentBody: string;
+  replyBody: string;
+};
+
+export const selectedTicketDraftEditableSlices = [
+  "metadata",
+  "communication",
+] as const;
 
 export type SelectedTicketDraftEditableSlice =
   (typeof selectedTicketDraftEditableSlices)[number];
 
 export type SelectedTicketDraft = {
+  communication: TicketCommunicationDraft;
   metadata: TicketMetadataDraft;
   ticketExternalId: string;
 };
 
 export type TicketMetadataDraftDirtyFields = {
+  communication: boolean;
   pendingDate: boolean;
   pendingTime: boolean;
   pendingUntil: boolean;
@@ -76,6 +88,10 @@ export function metadataDraftFromDetail(
   detail: WorkspaceTicketDetail,
 ): SelectedTicketDraft {
   return {
+    communication: {
+      commentBody: "",
+      replyBody: "",
+    },
     metadata: {
       groupExternalId: detail.groupExternalId,
       linkAddExternalId: "",
@@ -99,6 +115,10 @@ export function metadataDraftFromBaseline(
   baseline: SelectedTicketDraft,
 ): SelectedTicketDraft {
   return {
+    communication: {
+      commentBody: baseline.communication.commentBody,
+      replyBody: baseline.communication.replyBody,
+    },
     metadata: {
       groupExternalId: baseline.metadata.groupExternalId,
       linkAddExternalId: baseline.metadata.linkAddExternalId,
@@ -119,6 +139,8 @@ export function metadataDraftFromBaseline(
 export function metadataDraftKey(draft: SelectedTicketDraft): string {
   return [
     draft.ticketExternalId,
+    draft.communication.commentBody,
+    draft.communication.replyBody,
     draft.metadata.ownerExternalId ?? "",
     draft.metadata.groupExternalId ?? "",
     draft.metadata.tags.join(","),
@@ -152,6 +174,9 @@ export function metadataDraftDirtyFields(
   const subscription =
     draft.metadata.subscriptionFollowing !==
     baseline.metadata.subscriptionFollowing;
+  const communication =
+    Boolean(normalizedCommunicationBody(draft.communication.commentBody)) ||
+    Boolean(normalizedCommunicationBody(draft.communication.replyBody));
   const pendingUntil =
     isPendingState(draft.metadata.state) &&
     normalizedPendingIso(draft.metadata.pendingDateTime) !==
@@ -160,6 +185,7 @@ export function metadataDraftDirtyFields(
     isPendingState(draft.metadata.state) && (state || pendingUntil);
 
   return {
+    communication,
     pendingDate: pendingInputChanged,
     pendingTime: pendingInputChanged,
     pendingUntil,
@@ -180,6 +206,10 @@ function sameStringList(left: string[], right: string[]): boolean {
   );
 }
 
+function normalizedDraftCommunicationBody(body: string): string {
+  return normalizedCommunicationBody(sanitizeComposerHtml(body));
+}
+
 export function metadataDraftHasChanges(
   dirtyFields: TicketMetadataDraftDirtyFields,
 ): boolean {
@@ -191,7 +221,8 @@ export function metadataDraftHasChanges(
     dirtyFields.group ||
     dirtyFields.tags ||
     dirtyFields.links ||
-    dirtyFields.subscription
+    dirtyFields.subscription ||
+    dirtyFields.communication
   );
 }
 
@@ -230,6 +261,10 @@ export function metadataDraftSubmittedBaseline(
   draft: SelectedTicketDraft,
 ): SelectedTicketDraft {
   return {
+    communication: {
+      commentBody: "",
+      replyBody: "",
+    },
     metadata: {
       ...draft.metadata,
       linkAddExternalId: "",
@@ -252,6 +287,8 @@ export function metadataDraftUpdatePayload(
   }
 
   const metadata: NonNullable<SelectedTicketUpdatePayload["metadata"]> = {};
+  const communication: NonNullable<SelectedTicketUpdatePayload["communication"]> =
+    {};
   if (dirtyFields.state || dirtyFields.pendingUntil) {
     if (!draft.metadata.state) {
       return undefined;
@@ -301,9 +338,23 @@ export function metadataDraftUpdatePayload(
     }
     metadata.subscriptionFollowing = draft.metadata.subscriptionFollowing;
   }
+  if (dirtyFields.communication) {
+    const commentBody = normalizedDraftCommunicationBody(
+      draft.communication.commentBody,
+    );
+    const replyBody = normalizedDraftCommunicationBody(draft.communication.replyBody);
+    communication.bodyFormat = "html";
+    if (commentBody) {
+      communication.commentBody = commentBody;
+    }
+    if (replyBody) {
+      communication.replyBody = replyBody;
+    }
+  }
 
   return {
-    metadata,
+    ...(Object.keys(communication).length > 0 ? { communication } : {}),
+    ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
     ticketExternalId: draft.ticketExternalId,
   };
 }
