@@ -59,6 +59,14 @@ export function TicketAddLinkDialog({
     useState<WorkspaceTicketLinkTarget | undefined>();
   const trimmedManualTicketId = manualTicketId.trim();
   const canSubmit = Boolean(selectedTarget || trimmedManualTicketId) && !saving;
+  const trimmedQuery = query.trim();
+  const showManualTicketId =
+    Boolean(initialTicketId) ||
+    searchResult.status === "unavailable" ||
+    (searchResult.status === "available" &&
+      Boolean(trimmedQuery) &&
+      !searching &&
+      searchResult.targets.length === 0);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => inputRef.current?.focus(), 0);
@@ -77,6 +85,7 @@ export function TicketAddLinkDialog({
 
     const sequence = searchSequenceRef.current + 1;
     searchSequenceRef.current = sequence;
+    setSearchResult({ status: "available", targets: [] });
     setSearching(true);
     void searchTicketLinkTargetsAction({
       excludeTicketExternalId: currentTicketExternalId,
@@ -192,25 +201,27 @@ export function TicketAddLinkDialog({
               selectedTarget={selectedTarget}
             />
           </section>
-          <div className="space-y-2">
-            <label
-              className="block text-xs font-semibold text-slate-700"
-              htmlFor={`${titleId}-manual-ticket-id`}
-            >
-              Manual related ticket ID
-            </label>
-            <input
-              className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              disabled={saving}
-              id={`${titleId}-manual-ticket-id`}
-              onChange={(event) => {
-                setManualTicketId(event.currentTarget.value);
-                setSelectedTarget(undefined);
-              }}
-              placeholder="Related ticket ID"
-              value={manualTicketId}
-            />
-          </div>
+          {showManualTicketId ? (
+            <div className="space-y-2">
+              <label
+                className="block text-xs font-semibold text-slate-700"
+                htmlFor={`${titleId}-manual-ticket-id`}
+              >
+                Manual related ticket ID
+              </label>
+              <input
+                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                disabled={saving}
+                id={`${titleId}-manual-ticket-id`}
+                onChange={(event) => {
+                  setManualTicketId(event.currentTarget.value);
+                  setSelectedTarget(undefined);
+                }}
+                placeholder="Related ticket ID"
+                value={manualTicketId}
+              />
+            </div>
+          ) : null}
           <TicketAddLinkRelationOptions
             canEditLinkRelations={canEditLinkRelations}
             onRelationChange={setRelation}

@@ -102,6 +102,8 @@ describe("TicketWorkspace Add link modal", () => {
     await user.click(screen.getByRole("button", { name: "Add link" }));
     const dialog = screen.getByRole("dialog", { name: "Add ticket link" });
     expect(within(dialog).queryByText("#16004 Open")).not.toBeInTheDocument();
+    expect(within(dialog).queryByLabelText("Manual related ticket ID"))
+      .not.toBeInTheDocument();
     expect(searchAction).not.toHaveBeenCalled();
 
     await user.type(within(dialog).getByLabelText("Search tickets"), "16004");
@@ -109,6 +111,8 @@ describe("TicketWorkspace Add link modal", () => {
     expect(await within(dialog).findByText("#16004 Open")).toBeInTheDocument();
     expect(within(dialog).getByText("Test Customer · Open · Medium"))
       .toBeInTheDocument();
+    expect(within(dialog).queryByLabelText("Manual related ticket ID"))
+      .not.toBeInTheDocument();
     expect(searchAction).toHaveBeenCalledWith({
       excludeTicketExternalId: "ticket-1",
       query: expect.stringContaining("16004"),
@@ -161,9 +165,43 @@ describe("TicketWorkspace Add link modal", () => {
 
     await user.click(screen.getByRole("button", { name: "Add link" }));
     const dialog = screen.getByRole("dialog", { name: "Add ticket link" });
+    expect(within(dialog).queryByLabelText("Manual related ticket ID"))
+      .not.toBeInTheDocument();
     await user.type(within(dialog).getByLabelText("Search tickets"), "16004");
     expect(
       await within(dialog).findByText(/Search is unavailable for this workspace/u),
+    ).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText("Manual related ticket ID"), "77");
+    await user.click(within(dialog).getByRole("button", { name: "Add link" }));
+    await user.click(screen.getByRole("button", { name: "Update" }));
+
+    await waitFor(() => expect(action).toHaveBeenCalledOnce());
+    expect(action.mock.calls[0]?.[0]).toMatchObject({
+      metadata: {
+        linkAddExternalId: "77",
+        linkAddRelation: "related",
+      },
+    });
+  });
+
+  it("shows manual normal link fallback when search has no matches", async () => {
+    const user = userEvent.setup();
+    const action = vi.fn<MutationAction>(async () => ({
+      status: "saved" as const,
+      field: "links" as const,
+      message: "Saved.",
+    }));
+    renderWorkspace(action);
+
+    await user.click(screen.getByRole("button", { name: "Add link" }));
+    const dialog = screen.getByRole("dialog", { name: "Add ticket link" });
+    expect(within(dialog).queryByLabelText("Manual related ticket ID"))
+      .not.toBeInTheDocument();
+
+    await user.type(within(dialog).getByLabelText("Search tickets"), "missing");
+
+    expect(
+      await within(dialog).findByText(/No matching tickets found/u),
     ).toBeInTheDocument();
     await user.type(within(dialog).getByLabelText("Manual related ticket ID"), "77");
     await user.click(within(dialog).getByRole("button", { name: "Add link" }));
@@ -185,6 +223,10 @@ describe("TicketWorkspace Add link modal", () => {
     await user.click(screen.getByRole("button", { name: "Add link" }));
     const dialog = screen.getByRole("dialog", { name: "Add ticket link" });
     await user.click(within(dialog).getByRole("radio", { name: /Child/u }));
+    await user.type(within(dialog).getByLabelText("Search tickets"), "missing");
+    expect(
+      await within(dialog).findByText(/No matching tickets found/u),
+    ).toBeInTheDocument();
     await user.type(within(dialog).getByLabelText("Manual related ticket ID"), "77");
     await user.click(within(dialog).getByRole("button", { name: "Add link" }));
 
