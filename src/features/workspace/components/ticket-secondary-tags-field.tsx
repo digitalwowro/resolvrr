@@ -3,6 +3,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useId,
   type KeyboardEvent,
   type MouseEvent,
 } from "react";
@@ -53,6 +54,10 @@ function tagSuggestionLabels(
 
   const selected = new Set(selectedTags.map(normalizedTag));
   const normalizedQuery = normalizedTag(query);
+  if (!normalizedQuery) {
+    return [];
+  }
+
   return tagLookup.options
     .map((option) => option.label.trim())
     .filter((label) => {
@@ -60,7 +65,7 @@ function tagSuggestionLabels(
       return (
         normalizedLabel &&
         !selected.has(normalizedLabel) &&
-        (!normalizedQuery || normalizedLabel.includes(normalizedQuery))
+        normalizedLabel.includes(normalizedQuery)
       );
     })
     .sort((left, right) => left.localeCompare(right));
@@ -81,6 +86,7 @@ export function TicketSecondaryTagsField({
   onDraftChange(nextDraft: SelectedTicketDraft): void;
   saving: boolean;
 }) {
+  const suggestionsId = useId();
   const tagInputRef = useRef<HTMLInputElement>(null);
   const [pendingTagText, setPendingTagText] = useState("");
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
@@ -183,6 +189,8 @@ export function TicketSecondaryTagsField({
         {canEditTags ? (
           <input
             aria-label="Add tag"
+            aria-autocomplete="list"
+            aria-controls={suggestionsId}
             aria-expanded={showSuggestions}
             aria-haspopup="listbox"
             className={cn(
@@ -199,6 +207,7 @@ export function TicketSecondaryTagsField({
             onKeyDown={handlePendingTagKeyDown}
             placeholder={draft.metadata.tags.length > 0 ? "" : "Add tag"}
             ref={tagInputRef}
+            role="combobox"
             value={pendingTagText}
           />
         ) : null}
@@ -206,6 +215,7 @@ export function TicketSecondaryTagsField({
       {showSuggestions ? (
         <div
           className="absolute inset-x-0 top-full z-40 mt-1 max-h-52 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-md"
+          id={suggestionsId}
           role="listbox"
         >
           {suggestions.map((tag) => (
@@ -216,6 +226,7 @@ export function TicketSecondaryTagsField({
                 event.preventDefault();
                 addTag(tag);
               }}
+              aria-selected="false"
               role="option"
               type="button"
             >

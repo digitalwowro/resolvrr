@@ -104,6 +104,7 @@ describe("TicketWorkspace secondary metadata updates", () => {
 
     await user.click(subscriptionToggle as HTMLLabelElement);
     await user.click(screen.getByLabelText("Add tag"));
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     await user.type(screen.getByLabelText("Add tag"), "h");
     expect(screen.getByRole("option", { name: "channel-operations" }))
       .toBeInTheDocument();
