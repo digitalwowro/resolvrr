@@ -80,6 +80,25 @@ export type TicketLink = {
   providerUrl?: string;
 };
 
+export const ticketLinkRelationKinds = ["related", "parent", "child"] as const;
+
+export type TicketLinkRelationKind = (typeof ticketLinkRelationKinds)[number];
+
+export type TicketLinkTargetSearchInput = {
+  excludeTicketExternalId?: TicketExternalId;
+  limit?: number;
+  query: string;
+};
+
+export type TicketLinkTarget = {
+  customer?: string;
+  externalId: TicketExternalId;
+  number: string;
+  priority?: TicketPriority;
+  state?: TicketState;
+  title: string;
+};
+
 export type TicketSubscription = {
   externalId?: string;
   supported: boolean;
@@ -164,6 +183,7 @@ export type TicketDetail = {
 export type TicketMetadataMutationInput = {
   groupExternalId?: string;
   linkAddExternalId?: string;
+  linkAddRelation?: TicketLinkRelationKind;
   linkRemoveExternalIds?: string[];
   ownerExternalId?: string;
   subscriptionFollowing?: boolean;

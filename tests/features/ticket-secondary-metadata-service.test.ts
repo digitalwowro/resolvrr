@@ -116,6 +116,7 @@ describe("ticket secondary metadata mutation service", () => {
       "ticket-1",
       {
         linkAddExternalId: "77",
+        linkAddRelation: "related",
         linkRemoveExternalIds: ["88"],
         subscriptionFollowing: true,
         tags: ["vip", "renewal"],
@@ -128,6 +129,7 @@ describe("ticket secondary metadata mutation service", () => {
       "ticket-1",
       {
         linkAddExternalId: "77",
+        linkAddRelation: "related",
         linkRemoveExternalIds: ["88"],
         subscriptionFollowing: true,
         tags: ["vip", "renewal"],
@@ -157,6 +159,34 @@ describe("ticket secondary metadata mutation service", () => {
       {
         subscriptionFollowing: true,
         tags: ["vip"],
+      },
+    );
+
+    expect(result).toEqual({
+      status: "failed",
+      reason: "unsupported-capability",
+      retryable: false,
+    });
+    expect(updateTicketMetadata).not.toHaveBeenCalled();
+  });
+
+  it("rejects parent and child link writes without relation capability", async () => {
+    const updateTicketMetadata = vi.fn().mockResolvedValue(undefined);
+
+    const result = await updateWorkspaceTicketMetadata(
+      repository(),
+      createProviderRegistry([
+        provider({
+          capabilities: ["ticket:list", "ticket:detail", "ticket:update-links"],
+          updateTicketMetadata,
+        }),
+      ]),
+      encryptionKey,
+      "user-1",
+      "ticket-1",
+      {
+        linkAddExternalId: "77",
+        linkAddRelation: "parent",
       },
     );
 

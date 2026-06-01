@@ -4,6 +4,7 @@ import { createProviderRegistry } from "@/providers";
 import {
   loadWorkspaceTicketDetail,
   loadWorkspaceTicketList,
+  searchWorkspaceTicketLinkTargets,
 } from "@/features/tickets";
 import {
   connection,
@@ -137,6 +138,47 @@ describe("ticket read service", () => {
     expect(result).toMatchObject({
       status: "unavailable",
       reason: "unsupported-capability",
+    });
+  });
+
+  it("maps link target lookup capability and provider failures to unavailable states", async () => {
+    const unsupported = await searchWorkspaceTicketLinkTargets(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([provider({ capabilities: ["ticket:list"] })]),
+      encryptionKey,
+      "user-1",
+      { query: "16004" },
+    );
+    const denied = await searchWorkspaceTicketLinkTargets(
+      repository({
+        activeConnectionId: "connection-1",
+        connection: connection(),
+      }),
+      createProviderRegistry([
+        provider({
+          capabilities: ["lookup:link-targets"],
+          searchLinkTargets: async () => {
+            throw new ProviderError("permission-denied", "denied");
+          },
+        }),
+      ]),
+      encryptionKey,
+      "user-1",
+      { query: "16004" },
+    );
+
+    expect(unsupported).toMatchObject({
+      status: "unavailable",
+      reason: "unsupported-capability",
+      retryable: false,
+    });
+    expect(denied).toMatchObject({
+      status: "unavailable",
+      reason: "provider-permission-denied",
+      retryable: false,
     });
   });
 

@@ -4,6 +4,9 @@ export type {
   TicketCustomerReplyInput,
   TicketDetail,
   TicketInternalNoteInput,
+  TicketLinkRelationKind,
+  TicketLinkTarget,
+  TicketLinkTargetSearchInput,
   TicketListItem,
   TicketMetadataMutationInput,
   TicketPriority,
@@ -16,6 +19,7 @@ export {
 export {
   loadWorkspaceTicketDetail,
   loadWorkspaceTicketList,
+  searchWorkspaceTicketLinkTargets,
   updateWorkspaceTicketMetadata,
 } from "./service";
 export {
@@ -42,6 +46,12 @@ export {
   type LoadWorkspaceTicketListPageAction,
   type WorkspaceTicketListPageLoadResult,
 } from "./list-page-action-result";
+export {
+  type SearchWorkspaceTicketLinkTargetsAction,
+  type WorkspaceTicketLinkTarget,
+  type WorkspaceTicketLinkTargetSearchRequest,
+  type WorkspaceTicketLinkTargetSearchResult,
+} from "./link-target-search-action-result";
 export {
   noTicketMetadataMutationCapabilities,
   ticketMetadataMutationCapabilities,

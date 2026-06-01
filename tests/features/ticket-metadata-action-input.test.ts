@@ -42,6 +42,7 @@ describe("ticket metadata action input", () => {
     const result = ticketMetadataMutationActionInput({
       metadata: {
         linkAddExternalId: "#77",
+        linkAddRelation: "child",
         linkRemoveExternalIds: ["#88", "99"],
         subscriptionFollowing: true,
         tags: ["vip", " renewal ", "vip"],
@@ -53,6 +54,7 @@ describe("ticket metadata action input", () => {
       field: "tags",
       input: {
         linkAddExternalId: "77",
+        linkAddRelation: "child",
         linkRemoveExternalIds: ["88", "99"],
         subscriptionFollowing: true,
         tags: ["vip", "renewal"],
@@ -60,6 +62,22 @@ describe("ticket metadata action input", () => {
       status: "valid",
       ticketExternalId: "ticket-1",
     });
+  });
+
+  it("rejects unsupported or orphan link relation values", () => {
+    expect(
+      ticketMetadataMutationActionInput({
+        metadata: { linkAddExternalId: "77", linkAddRelation: "sibling" },
+        ticketExternalId: "ticket-1",
+      }),
+    ).toEqual({ status: "invalid", field: "links" });
+
+    expect(
+      ticketMetadataMutationActionInput({
+        metadata: { linkAddRelation: "parent" },
+        ticketExternalId: "ticket-1",
+      }),
+    ).toEqual({ status: "invalid", field: "links" });
   });
 
   it("rejects orphan pendingUntil without a pending state", () => {

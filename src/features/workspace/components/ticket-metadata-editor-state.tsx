@@ -7,6 +7,7 @@ import type {
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
 } from "@/features/tickets/mutation-model";
+import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
 import type {
   TicketCommunicationCapabilities,
   TicketCustomerReplyActionState,
@@ -72,6 +73,7 @@ export function TicketMetadataEditorState({
   onMetadataSaved,
   onMetadataSavedDetailRefresh,
   onReturnToListAfterUpdate,
+  searchTicketLinkTargetsAction,
   updateTicketMetadataAction,
 }: {
   addTicketCustomerReplyAction(
@@ -88,6 +90,7 @@ export function TicketMetadataEditorState({
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
   onMetadataSavedDetailRefresh?: (ticketId: string) => void;
   onReturnToListAfterUpdate(): void;
+  searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
@@ -209,6 +212,7 @@ export function TicketMetadataEditorState({
         draft={draft}
         metadataMutationCapabilities={metadataMutationCapabilities}
         onDraftChange={changeDraft}
+        searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
         saving={saving}
       />
       {hasChanges && validation.message ? (

@@ -2,6 +2,7 @@ import { Link2, RotateCcw, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { cn } from "@/components/ui/classnames";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
+import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
 import { TicketAddLinkDialog } from "./ticket-add-link-dialog";
 import type {
   SelectedTicketDraft,
@@ -38,18 +39,22 @@ function linkLabelParts(label: string) {
 }
 
 export function TicketSecondaryLinksField({
+  canEditLinkRelations,
   canEditLinks,
   detail,
   dirtyFields,
   draft,
   onDraftChange,
+  searchTicketLinkTargetsAction,
   saving,
 }: {
+  canEditLinkRelations: boolean;
   canEditLinks: boolean;
   detail: WorkspaceTicketDetail;
   dirtyFields: TicketMetadataDraftDirtyFields;
   draft: SelectedTicketDraft;
   onDraftChange(nextDraft: SelectedTicketDraft): void;
+  searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   saving: boolean;
 }) {
   const addLinkButtonRef = useRef<HTMLButtonElement>(null);
@@ -90,6 +95,9 @@ export function TicketSecondaryLinksField({
               <span className="font-semibold text-slate-900">Pending link </span>
               <span className="text-slate-600">
                 #{draft.metadata.linkAddExternalId}
+                {draft.metadata.linkAddRelation !== "related"
+                  ? ` · ${directionLabel(draft.metadata.linkAddRelation)}`
+                  : ""}
               </span>
             </span>
             <button
@@ -185,18 +193,23 @@ export function TicketSecondaryLinksField({
       </div>
       {addLinkDialogOpen ? (
         <TicketAddLinkDialog
+          canEditLinkRelations={canEditLinkRelations}
+          currentTicketExternalId={detail.id}
           initialTicketId={draft.metadata.linkAddExternalId}
-          onAdd={(ticketId) => {
+          initialRelation={draft.metadata.linkAddRelation}
+          onAdd={({ relation, ticketId }) => {
             onDraftChange({
               ...draft,
               metadata: {
                 ...draft.metadata,
                 linkAddExternalId: ticketId,
+                linkAddRelation: relation,
               },
             });
             closeAddLinkDialog();
           }}
           onClose={closeAddLinkDialog}
+          searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
           saving={saving}
         />
       ) : null}

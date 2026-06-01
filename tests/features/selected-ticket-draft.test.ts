@@ -22,6 +22,7 @@ describe("selected ticket draft model", () => {
       metadata: {
         groupExternalId: "group-1",
         linkAddExternalId: "",
+        linkAddRelation: "related",
         linkRemoveExternalIds: [],
         ownerExternalId: "agent-1",
         pendingDateTime: {
@@ -47,6 +48,7 @@ describe("selected ticket draft model", () => {
     draft.metadata.tagText = "vip, renewal";
     draft.metadata.tags = ["vip", "renewal"];
     draft.metadata.linkAddExternalId = "ticket-2";
+    draft.metadata.linkAddRelation = "parent";
     draft.metadata.subscriptionFollowing = true;
     draft.metadata.pendingDateTime = { date: "2099-01-02", time: "09:30" };
 
@@ -89,6 +91,7 @@ describe("selected ticket draft model", () => {
     draft.metadata.tagText = "vip, renewal";
     draft.metadata.tags = ["vip", "renewal"];
     draft.metadata.linkAddExternalId = "ticket-2";
+    draft.metadata.linkAddRelation = "parent";
     draft.metadata.subscriptionFollowing = true;
     draft.metadata.pendingDateTime = { date: "2099-01-02", time: "09:30" };
 
@@ -98,6 +101,7 @@ describe("selected ticket draft model", () => {
       metadata: {
         groupExternalId: "group-2",
         linkAddExternalId: "ticket-2",
+        linkAddRelation: "parent",
         ownerExternalId: "agent-2",
         pendingUntil: new Date("2099-01-02T09:30").toISOString(),
         priority: "high",

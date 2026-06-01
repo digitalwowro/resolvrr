@@ -80,13 +80,18 @@ provider can supply them. The tag suggestion menu stays hidden on focus and only
 shows suggestions that contain the typed query after the agent enters text;
 unsupported or unavailable suggestions do not disable freeform tag editing.
 Link controls render linked-ticket rows with remove controls and an `Add link`
-entry that opens a focused modal for staging one normal/related ticket link by
-ID. The modal does not search provider tickets, does not fetch recent tickets,
-and does not expose parent/child relation choices until the mutation contract can
-persist those choices. Old link modal parity requires provider-neutral ticket
-search plus relation-kind mutation support. Subscription controls update the
-current user's following state. Notes and replies remain read-only or absent
-until their own provider-neutral write contracts are added. Changed controls are
+entry that opens a focused modal for staging one ticket link. The modal keeps
+provider writes staged until the workspace `Update` action, shows no arbitrary
+provider results for an empty search, and searches provider-neutral link targets
+only when the active provider advertises `lookup:link-targets`. Search results
+show ticket number, title, customer, state, and priority when available. If
+search is unavailable, the modal keeps the manual related-ticket ID fallback.
+The default relation is Normal/Related; Parent and Child are selectable only
+when the provider advertises `ticket:update-link-relations`, otherwise those
+options remain visibly unavailable. The modal does not fetch from-this-customer
+or recently-viewed candidates. Subscription controls update the current user's
+following state. Notes and replies remain read-only or absent until their own
+provider-neutral write contracts are added. Changed controls are
 visually marked, `Discard changes`
 resets the selected-ticket draft to the loaded ticket values, and successful
 saves refresh the workspace after one checked mutation. The action row includes

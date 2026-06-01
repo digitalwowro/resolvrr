@@ -1,6 +1,8 @@
 import {
+  ticketLinkRelationKinds,
   ticketPriorities,
   ticketStates,
+  type TicketLinkRelationKind,
   type TicketMetadataMutationInput,
   type TicketPriority,
   type TicketState,
@@ -69,6 +71,10 @@ function isTicketState(value: string): value is TicketState {
 
 function isTicketPriority(value: string): value is TicketPriority {
   return ticketPriorities.includes(value as TicketPriority);
+}
+
+function isTicketLinkRelationKind(value: string): value is TicketLinkRelationKind {
+  return ticketLinkRelationKinds.includes(value as TicketLinkRelationKind);
 }
 
 function isPendingState(state: TicketState | undefined): boolean {
@@ -143,6 +149,7 @@ export function ticketMetadataMutationActionInput(
     /^#/u,
     "",
   );
+  const linkAddRelation = textValue(metadata, "linkAddRelation");
   const linkRemoveExternalIds = stringArrayValue(metadata, "linkRemoveExternalIds");
   const ownerExternalId = textValue(metadata, "ownerExternalId");
   const stateValue = textValue(metadata, "state");
@@ -183,6 +190,15 @@ export function ticketMetadataMutationActionInput(
   if (linkAddExternalId) {
     input.linkAddExternalId = linkAddExternalId;
     field = field ?? "links";
+  }
+  if (hasOwnValue(metadata, "linkAddRelation")) {
+    if (!linkAddExternalId || !isTicketLinkRelationKind(linkAddRelation)) {
+      return { status: "invalid", field: "links" };
+    }
+    input.linkAddRelation = linkAddRelation;
+    field = field ?? "links";
+  } else if (linkAddExternalId) {
+    input.linkAddRelation = "related";
   }
 
   if (hasOwnValue(metadata, "linkRemoveExternalIds")) {
