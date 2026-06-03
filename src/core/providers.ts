@@ -1,4 +1,8 @@
 import type { HelpdeskConnection } from "./helpdesk-connections";
+import type {
+  HelpdeskNotification,
+  HelpdeskNotificationMarkReadInput,
+} from "./notifications";
 import type { TicketLookupOption } from "./ticket-lookups";
 import type {
   TicketCustomerReplyInput,
@@ -54,6 +58,8 @@ export type ProviderCapability =
   | "lookup:assignable-users"
   | "lookup:groups"
   | "lookup:tags"
+  | "notifications:list"
+  | "notifications:mark-read"
   | "search:full-text";
 
 export type ProviderErrorKind =
@@ -159,4 +165,9 @@ export type HelpdeskProviderPlugin = {
     context: ProviderContext,
     input: TicketLinkTargetSearchInput,
   ): Promise<TicketLinkTarget[]>;
+  listNotifications?(context: ProviderContext): Promise<HelpdeskNotification[]>;
+  markNotificationsRead?(
+    context: ProviderContext,
+    input: HelpdeskNotificationMarkReadInput,
+  ): Promise<void>;
 };

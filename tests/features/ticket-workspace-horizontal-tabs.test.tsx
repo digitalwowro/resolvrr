@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -29,6 +29,45 @@ vi.mock("next/navigation", () => ({
     refresh: vi.fn(),
   }),
 }));
+
+const thirdRow = {
+  ...row,
+  id: "ticket-3",
+  number: "#1003",
+  title: "Billing problem",
+  customer: "Riley Stone",
+} satisfies typeof row;
+
+function domRect({
+  height,
+  left,
+  top,
+  width,
+}: {
+  height: number;
+  left: number;
+  top: number;
+  width: number;
+}): DOMRect {
+  return {
+    bottom: top + height,
+    height,
+    left,
+    right: left + width,
+    toJSON: () => ({}),
+    top,
+    width,
+    x: left,
+    y: top,
+  } as DOMRect;
+}
+
+function mockElementRect(element: Element | null, rect: DOMRect) {
+  if (!(element instanceof HTMLElement)) {
+    throw new Error("Expected an HTMLElement to mock a tab rect.");
+  }
+  vi.spyOn(element, "getBoundingClientRect").mockReturnValue(rect);
+}
 
 describe("TicketWorkspace horizontal tabs", () => {
   beforeEach(() => {
@@ -265,6 +304,189 @@ describe("TicketWorkspace horizontal tabs", () => {
         }),
       ),
     );
+  });
+
+  it("reorders horizontal ticket tabs with drag and persists the new order", async () => {
+    const saveWorkspaceOpenTabsStateAction = vi.fn<
+      SaveWorkspaceOpenTabsStateAction
+    >(async () => undefined);
+    const loadTicketDetailAction = vi.fn(
+      () => new Promise<WorkspaceTicketDetailLoadResult>(() => undefined),
+    );
+    const detailProps = selectedDetailProps();
+    const initialWorkspaceOpenTabsState = {
+      activePane: "ticket-1",
+      openTabs: [row, highRow],
+      recentTabs: [],
+      tabOrientation: "horizontal",
+      updatedAt: "2026-06-02T00:00:00.000Z",
+      version: workspaceOpenTabsStateVersion,
+    } satisfies WorkspaceOpenTabsState;
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={detailProps.detail}
+        detailResult={detailProps.detailResult}
+        initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
+        listResult={availableList}
+        loadTicketDetailAction={loadTicketDetailAction}
+        logoutAction={noopAction}
+        rows={[row, highRow]}
+        saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
+        selectedTicketId="ticket-1"
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(saveWorkspaceOpenTabsStateAction).toHaveBeenCalled(),
+    );
+    saveWorkspaceOpenTabsStateAction.mockClear();
+
+    const firstTab = screen.getByRole("tab", { name: /#1001/u });
+    const secondTab = screen.getByRole("tab", { name: /#1002/u });
+    mockElementRect(
+      firstTab.parentElement,
+      domRect({ height: 36, left: 100, top: 0, width: 100 }),
+    );
+    mockElementRect(
+      secondTab.parentElement,
+      domRect({ height: 36, left: 208, top: 0, width: 100 }),
+    );
+
+    fireEvent.pointerDown(firstTab, {
+      button: 0,
+      clientX: 150,
+      clientY: 18,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(firstTab.parentElement as HTMLElement, {
+      clientX: 280,
+      clientY: 18,
+      pointerId: 1,
+    });
+    fireEvent.pointerUp(firstTab.parentElement as HTMLElement, {
+      clientX: 280,
+      clientY: 18,
+      pointerId: 1,
+    });
+
+    await waitFor(() =>
+      expect(screen.getAllByRole("tab")[1]).toHaveTextContent("#1002"),
+    );
+    expect(screen.getAllByRole("tab")[2]).toHaveTextContent("#1001");
+    expect(screen.getByLabelText("Ticket detail #1001")).toBeInTheDocument();
+    expect(loadTicketDetailAction).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(saveWorkspaceOpenTabsStateAction).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          activePane: "ticket-1",
+          openTabs: [
+            expect.objectContaining({ id: "ticket-2" }),
+            expect.objectContaining({ id: "ticket-1" }),
+          ],
+        }),
+      ),
+    );
+  });
+
+  it("supports keyboard tab reordering while keeping List fixed", async () => {
+    const user = userEvent.setup();
+    const initialWorkspaceOpenTabsState = {
+      activePane: "list",
+      openTabs: [row, highRow, thirdRow],
+      recentTabs: [],
+      tabOrientation: "horizontal",
+      updatedAt: "2026-06-02T00:00:00.000Z",
+      version: workspaceOpenTabsStateVersion,
+    } satisfies WorkspaceOpenTabsState;
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row, highRow, thirdRow]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }, { ...highRow }, { ...thirdRow }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    screen.getByRole("tab", { name: /#1001/u }).focus();
+    await user.keyboard("{Alt>}{ArrowRight}{/Alt}");
+
+    const renderedTabs = screen.getAllByRole("tab");
+    expect(renderedTabs[0]).toHaveAccessibleName("Return to list: All tickets");
+    expect(renderedTabs[1]).toHaveTextContent("#1002");
+    expect(renderedTabs[2]).toHaveTextContent("#1001");
+    expect(screen.getByText("Moved #1001 after #1002.")).toBeInTheDocument();
+  });
+
+  it("keeps horizontal tab clicks working after small pointer jitter", () => {
+    const initialWorkspaceOpenTabsState = {
+      activePane: "list",
+      openTabs: [row, highRow],
+      recentTabs: [],
+      tabOrientation: "horizontal",
+      updatedAt: "2026-06-02T00:00:00.000Z",
+      version: workspaceOpenTabsStateVersion,
+    } satisfies WorkspaceOpenTabsState;
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row, highRow]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    const firstTab = screen.getByRole("tab", { name: /#1001/u });
+    const secondTab = screen.getByRole("tab", { name: /#1002/u });
+    mockElementRect(
+      firstTab.parentElement,
+      domRect({ height: 36, left: 100, top: 0, width: 100 }),
+    );
+    mockElementRect(
+      secondTab.parentElement,
+      domRect({ height: 36, left: 208, top: 0, width: 100 }),
+    );
+
+    fireEvent.pointerDown(firstTab, {
+      button: 0,
+      clientX: 150,
+      clientY: 18,
+      pointerId: 3,
+    });
+    fireEvent.pointerMove(firstTab.parentElement as HTMLElement, {
+      clientX: 156,
+      clientY: 18,
+      pointerId: 3,
+    });
+    fireEvent.pointerUp(firstTab.parentElement as HTMLElement, {
+      clientX: 156,
+      clientY: 18,
+      pointerId: 3,
+    });
+    fireEvent.click(firstTab);
+
+    expect(firstTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByLabelText("Ticket detail #1001")).toBeInTheDocument();
   });
 
   it("falls back to List when a saved active ticket is no longer open", () => {

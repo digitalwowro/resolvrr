@@ -7,26 +7,33 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { MenuDropdown, type MenuDropdownItem } from "@/components/ui";
+import type {
+  HelpdeskConnectionActionResult,
+  WorkspaceSettingsConnection,
+} from "@/features/helpdesk-connections/service-types";
+import type { WorkspaceSettingsSection } from "./workspace-settings-dialog";
 
 export type WorkspaceMenuConnection = {
   id: string;
   label: string;
   active: boolean;
-};
-
-export type WorkspaceProfileAction = {
-  id: "manage-workspaces";
-  label: string;
-  href?: string;
+  providerKey?: string;
+  providerLabel?: string;
+  baseUrl?: string;
+  status?: WorkspaceSettingsConnection["status"];
 };
 
 type WorkspaceHeaderProps = {
-  actions: WorkspaceProfileAction[];
   connections: WorkspaceMenuConnection[];
   controls?: ReactNode;
+  notifications?: ReactNode;
   logoutAction(formData: FormData): void | Promise<void>;
-  setActiveConnectionAction(formData: FormData): void | Promise<void>;
+  onOpenSettings(section: WorkspaceSettingsSection): void;
+  setActiveConnectionAction(
+    formData: FormData,
+  ): void | Promise<void | HelpdeskConnectionActionResult>;
   userEmail: string;
 };
 
@@ -35,56 +42,58 @@ function profileInitials(email: string): string {
 }
 
 export function WorkspaceHeader({
-  actions,
   connections,
   controls,
+  notifications,
   logoutAction,
+  onOpenSettings,
   setActiveConnectionAction,
   userEmail,
 }: WorkspaceHeaderProps) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [logoAvailable, setLogoAvailable] = useState(true);
   const selectedWorkspace = connections.find((connection) => connection.active);
   const items = useMemo<MenuDropdownItem[]>(
-    () => [
-      ...connections.map<MenuDropdownItem>((connection) => ({
+    () => {
+      const workspaceItems = connections.map<MenuDropdownItem>((connection) => ({
         id: `workspace-${connection.id}`,
         label: connection.label,
         icon: <Building2 aria-hidden="true" className="size-4" />,
         selected: connection.active,
         onSelect: () => {
-          const form = document.getElementById(
-            `workspace-switch-${connection.id}`,
-          ) as HTMLFormElement | null;
-          form?.requestSubmit();
+          const formData = new FormData();
+          formData.set("connectionId", connection.id);
+          void Promise.resolve(setActiveConnectionAction(formData)).then(() =>
+            router.refresh(),
+          );
         },
-      })),
-      { type: "separator", id: "profile-separator" },
-      ...actions.map<MenuDropdownItem>((action) => {
-        return {
-          id: `action-${action.id}`,
-          label: action.label,
+      }));
+      return [
+        ...workspaceItems,
+        ...(workspaceItems.length > 0
+          ? [{ type: "separator" as const, id: "workspace-separator" }]
+          : []),
+        {
+          id: "settings",
+          label: "Settings",
           icon: <SlidersHorizontal aria-hidden="true" className="size-4" />,
-          onSelect: () => {
-            if (action.href) {
-              window.location.href = action.href;
-            }
-          },
-        };
-      }),
-      {
-        id: "logout",
-        label: "Log out",
-        icon: <LogOut aria-hidden="true" className="size-4" />,
-        onSelect: () => {
-          const form = document.getElementById(
-            "workspace-logout",
-          ) as HTMLFormElement | null;
-          form?.requestSubmit();
+          onSelect: () => onOpenSettings("workspaces"),
         },
-      },
-    ],
-    [actions, connections],
+        {
+          id: "logout",
+          label: "Log out",
+          icon: <LogOut aria-hidden="true" className="size-4" />,
+          onSelect: () => {
+            const form = document.getElementById(
+              "workspace-logout",
+            ) as HTMLFormElement | null;
+            form?.requestSubmit();
+          },
+        },
+      ];
+    },
+    [connections, onOpenSettings, router, setActiveConnectionAction],
   );
 
   return (
@@ -114,16 +123,9 @@ export function WorkspaceHeader({
       {controls ? (
         <div className="flex min-w-0 shrink-0 items-center gap-2">{controls}</div>
       ) : null}
-      {connections.map((connection) => (
-        <form
-          action={setActiveConnectionAction}
-          className="hidden"
-          id={`workspace-switch-${connection.id}`}
-          key={connection.id}
-        >
-          <input name="connectionId" type="hidden" value={connection.id} />
-        </form>
-      ))}
+      {notifications ? (
+        <div className="flex shrink-0 items-center">{notifications}</div>
+      ) : null}
       <form action={logoutAction} className="hidden" id="workspace-logout" />
       <MenuDropdown
         align="end"

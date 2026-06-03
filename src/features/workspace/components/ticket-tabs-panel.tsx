@@ -10,6 +10,7 @@ type TicketTabsPanelProps = {
   activeTicketId?: string;
   listActive: boolean;
   onCloseTicket(ticketId: string): void;
+  onReorderTicket(sourceTicketId: string, targetIndex: number): void;
   onSelectList(): void;
   onSelectTicket(ticketId: string): void;
   orientation?: TicketTabOrientation;
@@ -21,6 +22,7 @@ export function TicketTabsPanel({
   activeTicketId,
   listActive,
   onCloseTicket,
+  onReorderTicket,
   onSelectList,
   onSelectTicket,
   orientation = "horizontal",
@@ -33,6 +35,7 @@ export function TicketTabsPanel({
         activeTicketId={activeTicketId}
         listActive={listActive}
         onCloseTicket={onCloseTicket}
+        onReorderTicket={onReorderTicket}
         onSelectList={onSelectList}
         onSelectTicket={onSelectTicket}
         savedViewLabel={savedViewLabel}
@@ -46,6 +49,7 @@ export function TicketTabsPanel({
       activeTicketId={activeTicketId}
       listActive={listActive}
       onCloseTicket={onCloseTicket}
+      onReorderTicket={onReorderTicket}
       onSelectList={onSelectList}
       onSelectTicket={onSelectTicket}
       savedViewLabel={savedViewLabel}

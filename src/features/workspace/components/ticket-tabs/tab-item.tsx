@@ -62,10 +62,10 @@ export function ListTab({
         aria-label={`Return to list: ${savedViewLabel}`}
         aria-selected={active}
         className={cn(
-          "inline-flex h-9 min-w-16 translate-y-px items-center justify-center gap-2 rounded-t-md border border-slate-200 px-3 text-indigo-700",
+          "inline-flex h-9 min-w-16 translate-y-px items-center justify-center gap-2 rounded-t-md border px-3 text-indigo-700",
           active
-            ? "relative z-10 border-b-white bg-white"
-            : "bg-indigo-50 hover:bg-white",
+            ? "relative z-10 border-indigo-200 border-b-indigo-50 bg-indigo-50"
+            : "border-x-indigo-500 border-t-indigo-500 border-b-indigo-200 bg-indigo-500 text-white hover:border-x-indigo-600 hover:border-t-indigo-600 hover:border-b-indigo-200 hover:bg-indigo-600",
         )}
         onClick={onSelect}
         role="tab"
@@ -91,8 +91,10 @@ export function VerticalListTab({
     <div className="shrink-0">
       <div
         className={cn(
-          "flex h-12 w-full items-center gap-2 border-b border-slate-200 px-3",
-          active ? "bg-indigo-50 text-indigo-700" : "bg-slate-50",
+          "flex h-12 w-full items-center gap-2 border-b px-3 text-white",
+          active
+            ? "border-indigo-700 bg-indigo-700"
+            : "border-indigo-500 bg-indigo-500 hover:border-indigo-600 hover:bg-indigo-600",
         )}
       >
         <button
@@ -101,7 +103,7 @@ export function VerticalListTab({
           className={cn(
             "flex min-w-0 flex-1 items-center gap-2 rounded-md text-left",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
-            active ? "text-indigo-700" : "text-slate-700 hover:text-indigo-700",
+            "text-white hover:text-white",
           )}
           onClick={onSelect}
           role="tab"
@@ -109,7 +111,7 @@ export function VerticalListTab({
         >
           <List aria-hidden="true" className="size-3.5 shrink-0" />
           <span className="min-w-0 flex-1 truncate font-semibold">List</span>
-          <span className="inline-flex min-w-0 max-w-24 items-center gap-1 truncate rounded-md border border-current px-1.5 py-0.5 text-xs">
+          <span className="inline-flex min-w-0 max-w-24 items-center gap-1 truncate rounded-md border border-white px-1.5 py-0.5 text-xs text-white">
             <BriefcaseBusiness aria-hidden="true" className="size-3 shrink-0" />
             {savedViewLabel}
           </span>

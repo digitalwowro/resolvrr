@@ -47,6 +47,8 @@ describe("Zammad ticket reads", () => {
       "lookup:assignable-users",
       "lookup:groups",
       "lookup:tags",
+      "notifications:list",
+      "notifications:mark-read",
     ]);
   });
 

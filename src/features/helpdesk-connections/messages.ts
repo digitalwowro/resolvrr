@@ -55,11 +55,3 @@ export function helpdeskConnectionMessage(
 
   return messages[code as HelpdeskConnectionMessageCode];
 }
-
-export function connectionMessagePath(
-  path: string,
-  kind: "success" | "error",
-  code: HelpdeskConnectionMessageCode,
-): string {
-  return `${path}?${kind}=${encodeURIComponent(code)}`;
-}

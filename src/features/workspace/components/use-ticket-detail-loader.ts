@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   LoadWorkspaceTicketDetailAction,
   WorkspaceTicketDetailLoadResult,
@@ -9,6 +9,8 @@ import type {
 type TicketDetailCacheEntry = WorkspaceTicketDetailLoadResult | { status: "loading" };
 
 type TicketDetailCache = Record<string, TicketDetailCacheEntry>;
+
+type TicketDetailLoadedAtCache = Record<string, number>;
 
 type TicketDetailLoaderProps = {
   initialDetailResult?: WorkspaceTicketDetailLoadResult;
@@ -43,9 +45,27 @@ export function useTicketDetailLoader({
   loadTicketDetailAction,
   selectedTicketId,
 }: TicketDetailLoaderProps) {
+  const detailLoadedAtRef = useRef<TicketDetailLoadedAtCache>({});
+  const inFlightRef = useRef(new Set<string>());
   const [detailCache, setDetailCacheState] = useState<TicketDetailCache>(
     () => initialDetailCache({ initialDetailResult, selectedTicketId }),
   );
+  const [refreshingTicketIds, setRefreshingTicketIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  useEffect(() => {
+    if (
+      selectedTicketId &&
+      initialDetailResult &&
+      detailLoadedAtRef.current[selectedTicketId] === undefined
+    ) {
+      detailLoadedAtRef.current = {
+        ...detailLoadedAtRef.current,
+        [selectedTicketId]: Date.now(),
+      };
+    }
+  }, [initialDetailResult, selectedTicketId]);
 
   function cacheSelectedDetail() {
     if (!selectedTicketId || !initialDetailResult) {
@@ -77,7 +97,15 @@ export function useTicketDetailLoader({
     if (!force && detailCache[ticketId]) {
       return;
     }
+    if (inFlightRef.current.has(ticketId)) {
+      return;
+    }
 
+    const existingEntry = detailCache[ticketId];
+    inFlightRef.current.add(ticketId);
+    if (force && existingEntry && existingEntry.status !== "loading") {
+      setRefreshingTicketIds((current) => new Set(current).add(ticketId));
+    }
     setDetailCacheState((current) => {
       const currentEntry = current[ticketId];
       if (!force && currentEntry) {
@@ -96,6 +124,10 @@ export function useTicketDetailLoader({
 
     void loadTicketDetailAction(ticketId)
       .then((result) => {
+        detailLoadedAtRef.current = {
+          ...detailLoadedAtRef.current,
+          [ticketId]: Date.now(),
+        };
         setDetailCacheState((current) => ({
           ...current,
           [ticketId]: result,
@@ -112,6 +144,17 @@ export function useTicketDetailLoader({
                 : clientLoadFailure,
           };
         });
+      })
+      .finally(() => {
+        inFlightRef.current.delete(ticketId);
+        setRefreshingTicketIds((current) => {
+          if (!current.has(ticketId)) {
+            return current;
+          }
+          const next = new Set(current);
+          next.delete(ticketId);
+          return next;
+        });
       });
   }
 
@@ -123,10 +166,21 @@ export function useTicketDetailLoader({
     loadTicketDetail(ticketId, { force: true });
   }
 
+  function isTicketDetailRefreshing(ticketId: string) {
+    return refreshingTicketIds.has(ticketId);
+  }
+
+  function isTicketDetailStale(ticketId: string, staleMs: number) {
+    const loadedAt = detailLoadedAtRef.current[ticketId];
+    return loadedAt === undefined || Date.now() - loadedAt >= staleMs;
+  }
+
   return {
     cacheSelectedDetail,
     detailFor,
     ensureTicketDetail,
+    isTicketDetailRefreshing,
+    isTicketDetailStale,
     refreshTicketDetail,
   };
 }

@@ -10,9 +10,32 @@ import {
   row,
   selectedDetailProps,
 } from "./ticket-workspace-test-utils";
+import type { ConnectionProviderOption } from "@/features/helpdesk-connections";
 
 const routerPush = vi.fn();
 const routerRefresh = vi.fn();
+
+const providerOptions: ConnectionProviderOption[] = [
+  {
+    key: "example",
+    label: "Example",
+    credentialSchemes: [
+      {
+        key: "basic-auth",
+        label: "Basic Auth",
+        fields: [
+          { name: "username", label: "Username", type: "text", required: true },
+          {
+            name: "password",
+            label: "Password",
+            type: "password",
+            required: true,
+          },
+        ],
+      },
+    ],
+  },
+];
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -28,10 +51,12 @@ describe("TicketWorkspace", () => {
     routerRefresh.mockClear();
   });
 
-  it("renders a disconnected state without an active connection", () => {
+  it("renders a first-workspace prompt without leaving the workspace", async () => {
+    const user = userEvent.setup();
     render(
       <TicketWorkspace
         columns={defaultWorkspaceTicketColumns}
+        connectionProviderOptions={providerOptions}
         connections={[]}
         listResult={{
           status: "unavailable",
@@ -49,8 +74,19 @@ describe("TicketWorkspace", () => {
 
     expect(screen.getByText("Tickets unavailable")).toBeInTheDocument();
     expect(
-      screen.getByText("No active helpdesk workspace is connected."),
+      screen.getByText(/Create your first workspace by clicking/u),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open profile menu, workspace" }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "here" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Settings" });
+    expect(within(dialog).getByRole("button", { name: "Workspaces" })).toHaveClass(
+      "bg-indigo-50",
+    );
+    expect(within(dialog).getByText("No workspaces connected")).toBeInTheDocument();
   });
 
   it("renders provider-backed rows with the production table shell", () => {
@@ -93,13 +129,84 @@ describe("TicketWorkspace", () => {
 
     await user.click(screen.getByRole("button", { name: "Open profile menu, Support" }));
 
+    const trigger = screen.getByRole("button", {
+      name: "Open profile menu, Support",
+    });
+
     expect(screen.getByRole("menuitem", { name: /Support/u })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Manage workspaces" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Settings" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Log out" })).toBeInTheDocument();
+    await user.click(screen.getByRole("menuitem", { name: "Settings" }));
+    expect(screen.getByRole("dialog", { name: "Settings" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Close settings" }));
+    expect(trigger).toHaveFocus();
     expect(screen.queryByRole("menuitem", { name: "Preferences" })).not.toBeInTheDocument();
     expect(
       screen.queryByRole("menuitem", { name: "Keyboard shortcuts" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("creates the first workspace from settings without redirecting", async () => {
+    const user = userEvent.setup();
+    const createConnectionAction = vi.fn(async (formData: FormData) => {
+      expect(formData.get("displayName")).toBe("Support");
+      expect(formData.get("providerKey")).toBe("example");
+      expect(formData.get("baseUrl")).toBe("https://example.com");
+      expect(formData.get("credentialScheme")).toBe("basic-auth");
+      expect(formData.get("username")).toBe("agent");
+      expect(formData.get("password")).toBe("secret");
+      return {
+        ok: true,
+        code: "created" as const,
+        connections: [
+          {
+            id: "connection-1",
+            label: "Support",
+            providerKey: "example",
+            providerLabel: "Example",
+            baseUrl: "https://example.com",
+            status: "active" as const,
+            active: true,
+          },
+        ],
+      };
+    });
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connectionProviderOptions={providerOptions}
+        connections={[]}
+        createConnectionAction={createConnectionAction}
+        listResult={{
+          status: "unavailable",
+          reason: "no-active-connection",
+          retryable: false,
+        }}
+        logoutAction={noopAction}
+        rows={[]}
+        setActiveConnectionAction={noopAction}
+        tabs={[]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "here" }));
+    const dialog = screen.getByRole("dialog", { name: "Settings" });
+    await user.click(within(dialog).getByRole("button", { name: "Add workspace" }));
+    await user.type(within(dialog).getByLabelText("Workspace name"), "Support");
+    await user.type(within(dialog).getByLabelText("Base URL"), "https://example.com");
+    await user.type(within(dialog).getByLabelText("Username"), "agent");
+    await user.type(within(dialog).getByLabelText("Password"), "secret");
+    await user.click(
+      within(dialog).getByRole("button", { name: "Connect workspace" }),
+    );
+
+    expect(createConnectionAction).toHaveBeenCalledTimes(1);
+    expect(await within(dialog).findByText("Workspace connected.")).toBeInTheDocument();
+    expect(within(dialog).getByText("Support")).toBeInTheDocument();
+    expect(routerRefresh).toHaveBeenCalled();
   });
 
   it("keeps metadata read-only when mutation capabilities are unavailable", () => {

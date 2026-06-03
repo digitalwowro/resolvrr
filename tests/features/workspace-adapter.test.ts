@@ -33,6 +33,17 @@ describe("workspace ticket adapter date formatting", () => {
           ticketExternalId: "ticket-1",
           articles: [
             {
+              externalId: "article-older",
+              attachments: [],
+              author: { email: "older@example.com", name: "Older Sender" },
+              createdAt: new Date("2026-05-26T06:00:00"),
+              direction: "inbound",
+              kind: "message",
+              recipients: [],
+              sanitizedHtml: "<p>Older</p>",
+              visibility: "public",
+            },
+            {
               externalId: "article-1",
               attachments: [
                 {
@@ -79,6 +90,10 @@ describe("workspace ticket adapter date formatting", () => {
       expect(row?.pendingTill).toBe("May 27, 06:00");
       expect(row?.updatedAt).toBe("May 17, 16:49");
       expect(detail.updatedAt).toBe("May 17, 16:49");
+      expect(detail.articles.map((article) => article.id)).toEqual([
+        "article-1",
+        "article-older",
+      ]);
       expect(detail.articles[0]?.meta).toBe("May 27, 06:00");
       expect(detail.articles[0]?.from).toEqual({
         email: "maya@example.com",

@@ -54,6 +54,8 @@ export function useTicketWorkspaceDisplayState({
     cacheSelectedDetail,
     detailFor,
     ensureTicketDetail,
+    isTicketDetailRefreshing,
+    isTicketDetailStale,
     refreshTicketDetail,
   } = useTicketDetailLoader({
     initialDetailResult,
@@ -141,6 +143,22 @@ export function useTicketWorkspaceDisplayState({
       ensureTicketDetail(activeTicketId);
     }
   }, [activeDetail, activeTicketId, ensureTicketDetail]);
+
+  useEffect(() => {
+    if (
+      activeTicketId &&
+      activeDetail &&
+      activeDetail.status !== "loading" &&
+      isTicketDetailStale(activeTicketId, 60_000)
+    ) {
+      refreshTicketDetail(activeTicketId);
+    }
+  }, [
+    activeDetail,
+    activeTicketId,
+    isTicketDetailStale,
+    refreshTicketDetail,
+  ]);
 
   useEffect(() => {
     if (!saveWorkspaceOpenTabsStateAction) {
@@ -246,6 +264,22 @@ export function useTicketWorkspaceDisplayState({
     refreshTicketDetail(ticketId);
   }
 
+  function refreshActiveTicketDetail() {
+    if (!activeTicketId) {
+      return;
+    }
+
+    refreshTicketDetail(activeTicketId);
+  }
+
+  function refreshTicketDetailById(ticketId: string) {
+    refreshTicketDetail(ticketId);
+  }
+
+  function isActiveTicketDetailStale(staleMs: number) {
+    return activeTicketId ? isTicketDetailStale(activeTicketId, staleMs) : false;
+  }
+
   function handleGroupByChange(nextGroupBy: WorkspaceTicketGroupKey) {
     setGroupBy(nextGroupBy);
     if (nextGroupBy !== "none" && nextGroupBy === sortKey) {
@@ -305,6 +339,32 @@ export function useTicketWorkspaceDisplayState({
     replaceWorkspaceUrl(ticketId);
   }
 
+  function showNotificationTicket(tab: WorkspaceTicketTab) {
+    const ticketId = tab.id;
+    const hydratedTab =
+      ticketTabs.find((ticketTab) => ticketTab.id === ticketId) ??
+      openTicketTabs.find((ticketTab) => ticketTab.id === ticketId) ??
+      tab;
+
+    cacheSelectedDetail();
+    setOpenTicketTabs((current) =>
+      cappedWorkspaceTabs(
+        current.some((currentTab) => currentTab.id === ticketId)
+          ? current
+          : [hydratedTab, ...current],
+      ),
+    );
+    setRecentTicketTabs((current) =>
+      cappedWorkspaceTabs([
+        hydratedTab,
+        ...current.filter((currentTab) => currentTab.id !== ticketId),
+      ]),
+    );
+    setActiveWorkspacePane({ ticketId });
+    replaceWorkspaceUrl(ticketId);
+    ensureTicketDetail(ticketId);
+  }
+
   function closeTicket(ticketId: string) {
     cacheSelectedDetail();
     const closingIndex = openTicketTabs.findIndex((tab) => tab.id === ticketId);
@@ -327,6 +387,22 @@ export function useTicketWorkspaceDisplayState({
     }
   }
 
+  function reorderOpenTicketTabs(sourceTicketId: string, targetIndex: number) {
+    setOpenTicketTabs((current) => {
+      const sourceIndex = current.findIndex((tab) => tab.id === sourceTicketId);
+      if (sourceIndex === -1) {
+        return current;
+      }
+
+      const next = current.filter((tab) => tab.id !== sourceTicketId);
+      const clampedTargetIndex = Math.max(0, Math.min(targetIndex, next.length));
+      next.splice(clampedTargetIndex, 0, current[sourceIndex]);
+      return next.every((tab, index) => tab.id === current[index]?.id)
+        ? current
+        : next;
+    });
+  }
+
   return {
     activeDetail,
     activeTicketId,
@@ -335,21 +411,29 @@ export function useTicketWorkspaceDisplayState({
     groupBy,
     groupedRows,
     handleGroupByChange,
+    isActiveTicketDetailStale,
     listActive,
     openTicketTabs,
     partiallySelected,
     recentTicketTabs,
+    refreshActiveTicketDetail,
+    refreshTicketDetailById,
     refreshList,
+    reorderOpenTicketTabs,
     returnActiveTicketToList,
     selectedRowIds,
     setTabOrientation,
     showList,
+    showNotificationTicket,
     showOpenTicket,
     showTicketFromRow,
     sortDirectionFor,
     sortingEnabled: providerSortEnabled || localSortEnabled,
     sortedRows,
     tabOrientation,
+    ticketDetailRefreshing: activeTicketId
+      ? isTicketDetailRefreshing(activeTicketId)
+      : false,
     toggleColumn,
     toggleRow,
     toggleSelectAll,

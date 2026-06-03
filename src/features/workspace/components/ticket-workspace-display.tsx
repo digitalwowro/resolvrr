@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import type { DropdownOption } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import {
@@ -30,6 +31,11 @@ import type {
   SaveWorkspaceOpenTabsStateAction,
   WorkspaceOpenTabsState,
 } from "@/features/workspace/workspace-tab-state";
+import type {
+  LoadWorkspaceNotificationsAction,
+  MarkWorkspaceNotificationsReadAction,
+} from "@/features/notifications";
+import type { HelpdeskConnectionActionResult } from "@/features/helpdesk-connections";
 import {
   type WorkspaceTicketColumn,
   type WorkspaceTicketDetail,
@@ -47,7 +53,6 @@ import { useTicketListPager } from "./use-ticket-list-pager";
 import { WorkspaceControls } from "./workspace-controls";
 import {
   type WorkspaceMenuConnection,
-  type WorkspaceProfileAction,
   WorkspaceHeader,
 } from "./workspace-header";
 import {
@@ -56,9 +61,13 @@ import {
   EmptyDetailState,
 } from "./workspace-states";
 import { mergeTicketTabs } from "./ticket-tabs-merge";
+import type { WorkspaceSettingsSection } from "./workspace-settings-dialog";
+import { WorkspaceNotifications } from "./workspace-notifications";
+
+const ticketDetailSilentRefreshMs = 60_000;
+const ticketListSilentRefreshMs = 120_000;
 
 type TicketWorkspaceDisplayProps = {
-  actions: WorkspaceProfileAction[];
   connections: WorkspaceMenuConnection[];
   columns: WorkspaceTicketColumn[];
   communicationCapabilities: TicketCommunicationCapabilities;
@@ -66,7 +75,10 @@ type TicketWorkspaceDisplayProps = {
   detailResult?: WorkspaceTicketDetailLoadResult;
   loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
+  loadWorkspaceNotificationsAction: LoadWorkspaceNotificationsAction;
   logoutAction(formData: FormData): void | Promise<void>;
+  markWorkspaceNotificationsReadAction: MarkWorkspaceNotificationsReadAction;
+  onOpenSettings(section: WorkspaceSettingsSection): void;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   initialListGroups?: WorkspaceTicketListGroup[];
   nextListCursor?: string;
@@ -80,7 +92,9 @@ type TicketWorkspaceDisplayProps = {
   saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
   selectedSavedViewId: string;
   selectedTicketId?: string;
-  setActiveConnectionAction(formData: FormData): void | Promise<void>;
+  setActiveConnectionAction(
+    formData: FormData,
+  ): void | Promise<void | HelpdeskConnectionActionResult>;
   tabs: WorkspaceTicketTab[];
   totalListCount?: number;
   updateTicketMetadataAction(
@@ -105,7 +119,6 @@ function tabLinkTarget(tab: WorkspaceTicketTab): WorkspaceTicketLinkTarget {
 }
 
 export function TicketWorkspaceDisplay({
-  actions,
   connections,
   columns,
   communicationCapabilities,
@@ -113,7 +126,10 @@ export function TicketWorkspaceDisplay({
   detailResult,
   loadTicketDetailAction,
   loadTicketListPageAction,
+  loadWorkspaceNotificationsAction,
   logoutAction,
+  markWorkspaceNotificationsReadAction,
+  onOpenSettings,
   metadataMutationCapabilities,
   initialListGroups,
   nextListCursor,
@@ -153,22 +169,28 @@ export function TicketWorkspaceDisplay({
     groupBy,
     groupedRows,
     handleGroupByChange,
+    isActiveTicketDetailStale,
     listActive,
     openTicketTabs,
     partiallySelected,
     recentTicketTabs,
+    refreshActiveTicketDetail,
+    refreshTicketDetailById,
     refreshList,
     refreshSavedTicketDetail,
+    reorderOpenTicketTabs,
     returnActiveTicketToList,
     selectedRowIds,
     setTabOrientation,
     showList,
+    showNotificationTicket,
     showOpenTicket,
     showTicketFromRow,
     sortDirectionFor,
     sortingEnabled,
     sortedRows,
     tabOrientation,
+    ticketDetailRefreshing,
     toggleColumn,
     toggleRow,
     toggleSelectAll,
@@ -213,6 +235,62 @@ export function TicketWorkspaceDisplay({
     savedViews.find((savedView) => savedView.id === listPager.savedViewId) ??
     savedViews.find((savedView) => savedView.id === allTicketsSavedViewId);
 
+  useEffect(() => {
+    if (!listActive || !loadTicketListPageAction) {
+      return;
+    }
+
+    function refreshVisibleListIfStale() {
+      if (document.hidden || !listPager.isListStale(ticketListSilentRefreshMs)) {
+        return;
+      }
+      void listPager.silentRefreshCurrentPage();
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (!document.hidden) {
+        void listPager.silentRefreshCurrentPage();
+      }
+    }, ticketListSilentRefreshMs);
+    document.addEventListener("visibilitychange", refreshVisibleListIfStale);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", refreshVisibleListIfStale);
+    };
+  }, [listActive, listPager, loadTicketListPageAction]);
+
+  useEffect(() => {
+    if (!activeTicketId) {
+      return;
+    }
+
+    function refreshVisibleTicketIfStale() {
+      if (
+        document.hidden ||
+        !isActiveTicketDetailStale(ticketDetailSilentRefreshMs)
+      ) {
+        return;
+      }
+      refreshActiveTicketDetail();
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (!document.hidden) {
+        refreshActiveTicketDetail();
+      }
+    }, ticketDetailSilentRefreshMs);
+    document.addEventListener("visibilitychange", refreshVisibleTicketIfStale);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener(
+        "visibilitychange",
+        refreshVisibleTicketIfStale,
+      );
+    };
+  }, [activeTicketId, isActiveTicketDetailStale, refreshActiveTicketDetail]);
+
   function handleWorkspaceGroupByChange(nextGroupBy: typeof groupBy) {
     handleGroupByChange(nextGroupBy);
     if (
@@ -237,14 +315,7 @@ export function TicketWorkspaceDisplay({
 
   function handleRefreshList() {
     refreshList();
-    if (
-      providerGroupedActive &&
-      (groupBy === "state" || groupBy === "priority")
-    ) {
-      void listPager.reloadGroupedFirstPage(groupBy);
-      return;
-    }
-    void listPager.reloadFirstPage();
+    void listPager.silentRefreshCurrentPage();
   }
 
   const workArea =
@@ -261,6 +332,7 @@ export function TicketWorkspaceDisplay({
           onSavedViewChange={handleSavedViewChange}
           onSelectAll={toggleSelectAll}
           partiallySelected={partiallySelected}
+          refreshing={listPager.silentRefreshing}
           roundedTop={tabOrientation === "vertical"}
           savedViewOptions={savedViewOptions}
           selectedSavedViewId={listPager.savedViewId}
@@ -301,10 +373,12 @@ export function TicketWorkspaceDisplay({
         metadataMutationCapabilities={metadataMutationCapabilities}
         onMetadataSaved={updateOpenTicketTabMetadata}
         onMetadataSavedDetailRefresh={refreshSavedTicketDetail}
+        onRefresh={refreshActiveTicketDetail}
         onReturnToListAfterUpdate={returnActiveTicketToList}
         recentlyViewedLinkTargets={recentlyViewedLinkTargets}
         roundedTop={tabOrientation === "vertical"}
         searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
+        refreshing={ticketDetailRefreshing}
         updateTicketMetadataAction={updateTicketMetadataAction}
       />
     ) : activeTicketId ? (
@@ -329,6 +403,17 @@ export function TicketWorkspaceDisplay({
     />
   );
 
+  const notifications = (
+    <WorkspaceNotifications
+      activeTicketId={activeTicketId}
+      loadNotificationsAction={loadWorkspaceNotificationsAction}
+      markNotificationsReadAction={markWorkspaceNotificationsReadAction}
+      onOpenTicket={showNotificationTicket}
+      onRefreshTicket={refreshTicketDetailById}
+      recentTickets={recentTicketTabs}
+    />
+  );
+
   const tabsPanel = (
     <TicketTabsPanel
       key="tabs"
@@ -337,6 +422,7 @@ export function TicketWorkspaceDisplay({
       onCloseTicket={closeTicket}
       onSelectList={showList}
       onSelectTicket={showOpenTicket}
+      onReorderTicket={reorderOpenTicketTabs}
       orientation={tabOrientation}
       savedViewLabel={activeSavedView?.label ?? "All tickets"}
       tabs={openTicketTabs}
@@ -346,10 +432,11 @@ export function TicketWorkspaceDisplay({
   return (
     <>
       <WorkspaceHeader
-        actions={actions}
         connections={connections}
         controls={controls}
+        notifications={notifications}
         logoutAction={logoutAction}
+        onOpenSettings={onOpenSettings}
         setActiveConnectionAction={setActiveConnectionAction}
         userEmail={userEmail}
       />

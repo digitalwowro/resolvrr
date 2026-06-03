@@ -1,7 +1,14 @@
 "use client";
 
 import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import type {
+  CSSProperties,
+  KeyboardEventHandler,
+  MouseEventHandler,
+  PointerEventHandler,
+  ReactNode,
+  Ref,
+} from "react";
 import { cn } from "./classnames";
 import { Tooltip } from "./tooltip";
 
@@ -17,6 +24,15 @@ type TicketTabProps = {
   unread?: boolean;
   dirty?: boolean;
   loading?: boolean;
+  containerClassName?: string;
+  containerRef?: Ref<HTMLDivElement>;
+  containerStyle?: CSSProperties;
+  onContainerClickCapture?: MouseEventHandler<HTMLDivElement>;
+  onContainerPointerCancel?: PointerEventHandler<HTMLDivElement>;
+  onContainerPointerDown?: PointerEventHandler<HTMLDivElement>;
+  onContainerPointerMove?: PointerEventHandler<HTMLDivElement>;
+  onContainerPointerUp?: PointerEventHandler<HTMLDivElement>;
+  onTabKeyDown?: KeyboardEventHandler<HTMLButtonElement>;
   onSelect(): void;
   onClose?(): void;
 };
@@ -33,6 +49,15 @@ export function TicketTab({
   unread = false,
   dirty = false,
   loading = false,
+  containerClassName,
+  containerRef,
+  containerStyle,
+  onContainerClickCapture,
+  onContainerPointerCancel,
+  onContainerPointerDown,
+  onContainerPointerMove,
+  onContainerPointerUp,
+  onTabKeyDown,
   onSelect,
   onClose,
 }: TicketTabProps) {
@@ -55,22 +80,30 @@ export function TicketTab({
   const tab = (
     <div
       className={cn(
-        "group relative inline-flex h-9 min-w-0 translate-y-px items-center gap-1.5 overflow-hidden rounded-t-md border border-slate-200",
+        "group relative inline-flex h-9 min-w-0 translate-y-px items-center gap-1.5 overflow-hidden rounded-t-md border",
         density === "full" && "flex-1 px-3",
         density === "compact" && "min-w-14 max-w-24 flex-1 px-2",
         density === "icon" &&
           "min-w-7 flex-1 justify-center px-1 hover:bg-white",
         className,
         active
-          ? "z-10 border-b-white bg-white"
-          : "border-slate-200 bg-slate-50 hover:bg-white",
+          ? "z-10 border-indigo-200 border-b-white bg-white"
+          : "border-slate-200 border-b-transparent bg-slate-50 hover:bg-white",
+        containerClassName,
       )}
+      onClickCapture={onContainerClickCapture}
+      onPointerCancel={onContainerPointerCancel}
+      onPointerDown={onContainerPointerDown}
+      onPointerMove={onContainerPointerMove}
+      onPointerUp={onContainerPointerUp}
+      ref={containerRef}
+      style={containerStyle}
     >
       {accentClassName ? (
         <span
           aria-hidden="true"
           className={cn(
-            "absolute inset-x-0 top-0 h-0.5",
+            "absolute inset-x-0 top-0 h-[3px]",
             active ? "opacity-100" : "opacity-40",
             accentClassName,
           )}
@@ -94,6 +127,9 @@ export function TicketTab({
           ) {
             event.preventDefault();
             onClose();
+          }
+          if (!event.defaultPrevented) {
+            onTabKeyDown?.(event);
           }
         }}
         onClick={onSelect}
@@ -123,6 +159,7 @@ export function TicketTab({
             aria-label={`Close ${label}`}
             className="grid size-5 shrink-0 place-items-center rounded-md text-slate-400 hover:bg-slate-200 hover:text-slate-700"
             onClick={onClose}
+            onPointerDown={(event) => event.stopPropagation()}
             type="button"
           >
             <X aria-hidden="true" className="size-3" />

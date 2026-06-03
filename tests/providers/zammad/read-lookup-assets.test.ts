@@ -197,4 +197,67 @@ describe("Zammad ticket read lookup assets", () => {
       },
     ]);
   });
+
+  it("uses the outbound email From identity instead of the Zammad login user", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          ...rawTicket,
+          customer: "razvan.rosca@gmail.com",
+          customer_id: 7,
+          owner: "admin@zammad.isp.fun",
+          owner_id: 11,
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [
+          {
+            ...rawArticle,
+            sender: "Agent",
+            created_by: "admin@zammad.isp.fun",
+            created_by_id: 11,
+            from: "Za Mad via Users <users@zammad.isp.fun>",
+            to: "razvan.rosca@gmail.com",
+            body: "<p>Thanks, we're working on it!</p>",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          id: 7,
+          firstname: "Razvan",
+          lastname: "Rosca",
+          email: "razvan.rosca@gmail.com",
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          id: 11,
+          fullname: "Admin User",
+          email: "admin@zammad.isp.fun",
+        },
+      });
+
+    const result = await zammadProviderPlugin.getTicketDetail?.(
+      providerContext(),
+      "245",
+    );
+
+    expect(result?.thread.articles[0]?.author).toEqual({
+      name: "Za Mad via Users",
+      email: "users@zammad.isp.fun",
+      role: "agent",
+    });
+    expect(result?.thread.articles[0]?.author.email).not.toBe(
+      "admin@zammad.isp.fun",
+    );
+  });
 });

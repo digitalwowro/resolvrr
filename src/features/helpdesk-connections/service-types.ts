@@ -16,3 +16,23 @@ export type ConnectionListItem = StoredHelpdeskConnection & {
 export type ConnectionMutationResult =
   | { ok: true; connectionId?: string; code: HelpdeskConnectionMessageCode }
   | { ok: false; code: HelpdeskConnectionMessageCode };
+
+export type WorkspaceSettingsConnection = {
+  id: string;
+  label: string;
+  providerKey: string;
+  providerLabel: string;
+  baseUrl: string;
+  status: ConnectionListItem["status"];
+  active: boolean;
+};
+
+export type HelpdeskConnectionActionResult = {
+  ok: boolean;
+  code: HelpdeskConnectionMessageCode;
+  connections: WorkspaceSettingsConnection[];
+};
+
+export type HelpdeskConnectionFormAction = (
+  formData: FormData,
+) => Promise<HelpdeskConnectionActionResult>;

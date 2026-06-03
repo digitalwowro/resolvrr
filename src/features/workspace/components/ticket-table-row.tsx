@@ -13,6 +13,7 @@ import { TicketGridCell } from "./ticket-table-grid";
 type TicketTableRowProps = {
   activeTicketId?: string;
   columns: WorkspaceTicketColumn[];
+  groupBoundaryAfter?: boolean;
   index: number;
   onRowSelect(ticketId: string): void;
   onToggleRow(ticketId: string): void;
@@ -44,6 +45,7 @@ function cellValue(row: WorkspaceTicketRow, column: WorkspaceTicketColumnKey) {
 export function TicketTableRow({
   activeTicketId,
   columns,
+  groupBoundaryAfter = false,
   index,
   onRowSelect,
   onToggleRow,
@@ -52,7 +54,12 @@ export function TicketTableRow({
   selectedRowIds,
 }: TicketTableRowProps) {
   const active = row.id === activeTicketId;
-  const cellBorderClass = index === rowCount - 1 ? "border-b-0" : "";
+  const cellBorderClass =
+    groupBoundaryAfter
+      ? "border-slate-200"
+      : index === rowCount - 1
+        ? "border-b-0"
+        : "";
   const rowCellClass = active ? "bg-slate-50" : "bg-white group-hover:bg-slate-50";
 
   return (

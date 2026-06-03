@@ -1,7 +1,5 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui";
 import type { SortDirection } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
@@ -12,8 +10,11 @@ import type {
   WorkspaceTicketSortKey,
 } from "@/features/tickets/workspace-adapter";
 import {
+  ticketGridBodyScrollerClass,
+  ticketGridColumnOrder,
+  ticketGridHeaderWrapperClass,
   ticketGridTableClass,
-  ticketGridTemplate,
+  ticketGridTemplateClass,
   TicketGridHeaderCell,
   TicketGridStaticHeaderCell,
 } from "./ticket-table-grid";
@@ -48,6 +49,61 @@ type TicketTableProps = {
 
 export type { TicketTableGroup } from "./ticket-table-types";
 
+function groupCountLabel(group: TicketTableGroup) {
+  const loaded = group.loadedCount ?? group.rows.length;
+  return group.totalCount === undefined ? `${loaded}` : `${loaded}/${group.totalCount}`;
+}
+
+function countLabel({
+  loadedCount,
+  rowCount,
+  totalCount,
+}: {
+  loadedCount?: number;
+  rowCount: number;
+  totalCount?: number;
+}) {
+  const loaded = loadedCount ?? rowCount;
+  return totalCount === undefined ? `${loaded}` : `${loaded}/${totalCount}`;
+}
+
+function LoadMoreTongue({
+  ariaLabel,
+  count,
+  loading,
+  onClick,
+  reserveBottomSpace,
+}: {
+  ariaLabel: string;
+  count: string;
+  loading: boolean;
+  onClick: () => void;
+  reserveBottomSpace: boolean;
+}) {
+  return (
+    <div className="contents" role="row">
+      <div
+        className={cn(
+          "relative z-20 col-span-full",
+          reserveBottomSpace ? "h-5" : "h-0",
+        )}
+        role="cell"
+      >
+        <button
+          aria-label={ariaLabel}
+          className="absolute left-1/2 top-0 flex h-4 -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-md bg-slate-950 px-5 text-[10px] font-semibold leading-none text-white shadow-sm hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-wait disabled:opacity-70"
+          disabled={loading}
+          onClick={onClick}
+          type="button"
+        >
+          <span>{loading ? "Loading" : "Show more"}</span>
+          <span className="font-normal text-white/70">{count}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function TicketTable({
   activeTicketId,
   columns,
@@ -72,13 +128,19 @@ export function TicketTable({
   totalCount,
   visibleColumns,
 }: TicketTableProps) {
-  const templateStyle = ticketGridTemplate(visibleColumns);
-  const visibleColumnList = columns.filter((column) =>
-    visibleColumns.has(column.key),
+  const columnByKey = new Map(columns.map((column) => [column.key, column]));
+  const visibleColumnList = ticketGridColumnOrder.flatMap((columnKey) => {
+    const column = columnByKey.get(columnKey);
+    return column && visibleColumns.has(columnKey) ? [column] : [];
+  });
+  const templateClass = ticketGridTemplateClass(
+    visibleColumnList.map((column) => column.key),
   );
   const groups = groupedRows ?? [{ id: "all", label: "", value: "", rows }];
   const rowCount = groups.reduce((total, group) => total + group.rows.length, 0);
   let rowIndex = 0;
+  const hasUngroupedLoadMore =
+    groupBy === "none" && (canLoadMore || loadingMore) && Boolean(onLoadMore);
 
   function sortHandler(key: WorkspaceTicketSortKey) {
     return sortingEnabled && groupBy !== key ? () => onSort(key) : undefined;
@@ -94,7 +156,7 @@ export function TicketTable({
         aria-label="Tickets"
         className={cn(
           ticketGridTableClass({ roundedTop }),
-          "p-6 text-sm text-slate-600",
+          "border-x border-slate-200 p-6 text-sm text-slate-600",
         )}
       >
         No tickets were returned by the active helpdesk workspace.
@@ -102,43 +164,35 @@ export function TicketTable({
     );
   }
 
-  const loadMoreFooter =
-    canLoadMore || loadingMore || loadMoreError ? (
-      <div className="flex min-h-12 items-center justify-between gap-3 border-x border-t border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-        <span>
-          {totalCount === undefined
-            ? `${loadedCount ?? rows.length} loaded`
-            : `${loadedCount ?? rows.length} of ${totalCount} loaded`}
-        </span>
-        <div className="flex items-center gap-3">
-          {loadMoreError ? (
-            <span className="text-red-700" role="alert">
-              Could not load more tickets.
-            </span>
-          ) : null}
-          {canLoadMore ? (
-            <Button
-              icon={<ChevronDown aria-hidden="true" className="size-4" />}
-              loading={loadingMore}
-              onClick={onLoadMore}
-              type="button"
-            >
-              Load more
-            </Button>
-          ) : null}
-        </div>
-      </div>
+  const ungroupedLoadMoreCount = countLabel({
+    loadedCount,
+    rowCount: rows.length,
+    totalCount,
+  });
+  const ungroupedLoadMoreTongue =
+    hasUngroupedLoadMore && onLoadMore ? (
+      <LoadMoreTongue
+        ariaLabel={`Show more tickets (${ungroupedLoadMoreCount})`}
+        count={ungroupedLoadMoreCount}
+        key="load-more"
+        loading={loadingMore}
+        onClick={onLoadMore}
+        reserveBottomSpace
+      />
     ) : null;
 
   return (
     <section className="flex min-h-0 flex-1 flex-col">
       <div
         aria-label="Tickets"
-        className={ticketGridTableClass({ roundedTop })}
+        className={cn(ticketGridTableClass({ roundedTop }), "flex flex-col")}
         role="table"
       >
-        <div className="grid w-full min-w-0" style={templateStyle}>
-          <div className="contents" role="rowgroup">
+        <div className={ticketGridHeaderWrapperClass}>
+          <div
+            className={cn("grid w-full min-w-0", templateClass)}
+            role="rowgroup"
+          >
             <div className="contents" role="row">
               <TicketGridStaticHeaderCell />
               <TicketGridHeaderCell
@@ -161,25 +215,33 @@ export function TicketTable({
               ))}
             </div>
           </div>
-          <div className="contents" role="rowgroup">
-            {groups.flatMap((group) => {
-              const firstGroup = groups[0]?.id === group.id;
+        </div>
+        <div className={ticketGridBodyScrollerClass}>
+          <div
+            className={cn("grid w-full min-w-0", templateClass)}
+            role="rowgroup"
+          >
+            {groups.flatMap((group, groupIndex) => {
+              const lastGroup = groupIndex === groups.length - 1;
               const groupHeader =
                 groupBy === "none" ? null : (
                   <TicketTableGroupHeader
-                    firstGroup={firstGroup}
                     group={group}
                     groupBy={groupBy}
                     groupLoadMoreError={groupLoadMoreError}
                     key={`group-${group.id}`}
-                    loadingGroupId={loadingGroupId}
-                    onLoadMoreGroup={onLoadMoreGroup}
                   />
                 );
-              const renderedRows = group.rows.map((row) => (
+              const renderedRows = group.rows.map((row, rowGroupIndex) => (
                 <TicketTableRow
                   activeTicketId={activeTicketId}
                   columns={visibleColumnList}
+                  groupBoundaryAfter={
+                    rowGroupIndex === group.rows.length - 1 &&
+                    ((groupBy !== "none" &&
+                      (!lastGroup || Boolean(group.nextCursor && onLoadMoreGroup))) ||
+                      hasUngroupedLoadMore)
+                  }
                   index={rowIndex++}
                   key={row.id}
                   onRowSelect={onRowSelect}
@@ -189,13 +251,40 @@ export function TicketTable({
                   selectedRowIds={selectedRowIds}
                 />
               ));
+              const loadMoreTongue =
+                groupBy === "none" || !group.nextCursor || !onLoadMoreGroup
+                  ? null
+                  : (
+                    <LoadMoreTongue
+                      ariaLabel={`Show more ${group.label} tickets (${groupCountLabel(group)})`}
+                      count={groupCountLabel(group)}
+                      key={`group-load-more-${group.id}`}
+                      loading={loadingGroupId === group.id}
+                      onClick={() => onLoadMoreGroup(group)}
+                      reserveBottomSpace={lastGroup}
+                    />
+                  );
 
-              return groupHeader ? [groupHeader, ...renderedRows] : renderedRows;
+              if (!groupHeader) {
+                return renderedRows;
+              }
+
+              return loadMoreTongue
+                ? [groupHeader, ...renderedRows, loadMoreTongue]
+                : [groupHeader, ...renderedRows];
             })}
+            {ungroupedLoadMoreTongue}
           </div>
         </div>
       </div>
-      {loadMoreFooter}
+      {loadMoreError ? (
+        <div
+          className="border-x border-t border-slate-200 bg-white px-3 py-2 text-sm text-red-700"
+          role="alert"
+        >
+          Could not load more tickets.
+        </div>
+      ) : null}
     </section>
   );
 }

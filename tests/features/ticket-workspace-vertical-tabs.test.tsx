@@ -1,8 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
+import {
+  workspaceOpenTabsStateVersion,
+  type WorkspaceOpenTabsState,
+} from "@/features/workspace/workspace-tab-state";
 import {
   availableList,
   detailPropsFor,
@@ -21,6 +25,37 @@ vi.mock("next/navigation", () => ({
     refresh: vi.fn(),
   }),
 }));
+
+function domRect({
+  height,
+  left,
+  top,
+  width,
+}: {
+  height: number;
+  left: number;
+  top: number;
+  width: number;
+}): DOMRect {
+  return {
+    bottom: top + height,
+    height,
+    left,
+    right: left + width,
+    toJSON: () => ({}),
+    top,
+    width,
+    x: left,
+    y: top,
+  } as DOMRect;
+}
+
+function mockElementRect(element: Element, rect: DOMRect) {
+  if (!(element instanceof HTMLElement)) {
+    throw new Error("Expected an HTMLElement to mock a tab rect.");
+  }
+  vi.spyOn(element, "getBoundingClientRect").mockReturnValue(rect);
+}
 
 describe("TicketWorkspace vertical tabs", () => {
   beforeEach(() => {
@@ -109,6 +144,72 @@ describe("TicketWorkspace vertical tabs", () => {
       "aria-selected",
       "true",
     );
+  });
+
+  it("reorders vertical ticket tabs with drag", async () => {
+    const user = userEvent.setup();
+    const detailProps = selectedDetailProps();
+    const initialWorkspaceOpenTabsState = {
+      activePane: "ticket-1",
+      openTabs: [row, highRow],
+      recentTabs: [],
+      tabOrientation: "horizontal",
+      updatedAt: "2026-06-02T00:00:00.000Z",
+      version: workspaceOpenTabsStateVersion,
+    } satisfies WorkspaceOpenTabsState;
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={detailProps.detail}
+        detailResult={detailProps.detailResult}
+        initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row, highRow]}
+        selectedTicketId="ticket-1"
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
+
+    const firstTab = screen.getByRole("tab", { name: /Cannot log in/u });
+    const secondTab = screen.getByRole("tab", { name: /Webhook failed/u });
+    mockElementRect(
+      firstTab,
+      domRect({ height: 52, left: 0, top: 60, width: 240 }),
+    );
+    mockElementRect(
+      secondTab,
+      domRect({ height: 52, left: 0, top: 112, width: 240 }),
+    );
+
+    fireEvent.pointerDown(secondTab, {
+      button: 0,
+      clientX: 40,
+      clientY: 132,
+      pointerId: 2,
+    });
+    fireEvent.pointerMove(secondTab, {
+      clientX: 40,
+      clientY: 70,
+      pointerId: 2,
+    });
+    fireEvent.pointerUp(secondTab, {
+      clientX: 40,
+      clientY: 70,
+      pointerId: 2,
+    });
+
+    await waitFor(() =>
+      expect(screen.getAllByRole("tab")[1]).toHaveTextContent("Webhook failed"),
+    );
+    expect(screen.getAllByRole("tab")[2]).toHaveTextContent("Cannot log in");
+    expect(screen.getByLabelText("Ticket detail #1001")).toBeInTheDocument();
   });
 
   it("reactivates older ticket tabs and shows their cached detail", async () => {

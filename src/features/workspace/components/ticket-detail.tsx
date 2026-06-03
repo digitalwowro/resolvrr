@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Check, Copy, ExternalLink } from "lucide-react";
+import { Check, Copy, ExternalLink, RefreshCw } from "lucide-react";
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
@@ -33,8 +33,10 @@ type TicketDetailProps = {
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
   onMetadataSavedDetailRefresh(ticketId: string): void;
+  onRefresh(): void;
   onReturnToListAfterUpdate(): void;
   recentlyViewedLinkTargets: WorkspaceTicketLinkTarget[];
+  refreshing?: boolean;
   roundedTop?: boolean;
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   updateTicketMetadataAction(
@@ -51,8 +53,10 @@ export function TicketDetail({
   metadataMutationCapabilities,
   onMetadataSaved,
   onMetadataSavedDetailRefresh,
+  onRefresh,
   onReturnToListAfterUpdate,
   recentlyViewedLinkTargets,
+  refreshing = false,
   roundedTop = true,
   searchTicketLinkTargetsAction,
   updateTicketMetadataAction,
@@ -102,6 +106,21 @@ export function TicketDetail({
                 ) : (
                   <Copy aria-hidden="true" className="size-3.5" />
                 )}
+              </button>
+            </Tooltip>
+            <Tooltip content={refreshing ? "Refreshing ticket" : "Refresh ticket"}>
+              <button
+                aria-label="Refresh ticket"
+                aria-busy={refreshing || undefined}
+                className="inline-grid size-6 shrink-0 place-items-center rounded-md text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-wait disabled:opacity-60"
+                disabled={refreshing}
+                onClick={onRefresh}
+                type="button"
+              >
+                <RefreshCw
+                  aria-hidden="true"
+                  className={cn("size-3.5", refreshing && "animate-spin")}
+                />
               </button>
             </Tooltip>
             {detail.providerUrl ? (
@@ -160,8 +179,8 @@ export function TicketDetail({
     <section
       aria-label={`Ticket detail ${detail.number}`}
       className={cn(
-        "flex min-h-0 flex-1 flex-col overflow-hidden border-x border-t border-slate-200 bg-white",
-        roundedTop && "rounded-t-md",
+        "flex min-h-0 flex-1 flex-col overflow-hidden border-x border-slate-200 bg-white",
+        roundedTop && "rounded-t-md border-t",
       )}
     >
       <TicketMetadataEditor
@@ -193,8 +212,8 @@ export function TicketDetailLoadingShell({
     <section
       aria-label={`Ticket detail ${ticket.number}`}
       className={cn(
-        "flex min-h-0 flex-1 flex-col overflow-hidden border-x border-t border-slate-200 bg-white",
-        roundedTop && "rounded-t-md",
+        "flex min-h-0 flex-1 flex-col overflow-hidden border-x border-slate-200 bg-white",
+        roundedTop && "rounded-t-md border-t",
       )}
     >
       <div className="flex min-h-0 flex-1">

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { TicketReadUnavailableReason } from "@/features/tickets/read-model";
 
 const unavailableMessages: Record<TicketReadUnavailableReason, string> = {
@@ -18,21 +17,42 @@ const unavailableMessages: Record<TicketReadUnavailableReason, string> = {
 };
 
 export function UnavailableState({
+  onOpenWorkspaces,
   reason,
 }: {
+  onOpenWorkspaces(): void;
   reason: TicketReadUnavailableReason;
 }) {
+  const firstWorkspace = reason === "no-active-connection";
+
   return (
     <section className="flex min-h-0 flex-1 items-center justify-center bg-slate-50 px-4">
       <div className="max-w-lg rounded-md border border-slate-200 bg-white p-5 text-center shadow-sm">
         <h1 className="text-lg font-semibold text-slate-950">Tickets unavailable</h1>
-        <p className="mt-2 text-sm text-slate-600">{unavailableMessages[reason]}</p>
-        <Link
+        {firstWorkspace ? (
+          <p className="mt-2 text-sm text-slate-600">
+            Create your first workspace by clicking{" "}
+            <button
+              className="font-semibold text-indigo-700 underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              onClick={onOpenWorkspaces}
+              type="button"
+            >
+              here
+            </button>
+            .
+          </p>
+        ) : (
+          <p className="mt-2 text-sm text-slate-600">
+            {unavailableMessages[reason]}
+          </p>
+        )}
+        <button
           className="mt-4 inline-flex h-9 items-center rounded-md bg-slate-950 px-3 text-sm font-semibold text-white"
-          href="/workspace/connections"
+          onClick={onOpenWorkspaces}
+          type="button"
         >
-          Manage workspaces
-        </Link>
+          Open settings
+        </button>
       </div>
     </section>
   );

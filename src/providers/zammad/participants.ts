@@ -123,6 +123,18 @@ function participantFromUser(
   };
 }
 
+function participantFromAddress(
+  value: string | null | undefined,
+  role: TicketParticipantRole,
+  externalId?: string,
+): TicketParticipant | undefined {
+  const parsed = addressParts(value);
+  const name = parsed.name ?? parsed.email;
+  return name
+    ? { externalId, name, email: parsed.email, role }
+    : undefined;
+}
+
 function userReference(
   value: ZammadTicket["customer"] | ZammadTicket["owner"] | ZammadArticle["created_by"],
 ): ZammadUser | undefined {
@@ -195,10 +207,24 @@ export function articleAuthor(
   assets: ZammadAssets | undefined,
   role: TicketParticipantRole,
 ): TicketParticipant {
-  const assetParticipant = participantFromUser(
-    assetById(assets?.User, article.created_by_id),
-    role,
-  );
+  const createdByUser = assetById(assets?.User, article.created_by_id);
+  const assetParticipant = participantFromUser(createdByUser, role);
+  const fromParticipant = participantFromAddress(article.from, role);
+  const outboundEmail =
+    !article.internal && article.sender?.toLowerCase().includes("agent");
+
+  if (outboundEmail && fromParticipant) {
+    const fromEmail = fromParticipant.email?.toLowerCase();
+    const createdByEmail = zammadUserEmail(createdByUser)?.toLowerCase();
+    const sameCreatedByEmail = fromEmail && createdByEmail === fromEmail;
+
+    if (!sameCreatedByEmail || fromParticipant.name !== fromParticipant.email) {
+      return sameCreatedByEmail && assetParticipant
+        ? { ...fromParticipant, externalId: assetParticipant.externalId }
+        : fromParticipant;
+    }
+  }
+
   if (assetParticipant) {
     return assetParticipant;
   }
@@ -214,11 +240,13 @@ export function articleAuthor(
   const createdBy = typeof article.created_by === "string"
     ? addressParts(article.created_by)
     : {};
-  const from = addressParts(article.from);
-  const name = createdBy.name ?? from.name ?? createdBy.email ?? from.email;
+  const name = createdBy.name ??
+    fromParticipant?.name ??
+    createdBy.email ??
+    fromParticipant?.email;
   return {
     name: name ?? "Unknown",
-    email: from.email ?? createdBy.email,
+    email: fromParticipant?.email ?? createdBy.email,
     role,
   };
 }

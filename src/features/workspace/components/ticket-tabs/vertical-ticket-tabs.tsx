@@ -1,4 +1,10 @@
 import { X } from "lucide-react";
+import type {
+  CSSProperties,
+  KeyboardEvent,
+  MouseEvent,
+  PointerEvent,
+} from "react";
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
@@ -9,6 +15,7 @@ import {
   stateIcon,
   VerticalListTab,
 } from "./tab-item";
+import { useDraggableTicketTabs } from "./use-draggable-ticket-tabs";
 
 type VerticalTicketTabsProps = {
   activeTicketId?: string;
@@ -16,6 +23,7 @@ type VerticalTicketTabsProps = {
   onSelectList(): void;
   onSelectTicket(ticketId: string): void;
   onCloseTicket(ticketId: string): void;
+  onReorderTicket(sourceTicketId: string, targetIndex: number): void;
   savedViewLabel: string;
   tabs: WorkspaceTicketTab[];
 };
@@ -23,12 +31,30 @@ type VerticalTicketTabsProps = {
 function VerticalTicketTab({
   active,
   onClose,
+  onClickCapture,
+  onKeyDown,
+  onPointerCancel,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  refCallback,
   onSelect,
+  reorderClassName,
+  style,
   tab,
 }: {
   active: boolean;
   onClose(): void;
+  onClickCapture(event: MouseEvent<HTMLElement>): void;
+  onKeyDown(event: KeyboardEvent<HTMLElement>): void;
+  onPointerCancel(): void;
+  onPointerDown(event: PointerEvent<HTMLElement>): void;
+  onPointerMove(event: PointerEvent<HTMLElement>): void;
+  onPointerUp(event: PointerEvent<HTMLElement>): void;
+  refCallback(element: HTMLElement | null): void;
   onSelect(): void;
+  reorderClassName: string;
+  style?: CSSProperties;
   tab: WorkspaceTicketTab;
 }) {
   const key = tab.stateKey ?? "unknown";
@@ -42,9 +68,18 @@ function VerticalTicketTab({
         active
           ? "border-l-indigo-600 bg-indigo-50"
           : "border-l-transparent bg-white hover:bg-slate-50",
+        reorderClassName,
       )}
+      onClickCapture={onClickCapture}
+      onKeyDown={onKeyDown}
       onClick={onSelect}
+      onPointerCancel={onPointerCancel}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      ref={refCallback}
       role="tab"
+      style={style}
       type="button"
     >
       <Icon
@@ -72,6 +107,7 @@ function VerticalTicketTab({
               onClose();
             }
           }}
+          onPointerDown={(event) => event.stopPropagation()}
           role="button"
           tabIndex={0}
         >
@@ -88,32 +124,68 @@ export function VerticalTicketTabs({
   onSelectList,
   onSelectTicket,
   onCloseTicket,
+  onReorderTicket,
   savedViewLabel,
   tabs,
 }: VerticalTicketTabsProps) {
+  const {
+    announcement,
+    containerRef,
+    insertionIndicatorStyle,
+    tabReorderProps,
+  } = useDraggableTicketTabs({
+    onReorder: onReorderTicket,
+    orientation: "vertical",
+    tabs,
+  });
+
   return (
     <aside
-      className="flex min-w-64 max-w-xs basis-1/6 shrink-0 flex-col border-r border-slate-200 bg-white"
+      className="flex min-w-64 max-w-xs basis-1/6 shrink-0 flex-col overflow-hidden rounded-tr-md border-r border-t border-slate-200 bg-white"
     >
+      <div aria-live="polite" className="sr-only">
+        {announcement}
+      </div>
       <div
         aria-label="Open tickets"
-        className="flex min-h-0 flex-1 flex-col overflow-y-auto"
+        className="relative flex min-h-0 flex-1 flex-col overflow-y-auto"
+        ref={containerRef}
         role="tablist"
       >
+        {insertionIndicatorStyle ? (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute z-40 h-0.5 rounded-full bg-indigo-600"
+            style={insertionIndicatorStyle}
+          />
+        ) : null}
         <VerticalListTab
           active={listActive}
           onSelect={onSelectList}
           savedViewLabel={savedViewLabel}
         />
-        {tabs.map((tab) => (
-          <VerticalTicketTab
-            active={tab.id === activeTicketId}
-            key={tab.id}
-            onClose={() => onCloseTicket(tab.id)}
-            onSelect={() => onSelectTicket(tab.id)}
-            tab={tab}
-          />
-        ))}
+        {tabs.map((tab, index) => {
+          const reorderProps = tabReorderProps(tab.id, index);
+
+          return (
+            <VerticalTicketTab
+              active={tab.id === activeTicketId}
+              key={tab.id}
+              onClickCapture={reorderProps.onClickCapture}
+              onClose={() => onCloseTicket(tab.id)}
+              onKeyDown={reorderProps.onKeyDown}
+              onPointerCancel={reorderProps.onPointerCancel}
+              onPointerDown={reorderProps.onPointerDown}
+              onPointerMove={reorderProps.onPointerMove}
+              onPointerUp={reorderProps.onPointerUp}
+              onSelect={() => onSelectTicket(tab.id)}
+              refCallback={reorderProps.ref}
+              reorderClassName={reorderProps.className}
+              style={reorderProps.style}
+              tab={tab}
+            />
+          );
+        })}
       </div>
     </aside>
   );

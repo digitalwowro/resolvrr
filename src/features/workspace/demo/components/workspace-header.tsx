@@ -23,7 +23,7 @@ type WorkspaceHeaderProps = {
 const actionIcon = {
   preferences: Settings,
   shortcuts: Keyboard,
-  "manage-workspaces": SlidersHorizontal,
+  settings: SlidersHorizontal,
 };
 
 export function WorkspaceHeader({

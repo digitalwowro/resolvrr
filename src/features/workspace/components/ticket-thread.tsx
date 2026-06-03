@@ -54,7 +54,7 @@ export function TicketThread({
     <section className="px-4 py-4">
       <div className="space-y-3">
         {articles.map((article, index) => {
-          const latest = index === articles.length - 1;
+          const latest = index === 0;
           return (
             <div key={article.id} ref={latest ? latestArticleRef : undefined}>
               <TicketThreadArticle

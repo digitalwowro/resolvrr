@@ -1,14 +1,10 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { providerRegistry } from "@/providers";
-import {
-  connectionMessagePath,
-  type HelpdeskConnectionMessageCode,
-} from "./messages";
+import { type HelpdeskConnectionMessageCode } from "./messages";
 import {
   createConnection,
   deleteConnection,
@@ -16,20 +12,48 @@ import {
   setActiveConnection,
   updateConnection,
   validateConnection,
+  listConnectionsForUser,
 } from "./service";
-
-const listPath = "/workspace/connections";
+import type {
+  ConnectionListItem,
+  HelpdeskConnectionActionResult,
+  WorkspaceSettingsConnection,
+} from "./service-types";
 
 function textValue(formData: FormData, name: string): string {
   const value = formData.get(name);
   return typeof value === "string" ? value : "";
 }
 
-function redirectForResult(
-  targetPath: string,
+function workspaceSettingsConnection(
+  connection: ConnectionListItem,
+): WorkspaceSettingsConnection {
+  return {
+    id: connection.id,
+    label: connection.displayName,
+    providerKey: connection.providerKey,
+    providerLabel: connection.providerLabel,
+    baseUrl: connection.baseUrl,
+    status: connection.status,
+    active: connection.active,
+  };
+}
+
+async function resultWithConnections(
+  userId: string,
   result: { ok: boolean; code: HelpdeskConnectionMessageCode },
-): never {
-  redirect(connectionMessagePath(targetPath, result.ok ? "success" : "error", result.code));
+): Promise<HelpdeskConnectionActionResult> {
+  const connections = await listConnectionsForUser(
+    prismaHelpdeskConnectionsRepository,
+    providerRegistry,
+    userId,
+  );
+
+  return {
+    ok: result.ok,
+    code: result.code,
+    connections: connections.map(workspaceSettingsConnection),
+  };
 }
 
 export async function createHelpdeskConnectionAction(formData: FormData) {
@@ -42,7 +66,7 @@ export async function createHelpdeskConnectionAction(formData: FormData) {
     formData,
   );
 
-  redirectForResult(result.ok ? listPath : `${listPath}/new`, result);
+  return resultWithConnections(user.id, result);
 }
 
 export async function updateHelpdeskConnectionAction(formData: FormData) {
@@ -57,10 +81,7 @@ export async function updateHelpdeskConnectionAction(formData: FormData) {
     formData,
   );
 
-  redirectForResult(
-    result.ok ? listPath : `${listPath}/${encodeURIComponent(connectionId)}/edit`,
-    result,
-  );
+  return resultWithConnections(user.id, result);
 }
 
 export async function validateHelpdeskConnectionAction(formData: FormData) {
@@ -73,7 +94,7 @@ export async function validateHelpdeskConnectionAction(formData: FormData) {
     textValue(formData, "connectionId"),
   );
 
-  redirectForResult(listPath, result);
+  return resultWithConnections(user.id, result);
 }
 
 export async function setActiveHelpdeskConnectionAction(formData: FormData) {
@@ -84,7 +105,7 @@ export async function setActiveHelpdeskConnectionAction(formData: FormData) {
     textValue(formData, "connectionId"),
   );
 
-  redirectForResult(listPath, result);
+  return resultWithConnections(user.id, result);
 }
 
 export async function disableHelpdeskConnectionAction(formData: FormData) {
@@ -95,7 +116,7 @@ export async function disableHelpdeskConnectionAction(formData: FormData) {
     textValue(formData, "connectionId"),
   );
 
-  redirectForResult(listPath, result);
+  return resultWithConnections(user.id, result);
 }
 
 export async function deleteHelpdeskConnectionAction(formData: FormData) {
@@ -106,5 +127,5 @@ export async function deleteHelpdeskConnectionAction(formData: FormData) {
     textValue(formData, "connectionId"),
   );
 
-  redirectForResult(listPath, result);
+  return resultWithConnections(user.id, result);
 }

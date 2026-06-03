@@ -59,14 +59,18 @@ describe("TicketWorkspace provider grouping", () => {
     await user.click(screen.getByRole("combobox", { name: "Group tickets by" }));
     await user.click(screen.getByRole("option", { name: "Priority" }));
 
-    expect(screen.getByRole("cell", { name: /^High 1$/u })).toBeInTheDocument();
-    expect(screen.getByRole("cell", { name: /^Medium 1$/u })).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "High group" })).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "Medium group" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("combobox", { name: "Group tickets by" }));
     await user.click(screen.getByRole("option", { name: "Owner" }));
 
-    expect(screen.getByRole("cell", { name: /^Agent Smith 1$/u })).toBeInTheDocument();
-    expect(screen.getByRole("cell", { name: /^Unassigned 1$/u })).toBeInTheDocument();
+    expect(
+      screen.getByRole("cell", { name: "Agent Smith group" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("cell", { name: "Unassigned group" }),
+    ).toBeInTheDocument();
   });
 
   it("loads provider-backed priority groups and paginates a bucket independently", async () => {
@@ -124,9 +128,11 @@ describe("TicketWorkspace provider grouping", () => {
 
     expect(loadTicketListPageAction).toHaveBeenCalledWith({ group: "priority" });
     expect(await screen.findByText("Webhook failed")).toBeInTheDocument();
-    expect(screen.getByRole("cell", { name: /High 1\/2/u })).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "High group" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Load more" }));
+    await user.click(
+      screen.getByRole("button", { name: "Show more High tickets (1/2)" }),
+    );
 
     expect(loadTicketListPageAction).toHaveBeenLastCalledWith({
       bucketValue: "high",
@@ -134,7 +140,7 @@ describe("TicketWorkspace provider grouping", () => {
       group: "priority",
     });
     expect(await screen.findByText("Webhook retry still failing")).toBeInTheDocument();
-    expect(screen.getByRole("cell", { name: /High 2\/2/u })).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "High group" })).toBeInTheDocument();
   });
 
   it("shows a bucket pagination error only on the failed group", async () => {
@@ -201,11 +207,11 @@ describe("TicketWorkspace provider grouping", () => {
     await user.click(screen.getByRole("combobox", { name: "Group tickets by" }));
     await user.click(screen.getByRole("option", { name: "Priority" }));
 
-    const highGroup = await screen.findByRole("cell", { name: /High 1\/2/u });
-    const lowGroup = screen.getByRole("cell", { name: /Low 1\/2/u });
+    const highGroup = await screen.findByRole("cell", { name: "High group" });
+    const lowGroup = screen.getByRole("cell", { name: "Low group" });
 
     await user.click(
-      within(highGroup).getByRole("button", { name: "Load more" }),
+      screen.getByRole("button", { name: "Show more High tickets (1/2)" }),
     );
 
     expect(loadTicketListPageAction).toHaveBeenLastCalledWith({

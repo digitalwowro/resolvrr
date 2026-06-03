@@ -35,10 +35,14 @@ export function useTicketListPager({
   const [groupError, setGroupError] =
     useState<{ groupId: string; reason: TicketReadUnavailableReason }>();
   const [sort, setSort] = useState<WorkspaceTicketListSort>();
+  const [silentRefreshing, setSilentRefreshing] = useState(false);
   const baselineIdentity = useRef(ticketListIdentity(initialRows));
   const hasClientLoadedRowsRef = useRef(false);
+  const lastRefreshedAtRef = useRef<number | undefined>(undefined);
+  const silentRefreshInFlightRef = useRef(false);
 
   useEffect(() => {
+    lastRefreshedAtRef.current ??= Date.now();
     const nextIdentity = ticketListIdentity(initialRows);
     const sameListIdentity = baselineIdentity.current === nextIdentity;
     baselineIdentity.current = nextIdentity;
@@ -53,12 +57,14 @@ export function useTicketListPager({
       setErrorReason(undefined);
       setLoading(false);
       hasClientLoadedRowsRef.current = false;
+      lastRefreshedAtRef.current = Date.now();
       return;
     }
 
     setRows((current) => mergeRefreshedBaselineRows(current, initialRows));
     setNextCursor((current) => hasClientLoadedRowsRef.current ? current : initialNextCursor);
     setTotalCount(initialTotalCount);
+    lastRefreshedAtRef.current = Date.now();
   }, [
     initialGroups,
     initialRows,
@@ -95,6 +101,7 @@ export function useTicketListPager({
 
     setNextCursor(result.nextCursor);
     setTotalCount(result.totalCount);
+    lastRefreshedAtRef.current = Date.now();
     hasClientLoadedRowsRef.current = true;
     setRows((current) => appendUniqueRows(current, result.rows));
   }
@@ -132,6 +139,7 @@ export function useTicketListPager({
     setRows(result.rows);
     setNextCursor(result.nextCursor);
     setTotalCount(result.totalCount);
+    lastRefreshedAtRef.current = Date.now();
   }
 
   async function reloadGroupedFirstPage(nextGroupBy: "state" | "priority") {
@@ -168,6 +176,7 @@ export function useTicketListPager({
     setRows(result.rows);
     setNextCursor(undefined);
     setTotalCount(result.totalCount);
+    lastRefreshedAtRef.current = Date.now();
   }
 
   async function reloadSavedView(nextSavedViewId: string): Promise<
@@ -220,8 +229,80 @@ export function useTicketListPager({
     setRows(result.rows);
     setNextCursor(result.nextCursor);
     setTotalCount(result.totalCount);
+    lastRefreshedAtRef.current = Date.now();
 
     return { status: "available", groupBy: result.appliedGroupBy };
+  }
+
+  async function silentRefreshCurrentPage() {
+    if (
+      loading ||
+      silentRefreshInFlightRef.current ||
+      !loadTicketListPageAction
+    ) {
+      return;
+    }
+
+    silentRefreshInFlightRef.current = true;
+    setSilentRefreshing(true);
+    try {
+      const result = await loadTicketListPageAction({
+        ...(groupBy ? { group: groupBy } : {}),
+        ...savedViewListRequest(savedViewId),
+        ...(sort && !groupBy ? { sort } : {}),
+      });
+      if (result.status === "unavailable") {
+        return;
+      }
+
+      lastRefreshedAtRef.current = Date.now();
+      setErrorReason(undefined);
+      setGroupError(undefined);
+      setTotalCount(result.totalCount);
+      if (groupBy) {
+        const refreshedGroups = result.groups ?? [];
+        setGroups((current) => {
+          const currentById = new Map(
+            (current ?? []).map((group) => [group.id, group]),
+          );
+          const nextGroups = refreshedGroups.map((group) => {
+            const currentGroup = currentById.get(group.id);
+            return currentGroup
+              ? {
+                  ...group,
+                  loadedCount: Math.max(
+                    currentGroup.loadedCount ?? currentGroup.rows.length,
+                    group.loadedCount ?? group.rows.length,
+                  ),
+                  nextCursor: currentGroup.nextCursor ?? group.nextCursor,
+                  rows: mergeRefreshedBaselineRows(
+                    currentGroup.rows,
+                    group.rows,
+                  ),
+                }
+              : group;
+          });
+          setRows(nextGroups.flatMap((group) => group.rows));
+          return nextGroups;
+        });
+        return;
+      }
+
+      setRows((current) => mergeRefreshedBaselineRows(current, result.rows));
+      setNextCursor((current) =>
+        hasClientLoadedRowsRef.current ? current : result.nextCursor,
+      );
+    } catch {
+      return;
+    } finally {
+      silentRefreshInFlightRef.current = false;
+      setSilentRefreshing(false);
+    }
+  }
+
+  function isListStale(staleMs: number) {
+    const lastRefreshedAt = lastRefreshedAtRef.current;
+    return lastRefreshedAt === undefined || Date.now() - lastRefreshedAt >= staleMs;
   }
 
   async function loadMoreGroup(group: Pick<WorkspaceTicketListGroup, "id" | "nextCursor" | "value">) {
@@ -293,6 +374,9 @@ export function useTicketListPager({
     reloadSavedView,
     rows,
     savedViewId,
+    silentRefreshCurrentPage,
+    silentRefreshing,
+    isListStale,
     sort,
     totalCount,
   };

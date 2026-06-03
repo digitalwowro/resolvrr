@@ -24,6 +24,10 @@ import {
   addZammadTicketCustomerReply,
   addZammadTicketInternalNote,
 } from "./ticket-article-mutations";
+import {
+  listZammadNotifications,
+  markZammadNotificationsRead,
+} from "./notifications";
 
 const defaultValidationTimeoutMs = 5000;
 const zammadValidationUserAgent = "Resolvrr/1.0";
@@ -113,6 +117,8 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "lookup:assignable-users",
     "lookup:groups",
     "lookup:tags",
+    "notifications:list",
+    "notifications:mark-read",
   ],
   credentialSchemes: [
     {
@@ -139,4 +145,6 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   listGroups: listZammadGroups,
   listTags: listZammadTags,
   searchLinkTargets: searchZammadLinkTargets,
+  listNotifications: listZammadNotifications,
+  markNotificationsRead: markZammadNotificationsRead,
 };

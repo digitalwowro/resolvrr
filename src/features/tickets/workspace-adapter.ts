@@ -213,6 +213,12 @@ function workspaceAttachment(attachment: TicketAttachment): WorkspaceAttachment 
   };
 }
 
+function newestArticlesFirst(articles: TicketArticle[]): TicketArticle[] {
+  return [...articles].sort(
+    (first, second) => second.createdAt.getTime() - first.createdAt.getTime(),
+  );
+}
+
 export function workspaceTicketRow(ticket: TicketListItem): WorkspaceTicketRow {
   return {
     id: ticket.externalId,
@@ -287,7 +293,7 @@ export function workspaceTicketDetail(
     subscription: detail.subscription,
     tags: detail.ticket.tags,
     metadataMutationConstraints: detail.ticket.metadataMutationConstraints,
-    articles: detail.thread.articles.map((article) => ({
+    articles: newestArticlesFirst(detail.thread.articles).map((article) => ({
       id: article.externalId,
       author: participantName(article.author),
       authorEmail: article.author.email,

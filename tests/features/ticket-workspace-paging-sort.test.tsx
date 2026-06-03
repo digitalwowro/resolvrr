@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
@@ -14,6 +14,14 @@ import {
 const routerPush = vi.fn();
 const routerRefresh = vi.fn();
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((innerResolve) => {
+    resolve = innerResolve;
+  });
+  return { promise, resolve };
+}
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: routerPush,
@@ -23,8 +31,13 @@ vi.mock("next/navigation", () => ({
 
 describe("TicketWorkspace paging and sort", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     routerPush.mockClear();
     routerRefresh.mockClear();
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: false,
+    });
   });
 
   it("loads the next ungrouped list page without loading ticket detail", async () => {
@@ -54,7 +67,9 @@ describe("TicketWorkspace paging and sort", () => {
 
     expect(screen.queryByText("Webhook failed")).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "Load more" }));
+    await user.click(
+      screen.getByRole("button", { name: "Show more tickets (1)" }),
+    );
 
     expect(await screen.findByText("Webhook failed")).toBeInTheDocument();
     expect(loadTicketListPageAction).toHaveBeenCalledWith({ cursor: "2" });
@@ -96,6 +111,122 @@ describe("TicketWorkspace paging and sort", () => {
 
     expect(loadTicketListPageAction).toHaveBeenCalledWith({});
     expect(await screen.findByText("New Zammad ticket")).toBeInTheDocument();
+  });
+
+  it("shows the list refresh button as busy while grabbing content", async () => {
+    const user = userEvent.setup();
+    const refreshResult = deferred<{
+      status: "available";
+      rows: Array<typeof row>;
+      loadedCount: number;
+    }>();
+    const loadTicketListPageAction = vi.fn(() => refreshResult.promise);
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        listResult={{ ...availableList, loadedCount: 1 }}
+        loadTicketListPageAction={loadTicketListPageAction}
+        logoutAction={noopAction}
+        rows={[row]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Refresh list" }));
+
+    expect(screen.getByRole("button", { name: "Refresh list" }))
+      .toHaveAttribute("aria-busy", "true");
+
+    await act(async () => {
+      refreshResult.resolve({
+        status: "available",
+        rows: [row],
+        loadedCount: 1,
+      });
+    });
+
+    expect(screen.getByRole("button", { name: "Refresh list" }))
+      .not.toHaveAttribute("aria-busy");
+  });
+
+  it("silently refreshes the active list after 120 seconds", async () => {
+    vi.useFakeTimers();
+    const newRow = {
+      ...highRow,
+      id: "ticket-3",
+      number: "#1003",
+      title: "New silent ticket",
+    };
+    const loadTicketListPageAction = vi.fn(async () => ({
+      status: "available" as const,
+      rows: [newRow, row],
+      loadedCount: 2,
+      totalCount: 2,
+    }));
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        listResult={{ ...availableList, loadedCount: 1, totalCount: 1 }}
+        loadTicketListPageAction={loadTicketListPageAction}
+        logoutAction={noopAction}
+        rows={[row]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    expect(screen.queryByText("New silent ticket")).toBeNull();
+
+    await act(async () => {
+      vi.advanceTimersByTime(120_000);
+    });
+
+    expect(loadTicketListPageAction).toHaveBeenCalledWith({});
+    expect(screen.getByText("New silent ticket")).toBeInTheDocument();
+    expect(screen.getByText("Cannot log in")).toBeInTheDocument();
+  });
+
+  it("does not auto-refresh the list while the browser tab is hidden", () => {
+    vi.useFakeTimers();
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: true,
+    });
+    const loadTicketListPageAction = vi.fn(async () => ({
+      status: "available" as const,
+      rows: [highRow],
+      loadedCount: 1,
+    }));
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        listResult={{ ...availableList, loadedCount: 1 }}
+        loadTicketListPageAction={loadTicketListPageAction}
+        logoutAction={noopAction}
+        rows={[row]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(120_000);
+    });
+
+    expect(loadTicketListPageAction).not.toHaveBeenCalled();
   });
 
   it("reloads the first page through provider sort and keeps the sort for next pages", async () => {
@@ -151,7 +282,9 @@ describe("TicketWorkspace paging and sort", () => {
     expect(await screen.findByText("Webhook failed")).toBeInTheDocument();
     expect(screen.queryByText("Cannot log in")).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "Load more" }));
+    await user.click(
+      screen.getByRole("button", { name: "Show more tickets (1)" }),
+    );
 
     expect(loadTicketListPageAction).toHaveBeenLastCalledWith({
       cursor: "2",
@@ -214,7 +347,9 @@ describe("TicketWorkspace paging and sort", () => {
       "Could not load more tickets.",
     );
 
-    await user.click(screen.getByRole("button", { name: "Load more" }));
+    await user.click(
+      screen.getByRole("button", { name: "Show more tickets (1)" }),
+    );
 
     expect(loadTicketListPageAction).toHaveBeenLastCalledWith({ cursor: "2" });
     expect(await screen.findByText("Webhook failed")).toBeInTheDocument();
@@ -273,7 +408,9 @@ describe("TicketWorkspace paging and sort", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Load more" }));
+    await user.click(
+      screen.getByRole("button", { name: "Show more tickets (1)" }),
+    );
     expect(await screen.findByText("Webhook failed")).toBeInTheDocument();
 
     rerender(

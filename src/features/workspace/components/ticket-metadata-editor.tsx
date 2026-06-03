@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import type {
   SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
@@ -17,7 +17,6 @@ import {
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import {
   metadataDraftFromDetail,
-  metadataDraftKey,
   type TicketMetadataSavedPatch,
 } from "./metadata-draft";
 import { TicketMetadataEditorState } from "./ticket-metadata-editor-state";
@@ -47,14 +46,14 @@ export function TicketMetadataEditor({
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
 }) {
-  const loadedBaseline = metadataDraftFromDetail(detail);
+  const loadedBaseline = useMemo(() => metadataDraftFromDetail(detail), [detail]);
 
   return (
     <TicketMetadataEditorState
       communicationCapabilities={communicationCapabilities}
       detail={detail}
       header={header}
-      key={metadataDraftKey(loadedBaseline)}
+      key={detail.id}
       loadedBaseline={loadedBaseline}
       metadataMutationCapabilities={metadataMutationCapabilities}
       onMetadataSaved={onMetadataSaved}

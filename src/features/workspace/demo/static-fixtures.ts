@@ -27,7 +27,7 @@ export const staticProfileWorkspaces: StaticProfileWorkspace[] = [
 export const staticProfileActions: StaticProfileAction[] = [
   { id: "preferences", label: "Preferences" },
   { id: "shortcuts", label: "Keyboard shortcuts" },
-  { id: "manage-workspaces", label: "Manage workspaces" },
+  { id: "settings", label: "Settings" },
 ];
 
 const baseTicketTabs: StaticTicketTab[] = [

@@ -6,8 +6,14 @@ import { prismaWorkspaceTabsRepository } from "@/data/workspace-tabs-repository"
 import type { TicketListQueryInput } from "@/core/providers";
 import { logoutAction } from "@/features/auth/actions";
 import {
+  createHelpdeskConnectionAction,
+  deleteHelpdeskConnectionAction,
+  disableHelpdeskConnectionAction,
   listConnectionsForUser,
+  listConnectionProviderOptions,
   setActiveHelpdeskConnectionAction,
+  updateHelpdeskConnectionAction,
+  validateHelpdeskConnectionAction,
 } from "@/features/helpdesk-connections";
 import {
   defaultWorkspaceTicketColumns,
@@ -23,6 +29,10 @@ import { updateTicketMetadataAction } from "@/features/tickets/actions";
 import { loadWorkspaceTicketDetailAction } from "@/features/tickets/detail-actions";
 import { loadWorkspaceTicketListPageAction } from "@/features/tickets/list-actions";
 import { searchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-actions";
+import {
+  loadWorkspaceNotificationsAction,
+  markWorkspaceNotificationsReadAction,
+} from "@/features/notifications";
 import { saveWorkspaceOpenTabsStateAction } from "@/features/workspace/actions";
 import {
   defaultWorkspaceSavedViewId,
@@ -128,14 +138,26 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       connections={connections.map((connection) => ({
         id: connection.id,
         label: connection.displayName,
+        providerKey: connection.providerKey,
+        providerLabel: connection.providerLabel,
+        baseUrl: connection.baseUrl,
+        status: connection.status,
         active: connection.active,
       }))}
+      connectionProviderOptions={listConnectionProviderOptions(providerRegistry)}
+      createConnectionAction={createHelpdeskConnectionAction}
+      deleteConnectionAction={deleteHelpdeskConnectionAction}
       detail={detail}
       detailResult={workspaceDetailResult}
+      disableConnectionAction={disableHelpdeskConnectionAction}
       listResult={listResult}
       loadTicketDetailAction={loadWorkspaceTicketDetailAction}
       loadTicketListPageAction={loadWorkspaceTicketListPageAction}
+      loadWorkspaceNotificationsAction={loadWorkspaceNotificationsAction}
       logoutAction={logoutAction}
+      markWorkspaceNotificationsReadAction={
+        markWorkspaceNotificationsReadAction
+      }
       metadataMutationCapabilities={
         listResult.status === "available"
           ? listResult.metadataMutationCapabilities
@@ -155,8 +177,10 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       selectedTicketId={selectedTicketId}
       setActiveConnectionAction={setActiveHelpdeskConnectionAction}
       tabs={workspaceTicketTabs(rows)}
+      updateConnectionAction={updateHelpdeskConnectionAction}
       updateTicketMetadataAction={updateTicketMetadataAction}
       userEmail={user.email}
+      validateConnectionAction={validateHelpdeskConnectionAction}
     />
   );
 }

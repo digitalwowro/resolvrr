@@ -37,6 +37,7 @@ type TicketListToolbarProps = {
   onSavedViewChange(savedViewId: string): void;
   onSelectAll(): void;
   partiallySelected: boolean;
+  refreshing?: boolean;
   roundedTop?: boolean;
   savedViewOptions: DropdownOption[];
   selectedSavedViewId: string;
@@ -54,6 +55,7 @@ export function TicketListToolbar({
   onSavedViewChange,
   onSelectAll,
   partiallySelected,
+  refreshing = false,
   roundedTop = false,
   savedViewOptions,
   selectedSavedViewId,
@@ -73,8 +75,8 @@ export function TicketListToolbar({
     <div
       aria-label="Ticket list controls"
       className={cn(
-        "flex min-h-11 shrink-0 items-center justify-between gap-3 border-x border-t border-slate-200 bg-white px-3 py-2",
-        roundedTop && "rounded-t-md",
+        "flex min-h-11 shrink-0 items-center justify-between gap-3 border-x border-b border-indigo-200 bg-indigo-50 px-3 py-2",
+        roundedTop && "rounded-t-md border-t",
       )}
       role="toolbar"
     >
@@ -94,8 +96,14 @@ export function TicketListToolbar({
         </Tooltip>
         <Button
           aria-label="Refresh list"
+          aria-busy={refreshing || undefined}
           className="translate-y-px !h-6 !gap-1.5 !rounded !px-2 !text-xs !text-slate-500"
-          icon={<RefreshCw aria-hidden="true" className="size-3.5" />}
+          icon={
+            <RefreshCw
+              aria-hidden="true"
+              className={cn("size-3.5", refreshing && "animate-spin")}
+            />
+          }
           onClick={onRefresh}
           type="button"
         >

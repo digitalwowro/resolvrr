@@ -70,6 +70,61 @@ function updatePayloadNeedsDetailRefresh(payload: SelectedTicketUpdatePayload) {
   );
 }
 
+function mergeRefreshedDraft({
+  currentBaseline,
+  currentDraft,
+  nextBaseline,
+}: {
+  currentBaseline: SelectedTicketDraft;
+  currentDraft: SelectedTicketDraft;
+  nextBaseline: SelectedTicketDraft;
+}): SelectedTicketDraft {
+  const dirtyFields = metadataDraftDirtyFields(currentBaseline, currentDraft);
+  const nextDraft = metadataDraftFromBaseline(nextBaseline);
+
+  return {
+    ...nextDraft,
+    communication: currentDraft.communication,
+    metadata: {
+      ...nextDraft.metadata,
+      ...(dirtyFields.group
+        ? { groupExternalId: currentDraft.metadata.groupExternalId }
+        : {}),
+      ...(dirtyFields.links
+        ? {
+            linkAddExternalId: currentDraft.metadata.linkAddExternalId,
+            linkAddRelation: currentDraft.metadata.linkAddRelation,
+            linkRemoveExternalIds: [
+              ...currentDraft.metadata.linkRemoveExternalIds,
+            ],
+          }
+        : {}),
+      ...(dirtyFields.owner
+        ? { ownerExternalId: currentDraft.metadata.ownerExternalId }
+        : {}),
+      ...(dirtyFields.pendingUntil || dirtyFields.state
+        ? { pendingDateTime: { ...currentDraft.metadata.pendingDateTime } }
+        : {}),
+      ...(dirtyFields.priority
+        ? { priority: currentDraft.metadata.priority }
+        : {}),
+      ...(dirtyFields.state ? { state: currentDraft.metadata.state } : {}),
+      ...(dirtyFields.subscription
+        ? {
+            subscriptionFollowing:
+              currentDraft.metadata.subscriptionFollowing,
+          }
+        : {}),
+      ...(dirtyFields.tags
+        ? {
+            tagText: currentDraft.metadata.tagText,
+            tags: [...currentDraft.metadata.tags],
+          }
+        : {}),
+    },
+  };
+}
+
 export function TicketMetadataEditorState({
   communicationCapabilities,
   detail,
@@ -100,6 +155,8 @@ export function TicketMetadataEditorState({
   const router = useRouter();
   const refreshSavedDetail =
     onMetadataSavedDetailRefresh ?? noopMetadataSavedDetailRefresh;
+  const [renderedBaseline, setRenderedBaseline] =
+    useState<SelectedTicketDraft>(loadedBaseline);
   const [baseline, setBaseline] = useState<SelectedTicketDraft>(loadedBaseline);
   const [draft, setDraft] = useState<SelectedTicketDraft>(
     metadataDraftFromBaseline(loadedBaseline),
@@ -111,9 +168,24 @@ export function TicketMetadataEditorState({
   const [scrollAfterArticleCount, setScrollAfterArticleCount] =
     useState<number>();
 
-  const dirtyFields = metadataDraftDirtyFields(baseline, draft);
+  let currentBaseline = baseline;
+  let currentDraft = draft;
+  if (renderedBaseline !== loadedBaseline) {
+    const nextDraft = mergeRefreshedDraft({
+      currentBaseline: baseline,
+      currentDraft: draft,
+      nextBaseline: loadedBaseline,
+    });
+    setRenderedBaseline(loadedBaseline);
+    setBaseline(loadedBaseline);
+    setDraft(nextDraft);
+    currentBaseline = loadedBaseline;
+    currentDraft = nextDraft;
+  }
+
+  const dirtyFields = metadataDraftDirtyFields(currentBaseline, currentDraft);
   const hasChanges = metadataDraftHasChanges(dirtyFields);
-  const validation = validateMetadataDraft(detail, dirtyFields, draft);
+  const validation = validateMetadataDraft(detail, dirtyFields, currentDraft);
   const statusText = mutationStatusText(saving, mutationResult);
   const canUpdate = hasChanges && validation.valid && !saving;
 
@@ -123,7 +195,8 @@ export function TicketMetadataEditorState({
   }
 
   function discardChanges() {
-    setDraft(metadataDraftFromBaseline(baseline));
+    const nextDraft = metadataDraftFromBaseline(currentBaseline);
+    setDraft(nextDraft);
     setMutationResult({ status: "idle" });
   }
 
@@ -132,7 +205,7 @@ export function TicketMetadataEditorState({
       return;
     }
 
-    const updatePayload = metadataDraftUpdatePayload(baseline, draft);
+    const updatePayload = metadataDraftUpdatePayload(currentBaseline, currentDraft);
     if (!updatePayload) {
       return;
     }
@@ -152,7 +225,7 @@ export function TicketMetadataEditorState({
           result.status === "saved" ||
           result.status === "saved-refresh-failed"
         ) {
-          const submittedBaseline = metadataDraftSubmittedBaseline(draft);
+          const submittedBaseline = metadataDraftSubmittedBaseline(currentDraft);
           onMetadataSaved({
             group: dirtyFields.group
               ? assignmentLabel(
@@ -187,8 +260,9 @@ export function TicketMetadataEditorState({
           if (submittedCommunication) {
             setThreadComposerResetKey((current) => current + 1);
           }
+          const nextDraft = metadataDraftFromBaseline(submittedBaseline);
           setBaseline(submittedBaseline);
-          setDraft(metadataDraftFromBaseline(submittedBaseline));
+          setDraft(nextDraft);
           if (
             shouldReturnToListAfterUpdate({
               finalState: submittedBaseline.metadata.state,
@@ -211,7 +285,7 @@ export function TicketMetadataEditorState({
       <TicketPrimaryMetadataFields
         detail={detail}
         dirtyFields={dirtyFields}
-        draft={draft}
+        draft={currentDraft}
         metadataMutationCapabilities={metadataMutationCapabilities}
         onDraftChange={changeDraft}
         saving={saving}
@@ -219,7 +293,7 @@ export function TicketMetadataEditorState({
       <TicketAssignmentFields
         detail={detail}
         dirtyFields={dirtyFields}
-        draft={draft}
+        draft={currentDraft}
         metadataMutationCapabilities={metadataMutationCapabilities}
         onDraftChange={changeDraft}
         saving={saving}
@@ -227,7 +301,7 @@ export function TicketMetadataEditorState({
       <TicketSecondaryMetadataFields
         detail={detail}
         dirtyFields={dirtyFields}
-        draft={draft}
+        draft={currentDraft}
         metadataMutationCapabilities={metadataMutationCapabilities}
         onDraftChange={changeDraft}
         recentlyViewedLinkTargets={recentlyViewedLinkTargets}
@@ -288,12 +362,12 @@ export function TicketMetadataEditorState({
                 {header}
                 <TicketThread
                   articles={detail.articles}
-                  communicationDraft={draft.communication}
+                  communicationDraft={currentDraft.communication}
                   communicationCapabilities={communicationCapabilities}
                   disabled={saving}
                   key={threadComposerResetKey}
                   onCommunicationDraftChange={(communication) =>
-                    changeDraft({ ...draft, communication })
+                    changeDraft({ ...currentDraft, communication })
                   }
                   onScrolledToLatest={() => setScrollAfterArticleCount(undefined)}
                   scrollAfterArticleCount={scrollAfterArticleCount}
