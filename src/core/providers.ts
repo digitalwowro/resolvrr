@@ -58,6 +58,7 @@ export type ProviderCapability =
   | "lookup:assignable-users"
   | "lookup:groups"
   | "lookup:tags"
+  | "lookup:current-user"
   | "notifications:list"
   | "notifications:mark-read"
   | "search:full-text";
@@ -161,6 +162,7 @@ export type HelpdeskProviderPlugin = {
   listAssignableUsers?(context: ProviderContext): Promise<ProviderLookupOption[]>;
   listGroups?(context: ProviderContext): Promise<ProviderLookupOption[]>;
   listTags?(context: ProviderContext): Promise<ProviderLookupOption[]>;
+  getCurrentUser?(context: ProviderContext): Promise<ProviderLookupOption>;
   searchLinkTargets?(
     context: ProviderContext,
     input: TicketLinkTargetSearchInput,

@@ -325,10 +325,25 @@ the active provider advertises `ticket:count`; providers without that capability
 keep returning loaded-count-only list results.
 
 Workspace saved views use the same provider-neutral guardrails before selecting
-a default view. If the user's default saved view requires unsupported search,
-sort, grouping, or grouped total-count behavior for the active provider, the
-workspace falls back to the provider-neutral "All tickets" view and keeps the
-unsupported saved view visible but disabled with a provider-neutral warning.
+a default view. Saved views are scoped to the active helpdesk connection and
+store provider-neutral condition/query data only. Conditions support Owner,
+State, Priority, and Group with `is` and `is not`; values in one condition are
+OR alternatives and separate conditions are ANDed. Owner values can reference
+provider-neutral presets (`Myself`, `Unassigned`, `All owners`) or lookup
+external IDs. `All owners` means no owner filter and is not persisted as a
+condition. Negative filters such as excluded states, priorities, owners, and
+groups are represented in the core query model and compiled only inside
+provider plugins.
+
+`My work` is the only seeded saved view. It is a personal, workspace-scoped
+seed whose provider-neutral conditions are `Owner is Myself` and `State is not
+Closed`; it becomes the default when no valid default exists and is not
+recreated after its `my-work` seed key is dismissed by deletion. The workspace
+does not create or persist an `All tickets` saved view. If no manageable saved
+view can be selected, the UI can use an internal provider-neutral all-tickets
+fallback for recovery only. If a saved view requires unsupported search, sort,
+grouping, or grouped total-count behavior for the active provider, the
+workspace keeps it visible but disabled with a provider-neutral warning.
 
 Workspace list sorting uses this same contract: when the active provider
 advertises `providerSort`, changing a table sort requests page 1 with the

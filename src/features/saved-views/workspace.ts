@@ -10,6 +10,7 @@ export const allTicketsSavedViewId = "all-tickets";
 export type WorkspaceSavedView = {
   id: string;
   label: string;
+  isDefault?: boolean;
   query?: SavedViewQuery;
   disabledReason?: TicketListQueryRejection["kind"];
   disabledLabel?: string;
@@ -66,9 +67,7 @@ export function workspaceSavedViews(
   savedViews: StoredSavedView[],
   capabilities?: TicketListQueryCapabilities,
 ): WorkspaceSavedView[] {
-  return [
-    { id: allTicketsSavedViewId, label: "All tickets" },
-    ...savedViews.map((savedView) => {
+  const views = savedViews.map((savedView) => {
       const disabledReason = savedViewQueryRejection(
         savedView.query,
         capabilities,
@@ -77,6 +76,7 @@ export function workspaceSavedViews(
       return {
         id: savedView.id,
         label: savedView.name,
+        isDefault: Boolean(savedView.preference?.isDefault),
         query: savedView.query,
         ...(disabledReason
           ? {
@@ -85,8 +85,11 @@ export function workspaceSavedViews(
             }
           : {}),
       };
-    }),
-  ];
+    });
+
+  return views.length > 0
+    ? views
+    : [{ id: allTicketsSavedViewId, label: "All tickets" }];
 }
 
 export function defaultWorkspaceSavedViewId(
@@ -98,6 +101,9 @@ export function defaultWorkspaceSavedViewId(
       (savedView) =>
         savedView.preference?.isDefault &&
         !savedViewQueryRejection(savedView.query, capabilities),
+    )?.id ??
+    savedViews.find(
+      (savedView) => !savedViewQueryRejection(savedView.query, capabilities),
     )?.id ??
     allTicketsSavedViewId
   );

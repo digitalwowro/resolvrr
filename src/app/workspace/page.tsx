@@ -26,9 +26,11 @@ import {
   workspaceTicketTabs,
 } from "@/features/tickets";
 import { updateTicketMetadataAction } from "@/features/tickets/actions";
+import { loadActiveTicketProviderContext } from "@/features/tickets/connection-context";
 import { loadWorkspaceTicketDetailAction } from "@/features/tickets/detail-actions";
 import { loadWorkspaceTicketListPageAction } from "@/features/tickets/list-actions";
 import { searchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-actions";
+import { dispatchCurrentHelpdeskUserRead } from "@/features/tickets/provider-dispatch";
 import {
   loadWorkspaceNotificationsAction,
   markWorkspaceNotificationsReadAction,
@@ -36,9 +38,18 @@ import {
 import { saveWorkspaceOpenTabsStateAction } from "@/features/workspace/actions";
 import {
   defaultWorkspaceSavedViewId,
+  ensureMyWorkSavedView,
   workspaceSavedViews,
   type StoredSavedView,
 } from "@/features/saved-views";
+import {
+  deleteWorkspaceSavedViewAction,
+  loadWorkspaceSavedViewsSettingsAction,
+  reorderWorkspaceSavedViewsAction,
+  saveWorkspaceSavedViewAction,
+  setDefaultWorkspaceSavedViewAction,
+} from "@/features/saved-views/actions";
+import { savedViewSettingsDataFromStored } from "@/features/saved-views/settings-model";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import { providerRegistry } from "@/providers";
 
@@ -80,16 +91,39 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
   const initialWorkspaceOpenTabsState = activeConnection
     ? await prismaWorkspaceTabsRepository.getForUser(user.id, activeConnection.id)
     : undefined;
-  const savedViews = await prismaSavedViewsRepository.listForUser(
-    user.id,
-    activeConnection?.id,
-  );
   const activeProvider = activeConnection
     ? providerRegistry.get(activeConnection.providerKey)
     : undefined;
   const activeQueryCapabilities = activeProvider
     ? ticketListQueryCapabilities(activeProvider.capabilities)
     : undefined;
+  let currentHelpdeskUser;
+  if (activeConnection) {
+    const providerContext = await loadActiveTicketProviderContext(
+      prismaHelpdeskConnectionsRepository,
+      providerRegistry,
+      env.APP_ENCRYPTION_KEY,
+      user.id,
+      "list",
+    );
+    if (providerContext.status === "available") {
+      const currentUserLookup =
+        await dispatchCurrentHelpdeskUserRead(providerContext.value);
+      currentHelpdeskUser =
+        currentUserLookup.status === "available"
+          ? currentUserLookup.options[0]
+          : undefined;
+    }
+  }
+  const savedViews = activeConnection
+    ? await ensureMyWorkSavedView(
+        prismaSavedViewsRepository,
+        activeProvider?.capabilities ?? [],
+        user.id,
+        activeConnection.id,
+        currentHelpdeskUser,
+      )
+    : [];
   const selectedSavedViewId = defaultWorkspaceSavedViewId(
     savedViews,
     activeQueryCapabilities,
@@ -154,6 +188,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       loadTicketDetailAction={loadWorkspaceTicketDetailAction}
       loadTicketListPageAction={loadWorkspaceTicketListPageAction}
       loadWorkspaceNotificationsAction={loadWorkspaceNotificationsAction}
+      loadSavedViewsSettingsAction={loadWorkspaceSavedViewsSettingsAction}
       logoutAction={logoutAction}
       markWorkspaceNotificationsReadAction={
         markWorkspaceNotificationsReadAction
@@ -164,8 +199,16 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           : undefined
       }
       rows={rows}
+      deleteSavedViewAction={deleteWorkspaceSavedViewAction}
       initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
+      initialSavedViewSettingsData={savedViewSettingsDataFromStored({
+        views: savedViews,
+        currentUser: currentHelpdeskUser,
+        canManageShared: user.role === "ADMIN",
+      })}
+      reorderSavedViewsAction={reorderWorkspaceSavedViewsAction}
       saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
+      saveSavedViewAction={saveWorkspaceSavedViewAction}
       searchTicketLinkTargetsAction={searchWorkspaceTicketLinkTargetsAction}
       savedViews={workspaceSavedViews(
         savedViews,
@@ -176,10 +219,12 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       selectedSavedViewId={selectedSavedViewId}
       selectedTicketId={selectedTicketId}
       setActiveConnectionAction={setActiveHelpdeskConnectionAction}
+      setDefaultSavedViewAction={setDefaultWorkspaceSavedViewAction}
       tabs={workspaceTicketTabs(rows)}
       updateConnectionAction={updateHelpdeskConnectionAction}
       updateTicketMetadataAction={updateTicketMetadataAction}
       userEmail={user.email}
+      userRole={user.role}
       validateConnectionAction={validateHelpdeskConnectionAction}
     />
   );

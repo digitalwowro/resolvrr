@@ -38,7 +38,13 @@ function repository(onCreate: (input: CreateSavedViewInput) => void) {
       listForUser: async () => [],
       findForUser: async () => null,
       create,
+      update: async () => null,
+      deleteForUser: async () => null,
       setDefaultForUser: async () => true,
+      reorderForUser: async () => [],
+      findSeedForUser: async () => null,
+      isSeedDismissed: async () => false,
+      dismissSeed: async () => undefined,
     } satisfies SavedViewsRepository,
     create,
   };

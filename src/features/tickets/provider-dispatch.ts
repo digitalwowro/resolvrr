@@ -211,18 +211,26 @@ export async function dispatchTicketLookupDataRead(
     providerContext,
     "lookup:assignable-users",
   );
+  const canGetCurrentUser = hasCapability(providerContext, "lookup:current-user");
   const canListGroups = hasCapability(providerContext, "lookup:groups");
   const canListTags = hasCapability(providerContext, "lookup:tags");
-  if (!canListAssignableUsers && !canListGroups && !canListTags) {
+  if (!canListAssignableUsers && !canGetCurrentUser && !canListGroups && !canListTags) {
     return unsupportedTicketLookupData();
   }
 
-  const [assignableUsers, groups, tags] = await Promise.all([
+  const [assignableUsers, currentUser, groups, tags] = await Promise.all([
     dispatchLookupListRead({
       read: canListAssignableUsers && providerContext.plugin.listAssignableUsers
         ? () => providerContext.plugin.listAssignableUsers!(
             providerContext.context,
           )
+        : undefined,
+    }),
+    dispatchLookupListRead({
+      read: canGetCurrentUser && providerContext.plugin.getCurrentUser
+        ? async () => [await providerContext.plugin.getCurrentUser!(
+            providerContext.context,
+          )]
         : undefined,
     }),
     dispatchLookupListRead({
@@ -237,7 +245,20 @@ export async function dispatchTicketLookupDataRead(
     }),
   ]);
 
-  return { assignableUsers, groups, tags };
+  return { assignableUsers, currentUser, groups, tags };
+}
+
+export async function dispatchCurrentHelpdeskUserRead(
+  providerContext: TicketProviderContext,
+): Promise<TicketLookupList> {
+  const canGetCurrentUser = hasCapability(providerContext, "lookup:current-user");
+  return dispatchLookupListRead({
+    read: canGetCurrentUser && providerContext.plugin.getCurrentUser
+      ? async () => [await providerContext.plugin.getCurrentUser!(
+          providerContext.context,
+        )]
+      : undefined,
+  });
 }
 
 export async function dispatchTicketMetadataMutation(

@@ -4,7 +4,10 @@ import type {
   WorkspaceTicketDetailLoadResult,
   WorkspaceTicketRow,
 } from "@/features/tickets";
-import { availableTicketLookupList } from "@/core/ticket-lookups";
+import {
+  availableTicketLookupList,
+  unsupportedTicketLookupList,
+} from "@/core/ticket-lookups";
 
 export async function noopAction() {}
 
@@ -84,6 +87,7 @@ export function detailPropsFor(
           { externalId: "agent-1", label: "Agent Smith" },
           { externalId: "agent-2", label: "Priya Agent" },
         ]),
+        currentUser: unsupportedTicketLookupList(),
         groups: availableTicketLookupList([
           { externalId: "group-1", label: "Users" },
           { externalId: "group-2", label: "Billing" },
@@ -139,6 +143,7 @@ export function detailPropsFor(
             { externalId: "agent-1", label: "Agent Smith" },
             { externalId: "agent-2", label: "Priya Agent" },
           ]),
+          currentUser: unsupportedTicketLookupList(),
           groups: availableTicketLookupList([
             { externalId: "group-1", label: "Users" },
             { externalId: "group-2", label: "Billing" },

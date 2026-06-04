@@ -10,10 +10,19 @@ import type {
   LoadWorkspaceNotificationsAction,
   MarkWorkspaceNotificationsReadAction,
 } from "@/features/notifications";
+import type {
+  DeleteWorkspaceSavedViewAction,
+  LoadWorkspaceSavedViewsSettingsAction,
+  ReorderWorkspaceSavedViewsAction,
+  SaveWorkspaceSavedViewAction,
+  SavedViewSettingsData,
+  SetDefaultWorkspaceSavedViewAction,
+} from "@/features/saved-views/settings-model";
 import {
   allTicketsSavedViewId,
   type WorkspaceSavedView,
-} from "@/features/saved-views";
+} from "@/features/saved-views/workspace";
+import type { AuthUserRole } from "@/auth/types";
 import type {
   SaveWorkspaceOpenTabsStateAction,
   WorkspaceOpenTabsState,
@@ -59,6 +68,7 @@ type TicketWorkspaceProps = {
   connections: WorkspaceMenuConnection[];
   connectionProviderOptions?: ConnectionProviderOption[];
   createConnectionAction?: HelpdeskConnectionFormAction;
+  deleteSavedViewAction?: DeleteWorkspaceSavedViewAction;
   deleteConnectionAction?: HelpdeskConnectionFormAction;
   detail?: WorkspaceTicketDetail;
   detailResult?: WorkspaceTicketDetailLoadResult;
@@ -66,6 +76,7 @@ type TicketWorkspaceProps = {
   listResult: TicketListReadResult;
   loadTicketDetailAction?: LoadWorkspaceTicketDetailAction;
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
+  loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
   loadWorkspaceNotificationsAction?: LoadWorkspaceNotificationsAction;
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
   logoutAction(formData: FormData): void | Promise<void>;
@@ -73,19 +84,24 @@ type TicketWorkspaceProps = {
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   rows: WorkspaceTicketRow[];
   savedViews?: WorkspaceSavedView[];
+  initialSavedViewSettingsData?: SavedViewSettingsData;
+  reorderSavedViewsAction?: ReorderWorkspaceSavedViewsAction;
   initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
   saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
+  saveSavedViewAction?: SaveWorkspaceSavedViewAction;
   selectedSavedViewId?: string;
   selectedTicketId?: string;
   setActiveConnectionAction(
     formData: FormData,
   ): void | Promise<void | HelpdeskConnectionActionResult>;
+  setDefaultSavedViewAction?: SetDefaultWorkspaceSavedViewAction;
   tabs: WorkspaceTicketTab[];
   updateConnectionAction?: HelpdeskConnectionFormAction;
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
   userEmail: string;
+  userRole?: AuthUserRole;
   validateConnectionAction?: HelpdeskConnectionFormAction;
 };
 
@@ -136,6 +152,7 @@ export function TicketWorkspace({
   connections,
   connectionProviderOptions = [],
   createConnectionAction,
+  deleteSavedViewAction,
   deleteConnectionAction,
   detail,
   detailResult,
@@ -143,6 +160,7 @@ export function TicketWorkspace({
   listResult,
   loadTicketDetailAction,
   loadTicketListPageAction,
+  loadSavedViewsSettingsAction,
   loadWorkspaceNotificationsAction,
   logoutAction,
   markWorkspaceNotificationsReadAction,
@@ -150,20 +168,31 @@ export function TicketWorkspace({
   rows,
   searchTicketLinkTargetsAction,
   savedViews,
+  initialSavedViewSettingsData,
+  reorderSavedViewsAction,
   initialWorkspaceOpenTabsState,
   saveWorkspaceOpenTabsStateAction,
+  saveSavedViewAction,
   selectedSavedViewId,
   selectedTicketId,
   setActiveConnectionAction,
+  setDefaultSavedViewAction,
   tabs,
   updateConnectionAction,
   updateTicketMetadataAction,
   userEmail,
+  userRole = "USER",
   validateConnectionAction,
 }: TicketWorkspaceProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] =
     useState<WorkspaceSettingsSection>("workspaces");
+  const [workspaceSavedViewOptions, setWorkspaceSavedViewOptions] = useState<
+    WorkspaceSavedView[]
+  >(() => savedViews ?? [{ id: allTicketsSavedViewId, label: "All tickets" }]);
+  const [savedViewSettingsData, setSavedViewSettingsData] = useState(
+    initialSavedViewSettingsData,
+  );
   const providedLoadTicketDetailAction = Boolean(loadTicketDetailAction);
   const effectiveLoadTicketDetailAction =
     loadTicketDetailAction ?? unavailableTicketDetailAction;
@@ -234,7 +263,7 @@ export function TicketWorkspace({
           refreshTicketDetailAfterMetadataSave={providedLoadTicketDetailAction}
           rows={rows}
           savedViews={
-            savedViews ?? [{ id: allTicketsSavedViewId, label: "All tickets" }]
+            workspaceSavedViewOptions
           }
           initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
           saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
@@ -256,15 +285,34 @@ export function TicketWorkspace({
           connections={settingsConnections}
           createConnectionAction={createConnectionAction}
           deleteConnectionAction={deleteConnectionAction}
+          deleteSavedViewAction={deleteSavedViewAction}
           disableConnectionAction={disableConnectionAction}
           initialSection={settingsSection}
+          initialSavedViewData={savedViewSettingsData}
+          loadSavedViewsSettingsAction={loadSavedViewsSettingsAction}
           onClose={() => setSettingsOpen(false)}
+          onSavedViewDataChange={(data) => {
+            setSavedViewSettingsData(data);
+            setWorkspaceSavedViewOptions(
+              data.views.length > 0
+                ? data.views.map((view) => ({
+                    id: view.id,
+                    label: view.name,
+                    isDefault: view.isDefault,
+                  }))
+                : [{ id: allTicketsSavedViewId, label: "All tickets" }],
+            );
+          }}
           providerOptions={connectionProviderOptions}
+          reorderSavedViewsAction={reorderSavedViewsAction}
+          saveSavedViewAction={saveSavedViewAction}
           setActiveConnectionAction={
             setActiveConnectionAction as HelpdeskConnectionFormAction
           }
+          setDefaultSavedViewAction={setDefaultSavedViewAction}
           updateConnectionAction={updateConnectionAction}
           userEmail={userEmail}
+          userRole={userRole}
           validateConnectionAction={validateConnectionAction}
         />
       ) : null}

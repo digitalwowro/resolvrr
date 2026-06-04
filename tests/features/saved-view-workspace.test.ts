@@ -103,7 +103,6 @@ describe("workspace saved-view performance rules", () => {
         },
       ),
     ).toMatchObject([
-      { id: "all-tickets", label: "All tickets" },
       {
         id: "search-view",
         disabledLabel: "search unsupported",

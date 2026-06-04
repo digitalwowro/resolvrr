@@ -229,6 +229,10 @@ export function useTicketWorkspaceDisplayState({
     setSelectedRowIds(new Set());
   }
 
+  function clearRowSelection() {
+    setSelectedRowIds(new Set());
+  }
+
   function updateOpenTicketTabMetadata({
     group,
     owner,
@@ -408,6 +412,7 @@ export function useTicketWorkspaceDisplayState({
     activeTicketId,
     allSelected,
     closeTicket,
+    clearRowSelection,
     groupBy,
     groupedRows,
     handleGroupByChange,

@@ -119,6 +119,7 @@ model SavedView {
   iconName             String?
   colorName            String?
   filterJson           Json
+  seedKey              String?
   isSystem             Boolean                    @default(false)
   createdAt            DateTime                   @default(now())
   updatedAt            DateTime                   @updatedAt
@@ -129,6 +130,7 @@ model SavedView {
 
   @@index([ownerUserId])
   @@index([helpdeskConnectionId])
+  @@index([helpdeskConnectionId, seedKey])
   @@index([visibility])
 }
 
