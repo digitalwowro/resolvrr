@@ -45,6 +45,7 @@ describe("Zammad ticket reads", () => {
       "ticket:add-customer-reply",
       "lookup:link-targets",
       "lookup:assignable-users",
+      "lookup:current-user",
       "lookup:groups",
       "lookup:tags",
       "notifications:list",
