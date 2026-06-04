@@ -16,6 +16,17 @@ export type WorkspaceSavedView = {
   disabledLabel?: string;
 };
 
+export type InitialWorkspaceSavedViewSelection =
+  | {
+      status: "selected";
+      selectedSavedViewId: string;
+      selectedSavedView?: StoredSavedView;
+    }
+  | {
+      status: "blocked";
+      reason: "my-work-current-user-unavailable";
+    };
+
 export function savedViewQueryRejection(
   query: SavedViewQuery,
   capabilities?: TicketListQueryCapabilities,
@@ -107,4 +118,34 @@ export function defaultWorkspaceSavedViewId(
     )?.id ??
     allTicketsSavedViewId
   );
+}
+
+export function initialWorkspaceSavedViewSelection({
+  blockUnfilteredFallback,
+  capabilities,
+  savedViews,
+}: {
+  savedViews: StoredSavedView[];
+  capabilities?: TicketListQueryCapabilities;
+  blockUnfilteredFallback?: boolean;
+}): InitialWorkspaceSavedViewSelection {
+  if (blockUnfilteredFallback && savedViews.length === 0) {
+    return {
+      status: "blocked",
+      reason: "my-work-current-user-unavailable",
+    };
+  }
+
+  const selectedSavedViewId = defaultWorkspaceSavedViewId(
+    savedViews,
+    capabilities,
+  );
+
+  return {
+    status: "selected",
+    selectedSavedViewId,
+    selectedSavedView: savedViews.find(
+      (savedView) => savedView.id === selectedSavedViewId,
+    ),
+  };
 }

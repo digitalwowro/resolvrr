@@ -47,7 +47,7 @@ export type SavedViewsRepository = {
     userId: string,
     savedViewId: string,
     helpdeskConnectionId: string,
-    input: Omit<CreateSavedViewInput, "ownerUserId" | "helpdeskConnectionId" | "preference" | "seedKey" | "isSystem">,
+    input: Omit<CreateSavedViewInput, "helpdeskConnectionId" | "preference" | "seedKey" | "isSystem">,
   ): Promise<StoredSavedView | null>;
   deleteForUser(
     userId: string,

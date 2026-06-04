@@ -13,6 +13,7 @@ export {
   createSavedView,
   deleteManagedSavedView,
   ensureMyWorkSavedView,
+  ensureMyWorkSavedViewResult,
   reorderManagedSavedViews,
   savedViewQueryFromInput,
   saveManagedSavedView,
@@ -22,6 +23,7 @@ export {
   type SavedViewMutationResult,
   type SaveSavedViewInput,
   type SaveSavedViewResult,
+  type EnsureMyWorkSavedViewResult,
 } from "./service";
 export {
   compileSavedViewConditions,
@@ -44,7 +46,9 @@ export type {
 export {
   allTicketsSavedViewId,
   defaultWorkspaceSavedViewId,
+  initialWorkspaceSavedViewSelection,
   workspaceSavedViews,
+  type InitialWorkspaceSavedViewSelection,
   type WorkspaceSavedView,
 } from "./workspace";
 export type {

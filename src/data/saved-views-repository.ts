@@ -240,6 +240,9 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
     const updated = await prisma.savedView.update({
       where: { id: savedViewId },
       data: {
+        ...(input.visibility === "personal"
+          ? { ownerUserId: input.ownerUserId }
+          : {}),
         name: input.name,
         visibility: toDbVisibility(input.visibility),
         iconName: input.iconName,

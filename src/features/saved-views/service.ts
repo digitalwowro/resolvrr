@@ -93,6 +93,15 @@ export type SaveSavedViewResult =
       rejection: TicketListQueryRejection;
     };
 
+export type EnsureMyWorkSavedViewResult =
+  | { status: "available"; views: StoredSavedView[] }
+  | {
+      status: "unavailable";
+      reason: "current-user-unavailable" | "unsupported-query";
+      views: StoredSavedView[];
+      rejection?: TicketListQueryRejection;
+    };
+
 function savedViewQueryInput(query: TicketListQueryInput): TicketListQueryInput {
   const filter = normalizeSavedViewFilter(query.filter);
   const sort = normalizeSavedViewSort(query.sort);
@@ -209,13 +218,13 @@ export async function createSavedView(
   };
 }
 
-export async function ensureMyWorkSavedView(
+export async function ensureMyWorkSavedViewResult(
   repository: SavedViewsRepository,
   providerCapabilities: ProviderCapability[],
   userId: string,
   helpdeskConnectionId: string,
   currentUser?: ProviderLookupOption,
-): Promise<StoredSavedView[]> {
+): Promise<EnsureMyWorkSavedViewResult> {
   const [existingViews, existingSeed, dismissed] = await Promise.all([
     repository.listForUser(userId, helpdeskConnectionId),
     repository.findSeedForUser(userId, helpdeskConnectionId, myWorkSavedViewSeedKey),
@@ -225,23 +234,35 @@ export async function ensureMyWorkSavedView(
   if (existingSeed) {
     if (!existingViews.some((view) => view.preference?.isDefault)) {
       await repository.setDefaultForUser(userId, existingSeed.id, helpdeskConnectionId);
-      return repository.listForUser(userId, helpdeskConnectionId);
+      return {
+        status: "available",
+        views: await repository.listForUser(userId, helpdeskConnectionId),
+      };
     }
-    return existingViews;
+    return { status: "available", views: existingViews };
   }
   if (dismissed) {
-    return existingViews;
+    return { status: "available", views: existingViews };
   }
 
   const conditions = myWorkSavedViewConditions();
   const query = compileSavedViewConditions({ conditions, currentUser });
   if (!query) {
-    return existingViews;
+    return {
+      status: "unavailable",
+      reason: "current-user-unavailable",
+      views: existingViews,
+    };
   }
 
   const guardrail = validateSavedViewQuery(providerCapabilities, query);
   if (guardrail.status === "unsupported") {
-    return existingViews;
+    return {
+      status: "unavailable",
+      reason: "unsupported-query",
+      rejection: guardrail.rejection,
+      views: existingViews,
+    };
   }
 
   await repository.create({
@@ -256,7 +277,27 @@ export async function ensureMyWorkSavedView(
     preference: { position: 0, isDefault: true },
   });
 
-  return repository.listForUser(userId, helpdeskConnectionId);
+  return {
+    status: "available",
+    views: await repository.listForUser(userId, helpdeskConnectionId),
+  };
+}
+
+export async function ensureMyWorkSavedView(
+  repository: SavedViewsRepository,
+  providerCapabilities: ProviderCapability[],
+  userId: string,
+  helpdeskConnectionId: string,
+  currentUser?: ProviderLookupOption,
+): Promise<StoredSavedView[]> {
+  const result = await ensureMyWorkSavedViewResult(
+    repository,
+    providerCapabilities,
+    userId,
+    helpdeskConnectionId,
+    currentUser,
+  );
+  return result.views;
 }
 
 export async function saveManagedSavedView(
@@ -339,6 +380,7 @@ export async function saveManagedSavedView(
       return viewsResult(repository, userId, helpdeskConnectionId, "not-found", false);
     }
     savedView = await repository.update(userId, input.id, helpdeskConnectionId, {
+      ownerUserId: userId,
       name: title,
       visibility: input.visibility,
       query,

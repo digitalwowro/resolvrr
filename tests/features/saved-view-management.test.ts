@@ -3,6 +3,7 @@ import {
   compileSavedViewConditions,
   deleteManagedSavedView,
   ensureMyWorkSavedView,
+  ensureMyWorkSavedViewResult,
   myWorkSavedViewConditions,
   saveManagedSavedView,
   type CreateSavedViewInput,
@@ -52,6 +53,36 @@ function repository(initialViews: StoredSavedView[] = []) {
     views.push(view);
     return view;
   });
+  const update = vi.fn(
+    async (
+      _userId: string,
+      savedViewId: string,
+      _helpdeskConnectionId: string,
+      input: Parameters<SavedViewsRepository["update"]>[3],
+    ) => {
+      const view = views.find((item) => item.id === savedViewId);
+      if (!view) {
+        return null;
+      }
+      view.ownerUserId =
+        input.visibility === "personal" ? input.ownerUserId : view.ownerUserId;
+      view.name = input.name;
+      view.visibility = input.visibility;
+      view.filter = input.query.filter;
+      view.query = input.query;
+      if (input.iconName) {
+        view.iconName = input.iconName;
+      } else {
+        delete view.iconName;
+      }
+      if (input.colorName) {
+        view.colorName = input.colorName;
+      } else {
+        delete view.colorName;
+      }
+      return view;
+    },
+  );
 
   return {
     views,
@@ -61,7 +92,7 @@ function repository(initialViews: StoredSavedView[] = []) {
       findForUser: async (_userId, savedViewId) =>
         views.find((view) => view.id === savedViewId) ?? null,
       create,
-      update: async () => null,
+      update,
       deleteForUser: async (_userId, savedViewId) => {
         const index = views.findIndex((view) => view.id === savedViewId);
         if (index === -1) {
@@ -77,6 +108,7 @@ function repository(initialViews: StoredSavedView[] = []) {
       dismissSeed: async () => undefined,
     } satisfies SavedViewsRepository,
     setDefaultForUser,
+    update,
   };
 }
 
@@ -117,6 +149,25 @@ describe("saved view management", () => {
       }),
     );
     expect(views).toHaveLength(1);
+  });
+
+  it("reports My work seed unavailable when current user lookup is missing", async () => {
+    const { repo, create } = repository();
+
+    await expect(
+      ensureMyWorkSavedViewResult(
+        repo,
+        ["ticket:list"],
+        "user-1",
+        "connection-1",
+        undefined,
+      ),
+    ).resolves.toEqual({
+      status: "unavailable",
+      reason: "current-user-unavailable",
+      views: [],
+    });
+    expect(create).not.toHaveBeenCalled();
   });
 
   it("sets an existing My work seed as default when no default is valid", async () => {
@@ -265,6 +316,54 @@ describe("saved view management", () => {
     ).resolves.toMatchObject({
       ok: false,
       code: "permission-denied",
+    });
+  });
+
+  it("transfers ownership when an admin changes a shared view to personal", async () => {
+    const { repo, update, views } = repository([
+      storedView({
+        id: "shared-view",
+        ownerUserId: "creator-user",
+        name: "Shared queue",
+        visibility: "shared",
+      }),
+    ]);
+
+    await expect(
+      saveManagedSavedView(
+        repo,
+        ["ticket:list"],
+        "admin-user",
+        "ADMIN",
+        "connection-1",
+        { externalId: "77", label: "Za Mad" },
+        {
+          id: "shared-view",
+          name: "Personal queue",
+          visibility: "personal",
+          colorName: "blue",
+          iconName: "briefcase-business",
+          conditions: myWorkSavedViewConditions(),
+        },
+      ),
+    ).resolves.toMatchObject({
+      ok: true,
+      code: "saved",
+    });
+
+    expect(update).toHaveBeenCalledWith(
+      "admin-user",
+      "shared-view",
+      "connection-1",
+      expect.objectContaining({
+        ownerUserId: "admin-user",
+        visibility: "personal",
+      }),
+    );
+    expect(views[0]).toMatchObject({
+      id: "shared-view",
+      ownerUserId: "admin-user",
+      visibility: "personal",
     });
   });
 });

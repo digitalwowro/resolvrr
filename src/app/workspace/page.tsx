@@ -37,11 +37,13 @@ import {
 } from "@/features/notifications";
 import { saveWorkspaceOpenTabsStateAction } from "@/features/workspace/actions";
 import {
-  defaultWorkspaceSavedViewId,
-  ensureMyWorkSavedView,
+  ensureMyWorkSavedViewResult,
+  initialWorkspaceSavedViewSelection,
   workspaceSavedViews,
+  type EnsureMyWorkSavedViewResult,
   type StoredSavedView,
 } from "@/features/saved-views";
+import { unavailableTicketRead } from "@/features/tickets/read-model";
 import {
   deleteWorkspaceSavedViewAction,
   loadWorkspaceSavedViewsSettingsAction,
@@ -115,29 +117,37 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           : undefined;
     }
   }
-  const savedViews = activeConnection
-    ? await ensureMyWorkSavedView(
+  const savedViewSeedResult: EnsureMyWorkSavedViewResult = activeConnection
+    ? await ensureMyWorkSavedViewResult(
         prismaSavedViewsRepository,
         activeProvider?.capabilities ?? [],
         user.id,
         activeConnection.id,
         currentHelpdeskUser,
       )
-    : [];
-  const selectedSavedViewId = defaultWorkspaceSavedViewId(
+    : { status: "available", views: [] };
+  const savedViews = savedViewSeedResult.views;
+  const savedViewSelection = initialWorkspaceSavedViewSelection({
     savedViews,
-    activeQueryCapabilities,
-  );
-  const selectedSavedView = savedViews.find(
-    (savedView) => savedView.id === selectedSavedViewId,
-  );
-  const listResult = await loadWorkspaceTicketList(
-    prismaHelpdeskConnectionsRepository,
-    providerRegistry,
-    env.APP_ENCRYPTION_KEY,
-    user.id,
-    savedViewTicketListQuery(selectedSavedView),
-  );
+    capabilities: activeQueryCapabilities,
+    blockUnfilteredFallback:
+      savedViewSeedResult.status === "unavailable" &&
+      savedViewSeedResult.reason === "current-user-unavailable",
+  });
+  const selectedSavedViewId =
+    savedViewSelection.status === "selected"
+      ? savedViewSelection.selectedSavedViewId
+      : undefined;
+  const listResult =
+    savedViewSelection.status === "blocked"
+      ? unavailableTicketRead("unsupported-capability")
+      : await loadWorkspaceTicketList(
+          prismaHelpdeskConnectionsRepository,
+          providerRegistry,
+          env.APP_ENCRYPTION_KEY,
+          user.id,
+          savedViewTicketListQuery(savedViewSelection.selectedSavedView),
+        );
 
   const rows =
     listResult.status === "available"
