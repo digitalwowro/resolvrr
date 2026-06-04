@@ -146,6 +146,103 @@ describe("TicketWorkspace", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("opens Settings Views from the avatar and updates the default in place", async () => {
+    const user = userEvent.setup();
+    const initialSavedViewSettingsData = {
+      views: [
+        {
+          id: "view-1",
+          name: "My work",
+          visibility: "personal" as const,
+          iconName: "briefcase-business",
+          colorName: "blue" as const,
+          seedKey: "my-work",
+          isDefault: true,
+          position: 0,
+          conditions: [
+            {
+              id: "owner-myself",
+              field: "owner" as const,
+              operator: "is" as const,
+              values: [{ kind: "owner-preset" as const, value: "myself" as const }],
+            },
+            {
+              id: "state-not-closed",
+              field: "state" as const,
+              operator: "is_not" as const,
+              values: [{ kind: "state" as const, value: "closed" as const }],
+            },
+          ],
+        },
+        {
+          id: "view-2",
+          name: "Escalations",
+          visibility: "personal" as const,
+          iconName: "signal-high",
+          colorName: "rose" as const,
+          isDefault: false,
+          position: 1,
+          conditions: [
+            {
+              id: "priority-high",
+              field: "priority" as const,
+              operator: "is" as const,
+              values: [{ kind: "priority" as const, value: "high" as const }],
+            },
+          ],
+        },
+      ],
+      defaultSavedViewId: "view-1",
+      ownerOptions: [],
+      groupOptions: [],
+      canManageShared: false,
+    };
+    const setDefaultSavedViewAction = vi.fn(async () => ({
+      ok: true,
+      code: "default-set" as const,
+      data: {
+        ...initialSavedViewSettingsData,
+        defaultSavedViewId: "view-2",
+        views: initialSavedViewSettingsData.views.map((view) => ({
+          ...view,
+          isDefault: view.id === "view-2",
+        })),
+      },
+    }));
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        initialSavedViewSettingsData={initialSavedViewSettingsData}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        savedViews={[
+          { id: "view-1", label: "My work", isDefault: true },
+          { id: "view-2", label: "Escalations" },
+        ]}
+        setActiveConnectionAction={noopAction}
+        setDefaultSavedViewAction={setDefaultSavedViewAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Open profile menu, Support" }));
+    await user.click(screen.getByRole("menuitem", { name: "Settings" }));
+    const dialog = screen.getByRole("dialog", { name: "Settings" });
+    await user.click(within(dialog).getByRole("button", { name: "Views" }));
+    await user.click(within(dialog).getByText("Escalations"));
+    await user.click(within(dialog).getByRole("button", { name: "Set default" }));
+
+    expect(setDefaultSavedViewAction).toHaveBeenCalledWith("view-2");
+    expect(await within(dialog).findByText("Default view updated.")).toBeInTheDocument();
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(routerRefresh).not.toHaveBeenCalled();
+  });
+
   it("creates the first workspace from settings without redirecting", async () => {
     const user = userEvent.setup();
     const createConnectionAction = vi.fn(async (formData: FormData) => {

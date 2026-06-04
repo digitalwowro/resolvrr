@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import type { DropdownOption } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import {
   allTicketsSavedViewId,
   type WorkspaceSavedView,
-} from "@/features/saved-views";
+} from "@/features/saved-views/workspace";
 import type {
   LoadWorkspaceTicketDetailAction,
   WorkspaceTicketDetailLoadResult,
@@ -166,6 +166,7 @@ export function TicketWorkspaceDisplay({
     activeTicketId,
     allSelected,
     closeTicket,
+    clearRowSelection,
     groupBy,
     groupedRows,
     handleGroupByChange,
@@ -305,13 +306,26 @@ export function TicketWorkspaceDisplay({
     }
   }
 
-  async function handleSavedViewChange(nextSavedViewId: string) {
+  const handleSavedViewChange = useCallback(async (nextSavedViewId: string) => {
     const result = await listPager.reloadSavedView(nextSavedViewId);
     if (result.status !== "available") {
       return;
     }
+    clearRowSelection();
     handleGroupByChange(result.groupBy ?? "none");
-  }
+  }, [clearRowSelection, handleGroupByChange, listPager]);
+
+  useEffect(() => {
+    if (savedViews.some((savedView) => savedView.id === listPager.savedViewId)) {
+      return;
+    }
+    const nextSavedView =
+      savedViews.find((savedView) => savedView.isDefault) ?? savedViews[0];
+    if (!nextSavedView || nextSavedView.disabledReason) {
+      return;
+    }
+    void handleSavedViewChange(nextSavedView.id);
+  }, [handleSavedViewChange, listPager.savedViewId, savedViews]);
 
   function handleRefreshList() {
     refreshList();

@@ -13,6 +13,7 @@ import {
 } from "./participants";
 import {
   zammadGroupListResponseSchema,
+  zammadUserSchema,
   zammadUserListResponseSchema,
   type ZammadGroup,
   type ZammadUser,
@@ -104,6 +105,27 @@ export async function listZammadAssignableUsers(
           .map(userLookupOption)
           .filter((option): option is ProviderLookupOption => Boolean(option)),
       );
+    },
+  );
+}
+
+export async function getZammadCurrentUser(
+  context: ProviderContext,
+): Promise<ProviderLookupOption> {
+  return measureTicketReadPhase(
+    "provider-user-lookup-request",
+    { ...timingMetadata(context), operation: "detail" },
+    async () => {
+      const raw = await zammadGetJson(context, "/api/v1/users/me");
+      const parsed = zammadUserSchema.safeParse(raw);
+      if (!parsed.success) {
+        throw providerDataMismatch();
+      }
+      const option = userLookupOption(parsed.data);
+      if (!option) {
+        throw providerDataMismatch();
+      }
+      return option;
     },
   );
 }

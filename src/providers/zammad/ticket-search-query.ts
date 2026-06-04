@@ -65,6 +65,14 @@ function zammadSearchField(field: string, values: string[]) {
   return `${field}:(${values.map(zammadSearchQuotedValue).join(" OR ")})`;
 }
 
+function zammadSearchRawField(field: string, value: string) {
+  return `${field}:${value}`;
+}
+
+function zammadSearchNot(clause: string) {
+  return `NOT (${clause})`;
+}
+
 function zammadTicketSearchQuery(query: TicketListQuery, baseQuery?: string) {
   const parts = baseQuery && baseQuery !== "*" ? [baseQuery] : [];
 
@@ -76,6 +84,16 @@ function zammadTicketSearchQuery(query: TicketListQuery, baseQuery?: string) {
       ),
     );
   }
+  if (query.filter.excludedStates?.length) {
+    parts.push(
+      zammadSearchNot(
+        zammadSearchField(
+          "state.name",
+          query.filter.excludedStates.map((state) => zammadStateSearchName[state]),
+        ),
+      ),
+    );
+  }
   if (query.filter.priorities?.length) {
     parts.push(
       zammadSearchField(
@@ -83,6 +101,44 @@ function zammadTicketSearchQuery(query: TicketListQuery, baseQuery?: string) {
         query.filter.priorities.map(
           (priority) => zammadPrioritySearchName[priority],
         ),
+      ),
+    );
+  }
+  if (query.filter.excludedPriorities?.length) {
+    parts.push(
+      zammadSearchNot(
+        zammadSearchField(
+          "priority.name",
+          query.filter.excludedPriorities.map(
+            (priority) => zammadPrioritySearchName[priority],
+          ),
+        ),
+      ),
+    );
+  }
+  if (query.filter.ownerExternalIds?.length) {
+    parts.push(zammadSearchField("owner_id", query.filter.ownerExternalIds));
+  }
+  if (query.filter.excludedOwnerExternalIds?.length) {
+    parts.push(
+      zammadSearchNot(
+        zammadSearchField("owner_id", query.filter.excludedOwnerExternalIds),
+      ),
+    );
+  }
+  if (query.filter.ownerUnassigned) {
+    parts.push(zammadSearchRawField("owner_id", "null"));
+  }
+  if (query.filter.excludeOwnerUnassigned) {
+    parts.push(zammadSearchNot(zammadSearchRawField("owner_id", "null")));
+  }
+  if (query.filter.groupExternalIds?.length) {
+    parts.push(zammadSearchField("group_id", query.filter.groupExternalIds));
+  }
+  if (query.filter.excludedGroupExternalIds?.length) {
+    parts.push(
+      zammadSearchNot(
+        zammadSearchField("group_id", query.filter.excludedGroupExternalIds),
       ),
     );
   }
@@ -167,10 +223,17 @@ export function zammadBucketFilterAllows(
   bucket: ZammadBucketDefinition,
 ) {
   if (bucket.key === "state") {
-    return !query.filter.states || query.filter.states.includes(bucket.value);
+    return (
+      (!query.filter.states || query.filter.states.includes(bucket.value)) &&
+      !query.filter.excludedStates?.includes(bucket.value)
+    );
   }
 
-  return !query.filter.priorities || query.filter.priorities.includes(bucket.value);
+  return (
+    (!query.filter.priorities ||
+      query.filter.priorities.includes(bucket.value)) &&
+    !query.filter.excludedPriorities?.includes(bucket.value)
+  );
 }
 
 export function zammadBucketPageQuery(

@@ -38,6 +38,7 @@ describe("TicketWorkspace lookup data", () => {
         { externalId: "user-1", label: "Riley Stone" },
         { externalId: "user-2", label: "Zara Lane" },
       ]),
+      currentUser: unsupportedTicketLookupList(),
       groups: unavailableTicketLookupList("provider-temporary-failure", true),
       tags: unsupportedTicketLookupList(),
     };

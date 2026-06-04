@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0 --port 3005",
     "build": "next build",
+    "postbuild": "node scripts/restore-next-env.mjs",
     "start": "next start --hostname 0.0.0.0 --port ${PORT:-3005}",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -20,6 +21,8 @@
     "docs:check": "node scripts/check-docs.mjs",
     "audit:zammad-boundary": "node scripts/zammad-boundary-audit.mjs",
     "cache:clear": "node scripts/cache-clear.mjs",
+    "next-env:check": "node scripts/check-next-env.mjs",
+    "next-env:restore": "node scripts/restore-next-env.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {

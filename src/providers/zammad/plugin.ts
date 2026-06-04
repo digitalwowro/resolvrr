@@ -14,6 +14,7 @@ import { classifyZammadResponse } from "./errors";
 import { safeProviderFetch } from "@/security/provider-http";
 import { getZammadTicketDetail, listZammadTickets } from "./tickets";
 import {
+  getZammadCurrentUser,
   listZammadAssignableUsers,
   listZammadGroups,
   listZammadTags,
@@ -115,6 +116,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "ticket:add-customer-reply",
     "lookup:link-targets",
     "lookup:assignable-users",
+    "lookup:current-user",
     "lookup:groups",
     "lookup:tags",
     "notifications:list",
@@ -142,6 +144,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   addTicketInternalNote: addZammadTicketInternalNote,
   addTicketCustomerReply: addZammadTicketCustomerReply,
   listAssignableUsers: listZammadAssignableUsers,
+  getCurrentUser: getZammadCurrentUser,
   listGroups: listZammadGroups,
   listTags: listZammadTags,
   searchLinkTargets: searchZammadLinkTargets,

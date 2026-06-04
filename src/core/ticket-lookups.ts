@@ -34,6 +34,7 @@ export type TicketLookupList =
 
 export type TicketLookupData = {
   assignableUsers: TicketLookupList;
+  currentUser: TicketLookupList;
   groups: TicketLookupList;
   tags: TicketLookupList;
 };
@@ -66,6 +67,7 @@ export function unavailableTicketLookupList(
 export function unsupportedTicketLookupData(): TicketLookupData {
   return {
     assignableUsers: unsupportedTicketLookupList(),
+    currentUser: unsupportedTicketLookupList(),
     groups: unsupportedTicketLookupList(),
     tags: unsupportedTicketLookupList(),
   };

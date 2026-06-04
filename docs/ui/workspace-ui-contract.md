@@ -22,6 +22,30 @@ The UI may call connected helpdesk instances workspaces. Workspace selection
 lives in the avatar/profile menu. Code, database, and domain docs should use
 explicit terms such as helpdesk connection.
 
+## Saved Views
+
+Saved views are workspace-scoped ticket list queries managed from
+`Avatar -> Settings -> Views`. The list toolbar saved-view control is only a
+switcher: it must not expose create, edit, delete, or reorder controls. Changing
+the selected view reloads the ticket list for that view and clears the current
+bulk row selection. Open ticket tabs are unchanged by view selection.
+
+New workspace users get one personal seeded view, `My work`, when the active
+provider can resolve the current helpdesk user. `My work` means `Owner is
+Myself` and `State is not Closed`, and it becomes the default when no valid
+default exists. Deleting that seed dismisses seed key `my-work` for the user and
+workspace, so it is not recreated. `All tickets` is not a saved view, is not
+seeded, is not shown in Settings, and is not reorderable. It may only appear as
+an internal unmanaged fallback when no saved view can be selected.
+
+The Views settings section owns personal/shared visibility, title, appearance,
+condition editing, default selection, ordering, and deletion. Agents can manage
+personal views only. Admins can manage shared workspace views and their own
+personal views. Conditions remain provider-neutral: fields are Owner, State,
+Priority, and Group; operators are `is` and `is not`; values within one
+condition are OR alternatives and separate conditions are ANDed. `All owners`
+acts as no owner filter and is not persisted as a condition.
+
 ## Ticket Tabs
 
 Ticket tabs are navigation for open tickets. One ticket is active at a time. Do

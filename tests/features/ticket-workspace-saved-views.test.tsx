@@ -2,7 +2,10 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
-import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
+import {
+  TicketWorkspace,
+  workspaceSavedViewOptionsFromSettingsData,
+} from "@/features/workspace/components/ticket-workspace";
 import {
   availableList,
   highRow,
@@ -103,5 +106,54 @@ describe("TicketWorkspace saved views", () => {
         name: "Full text (search unsupported)",
       }),
     ).toBeDisabled();
+  });
+
+  it("preserves unsupported saved-view option metadata after settings refresh", () => {
+    expect(
+      workspaceSavedViewOptionsFromSettingsData(
+        {
+          views: [
+            {
+              id: "view-2",
+              name: "Full text",
+              visibility: "personal",
+              isDefault: false,
+              position: 0,
+              conditions: [],
+            },
+          ],
+          ownerOptions: [],
+          groupOptions: [],
+          canManageShared: false,
+        },
+        [
+          {
+            id: "view-2",
+            label: "Full text",
+            query: { filter: { searchText: "billing" } },
+            disabledLabel: "search unsupported",
+            disabledReason: "full-text-search-unsupported",
+          },
+        ],
+        {
+          totalCount: true,
+          providerSort: true,
+          providerGrouping: true,
+          groupedTotalCount: true,
+          fullTextSearch: false,
+          maxPageSize: 50,
+          unsupportedCombinations: [],
+        },
+      ),
+    ).toEqual([
+      {
+        id: "view-2",
+        label: "Full text",
+        isDefault: false,
+        query: { filter: { searchText: "billing" } },
+        disabledLabel: "search unsupported",
+        disabledReason: "full-text-search-unsupported",
+      },
+    ]);
   });
 });

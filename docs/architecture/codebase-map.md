@@ -42,12 +42,6 @@ architecture folders or important files are added, moved, renamed, or removed.
   composes the active helpdesk connection ticket read path, controlled metadata
   mutation action, internal-note action, and customer-reply action into the real
   workspace.
-- `src/app/workspace/connections/page.tsx`: protected helpdesk workspace
-  connection list route.
-- `src/app/workspace/connections/new/page.tsx`: protected add-connection form
-  route.
-- `src/app/workspace/connections/[connectionId]/edit/page.tsx`: protected
-  edit-connection form route that never receives stored credential payloads.
 - `src/app/globals.css`: global Tailwind import, base document styles, and
   default plain-anchor color.
 - `src/core`: provider-neutral domain contracts and canonical values.
@@ -57,8 +51,8 @@ architecture folders or important files are added, moved, renamed, or removed.
   grouping, pagination, result contracts, and normalization.
 - `src/core/ticket-lookups.ts`: provider-neutral lookup option, lookup result,
   and request-scoped lookup cache-policy contracts.
-- `src/core/saved-views.ts`: provider-neutral saved view filters, query
-  defaults, storage helpers, and metadata.
+- `src/core/saved-views.ts`: provider-neutral saved view filters, conditions,
+  query defaults, storage helpers, and metadata.
 - `src/core/helpdesk-connections.ts`: explicit helpdesk connection domain types.
 - `src/core/providers.ts`: provider plugin contract, capability names, provider
   errors, and provider operation types.
@@ -83,7 +77,7 @@ architecture folders or important files are added, moved, renamed, or removed.
   connection repository and active connection preference persistence.
 - `src/data/prisma.ts`: Prisma Client singleton with PostgreSQL driver adapter.
 - `src/data/saved-views-repository.ts`: Prisma-backed saved view/preference
-  repository.
+  repository and seeded-view dismissal persistence.
 - `src/data/workspace-tabs-repository.ts`: Prisma-backed user and active
   helpdesk-connection scoped `UiPreference` repository for persisted workspace
   open tabs.
@@ -190,22 +184,19 @@ architecture folders or important files are added, moved, renamed, or removed.
   messages.
 - `src/features/helpdesk-connections/index.ts`: helpdesk connection feature
   exports.
-- `src/features/helpdesk-connections/components`: server-rendered connection
-  list and form components.
-- `src/features/helpdesk-connections/components/clear-connection-message-query.tsx`:
-  client-side helper that removes transient connection `success` and `error`
-  query parameters after rendering redirected action messages.
-- `src/features/helpdesk-connections/components/connection-page-shell.tsx`:
-  shared page shell for protected connection management routes.
-- `src/features/helpdesk-connections/components/connection-list.tsx`: local
-  connection list with active, validate, enable/disable, edit, and delete forms.
-- `src/features/helpdesk-connections/components/connection-form.tsx`: add/edit
-  form that never echoes stored credentials to the browser.
 - `src/features/saved-views/index.ts`: saved view feature boundary.
+- `src/features/saved-views/actions.ts`: server actions for non-redirecting
+  workspace saved-view Settings mutations and lookup-backed settings data.
+- `src/features/saved-views/conditions.ts`: provider-neutral condition
+  validation, `My work` seed conditions, and query compilation.
+- `src/features/saved-views/lucide-icon-names.ts`: curated and normalized
+  Lucide icon-name validation for saved-view appearance.
 - `src/features/saved-views/repository.ts`: saved view repository contract and
   stored view/preference shapes.
 - `src/features/saved-views/service.ts`: saved view query sanitization,
-  guardrails, and create-use-case logic.
+  guardrails, seed/default handling, and create/update/delete/reorder use cases.
+- `src/features/saved-views/settings-model.ts`: serializable Settings Views
+  data and action result contracts.
 - `src/features/saved-views/workspace.ts`: workspace saved-view option mapping
   and unsupported-view flagging.
 - `src/features/tickets/index.ts`: ticket workflow feature boundary. It does
@@ -320,6 +311,18 @@ architecture folders or important files are added, moved, renamed, or removed.
   and an avatar/profile menu fed by real connection/action props.
 - `src/features/workspace/components/workspace-controls.tsx`: read-safe
   workspace presentation for the always-available tab layout segmented control.
+- `src/features/workspace/components/workspace-settings-dialog.tsx`: 90vw/90vh
+  Settings shell with Profile, Workspaces, and Views sections.
+- `src/features/workspace/components/workspace-settings-workspaces-section.tsx`:
+  in-modal helpdesk connection management surface.
+- `src/features/workspace/components/workspace-settings-views-section.tsx`: in-modal
+  saved-view list and edit/create surface.
+- `src/features/workspace/components/workspace-settings-view-conditions.tsx`:
+  provider-neutral condition builder used by the Views settings section.
+- `src/features/workspace/components/workspace-settings-views-list.tsx`: left-pane
+  saved-view list with default markers and reorder controls.
+- `src/features/workspace/components/workspace-settings-views-utils.tsx`: local
+  saved-view draft, icon, color, and condition-value helpers for Settings Views.
 - `src/features/workspace/components/ticket-list-toolbar.tsx`: list-only
   toolbar for Select all, Refresh, the disabled Bulk actions placeholder, saved
   view selection, grouping, and column visibility above the ticket table.
@@ -547,7 +550,11 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/features`: feature-level component tests.
 - `tests/features/connection-message-query.test.tsx`: verifies transient
   connection action query parameters are removed after message rendering.
-- `tests/features/saved-view-persistence.test.ts`: verifies saved view persistence sanitization, guardrails, and storage round-tripping.
+- `tests/features/saved-view-management.test.ts`: verifies saved-view condition
+  compilation, `My work` seed/default behavior, delete/default guardrails, and
+  shared-view permissions.
+- `tests/features/saved-view-persistence.test.ts`: verifies saved view
+  persistence sanitization, guardrails, and storage round-tripping.
 - `tests/features/saved-view-workspace.test.ts`: verifies workspace saved-view performance guardrails and provider-neutral disabled labels.
 - `tests/features/ticket-workspace-test-utils.tsx`: shared provider-backed
   workspace fixtures and render helpers for feature tests.
@@ -660,6 +667,9 @@ architecture folders or important files are added, moved, renamed, or removed.
 - `tests/providers/zammad/read.test.ts`: verifies Zammad ticket list endpoint
   calls, search-backed total counts and grouped bucket counts, canonical list
   mapping, and read timing.
+- `tests/providers/zammad/ticket-search-query.test.ts`: verifies Zammad-owned
+  compilation of provider-neutral saved-view filters, including negative
+  filters, into Zammad search syntax.
 - `tests/providers/zammad/read-detail.test.ts`: verifies Zammad ticket detail
   and article-thread endpoint calls, optional feature defaults, sanitization,
   and detail read timing.

@@ -112,4 +112,27 @@ describe("Zammad lookup reads", () => {
       }),
     );
   });
+
+  it("resolves the current Zammad user as a provider-neutral lookup option", async () => {
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers(),
+      data: {
+        id: 9,
+        firstname: "Za",
+        lastname: "Mad",
+        email: "agent@example.com",
+        active: true,
+      },
+    });
+
+    await expect(zammadProviderPlugin.getCurrentUser?.(providerContext())).resolves
+      .toEqual({ externalId: "9", label: "Za Mad" });
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
+      "https://helpdesk.example.com/api/v1/users/me",
+      expect.objectContaining({
+        allowedAddresses: ["93.184.216.34"],
+      }),
+    );
+  });
 });

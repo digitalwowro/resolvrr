@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   allTicketsSavedViewId,
   defaultWorkspaceSavedViewId,
+  initialWorkspaceSavedViewSelection,
   workspaceSavedViews,
   type StoredSavedView,
 } from "@/features/saved-views";
@@ -103,7 +104,6 @@ describe("workspace saved-view performance rules", () => {
         },
       ),
     ).toMatchObject([
-      { id: "all-tickets", label: "All tickets" },
       {
         id: "search-view",
         disabledLabel: "search unsupported",
@@ -115,5 +115,40 @@ describe("workspace saved-view performance rules", () => {
         disabledReason: "grouped-total-count-too-expensive",
       },
     ]);
+  });
+
+  it("blocks the unfiltered All tickets fallback when My work cannot resolve Myself", () => {
+    expect(
+      initialWorkspaceSavedViewSelection({
+        savedViews: [],
+        capabilities: baseCapabilities,
+        blockUnfilteredFallback: true,
+      }),
+    ).toEqual({
+      status: "blocked",
+      reason: "my-work-current-user-unavailable",
+    });
+  });
+
+  it("blocks All tickets fallback when existing views are unsupported during My work seed failure", () => {
+    expect(
+      initialWorkspaceSavedViewSelection({
+        savedViews: [
+          savedView({
+            id: "search-view",
+            name: "Search view",
+            query: { filter: { searchText: "billing" } },
+          }),
+        ],
+        capabilities: {
+          ...baseCapabilities,
+          fullTextSearch: false,
+        },
+        blockUnfilteredFallback: true,
+      }),
+    ).toEqual({
+      status: "blocked",
+      reason: "my-work-current-user-unavailable",
+    });
   });
 });
