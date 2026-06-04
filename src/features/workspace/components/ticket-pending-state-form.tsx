@@ -1,10 +1,10 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { cn } from "@/components/ui/classnames";
-import {
-  minimumPendingDateValue,
-  type PendingDateTimeParts,
-} from "./ticket-pending-date-time";
+import type { PendingDateTimeParts } from "./ticket-pending-date-time";
+import { TicketPendingDateTimeSelector } from "./ticket-pending-date-time-selector";
+import { pendingDateLabel } from "./ticket-pending-date-time-selector-utils";
 
 type TicketPendingStateFormProps = {
   dateChanged?: boolean;
@@ -15,9 +15,6 @@ type TicketPendingStateFormProps = {
   onChange(value: PendingDateTimeParts): void;
 };
 
-const changedInputClass =
-  "border-amber-500 bg-amber-50 focus-visible:outline-amber-500";
-
 export function TicketPendingStateForm({
   dateChanged = false,
   disabled = false,
@@ -26,45 +23,49 @@ export function TicketPendingStateForm({
   value,
   onChange,
 }: TicketPendingStateFormProps) {
+  const [open, setOpen] = useState(false);
+  const fieldRef = useRef<HTMLDivElement | null>(null);
+  const changed = dateChanged || timeChanged;
+  const dateLabel = pendingDateLabel(value);
+
   return (
-    <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2">
-      <div className="flex items-center gap-2">
-        <label className="min-w-0 flex-1">
-          <span className="sr-only">Pending date for {stateLabel}</span>
-          <input
-            aria-label={`Pending date for ${stateLabel}`}
-            className={cn(
-              "h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50",
-              dateChanged && changedInputClass,
-            )}
-            disabled={disabled}
-            min={minimumPendingDateValue()}
-            onChange={(event) =>
-              onChange({ ...value, date: event.currentTarget.value })
+    <div>
+      <div
+        className={cn(
+          "w-full rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-left text-sm text-slate-900",
+          changed && "border-amber-500 bg-amber-50",
+        )}
+        ref={fieldRef}
+      >
+        <span className="text-slate-700">Until: </span>
+        <button
+          aria-expanded={open}
+          aria-label={`Open pending date and time selector for ${stateLabel}: ${dateLabel}, ${value.time}`}
+          className={cn(
+            "text-indigo-700 underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
+            changed && "text-amber-900",
+          )}
+          disabled={disabled}
+          onClick={() => setOpen((current) => !current)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              setOpen(false);
             }
-            type="date"
-            value={value.date}
-          />
-        </label>
-        <span className="text-xs text-slate-600">at</span>
-        <label className="w-20 shrink-0">
-          <span className="sr-only">Pending time for {stateLabel}</span>
-          <input
-            aria-label={`Pending time for ${stateLabel}`}
-            className={cn(
-              "h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50",
-              timeChanged && changedInputClass,
-            )}
-            disabled={disabled}
-            onChange={(event) =>
-              onChange({ ...value, time: event.currentTarget.value })
-            }
-            step={60}
-            type="time"
-            value={value.time}
-          />
-        </label>
+          }}
+          type="button"
+        >
+          {dateLabel}, {value.time}
+        </button>
       </div>
+      {open ? (
+        <TicketPendingDateTimeSelector
+          anchorRef={fieldRef}
+          stateLabel={stateLabel}
+          value={value}
+          onChange={onChange}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

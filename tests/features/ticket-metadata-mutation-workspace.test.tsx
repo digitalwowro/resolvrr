@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -13,6 +13,10 @@ import {
   row,
   selectedDetailProps,
 } from "./ticket-workspace-test-utils";
+import {
+  defaultPendingDateTimeParts,
+  pendingDateTimeIso,
+} from "@/features/workspace/components/ticket-pending-date-time";
 
 const routerPush = vi.fn();
 const routerRefresh = vi.fn();
@@ -204,22 +208,15 @@ describe("TicketWorkspace metadata mutations", () => {
     expect(
       screen.queryByRole("button", { name: "Cancel" }),
     ).not.toBeInTheDocument();
-    const pendingDateInput = screen.getByLabelText(
-      "Pending date for Pending Reminder",
-    );
-    const pendingTimeInput = screen.getByLabelText(
-      "Pending time for Pending Reminder",
-    );
-    expect(pendingTimeInput).toHaveValue("08:00");
-    expect(action).not.toHaveBeenCalled();
-    fireEvent.change(pendingDateInput, { target: { value: "2099-01-02" } });
     expect(action).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Update" }));
 
+    const expectedPendingUntil = pendingDateTimeIso(defaultPendingDateTimeParts());
+    expect(expectedPendingUntil).toBeDefined();
     await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
     expect(action.mock.calls[0]?.[0]).toEqual({
       metadata: {
-        pendingUntil: new Date("2099-01-02T08:00").toISOString(),
+        pendingUntil: expectedPendingUntil,
         state: "pending_reminder",
       },
       ticketExternalId: "ticket-1",

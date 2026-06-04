@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/features/tickets";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import { TicketMetadataEditor } from "@/features/workspace/components/ticket-metadata-editor";
+import { pendingDateMonthLabels } from "@/features/workspace/components/ticket-pending-date-time-selector-utils";
 import {
   availableList,
   detailPropsFor,
@@ -21,6 +22,12 @@ import {
 
 const routerPush = vi.fn();
 const routerRefresh = vi.fn();
+
+function pendingDateButtonName(dayOffset: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + dayOffset);
+  return `Select ${pendingDateMonthLabels[date.getMonth()]} ${date.getDate()}`;
+}
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -191,7 +198,7 @@ describe("TicketWorkspace staged metadata updates", () => {
     expect(screen.getByRole("button", { name: "Update" })).toBeEnabled();
   });
 
-  it("requires a future pending date before Update enables", async () => {
+  it("does not allow selecting past pending dates", async () => {
     const user = userEvent.setup();
     const detailProps = selectedDetailProps();
     detailProps.detail.metadataMutationConstraints = {
@@ -203,20 +210,26 @@ describe("TicketWorkspace staged metadata updates", () => {
 
     await user.click(screen.getByRole("combobox", { name: "Ticket state" }));
     await user.click(screen.getByRole("option", { name: "Pending Reminder" }));
-    const pendingDateInput = screen.getByLabelText(
-      "Pending date for Pending Reminder",
-    );
-    const pendingTimeInput = screen.getByLabelText(
-      "Pending time for Pending Reminder",
+    await user.click(
+      screen.getByRole("button", {
+        name: /Open pending date and time selector for Pending Reminder/,
+      }),
     );
 
-    expect(pendingDateInput).toHaveClass("border-amber-500");
-    expect(pendingTimeInput).toHaveClass("border-amber-500");
-    fireEvent.change(pendingDateInput, { target: { value: "2000-01-02" } });
-
-    expect(screen.getByRole("button", { name: "Update" })).toBeDisabled();
     expect(
-      screen.getByText("Choose a future pending date and time."),
+      screen.getByRole("button", { name: pendingDateButtonName(-1) }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: pendingDateButtonName(-2) }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: pendingDateButtonName(1) }),
+    ).toBeEnabled();
+    expect(
+      screen.queryByRole("button", { name: "Select minute 04" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Select minute 05" }),
     ).toBeInTheDocument();
   });
 

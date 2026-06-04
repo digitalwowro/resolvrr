@@ -3,11 +3,11 @@ export type PendingDateTimeParts = {
   time: string;
 };
 
-function pad(value: number): string {
+export function pad(value: number): string {
   return String(value).padStart(2, "0");
 }
 
-function localDateValue(date: Date): string {
+export function localDateValue(date: Date): string {
   return [
     date.getFullYear(),
     "-",
@@ -17,7 +17,7 @@ function localDateValue(date: Date): string {
   ].join("");
 }
 
-function localTimeValue(date: Date): string {
+export function localTimeValue(date: Date): string {
   return [pad(date.getHours()), ":", pad(date.getMinutes())].join("");
 }
 
