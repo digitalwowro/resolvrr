@@ -129,17 +129,17 @@ export function initialWorkspaceSavedViewSelection({
   capabilities?: TicketListQueryCapabilities;
   blockUnfilteredFallback?: boolean;
 }): InitialWorkspaceSavedViewSelection {
-  if (blockUnfilteredFallback && savedViews.length === 0) {
+  const selectedSavedViewId = defaultWorkspaceSavedViewId(
+    savedViews,
+    capabilities,
+  );
+
+  if (blockUnfilteredFallback && selectedSavedViewId === allTicketsSavedViewId) {
     return {
       status: "blocked",
       reason: "my-work-current-user-unavailable",
     };
   }
-
-  const selectedSavedViewId = defaultWorkspaceSavedViewId(
-    savedViews,
-    capabilities,
-  );
 
   return {
     status: "selected",

@@ -129,4 +129,26 @@ describe("workspace saved-view performance rules", () => {
       reason: "my-work-current-user-unavailable",
     });
   });
+
+  it("blocks All tickets fallback when existing views are unsupported during My work seed failure", () => {
+    expect(
+      initialWorkspaceSavedViewSelection({
+        savedViews: [
+          savedView({
+            id: "search-view",
+            name: "Search view",
+            query: { filter: { searchText: "billing" } },
+          }),
+        ],
+        capabilities: {
+          ...baseCapabilities,
+          fullTextSearch: false,
+        },
+        blockUnfilteredFallback: true,
+      }),
+    ).toEqual({
+      status: "blocked",
+      reason: "my-work-current-user-unavailable",
+    });
+  });
 });
