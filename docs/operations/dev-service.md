@@ -10,6 +10,10 @@ The expected unit path is:
 
 `~/.config/systemd/user/resolvrr-dev.service`
 
+The unit clears only the Turbopack dev cache before starting Next. This avoids
+reusing a corrupted `.next/dev/cache/turbopack` database without deleting the
+rest of `.next` while the service is running.
+
 ## Commands
 
 - Reload user units: `systemctl --user daemon-reload`

@@ -1,63 +1,14 @@
 "use client";
 
-import type {
-  LoadWorkspaceTicketDetailAction,
-  WorkspaceTicketDetailLoadResult,
-} from "@/features/tickets/detail-action-result";
-import type { LoadWorkspaceTicketListPageAction } from "@/features/tickets/list-page-action-result";
-import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
-import type {
-  LoadWorkspaceNotificationsAction,
-  MarkWorkspaceNotificationsReadAction,
-} from "@/features/notifications";
-import type {
-  DeleteWorkspaceSavedViewAction,
-  LoadWorkspaceSavedViewsSettingsAction,
-  ReorderWorkspaceSavedViewsAction,
-  SaveWorkspaceSavedViewAction,
-  SavedViewSettingsData,
-  SetDefaultWorkspaceSavedViewAction,
-} from "@/features/saved-views/settings-model";
-import {
-  allTicketsSavedViewId,
-  savedViewDisabledLabel,
-  savedViewQueryRejection,
-  type WorkspaceSavedView,
-} from "@/features/saved-views/workspace";
-import { compileSavedViewConditions } from "@/features/saved-views/conditions";
-import type { AuthUserRole } from "@/auth/types";
-import type {
-  SaveWorkspaceOpenTabsStateAction,
-  WorkspaceOpenTabsState,
-} from "@/features/workspace/workspace-tab-state";
-import type {
-  SelectedTicketUpdatePayload,
-  TicketMetadataMutationActionState,
-  TicketMetadataMutationCapabilities,
-} from "@/features/tickets/mutation-model";
+import { allTicketsSavedViewId, type WorkspaceSavedView } from "@/features/saved-views/workspace";
 import {
   noTicketCommunicationCapabilities,
-  type TicketCommunicationCapabilities,
 } from "@/features/tickets/communication-model";
-import type { TicketListReadResult } from "@/features/tickets/read-model";
-import type {
-  ConnectionProviderOption,
-  HelpdeskConnectionActionResult,
-  HelpdeskConnectionFormAction,
-  WorkspaceSettingsConnection,
-} from "@/features/helpdesk-connections/service-types";
-import type { TicketListQueryCapabilities } from "@/core/providers";
+import type { HelpdeskConnectionFormAction } from "@/features/helpdesk-connections/service-types";
 import { useMemo, useState } from "react";
-import type {
-  WorkspaceTicketColumn,
-  WorkspaceTicketDetail,
-  WorkspaceTicketRow,
-  WorkspaceTicketTab,
-} from "@/features/tickets/workspace-adapter";
 import { workspaceTicketListGroups } from "@/features/tickets/workspace-adapter";
 import { TicketWorkspaceDisplay } from "./ticket-workspace-display";
 import {
-  type WorkspaceMenuConnection,
   WorkspaceHeader,
 } from "./workspace-header";
 import { UnavailableState } from "./workspace-states";
@@ -65,138 +16,17 @@ import {
   WorkspaceSettingsDialog,
   type WorkspaceSettingsSection,
 } from "./workspace-settings-dialog";
+import {
+  unavailableLinkTargetSearchAction,
+  unavailableNotificationMarkReadAction,
+  unavailableNotificationsAction,
+  unavailableTicketDetailAction,
+} from "./ticket-workspace-fallbacks";
+import type { TicketWorkspaceProps } from "./ticket-workspace-types";
+import { workspaceSavedViewOptionsFromSettingsData } from "./workspace-saved-view-options";
+import { workspaceSettingsConnectionFromMenu } from "./workspace-settings-connections";
 
-type TicketWorkspaceProps = {
-  columns: WorkspaceTicketColumn[];
-  communicationCapabilities?: TicketCommunicationCapabilities;
-  connections: WorkspaceMenuConnection[];
-  connectionProviderOptions?: ConnectionProviderOption[];
-  createConnectionAction?: HelpdeskConnectionFormAction;
-  deleteSavedViewAction?: DeleteWorkspaceSavedViewAction;
-  deleteConnectionAction?: HelpdeskConnectionFormAction;
-  detail?: WorkspaceTicketDetail;
-  detailResult?: WorkspaceTicketDetailLoadResult;
-  disableConnectionAction?: HelpdeskConnectionFormAction;
-  listResult: TicketListReadResult;
-  loadTicketDetailAction?: LoadWorkspaceTicketDetailAction;
-  loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
-  loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
-  loadWorkspaceNotificationsAction?: LoadWorkspaceNotificationsAction;
-  searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
-  logoutAction(formData: FormData): void | Promise<void>;
-  markWorkspaceNotificationsReadAction?: MarkWorkspaceNotificationsReadAction;
-  metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
-  rows: WorkspaceTicketRow[];
-  savedViews?: WorkspaceSavedView[];
-  initialSavedViewSettingsData?: SavedViewSettingsData;
-  reorderSavedViewsAction?: ReorderWorkspaceSavedViewsAction;
-  initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
-  saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
-  saveSavedViewAction?: SaveWorkspaceSavedViewAction;
-  selectedSavedViewId?: string;
-  selectedTicketId?: string;
-  setActiveConnectionAction(
-    formData: FormData,
-  ): void | Promise<void | HelpdeskConnectionActionResult>;
-  setDefaultSavedViewAction?: SetDefaultWorkspaceSavedViewAction;
-  tabs: WorkspaceTicketTab[];
-  updateConnectionAction?: HelpdeskConnectionFormAction;
-  updateTicketMetadataAction(
-    request: SelectedTicketUpdatePayload,
-  ): Promise<TicketMetadataMutationActionState>;
-  userEmail: string;
-  userRole?: AuthUserRole;
-  validateConnectionAction?: HelpdeskConnectionFormAction;
-};
-
-const unavailableTicketDetailAction: LoadWorkspaceTicketDetailAction = async () => ({
-  status: "unavailable",
-  reason: "provider-temporary-failure",
-  retryable: true,
-});
-
-const unavailableLinkTargetSearchAction: SearchWorkspaceTicketLinkTargetsAction =
-  async () => ({
-    status: "unavailable",
-    reason: "unsupported-capability",
-    retryable: false,
-  });
-
-const unavailableNotificationsAction: LoadWorkspaceNotificationsAction =
-  async () => ({
-    status: "unavailable",
-    reason: "unsupported-capability",
-    retryable: false,
-  });
-
-const unavailableNotificationMarkReadAction: MarkWorkspaceNotificationsReadAction =
-  async () => ({
-    status: "failed",
-    reason: "unsupported-capability",
-    retryable: false,
-  });
-
-function workspaceSettingsConnectionFromMenu(
-  connection: WorkspaceMenuConnection,
-): WorkspaceSettingsConnection {
-  return {
-    id: connection.id,
-    label: connection.label,
-    providerKey: connection.providerKey ?? "unknown",
-    providerLabel: connection.providerLabel ?? connection.providerKey ?? "Unknown provider",
-    baseUrl: connection.baseUrl ?? "",
-    status: connection.status ?? "disconnected",
-    active: connection.active,
-  };
-}
-
-export function workspaceSavedViewOptionsFromSettingsData(
-  data: SavedViewSettingsData,
-  previousOptions: WorkspaceSavedView[],
-  capabilities?: TicketListQueryCapabilities,
-): WorkspaceSavedView[] {
-  if (data.views.length === 0) {
-    return [{ id: allTicketsSavedViewId, label: "All tickets" }];
-  }
-
-  const previousById = new Map(
-    previousOptions.map((option) => [option.id, option]),
-  );
-
-  return data.views.map((view) => {
-    const previous = previousById.get(view.id);
-    const query =
-      view.conditions.length > 0
-        ? compileSavedViewConditions({
-            conditions: view.conditions,
-            currentUser: data.currentUser,
-          })
-        : previous?.query;
-    const disabledReason = query
-      ? savedViewQueryRejection(query, capabilities)
-      : previous?.disabledReason;
-
-    const option: WorkspaceSavedView = {
-      ...previous,
-      id: view.id,
-      label: view.name,
-      isDefault: view.isDefault,
-      ...(query ? { query } : {}),
-    };
-
-    if (disabledReason) {
-      return {
-        ...option,
-        disabledLabel: savedViewDisabledLabel(disabledReason),
-        disabledReason,
-      };
-    }
-
-    delete option.disabledLabel;
-    delete option.disabledReason;
-    return option;
-  });
-}
+export { workspaceSavedViewOptionsFromSettingsData } from "./workspace-saved-view-options";
 
 export function TicketWorkspace({
   columns,

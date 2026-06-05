@@ -1,137 +1,22 @@
-import { SavedViewVisibility as DbSavedViewVisibility } from "@/generated/prisma/enums";
 import type { Prisma } from "@/generated/prisma/client";
+import { SavedViewVisibility as DbSavedViewVisibility } from "@/generated/prisma/enums";
 import { prisma } from "@/data/prisma";
 import {
   savedViewSeedDismissalPreferenceKey,
-  savedViewQueryFromStorage,
   savedViewStorageFromQuery,
-  type SavedViewVisibility,
 } from "@/core/saved-views";
 import type {
   CreateSavedViewInput,
-  SavedViewPreference,
   SavedViewsRepository,
-  StoredSavedView,
 } from "@/features/saved-views/repository";
-
-const savedViewSelect = {
-  id: true,
-  ownerUserId: true,
-  helpdeskConnectionId: true,
-  name: true,
-  visibility: true,
-  iconName: true,
-  colorName: true,
-  filterJson: true,
-  seedKey: true,
-  isSystem: true,
-  createdAt: true,
-  updatedAt: true,
-} satisfies Prisma.SavedViewSelect;
-
-function toDbVisibility(visibility: SavedViewVisibility): DbSavedViewVisibility {
-  return visibility === "shared"
-    ? DbSavedViewVisibility.SHARED
-    : DbSavedViewVisibility.PERSONAL;
-}
-
-function toDomainVisibility(
-  visibility: DbSavedViewVisibility,
-): SavedViewVisibility {
-  return visibility === DbSavedViewVisibility.SHARED ? "shared" : "personal";
-}
-
-function toPreference(
-  preference: SavedViewPreference | undefined,
-): SavedViewPreference | undefined {
-  return preference
-    ? {
-        position: preference.position,
-        isDefault: preference.isDefault,
-      }
-    : undefined;
-}
-
-function toStoredSavedView(
-  view: {
-    id: string;
-    ownerUserId: string;
-    helpdeskConnectionId: string | null;
-    name: string;
-    visibility: DbSavedViewVisibility;
-    iconName: string | null;
-    colorName: string | null;
-    filterJson: Prisma.JsonValue;
-    seedKey: string | null;
-    isSystem: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-    preferences?: SavedViewPreference[];
-  },
-): StoredSavedView {
-  const query = savedViewQueryFromStorage(view.filterJson);
-
-  return {
-    id: view.id,
-    ownerUserId: view.ownerUserId,
-    ...(view.helpdeskConnectionId
-      ? { helpdeskConnectionId: view.helpdeskConnectionId }
-      : {}),
-    name: view.name,
-    visibility: toDomainVisibility(view.visibility),
-    filter: query.filter,
-    query,
-    ...(query.sort ? { sort: query.sort } : {}),
-    ...(query.group ? { group: query.group } : {}),
-    ...(view.iconName ? { iconName: view.iconName } : {}),
-    ...(view.colorName ? { colorName: view.colorName } : {}),
-    ...(view.seedKey ? { seedKey: view.seedKey } : {}),
-    isSystem: view.isSystem,
-    createdAt: view.createdAt,
-    updatedAt: view.updatedAt,
-    ...(view.preferences?.[0]
-      ? { preference: toPreference(view.preferences[0]) }
-      : {}),
-  };
-}
-
-function visibleViewWhere(
-  userId: string,
-  helpdeskConnectionId: string | undefined,
-): Prisma.SavedViewWhereInput {
-  return {
-    helpdeskConnectionId: helpdeskConnectionId ?? "__missing-connection__",
-    OR: [
-      { ownerUserId: userId },
-      { visibility: DbSavedViewVisibility.SHARED },
-    ],
-  };
-}
-
-function sortedViews(views: StoredSavedView[]) {
-  return views.sort(
-    (left, right) =>
-      (left.preference?.position ?? Number.MAX_SAFE_INTEGER) -
-        (right.preference?.position ?? Number.MAX_SAFE_INTEGER) ||
-      left.name.localeCompare(right.name),
-  );
-}
-
-function dismissedSeedKeys(value: Prisma.JsonValue | null | undefined): string[] {
-  if (
-    value &&
-    typeof value === "object" &&
-    !Array.isArray(value) &&
-    "seedKeys" in value &&
-    Array.isArray(value.seedKeys)
-  ) {
-    return value.seedKeys.filter(
-      (seedKey): seedKey is string => typeof seedKey === "string",
-    );
-  }
-
-  return [];
-}
+import {
+  dismissedSeedKeys,
+  savedViewSelect,
+  sortedViews,
+  toDbVisibility,
+  toStoredSavedView,
+  visibleViewWhere,
+} from "./saved-views-repository-mappers";
 
 export const prismaSavedViewsRepository: SavedViewsRepository = {
   async listForUser(userId, helpdeskConnectionId) {

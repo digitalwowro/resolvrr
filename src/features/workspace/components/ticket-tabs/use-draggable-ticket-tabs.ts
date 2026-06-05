@@ -1,7 +1,6 @@
 "use client";
 
 import type {
-  CSSProperties,
   KeyboardEvent,
   MouseEvent,
   PointerEvent,
@@ -16,35 +15,17 @@ import {
 import type {
   WorkspaceTicketTab,
 } from "@/features/tickets/workspace-adapter";
-
-type DragOrientation = "horizontal" | "vertical";
-
-type TabRect = {
-  id: string;
-  index: number;
-  bottom: number;
-  height: number;
-  left: number;
-  right: number;
-  top: number;
-  width: number;
-};
-
-type DragState = {
-  containerRect: DOMRect;
-  currentX: number;
-  currentY: number;
-  dragging: boolean;
-  gap: number;
-  itemRects: TabRect[];
-  originIndex: number;
-  pointerId: number;
-  sourceId: string;
-  sourceRect: TabRect;
-  startX: number;
-  startY: number;
-  targetIndex: number;
-};
+import {
+  elementRect,
+  insertionIndicatorStyleForDrag,
+  rectGap,
+  targetIndexForPointer,
+  transformForDrag,
+  type DragOrientation,
+  type DragState,
+  type TabRect,
+} from "./drag-geometry";
+import { moveAnnouncement } from "./drag-announcement";
 
 type DraggableTicketTabsOptions = {
   onReorder(sourceTicketId: string, targetIndex: number): void;
@@ -53,72 +34,6 @@ type DraggableTicketTabsOptions = {
 };
 
 const dragThreshold = 4;
-
-function tabLabel(tab: WorkspaceTicketTab) {
-  return tab.number || tab.title;
-}
-
-function reorderedTabs(
-  tabs: WorkspaceTicketTab[],
-  sourceId: string,
-  targetIndex: number,
-) {
-  const sourceIndex = tabs.findIndex((tab) => tab.id === sourceId);
-  if (sourceIndex === -1) {
-    return tabs;
-  }
-
-  const next = tabs.filter((tab) => tab.id !== sourceId);
-  const clampedTargetIndex = Math.max(0, Math.min(targetIndex, next.length));
-  next.splice(clampedTargetIndex, 0, tabs[sourceIndex]);
-  return next;
-}
-
-function targetIndexForPointer(
-  drag: DragState,
-  orientation: DragOrientation,
-  clientX: number,
-  clientY: number,
-) {
-  const pointerPosition = orientation === "horizontal" ? clientX : clientY;
-  const remainingRects = drag.itemRects.filter((rect) => rect.id !== drag.sourceId);
-
-  return remainingRects.reduce((targetIndex, rect) => {
-    const midpoint = orientation === "horizontal"
-      ? rect.left + rect.width / 2
-      : rect.top + rect.height / 2;
-    return pointerPosition > midpoint ? targetIndex + 1 : targetIndex;
-  }, 0);
-}
-
-function rectGap(rects: TabRect[], orientation: DragOrientation) {
-  const sortedRects = [...rects].sort((a, b) => a.index - b.index);
-  for (let index = 0; index < sortedRects.length - 1; index += 1) {
-    const current = sortedRects[index];
-    const next = sortedRects[index + 1];
-    const gap = orientation === "horizontal"
-      ? next.left - current.right
-      : next.top - current.bottom;
-    if (gap > 0) {
-      return gap;
-    }
-  }
-  return 0;
-}
-
-function elementRect(element: HTMLElement, index: number, id: string): TabRect {
-  const rect = element.getBoundingClientRect();
-  return {
-    id,
-    index,
-    bottom: rect.bottom,
-    height: rect.height,
-    left: rect.left,
-    right: rect.right,
-    top: rect.top,
-    width: rect.width,
-  };
-}
 
 export function useDraggableTicketTabs({
   onReorder,
@@ -153,30 +68,9 @@ export function useDraggableTicketTabs({
   }, [tabs]);
 
   function announceMove(sourceId: string, targetIndex: number) {
-    const sourceIndex = tabs.findIndex((tab) => tab.id === sourceId);
-    if (sourceIndex === -1 || sourceIndex === targetIndex) {
-      return;
-    }
-
-    const nextTabs = reorderedTabs(tabs, sourceId, targetIndex);
-    const movedIndex = nextTabs.findIndex((tab) => tab.id === sourceId);
-    const movedTab = nextTabs[movedIndex];
-    if (!movedTab) {
-      return;
-    }
-
-    const previousTab = nextTabs[movedIndex - 1];
-    const nextTab = nextTabs[movedIndex + 1];
-    if (previousTab) {
-      setAnnouncement(
-        `Moved ${tabLabel(movedTab)} after ${tabLabel(previousTab)}.`,
-      );
-    } else if (nextTab) {
-      setAnnouncement(
-        `Moved ${tabLabel(movedTab)} before ${tabLabel(nextTab)}.`,
-      );
-    } else {
-      setAnnouncement(`Moved ${tabLabel(movedTab)}.`);
+    const message = moveAnnouncement(tabs, sourceId, targetIndex);
+    if (message) {
+      setAnnouncement(message);
     }
   }
 
@@ -345,76 +239,15 @@ export function useDraggableTicketTabs({
     return () => window.removeEventListener("keydown", handleEscape);
   }, [cancelDrag, drag?.dragging]);
 
-  const insertionIndicatorStyle = useMemo<CSSProperties | undefined>(() => {
-    if (!drag?.dragging) {
-      return undefined;
-    }
-
-    const remainingRects = drag.itemRects.filter((rect) => rect.id !== drag.sourceId);
-    const referenceRect =
-      drag.targetIndex === 0
-        ? remainingRects[0]
-        : remainingRects[Math.min(drag.targetIndex, remainingRects.length) - 1];
-
-    if (!referenceRect) {
-      return undefined;
-    }
-
-    if (orientation === "horizontal") {
-      const left = drag.targetIndex === 0 ? referenceRect.left : referenceRect.right;
-      return {
-        bottom: 4,
-        left: left - drag.containerRect.left,
-        top: 4,
-      };
-    }
-
-    const top = drag.targetIndex === 0 ? referenceRect.top : referenceRect.bottom;
-    return {
-      left: 8,
-      right: 8,
-      top: top - drag.containerRect.top,
-    };
-  }, [drag, orientation]);
-
-  function transformFor(tabId: string, index: number) {
-    if (!drag?.dragging) {
-      return undefined;
-    }
-
-    if (tabId === drag.sourceId) {
-      const x = drag.currentX - drag.startX;
-      const y = drag.currentY - drag.startY;
-      return `translate3d(${x}px, ${y}px, 0)`;
-    }
-
-    const sourceSpan = orientation === "horizontal"
-      ? drag.sourceRect.width + drag.gap
-      : drag.sourceRect.height + drag.gap;
-    const movedForward = drag.targetIndex > drag.originIndex;
-    const movedBackward = drag.targetIndex < drag.originIndex;
-    const shouldShiftBackward =
-      movedForward && index > drag.originIndex && index <= drag.targetIndex;
-    const shouldShiftForward =
-      movedBackward && index >= drag.targetIndex && index < drag.originIndex;
-
-    if (shouldShiftBackward) {
-      return orientation === "horizontal"
-        ? `translate3d(${-sourceSpan}px, 0, 0)`
-        : `translate3d(0, ${-sourceSpan}px, 0)`;
-    }
-    if (shouldShiftForward) {
-      return orientation === "horizontal"
-        ? `translate3d(${sourceSpan}px, 0, 0)`
-        : `translate3d(0, ${sourceSpan}px, 0)`;
-    }
-    return undefined;
-  }
+  const insertionIndicatorStyle = useMemo(
+    () => insertionIndicatorStyleForDrag(drag, orientation),
+    [drag, orientation],
+  );
 
   function tabReorderProps(tabId: string, index: number) {
     const dragging = drag?.dragging === true;
     const isSource = dragging && drag.sourceId === tabId;
-    const transform = transformFor(tabId, index);
+    const transform = transformForDrag(drag, orientation, tabId, index);
 
     return {
       className: isSource

@@ -41,14 +41,12 @@ function failedMutation(
     retryable: result.retryable,
   };
 }
-
 function hasProviderCapability(
   capabilities: ProviderCapability[],
   capability: ProviderCapability,
 ) {
   return capabilities.includes(capability);
 }
-
 function countAwareListQueryInput(
   capabilities: ProviderCapability[],
   query: TicketListQueryInput,

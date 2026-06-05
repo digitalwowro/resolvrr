@@ -62,9 +62,11 @@ server write wins.
 
 Horizontal ticket tabs sit directly above the list toolbar or selected-ticket
 pane. The List tab starts the tab strip; horizontal tabs stay constrained to the
-available tab area and remain navigation-only. Vertical ticket tabs use a fixed
-left rail below the header. The vertical rail and ticket table scroll
-independently.
+available tab area and remain navigation-only. When title tabs no longer fit,
+horizontal tabs fall back to ID-only labels before using icon-only overflow
+behavior. ID-only tabs should remain wide enough to show normal ticket numbers
+and their close affordance. Vertical ticket tabs use a fixed left rail below the
+header. The vertical rail and ticket table scroll independently.
 
 The tab layout control is a two-button segmented control, not a dropdown. It is
 placed in the merged header and remains enabled in both List and selected ticket

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import type {
-  WorkspaceTicketListGroup,
   WorkspaceTicketListPageLoadResult,
   WorkspaceTicketListSort,
 } from "@/features/tickets/list-page-action-result";
@@ -15,6 +14,8 @@ import {
   ticketListIdentity,
 } from "./ticket-list-pager-rows";
 import type { TicketListPagerProps } from "./ticket-list-pager-types";
+import { useTicketListGroupLoader } from "./use-ticket-list-group-loader";
+import { useTicketListSilentRefresh } from "./use-ticket-list-silent-refresh";
 export function useTicketListPager({
   initialSavedViewId,
   initialGroups,
@@ -30,16 +31,35 @@ export function useTicketListPager({
   const [nextCursor, setNextCursor] = useState(initialNextCursor);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [loading, setLoading] = useState(false);
-  const [loadingGroupId, setLoadingGroupId] = useState<string>();
   const [errorReason, setErrorReason] = useState<TicketReadUnavailableReason>();
-  const [groupError, setGroupError] =
-    useState<{ groupId: string; reason: TicketReadUnavailableReason }>();
   const [sort, setSort] = useState<WorkspaceTicketListSort>();
-  const [silentRefreshing, setSilentRefreshing] = useState(false);
   const baselineIdentity = useRef(ticketListIdentity(initialRows));
   const hasClientLoadedRowsRef = useRef(false);
   const lastRefreshedAtRef = useRef<number | undefined>(undefined);
-  const silentRefreshInFlightRef = useRef(false);
+  const { groupError, loadMoreGroup, loadingGroupId, setGroupError } =
+    useTicketListGroupLoader({
+      groupBy,
+      loadTicketListPageAction,
+      savedViewId,
+      setGroups,
+      setRows,
+    });
+  const { isListStale, silentRefreshCurrentPage, silentRefreshing } =
+    useTicketListSilentRefresh({
+      groupBy,
+      hasClientLoadedRowsRef,
+      lastRefreshedAtRef,
+      loadTicketListPageAction,
+      loading,
+      savedViewId,
+      setErrorReason,
+      setGroupError,
+      setGroups,
+      setNextCursor,
+      setRows,
+      setTotalCount,
+      sort,
+    });
 
   useEffect(() => {
     lastRefreshedAtRef.current ??= Date.now();
@@ -232,129 +252,6 @@ export function useTicketListPager({
     lastRefreshedAtRef.current = Date.now();
 
     return { status: "available", groupBy: result.appliedGroupBy };
-  }
-
-  async function silentRefreshCurrentPage() {
-    if (
-      loading ||
-      silentRefreshInFlightRef.current ||
-      !loadTicketListPageAction
-    ) {
-      return;
-    }
-
-    silentRefreshInFlightRef.current = true;
-    setSilentRefreshing(true);
-    try {
-      const result = await loadTicketListPageAction({
-        ...(groupBy ? { group: groupBy } : {}),
-        ...savedViewListRequest(savedViewId),
-        ...(sort && !groupBy ? { sort } : {}),
-      });
-      if (result.status === "unavailable") {
-        return;
-      }
-
-      lastRefreshedAtRef.current = Date.now();
-      setErrorReason(undefined);
-      setGroupError(undefined);
-      setTotalCount(result.totalCount);
-      if (groupBy) {
-        const refreshedGroups = result.groups ?? [];
-        setGroups((current) => {
-          const currentById = new Map(
-            (current ?? []).map((group) => [group.id, group]),
-          );
-          const nextGroups = refreshedGroups.map((group) => {
-            const currentGroup = currentById.get(group.id);
-            return currentGroup
-              ? {
-                  ...group,
-                  loadedCount: Math.max(
-                    currentGroup.loadedCount ?? currentGroup.rows.length,
-                    group.loadedCount ?? group.rows.length,
-                  ),
-                  nextCursor: currentGroup.nextCursor ?? group.nextCursor,
-                  rows: mergeRefreshedBaselineRows(
-                    currentGroup.rows,
-                    group.rows,
-                  ),
-                }
-              : group;
-          });
-          setRows(nextGroups.flatMap((group) => group.rows));
-          return nextGroups;
-        });
-        return;
-      }
-
-      setRows((current) => mergeRefreshedBaselineRows(current, result.rows));
-      setNextCursor((current) =>
-        hasClientLoadedRowsRef.current ? current : result.nextCursor,
-      );
-    } catch {
-      return;
-    } finally {
-      silentRefreshInFlightRef.current = false;
-      setSilentRefreshing(false);
-    }
-  }
-
-  function isListStale(staleMs: number) {
-    const lastRefreshedAt = lastRefreshedAtRef.current;
-    return lastRefreshedAt === undefined || Date.now() - lastRefreshedAt >= staleMs;
-  }
-
-  async function loadMoreGroup(group: Pick<WorkspaceTicketListGroup, "id" | "nextCursor" | "value">) {
-    if (
-      !groupBy ||
-      !group.nextCursor ||
-      loadingGroupId ||
-      !loadTicketListPageAction
-    ) {
-      return;
-    }
-
-    setLoadingGroupId(group.id);
-    setGroupError(undefined);
-    let result;
-    try {
-      result = await loadTicketListPageAction({
-        bucketValue: group.value,
-        cursor: group.nextCursor,
-        group: groupBy,
-        ...savedViewListRequest(savedViewId),
-      });
-    } catch {
-      setLoadingGroupId(undefined);
-      setGroupError({
-        groupId: group.id,
-        reason: "provider-temporary-failure",
-      });
-      return;
-    }
-    setLoadingGroupId(undefined);
-
-    if (result.status === "unavailable") {
-      setGroupError({ groupId: group.id, reason: result.reason });
-      return;
-    }
-
-    setGroups((current) => {
-      const nextGroups = (current ?? []).map((currentGroup) =>
-        currentGroup.id === group.id
-          ? {
-              ...currentGroup,
-              loadedCount: currentGroup.loadedCount + result.rows.length,
-              nextCursor: result.nextCursor,
-              rows: appendUniqueRows(currentGroup.rows, result.rows),
-              totalCount: result.totalCount,
-            }
-          : currentGroup,
-      );
-      setRows(nextGroups.flatMap((nextGroup) => nextGroup.rows));
-      return nextGroups;
-    });
   }
 
   return {

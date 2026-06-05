@@ -66,6 +66,24 @@ describe("TicketTab", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("keeps compact ticket tabs wide enough for ID-only labels", () => {
+    render(
+      <TicketTab
+        density="compact"
+        icon={<span aria-hidden="true" />}
+        label="#99999999"
+        onClose={vi.fn()}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("tab", { name: "#99999999" }).parentElement)
+      .toHaveClass("min-w-32", "max-w-36");
+    expect(
+      screen.getByRole("button", { name: "Close #99999999" }),
+    ).toBeInTheDocument();
+  });
+
   it("shows the close affordance for active icon-only tabs", () => {
     render(
       <TicketTab

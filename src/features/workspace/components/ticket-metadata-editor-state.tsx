@@ -1,20 +1,8 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type {
-  SelectedTicketUpdatePayload,
-  TicketMetadataMutationActionState,
-  TicketMetadataMutationCapabilities,
-} from "@/features/tickets/mutation-model";
-import type {
-  SearchWorkspaceTicketLinkTargetsAction,
-  WorkspaceTicketLinkTarget,
-} from "@/features/tickets/link-target-search-action-result";
-import type {
-  TicketCommunicationCapabilities,
-} from "@/features/tickets/communication-model";
-import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
+import type { TicketMetadataMutationActionState } from "@/features/tickets/mutation-model";
 import {
   metadataDraftDirtyFields,
   metadataDraftFromBaseline,
@@ -23,8 +11,14 @@ import {
   metadataDraftUpdatePayload,
   validateMetadataDraft,
   type SelectedTicketDraft,
-  type TicketMetadataSavedPatch,
 } from "./metadata-draft";
+import {
+  actionErrorState,
+  mergeRefreshedDraft,
+  mutationStatusText,
+  noopMetadataSavedDetailRefresh,
+  updatePayloadNeedsDetailRefresh,
+} from "./ticket-metadata-editor-submit";
 import {
   shouldReturnToListAfterUpdate,
   type PostUpdateNavigation,
@@ -38,92 +32,7 @@ import { TicketDetailSidebar } from "./ticket-detail-sidebar";
 import { TicketPrimaryMetadataFields } from "./ticket-primary-metadata-fields";
 import { TicketSecondaryMetadataFields } from "./ticket-secondary-metadata-fields";
 import { TicketThread } from "./ticket-thread";
-
-function noopMetadataSavedDetailRefresh() {}
-
-function mutationStatusText(
-  saving: boolean,
-  result: TicketMetadataMutationActionState,
-) {
-  if (saving) {
-    return undefined;
-  }
-  if (result.status === "failed" || result.status === "saved-refresh-failed") {
-    return result.message;
-  }
-  return undefined;
-}
-
-function actionErrorState(): TicketMetadataMutationActionState {
-  return {
-    status: "failed",
-    message: "The ticket could not be updated. Try again.",
-  };
-}
-
-function updatePayloadNeedsDetailRefresh(payload: SelectedTicketUpdatePayload) {
-  return Boolean(
-    payload.communication?.commentBody ||
-      payload.communication?.replyBody ||
-      payload.metadata?.linkAddExternalId ||
-      payload.metadata?.linkRemoveExternalIds?.length,
-  );
-}
-
-function mergeRefreshedDraft({
-  currentBaseline,
-  currentDraft,
-  nextBaseline,
-}: {
-  currentBaseline: SelectedTicketDraft;
-  currentDraft: SelectedTicketDraft;
-  nextBaseline: SelectedTicketDraft;
-}): SelectedTicketDraft {
-  const dirtyFields = metadataDraftDirtyFields(currentBaseline, currentDraft);
-  const nextDraft = metadataDraftFromBaseline(nextBaseline);
-
-  return {
-    ...nextDraft,
-    communication: currentDraft.communication,
-    metadata: {
-      ...nextDraft.metadata,
-      ...(dirtyFields.group
-        ? { groupExternalId: currentDraft.metadata.groupExternalId }
-        : {}),
-      ...(dirtyFields.links
-        ? {
-            linkAddExternalId: currentDraft.metadata.linkAddExternalId,
-            linkAddRelation: currentDraft.metadata.linkAddRelation,
-            linkRemoveExternalIds: [
-              ...currentDraft.metadata.linkRemoveExternalIds,
-            ],
-          }
-        : {}),
-      ...(dirtyFields.owner
-        ? { ownerExternalId: currentDraft.metadata.ownerExternalId }
-        : {}),
-      ...(dirtyFields.pendingUntil || dirtyFields.state
-        ? { pendingDateTime: { ...currentDraft.metadata.pendingDateTime } }
-        : {}),
-      ...(dirtyFields.priority
-        ? { priority: currentDraft.metadata.priority }
-        : {}),
-      ...(dirtyFields.state ? { state: currentDraft.metadata.state } : {}),
-      ...(dirtyFields.subscription
-        ? {
-            subscriptionFollowing:
-              currentDraft.metadata.subscriptionFollowing,
-          }
-        : {}),
-      ...(dirtyFields.tags
-        ? {
-            tagText: currentDraft.metadata.tagText,
-            tags: [...currentDraft.metadata.tags],
-          }
-        : {}),
-    },
-  };
-}
+import type { TicketMetadataEditorStateProps } from "./ticket-metadata-editor-state-types";
 
 export function TicketMetadataEditorState({
   communicationCapabilities,
@@ -137,21 +46,7 @@ export function TicketMetadataEditorState({
   recentlyViewedLinkTargets,
   searchTicketLinkTargetsAction,
   updateTicketMetadataAction,
-}: {
-  communicationCapabilities: TicketCommunicationCapabilities;
-  detail: WorkspaceTicketDetail;
-  header?: ReactNode;
-  loadedBaseline: SelectedTicketDraft;
-  metadataMutationCapabilities: TicketMetadataMutationCapabilities;
-  onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
-  onMetadataSavedDetailRefresh?: (ticketId: string) => void;
-  onReturnToListAfterUpdate(): void;
-  recentlyViewedLinkTargets: WorkspaceTicketLinkTarget[];
-  searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
-  updateTicketMetadataAction(
-    request: SelectedTicketUpdatePayload,
-  ): Promise<TicketMetadataMutationActionState>;
-}) {
+}: TicketMetadataEditorStateProps) {
   const router = useRouter();
   const refreshSavedDetail =
     onMetadataSavedDetailRefresh ?? noopMetadataSavedDetailRefresh;

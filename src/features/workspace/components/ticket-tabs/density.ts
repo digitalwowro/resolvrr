@@ -9,7 +9,7 @@ export function horizontalTicketTabDensity(
   }
 
   const fullTabMinWidth = 176;
-  const compactTabMinWidth = 56;
+  const compactTabMinWidth = 128;
   const tabGapWidth = 4;
 
   if (tabCount * fullTabMinWidth + (tabCount - 1) * tabGapWidth <= width) {

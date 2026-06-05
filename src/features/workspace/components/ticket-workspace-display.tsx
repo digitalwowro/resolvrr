@@ -5,118 +5,24 @@ import type { DropdownOption } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import {
   allTicketsSavedViewId,
-  type WorkspaceSavedView,
 } from "@/features/saved-views/workspace";
-import type {
-  LoadWorkspaceTicketDetailAction,
-  WorkspaceTicketDetailLoadResult,
-} from "@/features/tickets/detail-action-result";
-import type {
-  LoadWorkspaceTicketListPageAction,
-  WorkspaceTicketListGroup,
-} from "@/features/tickets/list-page-action-result";
-import type {
-  SearchWorkspaceTicketLinkTargetsAction,
-  WorkspaceTicketLinkTarget,
-} from "@/features/tickets/link-target-search-action-result";
-import type {
-  SelectedTicketUpdatePayload,
-  TicketMetadataMutationActionState,
-  TicketMetadataMutationCapabilities,
-} from "@/features/tickets/mutation-model";
-import type {
-  TicketCommunicationCapabilities,
-} from "@/features/tickets/communication-model";
-import type {
-  SaveWorkspaceOpenTabsStateAction,
-  WorkspaceOpenTabsState,
-} from "@/features/workspace/workspace-tab-state";
-import type {
-  LoadWorkspaceNotificationsAction,
-  MarkWorkspaceNotificationsReadAction,
-} from "@/features/notifications";
-import type { HelpdeskConnectionActionResult } from "@/features/helpdesk-connections";
 import {
-  type WorkspaceTicketColumn,
-  type WorkspaceTicketDetail,
-  type WorkspaceTicketRow,
-  type WorkspaceTicketTab,
   workspaceTicketTabs,
 } from "@/features/tickets/workspace-adapter";
-import { TicketDetail, TicketDetailLoadingShell } from "./ticket-detail";
-import { TicketListToolbar } from "./ticket-list-toolbar";
-import { TicketTable } from "./ticket-table";
-import { TicketTabsPanel } from "./ticket-tabs-panel";
-import { ticketGroupOptions } from "./ticket-table-grouping";
 import { useTicketWorkspaceDisplayState } from "./ticket-workspace-state";
 import { useTicketListPager } from "./use-ticket-list-pager";
-import { WorkspaceControls } from "./workspace-controls";
-import {
-  type WorkspaceMenuConnection,
-  WorkspaceHeader,
-} from "./workspace-header";
-import {
-  DetailLoadingState,
-  DetailUnavailableState,
-  EmptyDetailState,
-} from "./workspace-states";
+import { useTicketWorkspaceAutoRefresh } from "./use-ticket-workspace-auto-refresh";
 import { mergeTicketTabs } from "./ticket-tabs-merge";
-import type { WorkspaceSettingsSection } from "./workspace-settings-dialog";
-import { WorkspaceNotifications } from "./workspace-notifications";
-
-const ticketDetailSilentRefreshMs = 60_000;
-const ticketListSilentRefreshMs = 120_000;
-
-type TicketWorkspaceDisplayProps = {
-  connections: WorkspaceMenuConnection[];
-  columns: WorkspaceTicketColumn[];
-  communicationCapabilities: TicketCommunicationCapabilities;
-  detail?: WorkspaceTicketDetail;
-  detailResult?: WorkspaceTicketDetailLoadResult;
-  loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
-  loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
-  loadWorkspaceNotificationsAction: LoadWorkspaceNotificationsAction;
-  logoutAction(formData: FormData): void | Promise<void>;
-  markWorkspaceNotificationsReadAction: MarkWorkspaceNotificationsReadAction;
-  onOpenSettings(section: WorkspaceSettingsSection): void;
-  metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
-  initialListGroups?: WorkspaceTicketListGroup[];
-  nextListCursor?: string;
-  providerGroupingEnabled: boolean;
-  providerSortEnabled: boolean;
-  refreshTicketDetailAfterMetadataSave: boolean;
-  rows: WorkspaceTicketRow[];
-  searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
-  savedViews: WorkspaceSavedView[];
-  initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
-  saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
-  selectedSavedViewId: string;
-  selectedTicketId?: string;
-  setActiveConnectionAction(
-    formData: FormData,
-  ): void | Promise<void | HelpdeskConnectionActionResult>;
-  tabs: WorkspaceTicketTab[];
-  totalListCount?: number;
-  updateTicketMetadataAction(
-    request: SelectedTicketUpdatePayload,
-  ): Promise<TicketMetadataMutationActionState>;
-  userEmail: string;
-};
-
-function stripTicketNumberPrefix(number: string) {
-  return number.replace(/^#/u, "");
-}
-
-function tabLinkTarget(tab: WorkspaceTicketTab): WorkspaceTicketLinkTarget {
-  return {
-    customer: tab.customer,
-    externalId: tab.id,
-    number: stripTicketNumberPrefix(tab.number),
-    priority: tab.priorityKey,
-    state: tab.stateKey,
-    title: tab.title,
-  };
-}
+import { tabLinkTarget } from "./ticket-workspace-link-targets";
+import {
+  TicketWorkspaceDetailArea,
+  TicketWorkspaceListArea,
+} from "./ticket-workspace-work-area";
+import type { TicketWorkspaceDisplayProps } from "./ticket-workspace-display-types";
+import {
+  WorkspaceHeaderChrome,
+  WorkspaceTabsChrome,
+} from "./ticket-workspace-chrome";
 
 export function TicketWorkspaceDisplay({
   connections,
@@ -236,61 +142,15 @@ export function TicketWorkspaceDisplay({
     savedViews.find((savedView) => savedView.id === listPager.savedViewId) ??
     savedViews.find((savedView) => savedView.id === allTicketsSavedViewId);
 
-  useEffect(() => {
-    if (!listActive || !loadTicketListPageAction) {
-      return;
-    }
-
-    function refreshVisibleListIfStale() {
-      if (document.hidden || !listPager.isListStale(ticketListSilentRefreshMs)) {
-        return;
-      }
-      void listPager.silentRefreshCurrentPage();
-    }
-
-    const intervalId = window.setInterval(() => {
-      if (!document.hidden) {
-        void listPager.silentRefreshCurrentPage();
-      }
-    }, ticketListSilentRefreshMs);
-    document.addEventListener("visibilitychange", refreshVisibleListIfStale);
-
-    return () => {
-      window.clearInterval(intervalId);
-      document.removeEventListener("visibilitychange", refreshVisibleListIfStale);
-    };
-  }, [listActive, listPager, loadTicketListPageAction]);
-
-  useEffect(() => {
-    if (!activeTicketId) {
-      return;
-    }
-
-    function refreshVisibleTicketIfStale() {
-      if (
-        document.hidden ||
-        !isActiveTicketDetailStale(ticketDetailSilentRefreshMs)
-      ) {
-        return;
-      }
-      refreshActiveTicketDetail();
-    }
-
-    const intervalId = window.setInterval(() => {
-      if (!document.hidden) {
-        refreshActiveTicketDetail();
-      }
-    }, ticketDetailSilentRefreshMs);
-    document.addEventListener("visibilitychange", refreshVisibleTicketIfStale);
-
-    return () => {
-      window.clearInterval(intervalId);
-      document.removeEventListener(
-        "visibilitychange",
-        refreshVisibleTicketIfStale,
-      );
-    };
-  }, [activeTicketId, isActiveTicketDetailStale, refreshActiveTicketDetail]);
+  useTicketWorkspaceAutoRefresh({
+    activeTicketId,
+    isActiveTicketDetailStale,
+    isListRefreshAvailable: Boolean(loadTicketListPageAction),
+    isListStale: listPager.isListStale,
+    listActive,
+    refreshActiveTicketDetail,
+    silentRefreshCurrentPage: listPager.silentRefreshCurrentPage,
+  });
 
   function handleWorkspaceGroupByChange(nextGroupBy: typeof groupBy) {
     handleGroupByChange(nextGroupBy);
@@ -334,55 +194,46 @@ export function TicketWorkspaceDisplay({
 
   const workArea =
     listActive ? (
-      <div key="work-area" className="flex min-h-0 flex-1 flex-col">
-        <TicketListToolbar
-          allSelected={allSelected}
-          columns={columns}
-          groupBy={groupBy}
-          groupOptions={ticketGroupOptions(providerGroupingEnabled)}
-          onColumnToggle={toggleColumn}
-          onGroupByChange={handleWorkspaceGroupByChange}
-          onRefresh={handleRefreshList}
-          onSavedViewChange={handleSavedViewChange}
-          onSelectAll={toggleSelectAll}
-          partiallySelected={partiallySelected}
-          refreshing={listPager.silentRefreshing}
-          roundedTop={tabOrientation === "vertical"}
-          savedViewOptions={savedViewOptions}
-          selectedSavedViewId={listPager.savedViewId}
-          visibleColumns={visibleColumnSet}
-        />
-        <TicketTable
-          activeTicketId={activeTicketId}
-          columns={columns}
-          groupedRows={groupBy === "none" ? undefined : tableGroupedRows}
-          groupBy={groupBy}
-          onRowSelect={showTicketFromRow}
-          onSort={toggleSort}
-          onToggleRow={toggleRow}
-          canLoadMore={!providerGroupedActive && listPager.canLoadMore}
-          groupLoadMoreError={listPager.groupError}
-          loadingGroupId={listPager.loadingGroupId}
-          loadMoreError={listPager.errorReason}
-          loadedCount={listPager.loadedCount}
-          loadingMore={listPager.loading}
-          onLoadMoreGroup={listPager.loadMoreGroup}
-          onLoadMore={listPager.loadMore}
-          roundedTop={false}
-          rows={tableRows}
-          selectedRowIds={selectedRowIds}
-          sortingEnabled={sortingEnabled && !providerGroupedActive}
-          sortDirectionFor={sortDirectionFor}
-          totalCount={listPager.totalCount}
-          visibleColumns={visibleColumnSet}
-        />
-      </div>
-    ) : activeDetail?.status === "unavailable" ? (
-      <DetailUnavailableState key="work-area" reason={activeDetail.reason} />
-    ) : activeDetail?.status === "available" ? (
-      <TicketDetail
-        key="work-area"
-        detail={activeDetail.detail}
+      <TicketWorkspaceListArea
+        activeTicketId={activeTicketId}
+        allSelected={allSelected}
+        canLoadMore={!providerGroupedActive && listPager.canLoadMore}
+        columns={columns}
+        groupedRows={tableGroupedRows}
+        groupBy={groupBy}
+        groupLoadMoreError={listPager.groupError}
+        loadingGroupId={listPager.loadingGroupId}
+        loadingMore={listPager.loading}
+        loadMoreError={listPager.errorReason}
+        loadedCount={listPager.loadedCount}
+        onColumnToggle={toggleColumn}
+        onGroupByChange={handleWorkspaceGroupByChange}
+        onLoadMore={listPager.loadMore}
+        onLoadMoreGroup={listPager.loadMoreGroup}
+        onRefresh={handleRefreshList}
+        onRowSelect={showTicketFromRow}
+        onSavedViewChange={handleSavedViewChange}
+        onSelectAll={toggleSelectAll}
+        onSort={toggleSort}
+        onToggleRow={toggleRow}
+        partiallySelected={partiallySelected}
+        providerGroupingEnabled={providerGroupingEnabled}
+        refreshing={listPager.silentRefreshing}
+        roundedTop={tabOrientation === "vertical"}
+        rows={tableRows}
+        savedViewOptions={savedViewOptions}
+        selectedRowIds={selectedRowIds}
+        selectedSavedViewId={listPager.savedViewId}
+        sortingEnabled={sortingEnabled && !providerGroupedActive}
+        sortDirectionFor={sortDirectionFor}
+        totalCount={listPager.totalCount}
+        visibleColumns={visibleColumnSet}
+      />
+    ) : (
+      <TicketWorkspaceDetailArea
+        activeDetail={activeDetail}
+        activeTicketId={activeTicketId}
+        activeTicketSummary={activeTicketSummary}
         communicationCapabilities={communicationCapabilities}
         metadataMutationCapabilities={metadataMutationCapabilities}
         onMetadataSaved={updateOpenTicketTabMetadata}
@@ -395,48 +246,16 @@ export function TicketWorkspaceDisplay({
         refreshing={ticketDetailRefreshing}
         updateTicketMetadataAction={updateTicketMetadataAction}
       />
-    ) : activeTicketId ? (
-      activeTicketSummary ? (
-        <TicketDetailLoadingShell
-          key="work-area"
-          roundedTop={tabOrientation === "vertical"}
-          ticket={activeTicketSummary}
-        />
-      ) : (
-        <DetailLoadingState key="work-area" />
-      )
-    ) : (
-      <EmptyDetailState key="work-area" />
     );
 
-  const controls = (
-    <WorkspaceControls
-      key="controls"
-      onTabOrientationChange={setTabOrientation}
-      tabOrientation={tabOrientation}
-    />
-  );
-
-  const notifications = (
-    <WorkspaceNotifications
-      activeTicketId={activeTicketId}
-      loadNotificationsAction={loadWorkspaceNotificationsAction}
-      markNotificationsReadAction={markWorkspaceNotificationsReadAction}
-      onOpenTicket={showNotificationTicket}
-      onRefreshTicket={refreshTicketDetailById}
-      recentTickets={recentTicketTabs}
-    />
-  );
-
   const tabsPanel = (
-    <TicketTabsPanel
-      key="tabs"
+    <WorkspaceTabsChrome
       activeTicketId={activeTicketId}
       listActive={listActive}
       onCloseTicket={closeTicket}
+      onReorderTicket={reorderOpenTicketTabs}
       onSelectList={showList}
       onSelectTicket={showOpenTicket}
-      onReorderTicket={reorderOpenTicketTabs}
       orientation={tabOrientation}
       savedViewLabel={activeSavedView?.label ?? "All tickets"}
       tabs={openTicketTabs}
@@ -445,13 +264,19 @@ export function TicketWorkspaceDisplay({
 
   return (
     <>
-      <WorkspaceHeader
+      <WorkspaceHeaderChrome
+        activeTicketId={activeTicketId}
         connections={connections}
-        controls={controls}
-        notifications={notifications}
+        loadNotificationsAction={loadWorkspaceNotificationsAction}
         logoutAction={logoutAction}
+        markNotificationsReadAction={markWorkspaceNotificationsReadAction}
+        onOpenNotificationTicket={showNotificationTicket}
         onOpenSettings={onOpenSettings}
+        onRefreshTicket={refreshTicketDetailById}
+        onTabOrientationChange={setTabOrientation}
+        recentTickets={recentTicketTabs}
         setActiveConnectionAction={setActiveConnectionAction}
+        tabOrientation={tabOrientation}
         userEmail={userEmail}
       />
       <section

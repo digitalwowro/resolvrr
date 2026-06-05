@@ -1,12 +1,7 @@
-import {
-  ticketLinkRelationKinds,
-  ticketPriorities,
-  ticketStates,
-  type TicketCommunicationBodyFormat,
-  type TicketLinkRelationKind,
-  type TicketMetadataMutationInput,
-  type TicketPriority,
-  type TicketState,
+import type {
+  TicketCommunicationBodyFormat,
+  TicketMetadataMutationInput,
+  TicketState,
 } from "@/core/tickets";
 import {
   isTicketCommunicationBodyFormat,
@@ -19,6 +14,18 @@ import {
   selectedTicketUpdatePayloadKeys,
   type TicketMetadataMutationField,
 } from "./mutation-model";
+import {
+  booleanValue,
+  hasOwnValue,
+  hasUnsupportedKeys,
+  isTicketLinkRelationKind,
+  isTicketPriority,
+  isTicketState,
+  normalizedTags,
+  objectValue,
+  stringArrayValue,
+  textValue,
+} from "./metadata-action-input-values";
 
 export type TicketMetadataMutationActionInput =
   | {
@@ -34,58 +41,6 @@ export type TicketMetadataMutationActionInput =
       field: TicketMetadataMutationField;
       status: "invalid";
     };
-
-function objectValue(value: unknown): Record<string, unknown> | undefined {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
-
-function textValue(record: Record<string, unknown>, name: string): string {
-  const value = record[name];
-  return typeof value === "string" ? value : "";
-}
-
-function booleanValue(
-  record: Record<string, unknown>,
-  name: string,
-): boolean | undefined {
-  const value = record[name];
-  return typeof value === "boolean" ? value : undefined;
-}
-
-function stringArrayValue(
-  record: Record<string, unknown>,
-  name: string,
-): string[] | undefined {
-  const value = record[name];
-  return Array.isArray(value) && value.every((item) => typeof item === "string")
-    ? value
-    : undefined;
-}
-
-function hasOwnValue(record: Record<string, unknown>, name: string): boolean {
-  return Object.prototype.hasOwnProperty.call(record, name);
-}
-
-function hasUnsupportedKeys(
-  record: Record<string, unknown>,
-  allowedKeys: readonly string[],
-): boolean {
-  return Object.keys(record).some((key) => !allowedKeys.includes(key));
-}
-
-function isTicketState(value: string): value is TicketState {
-  return ticketStates.includes(value as TicketState);
-}
-
-function isTicketPriority(value: string): value is TicketPriority {
-  return ticketPriorities.includes(value as TicketPriority);
-}
-
-function isTicketLinkRelationKind(value: string): value is TicketLinkRelationKind {
-  return ticketLinkRelationKinds.includes(value as TicketLinkRelationKind);
-}
 
 function isPendingState(state: TicketState | undefined): boolean {
   return state === "pending_reminder" || state === "pending_close";
@@ -135,16 +90,6 @@ function invalidField(
     return "communication";
   }
   return stateValue || !priorityValue ? "state" : "priority";
-}
-
-function normalizedTags(values: string[]): string[] {
-  return [
-    ...new Set(
-      values
-        .map((value) => value.trim())
-        .filter(Boolean),
-    ),
-  ];
 }
 
 export function ticketMetadataMutationActionInput(

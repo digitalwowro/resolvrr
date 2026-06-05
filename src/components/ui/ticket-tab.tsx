@@ -82,7 +82,7 @@ export function TicketTab({
       className={cn(
         "group relative inline-flex h-9 min-w-0 translate-y-px items-center gap-1.5 overflow-hidden rounded-t-md border",
         density === "full" && "flex-1 px-3",
-        density === "compact" && "min-w-14 max-w-24 flex-1 px-2",
+        density === "compact" && "min-w-32 max-w-36 flex-1 px-2",
         density === "icon" &&
           "min-w-7 flex-1 justify-center px-1 hover:bg-white",
         className,

@@ -1,16 +1,9 @@
 import { Search, X } from "lucide-react";
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui";
 import type { TicketLinkRelationKind } from "@/core/tickets";
 import type {
-  SearchWorkspaceTicketLinkTargetsAction,
   WorkspaceTicketLinkTarget,
   WorkspaceTicketLinkTargetSearchResult,
 } from "@/features/tickets/link-target-search-action-result";
@@ -19,23 +12,9 @@ import {
   TicketAddLinkCandidateList,
   TicketAddLinkSearchResults,
 } from "./ticket-add-link-search-results";
-
-type TicketAddLinkDialogProps = {
-  canEditLinkRelations: boolean;
-  currentTicketCustomerExternalId?: string;
-  currentTicketExternalId: string;
-  initialRelation: TicketLinkRelationKind;
-  initialTicketId?: string;
-  recentlyViewedTargets: WorkspaceTicketLinkTarget[];
-  saving: boolean;
-  searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
-  onAdd(input: {
-    relation: TicketLinkRelationKind;
-    ticketId: string;
-    target?: WorkspaceTicketLinkTarget;
-  }): void;
-  onClose(): void;
-};
+import { TicketAddLinkCustomerSection } from "./ticket-add-link-customer-section";
+import { TicketAddLinkManualField } from "./ticket-add-link-manual-field";
+import type { TicketAddLinkDialogProps } from "./ticket-add-link-dialog-types";
 
 export function TicketAddLinkDialog({
   canEditLinkRelations,
@@ -263,27 +242,12 @@ export function TicketAddLinkDialog({
             />
           </section>
           {currentTicketCustomerExternalId ? (
-            <section aria-label="From this customer" className="space-y-2">
-              <div className="text-xs font-semibold text-slate-700">
-                From this customer
-              </div>
-              {customerSearching ? (
-                <div className="rounded-md border border-slate-200 px-3 py-3 text-sm text-slate-500">
-                  Loading tickets from this customer...
-                </div>
-              ) : customerSearchResult.status === "unavailable" ? (
-                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800">
-                  Customer ticket lookup is unavailable.
-                </div>
-              ) : (
-                <TicketAddLinkCandidateList
-                  emptyMessage="No other tickets from this customer."
-                  onSelectTarget={selectTarget}
-                  selectedTarget={selectedTarget}
-                  targets={customerSearchResult.targets}
-                />
-              )}
-            </section>
+            <TicketAddLinkCustomerSection
+              customerSearchResult={customerSearchResult}
+              customerSearching={customerSearching}
+              onSelectTarget={selectTarget}
+              selectedTarget={selectedTarget}
+            />
           ) : null}
           <section aria-label="Recently viewed" className="space-y-2">
             <div className="text-xs font-semibold text-slate-700">
@@ -297,25 +261,15 @@ export function TicketAddLinkDialog({
             />
           </section>
           {showManualTicketId ? (
-            <div className="space-y-2">
-              <label
-                className="block text-xs font-semibold text-slate-700"
-                htmlFor={`${titleId}-manual-ticket-id`}
-              >
-                Manual related ticket ID
-              </label>
-              <input
-                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                disabled={saving}
-                id={`${titleId}-manual-ticket-id`}
-                onChange={(event) => {
-                  setManualTicketId(event.currentTarget.value);
-                  setSelectedTarget(undefined);
-                }}
-                placeholder="Related ticket ID"
-                value={manualTicketId}
-              />
-            </div>
+            <TicketAddLinkManualField
+              inputId={`${titleId}-manual-ticket-id`}
+              manualTicketId={manualTicketId}
+              onManualTicketIdChange={(value) => {
+                setManualTicketId(value);
+                setSelectedTarget(undefined);
+              }}
+              saving={saving}
+            />
           ) : null}
         </div>
         <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-3">

@@ -6,114 +6,18 @@ import type {
   TicketSortDirection,
   TicketSortKey,
 } from "./ticket-list-query";
+import {
+  savedViewColorNames,
+  savedViewStorageVersion,
+  type SavedViewColorName,
+  type SavedViewFilter,
+  type SavedViewQuery,
+  type SavedViewStorage,
+} from "./saved-view-types";
+import { normalizeSavedViewConditions } from "./saved-view-condition-normalization";
 
-export type SavedViewVisibility = "personal" | "shared";
-
-export type SavedViewConditionField = "owner" | "state" | "priority" | "group";
-
-export type SavedViewConditionOperator = "is" | "is_not";
-
-export type SavedViewOwnerPreset = "myself" | "unassigned" | "all";
-
-export type SavedViewConditionValue =
-  | { kind: "owner-preset"; value: SavedViewOwnerPreset }
-  | { kind: "external"; externalId: string; label?: string }
-  | { kind: "state"; value: TicketState }
-  | { kind: "priority"; value: TicketPriority };
-
-export type SavedViewCondition = {
-  id: string;
-  field: SavedViewConditionField;
-  operator: SavedViewConditionOperator;
-  values: SavedViewConditionValue[];
-};
-
-export type SavedViewFilter = {
-  states?: TicketState[];
-  excludedStates?: TicketState[];
-  priorities?: TicketPriority[];
-  excludedPriorities?: TicketPriority[];
-  ownerExternalIds?: string[];
-  excludedOwnerExternalIds?: string[];
-  ownerUnassigned?: boolean;
-  excludeOwnerUnassigned?: boolean;
-  groupExternalIds?: string[];
-  excludedGroupExternalIds?: string[];
-  tagNames?: string[];
-  searchText?: string;
-};
-
-export type SavedViewQuery = {
-  filter: SavedViewFilter;
-  conditions?: SavedViewCondition[];
-  sort?: TicketSort;
-  group?: TicketListGroupRequest;
-};
-
-export type SavedView = {
-  id: string;
-  name: string;
-  visibility: SavedViewVisibility;
-  filter: SavedViewFilter;
-  query: SavedViewQuery;
-  conditions?: SavedViewCondition[];
-  sort?: TicketSort;
-  group?: TicketListGroupRequest;
-  iconName?: string;
-  colorName?: string;
-  seedKey?: string;
-};
-
-export const savedViewStorageVersion = 2;
-export const myWorkSavedViewSeedKey = "my-work";
-export const savedViewSeedDismissalPreferenceKey = "savedView.dismissedSeeds";
-export const savedViewMaxConditions = 12;
-export const savedViewMaxValuesPerCondition = 20;
-export const savedViewTitleMaxLength = 80;
-
-export const savedViewConditionFields = [
-  "owner",
-  "state",
-  "priority",
-  "group",
-] satisfies SavedViewConditionField[];
-
-export const savedViewConditionOperators = [
-  "is",
-  "is_not",
-] satisfies SavedViewConditionOperator[];
-
-export const savedViewColorNames = [
-  "blue",
-  "green",
-  "amber",
-  "violet",
-  "rose",
-  "teal",
-  "slate",
-  "orange",
-] as const;
-
-export const curatedSavedViewIconNames = [
-  "briefcase-business",
-  "inbox",
-  "list-filter",
-  "clock",
-  "circle-dot",
-  "signal-high",
-  "users",
-  "tag",
-] as const;
-
-export type SavedViewColorName = (typeof savedViewColorNames)[number];
-
-export type SavedViewStorage = {
-  version: typeof savedViewStorageVersion;
-  filter: SavedViewFilter;
-  conditions?: SavedViewCondition[];
-  sort?: TicketSort;
-  group?: TicketListGroupRequest;
-};
+export { normalizeSavedViewConditions } from "./saved-view-condition-normalization";
+export * from "./saved-view-types";
 
 const ticketSortKeys = [
   "number",
@@ -235,106 +139,6 @@ export function normalizeSavedViewFilter(
       ? { searchText: filter.searchText.trim() }
       : {}),
   };
-}
-
-function normalizeConditionValue(
-  field: SavedViewConditionField,
-  value: unknown,
-): SavedViewConditionValue | undefined {
-  if (!isRecord(value) || typeof value.kind !== "string") {
-    return undefined;
-  }
-
-  if (field === "owner" && value.kind === "owner-preset") {
-    return isAllowed(value.value, ["myself", "unassigned", "all"] as const)
-      ? { kind: "owner-preset", value: value.value }
-      : undefined;
-  }
-  if (
-    (field === "owner" || field === "group") &&
-    value.kind === "external" &&
-    typeof value.externalId === "string" &&
-    value.externalId.trim()
-  ) {
-    return {
-      kind: "external",
-      externalId: value.externalId.trim(),
-      ...(typeof value.label === "string" && value.label.trim()
-        ? { label: value.label.trim() }
-        : {}),
-    };
-  }
-  if (
-    field === "state" &&
-    value.kind === "state" &&
-    isAllowed(value.value, [
-      "new",
-      "open",
-      "pending_reminder",
-      "pending_close",
-      "closed",
-    ] satisfies TicketState[])
-  ) {
-    return { kind: "state", value: value.value };
-  }
-  if (
-    field === "priority" &&
-    value.kind === "priority" &&
-    isAllowed(value.value, [
-      "low",
-      "medium",
-      "high",
-    ] satisfies TicketPriority[])
-  ) {
-    return { kind: "priority", value: value.value };
-  }
-
-  return undefined;
-}
-
-export function normalizeSavedViewConditions(
-  conditions: unknown,
-): SavedViewCondition[] | undefined {
-  if (!Array.isArray(conditions)) {
-    return undefined;
-  }
-
-  const normalized = conditions
-    .slice(0, savedViewMaxConditions)
-    .map((condition, index): SavedViewCondition | undefined => {
-      if (
-        !isRecord(condition) ||
-        !isAllowed(condition.field, savedViewConditionFields) ||
-        !isAllowed(condition.operator, savedViewConditionOperators) ||
-        !Array.isArray(condition.values)
-      ) {
-        return undefined;
-      }
-
-      const field = condition.field;
-      const operator = condition.operator;
-      const values = condition.values
-        .slice(0, savedViewMaxValuesPerCondition)
-        .map((value) => normalizeConditionValue(field, value))
-        .filter((value): value is SavedViewConditionValue => Boolean(value));
-
-      if (values.length === 0) {
-        return undefined;
-      }
-
-      return {
-        id:
-          typeof condition.id === "string" && condition.id.trim()
-            ? condition.id.trim()
-            : `condition-${index + 1}`,
-        field,
-        operator,
-        values,
-      };
-    })
-    .filter((condition): condition is SavedViewCondition => Boolean(condition));
-
-  return normalized.length > 0 ? normalized : undefined;
 }
 
 export function isSavedViewColorName(value: unknown): value is SavedViewColorName {

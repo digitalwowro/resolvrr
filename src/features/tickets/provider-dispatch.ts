@@ -4,13 +4,9 @@ import {
   type TicketListQuery,
 } from "@/core/providers";
 import {
-  availableTicketLookupList,
-  unavailableTicketLookupList,
   unsupportedTicketLookupData,
-  unsupportedTicketLookupList,
   type TicketLookupData,
   type TicketLookupList,
-  type TicketLookupUnavailableReason,
 } from "@/core/ticket-lookups";
 import type {
   TicketExternalId,
@@ -20,6 +16,7 @@ import type {
 } from "@/core/tickets";
 import type { TicketProviderContext } from "./connection-context";
 import { readUnavailableForProviderError } from "./connection-context";
+import { dispatchLookupListRead } from "./provider-lookup-dispatch";
 import { ticketCommunicationCapabilities } from "./communication-model";
 import { ticketListQueryCapabilities } from "./list-query-guardrails";
 import {
@@ -39,58 +36,6 @@ function hasCapability(
   capability: ProviderCapability,
 ): boolean {
   return providerContext.plugin.capabilities.includes(capability);
-}
-
-function lookupReasonForProviderError(
-  error: unknown,
-): { reason: TicketLookupUnavailableReason; retryable: boolean } {
-  const unavailable = readUnavailableForProviderError(error);
-  if (unavailable.reason === "provider-auth-failed") {
-    return { reason: "provider-auth-failed", retryable: unavailable.retryable };
-  }
-  if (unavailable.reason === "provider-permission-denied") {
-    return {
-      reason: "provider-permission-denied",
-      retryable: unavailable.retryable,
-    };
-  }
-  if (unavailable.reason === "provider-rate-limited") {
-    return { reason: "provider-rate-limited", retryable: unavailable.retryable };
-  }
-  if (unavailable.reason === "provider-temporary-failure") {
-    return {
-      reason: "provider-temporary-failure",
-      retryable: unavailable.retryable,
-    };
-  }
-  if (unavailable.reason === "unsupported-capability") {
-    return { reason: "unsupported-capability", retryable: unavailable.retryable };
-  }
-
-  return {
-    reason: "provider-unexpected-response",
-    retryable: unavailable.retryable,
-  };
-}
-
-async function dispatchLookupListRead({
-  read,
-}: {
-  read?: () => Promise<{ externalId: string; label: string }[]>;
-}): Promise<TicketLookupList> {
-  if (!read) {
-    return unsupportedTicketLookupList();
-  }
-
-  try {
-    return availableTicketLookupList(await read());
-  } catch (error) {
-    const unavailable = lookupReasonForProviderError(error);
-    return unavailableTicketLookupList(
-      unavailable.reason,
-      unavailable.retryable,
-    );
-  }
 }
 
 function canUpdateTicketMetadata(
