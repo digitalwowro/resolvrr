@@ -2,9 +2,10 @@
 
 This contract defines the provider data cache rules, refresh states, and future
 prompt context. The first implemented durable provider cache slice is limited to
-selected-ticket detail/thread snapshots. Generated output cache, background
-sync, webhooks, and job queues remain out of scope. Read-only AI behavior is
-defined separately in `docs/architecture/read-only-ai-contract.md`.
+selected-ticket detail/thread snapshots. The first AI output cache slice is
+limited to selected-ticket generated summaries. Background sync, webhooks, and
+job queues remain out of scope. Read-only AI behavior is defined separately in
+`docs/architecture/read-only-ai-contract.md`.
 
 ## Goals
 
@@ -13,8 +14,8 @@ defined separately in `docs/architecture/read-only-ai-contract.md`.
 - Define what normalized provider data may be cached later.
 - Define stale, refreshing, refresh-failed, and manual-refresh behavior before
   adding persistent cache.
-- Define what AI prompts may read before durable provider or output caching is
-  implemented.
+- Define what AI prompts and generated-output cache entries may use before
+  assisted AI features are implemented.
 - Keep provider-specific fields, raw provider responses, credentials, and
   customer content out of logs.
 
@@ -37,12 +38,17 @@ defined separately in `docs/architecture/read-only-ai-contract.md`.
 - The encrypted cache payload stores normalized provider-neutral ticket detail
   and thread data. Plaintext columns are limited to cache identity/freshness and
   narrow metadata used for scoping and invalidation.
-- The first cache slice does not cache list query pages, lookup data, generated
-  AI output, background refresh jobs, or provider raw payloads.
+- Selected-ticket AI summaries are cached as encrypted generated output. Their
+  cache keys include user, active helpdesk connection, selected ticket, prompt
+  version, sanitization version, provider protocol, model fingerprint, and
+  source fingerprint/freshness metadata.
+- The current cache implementation does not cache list query pages, lookup data,
+  background refresh jobs, webhooks, or provider raw payloads.
 
 ## Non-Goals
 
-- No generated summaries, draft suggestions, or output cache in this phase.
+- No draft suggestions, customer replies, or assisted-action output cache in
+  this phase.
 - No background sync, webhooks, scheduled refresh jobs, or hidden provider
   writes in this phase.
 - No provider-specific cache keys, query syntax, raw API paths, or raw payload
@@ -151,8 +157,8 @@ Future cache implementations may tune exact TTLs, but the default classes are:
 - Thread snapshots: short lived, around 2-5 minutes.
 - Lookup snapshots: medium lived, around 15-60 minutes when the provider does
   not return an explicit freshness hint.
-- Generated AI output: not part of Phase 9; it belongs to the later output cache
-  phase after read-only AI exists.
+- Generated AI output: selected-ticket summaries use a medium-lived encrypted
+  cache, currently around 24 hours, keyed by source/model/prompt identity.
 
 Any TTL can be shortened for sensitive data, provider errors, permission
 changes, or high-churn views. Expired snapshots may be shown only as stale data
@@ -168,7 +174,7 @@ confirms the write:
 - Owner/group/tag/link/subscription writes invalidate selected-ticket detail,
   affected list rows, and any related lookup-derived display where applicable.
 - Internal notes and customer replies invalidate selected-ticket detail and
-  thread snapshots.
+  thread snapshots plus generated selected-ticket summaries.
 - Saved-view changes invalidate list snapshots keyed by that saved view.
 - Helpdesk connection credential, active connection, or permission changes
   invalidate all snapshots scoped to that connection for that user.
@@ -239,11 +245,11 @@ Future AI prompts must not include:
   content.
 
 Before an AI request uses stale or persisted source data, the UI and service
-contract must make that freshness explicit. The default behavior for
-selected-ticket summaries is to reload selected-ticket detail on the server
-before generation. Until the separate AI output cache phase models AI source
-freshness in the UI and prompt contract, selected-ticket summary generation
-bypasses the persistent detail cache.
+contract must make that freshness explicit. Selected-ticket summaries reload
+selected-ticket detail from provider source on the server before prompt
+preparation, then may reuse a generated-summary cache entry only when the
+source fingerprint, prompt version, sanitization version, user scope, connection
+scope, selected-ticket identity, provider protocol, and model fingerprint match.
 
 ## Observability
 

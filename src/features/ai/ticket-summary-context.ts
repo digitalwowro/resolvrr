@@ -5,6 +5,9 @@ const maxArticleCount = 12;
 const maxArticleTextLength = 1800;
 const maxPromptLength = 18000;
 
+export const ticketSummaryPromptVersion = "ticket-summary-prompt-v1";
+export const ticketSummarySanitizationVersion = "sanitize-html-plain-text-v1";
+
 export type TicketSummaryPromptContext = {
   articleCount: number;
   prompt: string;

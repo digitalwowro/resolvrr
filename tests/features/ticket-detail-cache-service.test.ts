@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { TicketDetail } from "@/core/tickets";
+import type { AiSummaryCacheRepository } from "@/features/ai/summary-cache-repository";
 import type { TicketDetailCacheRepository } from "@/features/tickets/cache-repository";
 import {
   loadWorkspaceTicketDetail,
@@ -43,6 +44,19 @@ function cacheRepository(
     invalidateConnection: vi.fn(async () => undefined),
     invalidateTicketDetail: vi.fn(async () => undefined),
     storeTicketDetail: vi.fn(async () => undefined),
+    ...overrides,
+  };
+}
+
+function aiCacheRepository(
+  overrides: Partial<AiSummaryCacheRepository> = {},
+): AiSummaryCacheRepository {
+  return {
+    enabled: true,
+    findFreshSummary: vi.fn(async () => null),
+    invalidateConnection: vi.fn(async () => undefined),
+    invalidateTicket: vi.fn(async () => undefined),
+    storeSummary: vi.fn(async () => undefined),
     ...overrides,
   };
 }
@@ -138,6 +152,7 @@ describe("ticket detail persistent cache service integration", () => {
 
   it("invalidates cached detail after confirmed metadata writes", async () => {
     const cache = cacheRepository();
+    const aiCache = aiCacheRepository();
     const refreshedDetail = ticketDetail("Refreshed provider detail");
 
     const result = await updateWorkspaceTicketMetadata(
@@ -154,6 +169,7 @@ describe("ticket detail persistent cache service integration", () => {
       "ticket-1",
       { priority: "high" },
       cache,
+      aiCache,
     );
 
     expect(result).toEqual({ status: "saved" });
@@ -165,5 +181,10 @@ describe("ticket detail persistent cache service integration", () => {
     expect(cache.storeTicketDetail).toHaveBeenCalledWith(
       expect.objectContaining({ detail: refreshedDetail }),
     );
+    expect(aiCache.invalidateTicket).toHaveBeenCalledWith({
+      helpdeskConnectionId: "connection-1",
+      ticketExternalId: "ticket-1",
+      userId: "user-1",
+    });
   });
 });

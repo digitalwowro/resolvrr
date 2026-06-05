@@ -5,6 +5,13 @@ import type {
 import type { ProviderRegistry } from "@/providers";
 import type { HelpdeskConnectionsRepository } from "@/features/helpdesk-connections/repository";
 import {
+  invalidateAiSummaryTicketCache,
+} from "@/features/ai/summary-cache-invalidation";
+import {
+  noAiSummaryCacheRepository,
+  type AiSummaryCacheRepository,
+} from "@/features/ai/summary-cache-repository";
+import {
   recordTicketReadTiming,
   ticketReadTimingDuration,
   ticketReadTimingStart,
@@ -51,6 +58,7 @@ export async function updateWorkspaceTicketMetadata(
   ticketExternalId: TicketExternalId,
   input: TicketMetadataMutationInput,
   cacheRepository: TicketDetailCacheRepository = noTicketDetailCacheRepository,
+  aiSummaryCacheRepository: AiSummaryCacheRepository = noAiSummaryCacheRepository,
 ): Promise<TicketMetadataMutationResult> {
   const totalStart = ticketReadTimingStart();
   if (!hasTicketMetadataMutationInput(input)) {
@@ -121,6 +129,12 @@ export async function updateWorkspaceTicketMetadata(
     cacheRepository,
     operation: "mutation",
     providerContext: providerContext.value,
+    ticketExternalId,
+    userId,
+  });
+  await invalidateAiSummaryTicketCache({
+    cacheRepository: aiSummaryCacheRepository,
+    helpdeskConnectionId: providerContext.value.context.connection.id,
     ticketExternalId,
     userId,
   });

@@ -24,8 +24,8 @@ conversation content.
 - The current durable provider cache stores selected-ticket detail/thread
   snapshots as encrypted normalized payloads scoped by user, active helpdesk
   connection, provider ticket identity, and source version. It does not cache
-  raw provider payloads, provider request/response bodies, generated AI output,
-  or background sync data.
+  raw provider payloads, provider request/response bodies, or background sync
+  data.
 - The cache and freshness contract lives in
   `docs/architecture/cache-and-privacy-contract.md`. Durable provider cache,
   generated output cache, background sync, and webhooks must follow that
@@ -51,7 +51,10 @@ conversation content.
   provider request bodies, provider response bodies, provider credentials, model
   names, ticket IDs, article IDs, customer names, email addresses, prompts,
   generated summaries, or ticket/thread content.
-- Generated output cache is separate from provider data cache and is not part of
-  the read-only summary phase.
+- Generated selected-ticket summaries may be cached server-side as encrypted
+  output scoped by user, active helpdesk connection, selected ticket,
+  source fingerprint/freshness, prompt version, sanitization version, provider
+  protocol, and model fingerprint. Prompt text, raw provider payloads, model
+  names, and generated summaries must not be logged.
 - Customer-visible communication still happens only through the selected
   helpdesk provider after explicit user review and submit.

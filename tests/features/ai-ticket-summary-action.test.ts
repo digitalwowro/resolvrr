@@ -19,6 +19,10 @@ vi.mock("@/data/helpdesk-connections-repository", () => ({
   prismaHelpdeskConnectionsRepository: {},
 }));
 
+vi.mock("@/data/ai-summary-cache-repository", () => ({
+  prismaAiSummaryCacheRepository: { enabled: true },
+}));
+
 vi.mock("@/data/ticket-detail-cache-repository", () => ({
   prismaTicketDetailCacheRepository: { enabled: true },
 }));
@@ -41,6 +45,7 @@ describe("summarizeWorkspaceTicketAction", () => {
   it("reloads provider-neutral ticket detail server-side before summarizing", async () => {
     mockedLoadWorkspaceTicketDetail.mockResolvedValueOnce({
       status: "available",
+      helpdeskConnectionId: "connection-1",
       detail: {
         links: [],
         measuredAt: new Date("2026-05-24T08:35:00Z"),

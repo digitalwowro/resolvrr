@@ -152,6 +152,7 @@ export async function loadWorkspaceTicketDetail(
       });
       return {
         status: "available",
+        helpdeskConnectionId: providerContext.value.context.connection.id,
         detail: {
           ...cachedDetail,
           lookupData,
@@ -190,6 +191,7 @@ export async function loadWorkspaceTicketDetail(
 
   return {
     status: "available",
+    helpdeskConnectionId: providerContext.value.context.connection.id,
     detail: {
       ...result.detail,
       lookupData,

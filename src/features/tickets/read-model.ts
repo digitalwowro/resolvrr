@@ -47,6 +47,7 @@ export type TicketListAvailable = {
 export type TicketDetailAvailable = {
   status: "available";
   detail: TicketDetail;
+  helpdeskConnectionId?: string;
 };
 
 export type TicketListReadResult = TicketListAvailable | TicketReadUnavailable;

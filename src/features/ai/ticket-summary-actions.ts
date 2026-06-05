@@ -2,6 +2,7 @@
 
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
+import { prismaAiSummaryCacheRepository } from "@/data/ai-summary-cache-repository";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
 import { providerRegistry } from "@/providers";
@@ -47,5 +48,16 @@ export const summarizeWorkspaceTicketAction: SummarizeWorkspaceTicketAction =
     return summarizeTicketDetail(
       aiRuntimeConfigFromEnv(env),
       detailResult.detail,
+      detailResult.helpdeskConnectionId
+        ? {
+            cacheRepository: prismaAiSummaryCacheRepository,
+            encryptionKey: env.APP_ENCRYPTION_KEY,
+            scope: {
+              helpdeskConnectionId: detailResult.helpdeskConnectionId,
+              ticketExternalId: trimmedTicketId,
+              userId: user.id,
+            },
+          }
+        : undefined,
     );
   };

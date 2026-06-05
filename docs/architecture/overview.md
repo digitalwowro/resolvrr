@@ -17,8 +17,9 @@ tickets and conversations.
 - Core use cases call provider contracts only.
 - Customer communication must go through the selected helpdesk provider.
 - Cache and freshness behavior is defined in
-  `docs/architecture/cache-and-privacy-contract.md` before any durable provider
-  or generated-output cache implementation.
+  `docs/architecture/cache-and-privacy-contract.md`; current durable cache
+  slices are limited to selected-ticket detail/thread snapshots and generated
+  selected-ticket summaries.
 - Read-only AI summary behavior is defined in
   `docs/architecture/read-only-ai-contract.md`; it is optional, explicit-action
   only, and cannot write to helpdesk providers.
@@ -29,5 +30,5 @@ The first release targets a conservative multi-user foundation: email/password
 Resolvrr users, SQL-backed sessions, per-user helpdesk connections, per-user
 saved view preferences, and the workspace ticket workflow. Broader team
 management, workflow automation, public APIs, assisted AI actions, and durable
-AI output caching are deferred. Read-only AI summaries are limited to internal
-selected-ticket summaries.
+assisted AI output beyond selected-ticket summaries are deferred. Read-only AI
+summaries are limited to internal selected-ticket summaries.

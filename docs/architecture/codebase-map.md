@@ -124,6 +124,8 @@ added, moved, renamed, or removed.
     - `tickets.ts` (`src/core/tickets.ts`): canonical ticket values and provider-neutral
       ticket/thread/link/subscription/mutation/communication types.
   - `src/data`: server-only database access boundaries.
+    - `ai-summary-cache-repository.ts` (`src/data/ai-summary-cache-repository.ts`):
+      Prisma-backed encrypted selected-ticket AI summary output cache repository.
     - `auth-repository.ts` (`src/data/auth-repository.ts`): Prisma-backed auth repository.
     - `helpdesk-connections-repository.ts` (`src/data/helpdesk-connections-repository.ts`):
       Prisma-backed helpdesk connection repository and active connection preference persistence.
@@ -145,6 +147,12 @@ added, moved, renamed, or removed.
         result, unavailable-state, and action types.
       - `provider-config.ts` (`src/features/ai/provider-config.ts`): disabled-by-default runtime AI
         provider configuration derived from typed app environment variables.
+      - `summary-cache-invalidation.ts` (`src/features/ai/summary-cache-invalidation.ts`):
+        best-effort generated-summary cache invalidation helpers for ticket and connection changes.
+      - `summary-cache-key.ts` (`src/features/ai/summary-cache-key.ts`): prompt/model/source
+        fingerprint key builder for generated-summary cache entries.
+      - `summary-cache-repository.ts` (`src/features/ai/summary-cache-repository.ts`):
+        provider-neutral generated-summary cache repository contract and disabled no-op repository.
       - `text-generation.ts` (`src/features/ai/text-generation.ts`): OpenAI-compatible Chat
         Completions and Anthropic-compatible Messages HTTP adapters for single text generation
         requests, with safe error mapping and no prompt/output logging.
@@ -751,6 +759,10 @@ added, moved, renamed, or removed.
       - `migration.sql`
         (`prisma/migrations/20260605204000_add_ticket_detail_cache_payload/migration.sql`):
         migration adding encrypted selected-ticket detail cache payload and source-version columns.
+    - `prisma/migrations/20260605213000_add_ai_summary_cache`: contains related
+      20260605213000_add_ai_summary_cache files.
+      - `migration.sql` (`prisma/migrations/20260605213000_add_ai_summary_cache/migration.sql`):
+        migration adding encrypted selected-ticket AI summary output cache storage.
     - `migration_lock.toml` (`prisma/migrations/migration_lock.toml`): Prisma migration provider
       lockfile.
   - `schema.prisma` (`prisma/schema.prisma`): provider-neutral SQL schema.
@@ -792,9 +804,12 @@ added, moved, renamed, or removed.
     - `ai-ticket-summary-action.test.ts` (`tests/features/ai-ticket-summary-action.test.ts`):
       verifies the selected-ticket AI summary action reloads provider-neutral ticket detail
       server-side and rejects blank ticket requests without provider reads.
+    - `ai-ticket-summary-cache.test.ts` (`tests/features/ai-ticket-summary-cache.test.ts`):
+      verifies generated selected-ticket AI summary output cache hit and write behavior without
+      prompt persistence.
     - `ai-ticket-summary.test.ts` (`tests/features/ai-ticket-summary.test.ts`): verifies read-only
-      AI summary config defaults, sanitized prompt context, safe telemetry, and
-      OpenAI-compatible and Anthropic-compatible request shapes.
+      AI summary config defaults, sanitized prompt context, safe telemetry, and OpenAI-compatible
+      and Anthropic-compatible request shapes.
     - `saved-view-management-permissions.test.ts`
       (`tests/features/saved-view-management-permissions.test.ts`): verifies saved view management
       permissions behavior.

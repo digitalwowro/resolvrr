@@ -10,7 +10,7 @@ communication.
 - Server-side ticket detail reload before prompt preparation.
 - Provider-neutral, sanitized ticket metadata and thread text only.
 - Disabled-by-default runtime configuration.
-- No durable AI output cache in this phase.
+- Durable selected-ticket summary cache for successful generated summaries.
 
 ## Boundaries
 
@@ -24,7 +24,8 @@ communication.
 The selected-ticket summary action accepts only the ticket external ID from the
 client. It reloads the current user's active selected-ticket detail on the
 server through the existing provider-neutral ticket read service, then builds
-the prompt from normalized data.
+the prompt from normalized data. The summary cache is checked only after this
+provider-source detail reload and prompt-context construction.
 
 ## Prompt Data
 
@@ -41,7 +42,6 @@ Prompt input must not include:
 - raw provider article IDs;
 - attachment bytes or provider attachment URLs;
 - unsanitized HTML;
-- cached generated summaries from a previous phase;
 - customer reply drafts unless a later approved phase explicitly defines that
   prompt contract.
 
@@ -79,7 +79,16 @@ customer names, email addresses, or ticket/thread content.
 
 ## Caching
 
-This phase stores no generated AI output. The future persistent output cache
-phase must key generated text on prompt contract version, model identity,
-selected-ticket identity, source freshness, sanitization version, user and
-permission scope, and relevant source updates.
+Successful selected-ticket summaries may be cached in encrypted server-side
+storage. Cache keys include prompt contract version, model identity fingerprint,
+selected-ticket identity, source fingerprint/freshness, sanitization version,
+user, and active helpdesk connection. Prompt text, raw provider payloads, model
+names, and generated summaries must not be logged.
+
+The cache is read only from the explicit summary action. Rendering, route
+loading, tab switching, background refresh, and local state changes must not
+trigger cache reads that generate AI output or AI provider calls.
+
+Generated summary cache entries are invalidated when confirmed provider writes
+change the selected ticket/thread source or when the helpdesk connection is
+updated, validated, disabled, or deleted.
