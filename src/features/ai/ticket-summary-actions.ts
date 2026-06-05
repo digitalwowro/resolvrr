@@ -3,6 +3,7 @@
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
+import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
 import { providerRegistry } from "@/providers";
 import { loadWorkspaceTicketDetail } from "@/features/tickets/service";
 import type {
@@ -36,6 +37,7 @@ export const summarizeWorkspaceTicketAction: SummarizeWorkspaceTicketAction =
       env.APP_ENCRYPTION_KEY,
       user.id,
       trimmedTicketId,
+      prismaTicketDetailCacheRepository,
     );
     if (detailResult.status === "unavailable") {
       return unavailableTicketSummary(detailResult.retryable);

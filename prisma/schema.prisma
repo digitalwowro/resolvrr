@@ -168,6 +168,8 @@ model TicketSnapshotCache {
   providerUpdatedAt    DateTime?
   tagNamesJson         Json
   capabilityJson       Json?
+  encryptedDetailJson  String?
+  sourceVersion        String             @default("ticket-detail-v1")
   fetchedAt            DateTime           @default(now())
   expiresAt            DateTime
   user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)

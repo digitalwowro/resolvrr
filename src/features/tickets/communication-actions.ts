@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
+import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
 import { providerRegistry } from "@/providers";
 import {
   ticketCustomerReplyActionInput,
@@ -150,6 +151,7 @@ export async function addTicketInternalNoteAction(
     user.id,
     actionInput.ticketExternalId,
     actionInput.input,
+    prismaTicketDetailCacheRepository,
   );
 
   if (result.status === "saved" || result.status === "saved-refresh-failed") {
@@ -178,6 +180,7 @@ export async function addTicketCustomerReplyAction(
     user.id,
     actionInput.ticketExternalId,
     actionInput.input,
+    prismaTicketDetailCacheRepository,
   );
 
   if (result.status === "saved" || result.status === "saved-refresh-failed") {

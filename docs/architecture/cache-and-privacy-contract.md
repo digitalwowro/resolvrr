@@ -1,10 +1,10 @@
 # Cache And Privacy Contract
 
-This contract defines the Phase 9 rules for provider data caching, refresh
-states, and future prompt context. It is intentionally a contract only: this
-phase does not add database-backed provider cache, generated output cache,
-background sync, webhooks, or job queues. Read-only AI behavior is defined
-separately in `docs/architecture/read-only-ai-contract.md`.
+This contract defines the provider data cache rules, refresh states, and future
+prompt context. The first implemented durable provider cache slice is limited to
+selected-ticket detail/thread snapshots. Generated output cache, background
+sync, webhooks, and job queues remain out of scope. Read-only AI behavior is
+defined separately in `docs/architecture/read-only-ai-contract.md`.
 
 ## Goals
 
@@ -18,9 +18,26 @@ separately in `docs/architecture/read-only-ai-contract.md`.
 - Keep provider-specific fields, raw provider responses, credentials, and
   customer content out of logs.
 
+## Current Implementation
+
+- Selected-ticket detail reads may use a fresh encrypted database cache entry
+  scoped by user, active helpdesk connection, provider ticket identity, and
+  cache source version.
+- Provider detail refreshes write through to the selected-ticket detail cache.
+- Confirmed metadata and communication writes invalidate the selected-ticket
+  detail cache before the post-write provider refresh; successful refreshes
+  write the refreshed detail back to cache.
+- Successful helpdesk connection update, validation, disable, and delete
+  actions clear selected-ticket detail cache entries scoped to that connection
+  and user.
+- The encrypted cache payload stores normalized provider-neutral ticket detail
+  and thread data. Plaintext columns are limited to cache identity/freshness and
+  narrow metadata used for scoping and invalidation.
+- The first cache slice does not cache list query pages, lookup data, generated
+  AI output, background refresh jobs, or provider raw payloads.
+
 ## Non-Goals
 
-- No durable cache tables or migrations in this phase.
 - No generated summaries, draft suggestions, or output cache in this phase.
 - No background sync, webhooks, scheduled refresh jobs, or hidden provider
   writes in this phase.

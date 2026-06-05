@@ -3,6 +3,7 @@
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
+import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
 import { providerRegistry } from "@/providers";
 import { type HelpdeskConnectionMessageCode } from "./messages";
 import {
@@ -80,6 +81,12 @@ export async function updateHelpdeskConnectionAction(formData: FormData) {
     connectionId,
     formData,
   );
+  if (result.ok) {
+    await prismaTicketDetailCacheRepository.invalidateConnection({
+      helpdeskConnectionId: connectionId,
+      userId: user.id,
+    });
+  }
 
   return resultWithConnections(user.id, result);
 }
@@ -93,6 +100,12 @@ export async function validateHelpdeskConnectionAction(formData: FormData) {
     user.id,
     textValue(formData, "connectionId"),
   );
+  if (result.ok && result.connectionId) {
+    await prismaTicketDetailCacheRepository.invalidateConnection({
+      helpdeskConnectionId: result.connectionId,
+      userId: user.id,
+    });
+  }
 
   return resultWithConnections(user.id, result);
 }
@@ -115,6 +128,12 @@ export async function disableHelpdeskConnectionAction(formData: FormData) {
     user.id,
     textValue(formData, "connectionId"),
   );
+  if (result.ok && result.connectionId) {
+    await prismaTicketDetailCacheRepository.invalidateConnection({
+      helpdeskConnectionId: result.connectionId,
+      userId: user.id,
+    });
+  }
 
   return resultWithConnections(user.id, result);
 }
@@ -126,6 +145,12 @@ export async function deleteHelpdeskConnectionAction(formData: FormData) {
     user.id,
     textValue(formData, "connectionId"),
   );
+  if (result.ok && result.connectionId) {
+    await prismaTicketDetailCacheRepository.invalidateConnection({
+      helpdeskConnectionId: result.connectionId,
+      userId: user.id,
+    });
+  }
 
   return resultWithConnections(user.id, result);
 }

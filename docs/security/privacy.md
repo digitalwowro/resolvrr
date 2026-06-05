@@ -21,10 +21,15 @@ conversation content.
 - Do not cache full provider responses by default.
 - If sensitive ticket/thread content must be cached, store sanitized normalized
   content and encrypt sensitive body fields at rest.
+- The current durable provider cache stores selected-ticket detail/thread
+  snapshots as encrypted normalized payloads scoped by user, active helpdesk
+  connection, provider ticket identity, and source version. It does not cache
+  raw provider payloads, provider request/response bodies, generated AI output,
+  or background sync data.
 - The cache and freshness contract lives in
   `docs/architecture/cache-and-privacy-contract.md`. Durable provider cache,
-  generated output cache, background sync, and webhooks must not be added until
-  their scope follows that contract.
+  generated output cache, background sync, and webhooks must follow that
+  contract.
 - Logs may include safe metadata such as provider key, connection id,
   capability, communication kind, mutation field names, field counts, status,
   retryability, and timing. Logs must not include credentials, tokens,

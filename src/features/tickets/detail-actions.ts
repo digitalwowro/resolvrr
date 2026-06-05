@@ -3,6 +3,7 @@
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
+import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
 import { providerRegistry } from "@/providers";
 import type { WorkspaceTicketDetailLoadResult } from "./detail-action-result";
 import { unavailableTicketRead } from "./read-model";
@@ -24,6 +25,7 @@ export async function loadWorkspaceTicketDetailAction(
     env.APP_ENCRYPTION_KEY,
     user.id,
     normalizedTicketExternalId,
+    prismaTicketDetailCacheRepository,
   );
 
   if (result.status === "unavailable") {

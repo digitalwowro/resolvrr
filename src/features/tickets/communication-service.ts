@@ -14,6 +14,14 @@ import {
   dispatchTicketInternalNote,
 } from "./communication-dispatch";
 import { dispatchTicketDetailRead } from "./provider-dispatch";
+import {
+  noTicketDetailCacheRepository,
+  type TicketDetailCacheRepository,
+} from "./cache-repository";
+import {
+  invalidateTicketDetailCache,
+  storeTicketDetailCache,
+} from "./service-cache";
 import type {
   TicketCommunicationErrorReason,
   TicketCustomerReplyResult,
@@ -114,6 +122,7 @@ export async function addWorkspaceTicketInternalNote(
   userId: string,
   ticketExternalId: string,
   input: TicketInternalNoteInput,
+  cacheRepository: TicketDetailCacheRepository = noTicketDetailCacheRepository,
 ): Promise<TicketInternalNoteResult> {
   if (!ticketExternalId.trim() || !input.body.trim()) {
     recordFailedCommunicationAudit(
@@ -148,6 +157,13 @@ export async function addWorkspaceTicketInternalNote(
     return result;
   }
 
+  await invalidateTicketDetailCache({
+    cacheRepository,
+    operation: "mutation",
+    providerContext: providerContext.value,
+    ticketExternalId,
+    userId,
+  });
   const detailRefresh = await dispatchTicketDetailRead(
     providerContext.value,
     ticketExternalId,
@@ -162,6 +178,15 @@ export async function addWorkspaceTicketInternalNote(
     return result;
   }
 
+  await storeTicketDetailCache({
+    cacheRepository,
+    detail: detailRefresh.detail,
+    encryptionKey,
+    operation: "mutation",
+    providerContext: providerContext.value,
+    ticketExternalId,
+    userId,
+  });
   recordSavedCommunicationAudit("internal-note", auditContext);
   return { status: "saved" };
 }
@@ -173,6 +198,7 @@ export async function addWorkspaceTicketCustomerReply(
   userId: string,
   ticketExternalId: string,
   input: TicketCustomerReplyInput,
+  cacheRepository: TicketDetailCacheRepository = noTicketDetailCacheRepository,
 ): Promise<TicketCustomerReplyResult> {
   if (!ticketExternalId.trim() || !input.body.trim()) {
     recordFailedCommunicationAudit(
@@ -207,6 +233,13 @@ export async function addWorkspaceTicketCustomerReply(
     return result;
   }
 
+  await invalidateTicketDetailCache({
+    cacheRepository,
+    operation: "mutation",
+    providerContext: providerContext.value,
+    ticketExternalId,
+    userId,
+  });
   const detailRefresh = await dispatchTicketDetailRead(
     providerContext.value,
     ticketExternalId,
@@ -221,6 +254,15 @@ export async function addWorkspaceTicketCustomerReply(
     return result;
   }
 
+  await storeTicketDetailCache({
+    cacheRepository,
+    detail: detailRefresh.detail,
+    encryptionKey,
+    operation: "mutation",
+    providerContext: providerContext.value,
+    ticketExternalId,
+    userId,
+  });
   recordSavedCommunicationAudit("customer-reply", auditContext);
   return { status: "saved" };
 }

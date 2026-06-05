@@ -14,6 +14,10 @@ vi.mock("@/data/helpdesk-connections-repository", () => ({
   prismaHelpdeskConnectionsRepository: {},
 }));
 
+vi.mock("@/data/ticket-detail-cache-repository", () => ({
+  prismaTicketDetailCacheRepository: { enabled: true },
+}));
+
 vi.mock("@/providers", () => ({
   providerRegistry: {},
 }));
@@ -75,6 +79,7 @@ describe("loadWorkspaceTicketDetailAction", () => {
       "0123456789abcdef0123456789abcdef",
       "user-1",
       "ticket-1",
+      { enabled: true },
     );
     expect(result).toMatchObject({
       status: "available",
