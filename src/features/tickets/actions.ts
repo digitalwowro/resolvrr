@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
+import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
 import { providerRegistry } from "@/providers";
 import {
   addWorkspaceTicketCustomerReply,
@@ -141,6 +142,7 @@ export async function updateTicketMetadataAction(
       user.id,
       actionInput.ticketExternalId,
       actionInput.input,
+      prismaTicketDetailCacheRepository,
     );
 
     if (result.status === "failed") {
@@ -158,6 +160,7 @@ export async function updateTicketMetadataAction(
         user.id,
         actionInput.ticketExternalId,
         { body: actionInput.commentBody, bodyFormat: actionInput.bodyFormat },
+        prismaTicketDetailCacheRepository,
       ),
     );
     if (result.status === "failed") {
@@ -177,6 +180,7 @@ export async function updateTicketMetadataAction(
         user.id,
         actionInput.ticketExternalId,
         { body: actionInput.replyBody, bodyFormat: actionInput.bodyFormat },
+        prismaTicketDetailCacheRepository,
       ),
     );
     if (result.status === "failed") {

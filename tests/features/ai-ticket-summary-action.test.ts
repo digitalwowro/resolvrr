@@ -19,6 +19,10 @@ vi.mock("@/data/helpdesk-connections-repository", () => ({
   prismaHelpdeskConnectionsRepository: {},
 }));
 
+vi.mock("@/data/ticket-detail-cache-repository", () => ({
+  prismaTicketDetailCacheRepository: { enabled: true },
+}));
+
 vi.mock("@/providers", () => ({
   providerRegistry: {},
 }));
@@ -69,6 +73,8 @@ describe("summarizeWorkspaceTicketAction", () => {
       "test encryption key long enough",
       "user-1",
       "ticket-1",
+      { enabled: true },
+      { cacheMode: "bypass" },
     );
   });
 

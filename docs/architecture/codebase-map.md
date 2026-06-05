@@ -132,6 +132,9 @@ added, moved, renamed, or removed.
       views repository mappers runtime module.
     - `saved-views-repository.ts` (`src/data/saved-views-repository.ts`): Prisma-backed saved
       view/preference repository and seeded-view dismissal persistence.
+    - `ticket-detail-cache-repository.ts` (`src/data/ticket-detail-cache-repository.ts`):
+      Prisma-backed selected-ticket detail cache repository that encrypts normalized detail/thread
+      payloads and keeps cache identity/freshness metadata scoped to user and connection.
     - `workspace-tabs-repository.ts` (`src/data/workspace-tabs-repository.ts`): Prisma-backed user
       and active helpdesk-connection scoped `UiPreference` repository for persisted workspace open
       tabs.
@@ -209,6 +212,8 @@ added, moved, renamed, or removed.
       communication, and adapter workflows.
       - `actions.ts` (`src/features/tickets/actions.ts`): server action for staged selected-ticket
         metadata and communication update payloads from `/workspace`.
+      - `cache-repository.ts` (`src/features/tickets/cache-repository.ts`): provider-neutral
+        selected-ticket detail cache repository contract and no-cache implementation.
       - `communication-action-input.ts` (`src/features/tickets/communication-action-input.ts`):
         server-side parser and validation for selected-ticket internal-note and customer-reply
         submit payloads.
@@ -262,6 +267,9 @@ added, moved, renamed, or removed.
         parser and validation for one selected-ticket update payload per explicit `Update`,
         including communication, tag, link relation, subscription, pending-date, and raw provider
         field validation.
+      - `metadata-mutation-service.ts` (`src/features/tickets/metadata-mutation-service.ts`):
+        provider-neutral selected-ticket metadata mutation orchestration, cache invalidation, and
+        refresh-after-write behavior.
       - `mutation-model.ts` (`src/features/tickets/mutation-model.ts`): provider-neutral metadata
         mutation capabilities, selected-ticket update payload shape, allowed update payload/slice
         keys, pending-date validation, result/error model, and action state types.
@@ -273,8 +281,12 @@ added, moved, renamed, or removed.
       - `read-model.ts` (`src/features/tickets/read-model.ts`): provider-neutral ticket read result,
         unavailable-state, metadata mutation and communication capability exposure, and default list
         query types.
+      - `service-cache.ts` (`src/features/tickets/service-cache.ts`): metadata-only cache read,
+        write, and invalidation timing wrappers used by ticket read and mutation orchestration.
+      - `service-list-query.ts` (`src/features/tickets/service-list-query.ts`): ticket list query
+        helper that requests counts only when the provider advertises count support.
       - `service.ts` (`src/features/tickets/service.ts`): thin ticket read orchestration and
-        controlled metadata mutation entrypoints with refresh-after-write checks.
+        selected-ticket detail cache hit/write-through integration.
       - `workspace-adapter-types.ts` (`src/features/tickets/workspace-adapter-types.ts`): type
         contracts for workspace adapter.
       - `workspace-adapter.ts` (`src/features/tickets/workspace-adapter.ts`): canonical
@@ -734,6 +746,11 @@ added, moved, renamed, or removed.
       20260604120000_add_saved_view_seed_key files.
       - `migration.sql` (`prisma/migrations/20260604120000_add_saved_view_seed_key/migration.sql`):
         migration adding saved-view seed-key support.
+    - `prisma/migrations/20260605204000_add_ticket_detail_cache_payload`: contains related
+      20260605204000_add_ticket_detail_cache_payload files.
+      - `migration.sql`
+        (`prisma/migrations/20260605204000_add_ticket_detail_cache_payload/migration.sql`):
+        migration adding encrypted selected-ticket detail cache payload and source-version columns.
     - `migration_lock.toml` (`prisma/migrations/migration_lock.toml`): Prisma migration provider
       lockfile.
   - `schema.prisma` (`prisma/schema.prisma`): provider-neutral SQL schema.
@@ -805,6 +822,10 @@ added, moved, renamed, or removed.
       ticket communication workspace.
     - `ticket-detail-action.test.ts` (`tests/features/ticket-detail-action.test.ts`): verifies
       ticket detail action behavior.
+    - `ticket-detail-cache-service.test.ts`
+      (`tests/features/ticket-detail-cache-service.test.ts`): verifies selected-ticket detail cache
+      hits skip provider detail reads, provider refreshes write cache entries, and confirmed
+      metadata writes invalidate cached detail before refresh.
     - `ticket-internal-note-action-input.test.ts`
       (`tests/features/ticket-internal-note-action-input.test.ts`): verifies selected-ticket
       communication payload parsing and unsupported-key rejection.

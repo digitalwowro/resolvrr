@@ -122,7 +122,11 @@ export function useTicketDetailLoader({
       };
     });
 
-    void loadTicketDetailAction(ticketId)
+    const detailRequest = force
+      ? loadTicketDetailAction(ticketId, { cacheMode: "bypass" })
+      : loadTicketDetailAction(ticketId);
+
+    void detailRequest
       .then((result) => {
         detailLoadedAtRef.current = {
           ...detailLoadedAtRef.current,

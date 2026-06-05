@@ -162,7 +162,10 @@ describe("TicketWorkspace notifications", () => {
         notificationIds: ["active-notification"],
       }),
     );
-    expect(loadTicketDetailAction).toHaveBeenCalledWith("ticket-1");
+    expect(loadTicketDetailAction).toHaveBeenCalledWith(
+      "ticket-1",
+      { cacheMode: "bypass" },
+    );
     expect(
       screen.getByRole("button", { name: "Notifications" }),
     ).toBeInTheDocument();

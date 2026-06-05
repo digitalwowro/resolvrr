@@ -70,7 +70,10 @@ describe("TicketWorkspace detail refresh", () => {
       vi.advanceTimersByTime(60_000);
     });
 
-    expect(loadTicketDetailAction).toHaveBeenCalledWith("ticket-1");
+    expect(loadTicketDetailAction).toHaveBeenCalledWith(
+      "ticket-1",
+      { cacheMode: "bypass" },
+    );
     expect(screen.getByText("Hello there")).toBeInTheDocument();
     expect(screen.queryByRole("status", { name: "Loading ticket thread" }))
       .toBeNull();
@@ -123,7 +126,10 @@ describe("TicketWorkspace detail refresh", () => {
       document.dispatchEvent(new Event("visibilitychange"));
     });
 
-    expect(loadTicketDetailAction).toHaveBeenCalledWith("ticket-1");
+    expect(loadTicketDetailAction).toHaveBeenCalledWith(
+      "ticket-1",
+      { cacheMode: "bypass" },
+    );
     expect(screen.getByText("Visible tab refresh")).toBeInTheDocument();
   });
 
@@ -153,7 +159,10 @@ describe("TicketWorkspace detail refresh", () => {
 
     await user.click(screen.getByRole("button", { name: "Refresh ticket" }));
 
-    expect(loadTicketDetailAction).toHaveBeenCalledWith("ticket-1");
+    expect(loadTicketDetailAction).toHaveBeenCalledWith(
+      "ticket-1",
+      { cacheMode: "bypass" },
+    );
     expect(screen.getByText("Hello there")).toBeInTheDocument();
     expect(screen.queryByRole("status", { name: "Loading ticket thread" }))
       .toBeNull();

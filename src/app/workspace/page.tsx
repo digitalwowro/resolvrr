@@ -1,6 +1,7 @@
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
+import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
 import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
 import { prismaWorkspaceTabsRepository } from "@/data/workspace-tabs-repository";
 import type { TicketListQueryInput } from "@/core/providers";
@@ -163,6 +164,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           env.APP_ENCRYPTION_KEY,
           user.id,
           selectedTicketId,
+          prismaTicketDetailCacheRepository,
         )
       : undefined;
   const workspaceDetailResult =

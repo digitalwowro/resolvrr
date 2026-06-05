@@ -3,14 +3,17 @@
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
+import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
 import { providerRegistry } from "@/providers";
 import type { WorkspaceTicketDetailLoadResult } from "./detail-action-result";
+import type { TicketDetailCacheLoadOptions } from "./cache-repository";
 import { unavailableTicketRead } from "./read-model";
 import { loadWorkspaceTicketDetail } from "./service";
 import { workspaceTicketDetail } from "./workspace-adapter";
 
 export async function loadWorkspaceTicketDetailAction(
   ticketExternalId: string,
+  options?: TicketDetailCacheLoadOptions,
 ): Promise<WorkspaceTicketDetailLoadResult> {
   const normalizedTicketExternalId = ticketExternalId.trim();
   if (!normalizedTicketExternalId) {
@@ -18,13 +21,17 @@ export async function loadWorkspaceTicketDetailAction(
   }
 
   const user = await requireCurrentUser();
-  const result = await loadWorkspaceTicketDetail(
+  const detailArgs = [
     prismaHelpdeskConnectionsRepository,
     providerRegistry,
     env.APP_ENCRYPTION_KEY,
     user.id,
     normalizedTicketExternalId,
-  );
+    prismaTicketDetailCacheRepository,
+  ] as const;
+  const result = options
+    ? await loadWorkspaceTicketDetail(...detailArgs, options)
+    : await loadWorkspaceTicketDetail(...detailArgs);
 
   if (result.status === "unavailable") {
     return result;

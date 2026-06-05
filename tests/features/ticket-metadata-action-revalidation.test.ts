@@ -23,6 +23,10 @@ vi.mock("@/data/helpdesk-connections-repository", () => ({
   prismaHelpdeskConnectionsRepository: {},
 }));
 
+vi.mock("@/data/ticket-detail-cache-repository", () => ({
+  prismaTicketDetailCacheRepository: { enabled: true },
+}));
+
 vi.mock("@/providers", () => ({
   providerRegistry: {},
 }));
@@ -119,6 +123,7 @@ describe("updateTicketMetadataAction revalidation", () => {
         priority: "high",
         state: "pending_close",
       },
+      { enabled: true },
     ]);
   });
 
@@ -152,6 +157,7 @@ describe("updateTicketMetadataAction revalidation", () => {
       "user-1",
       "ticket-1",
       { body: "<p>Checked the logs.</p>", bodyFormat: "html" },
+      { enabled: true },
     );
     expect(mockedAddWorkspaceTicketCustomerReply).toHaveBeenCalledWith(
       {},
@@ -160,6 +166,7 @@ describe("updateTicketMetadataAction revalidation", () => {
       "user-1",
       "ticket-1",
       { body: "<p>Thanks for the report.</p>", bodyFormat: "html" },
+      { enabled: true },
     );
     expect(mockedRevalidatePath).toHaveBeenCalledWith("/workspace");
   });

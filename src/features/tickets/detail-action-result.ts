@@ -1,5 +1,6 @@
 import type { TicketReadUnavailable } from "./read-model";
 import type { WorkspaceTicketDetail } from "./workspace-adapter";
+import type { TicketDetailCacheLoadOptions } from "./cache-repository";
 
 export type WorkspaceTicketDetailLoadResult =
   | {
@@ -10,4 +11,5 @@ export type WorkspaceTicketDetailLoadResult =
 
 export type LoadWorkspaceTicketDetailAction = (
   ticketExternalId: string,
+  options?: TicketDetailCacheLoadOptions,
 ) => Promise<WorkspaceTicketDetailLoadResult>;
