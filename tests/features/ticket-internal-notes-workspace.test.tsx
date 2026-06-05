@@ -170,7 +170,10 @@ describe("TicketWorkspace inline communication composers", () => {
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() =>
-      expect(loadTicketDetailAction).toHaveBeenCalledWith("ticket-1"),
+      expect(loadTicketDetailAction).toHaveBeenCalledWith(
+        "ticket-1",
+        { cacheMode: "bypass" },
+      ),
     );
     expect(screen.queryByText("Loading ticket thread...")).not.toBeInTheDocument();
     expect(getCustomerArticle()).toBeInTheDocument();
@@ -237,7 +240,10 @@ describe("TicketWorkspace inline communication composers", () => {
         }),
       ).not.toBeInTheDocument();
       await waitFor(() =>
-        expect(loadTicketDetailAction).toHaveBeenCalledWith("ticket-1"),
+        expect(loadTicketDetailAction).toHaveBeenCalledWith(
+          "ticket-1",
+          { cacheMode: "bypass" },
+        ),
       );
       expect(
         await screen.findByRole("article", {

@@ -38,6 +38,7 @@ export const summarizeWorkspaceTicketAction: SummarizeWorkspaceTicketAction =
       user.id,
       trimmedTicketId,
       prismaTicketDetailCacheRepository,
+      { cacheMode: "bypass" },
     );
     if (detailResult.status === "unavailable") {
       return unavailableTicketSummary(detailResult.retryable);

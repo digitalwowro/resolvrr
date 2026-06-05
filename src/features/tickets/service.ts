@@ -17,6 +17,7 @@ import {
 import { guardTicketListQuery } from "./list-query-guardrails";
 import {
   noTicketDetailCacheRepository,
+  type TicketDetailCacheLoadOptions,
   type TicketDetailCacheRepository,
 } from "./cache-repository";
 import {
@@ -108,6 +109,7 @@ export async function loadWorkspaceTicketDetail(
   userId: string,
   ticketExternalId: TicketExternalId,
   cacheRepository: TicketDetailCacheRepository = noTicketDetailCacheRepository,
+  options: TicketDetailCacheLoadOptions = {},
 ): Promise<TicketDetailReadResult> {
   const totalStart = ticketReadTimingStart();
   const providerContext = await loadActiveTicketProviderContext(
@@ -129,31 +131,33 @@ export async function loadWorkspaceTicketDetail(
     return providerContext;
   }
 
-  const cachedDetail = await readFreshTicketDetailCache({
-    cacheRepository,
-    encryptionKey,
-    operation: "detail",
-    providerContext: providerContext.value,
-    ticketExternalId,
-    userId,
-  });
-  if (cachedDetail) {
-    const lookupData = await dispatchTicketLookupDataRead(providerContext.value);
-    recordTicketReadTiming({
-      connectionId: providerContext.value.context.connection.id,
-      durationMs: ticketReadTimingDuration(totalStart),
+  if (options.cacheMode !== "bypass") {
+    const cachedDetail = await readFreshTicketDetailCache({
+      cacheRepository,
+      encryptionKey,
       operation: "detail",
-      phase: "total-detail-load",
-      providerKey: providerContext.value.context.connection.providerKey,
-      status: "ok",
+      providerContext: providerContext.value,
+      ticketExternalId,
+      userId,
     });
-    return {
-      status: "available",
-      detail: {
-        ...cachedDetail,
-        lookupData,
-      },
-    };
+    if (cachedDetail) {
+      const lookupData = await dispatchTicketLookupDataRead(providerContext.value);
+      recordTicketReadTiming({
+        connectionId: providerContext.value.context.connection.id,
+        durationMs: ticketReadTimingDuration(totalStart),
+        operation: "detail",
+        phase: "total-detail-load",
+        providerKey: providerContext.value.context.connection.providerKey,
+        status: "ok",
+      });
+      return {
+        status: "available",
+        detail: {
+          ...cachedDetail,
+          lookupData,
+        },
+      };
+    }
   }
 
   const [result, lookupData] = await Promise.all([

@@ -1,5 +1,11 @@
 import type { TicketDetail, TicketExternalId } from "@/core/tickets";
 
+export type TicketDetailCacheMode = "allow" | "bypass";
+
+export type TicketDetailCacheLoadOptions = {
+  cacheMode?: TicketDetailCacheMode;
+};
+
 export type TicketDetailCacheReadInput = {
   encryptionKey: string;
   helpdeskConnectionId: string;

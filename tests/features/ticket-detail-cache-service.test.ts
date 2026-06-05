@@ -108,6 +108,34 @@ describe("ticket detail persistent cache service integration", () => {
     );
   });
 
+  it("bypasses a fresh cache entry for forced provider detail refreshes", async () => {
+    const providerDetail = ticketDetail("Provider source detail");
+    const getTicketDetail = vi.fn(async () => providerDetail);
+    const cache = cacheRepository({
+      findFreshTicketDetail: vi.fn(async () => ticketDetail("Cached detail")),
+    });
+
+    const result = await loadWorkspaceTicketDetail(
+      repository({ activeConnectionId: "connection-1", connection: connection() }),
+      createProviderRegistry([provider({ getTicketDetail })]),
+      encryptionKey,
+      "user-1",
+      "ticket-1",
+      cache,
+      { cacheMode: "bypass" },
+    );
+
+    expect(result).toMatchObject({
+      status: "available",
+      detail: { ticket: { title: "Provider source detail" } },
+    });
+    expect(cache.findFreshTicketDetail).not.toHaveBeenCalled();
+    expect(getTicketDetail).toHaveBeenCalledWith(expect.anything(), "ticket-1");
+    expect(cache.storeTicketDetail).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: providerDetail }),
+    );
+  });
+
   it("invalidates cached detail after confirmed metadata writes", async () => {
     const cache = cacheRepository();
     const refreshedDetail = ticketDetail("Refreshed provider detail");

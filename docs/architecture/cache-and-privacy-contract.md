@@ -23,6 +23,10 @@ defined separately in `docs/architecture/read-only-ai-contract.md`.
 - Selected-ticket detail reads may use a fresh encrypted database cache entry
   scoped by user, active helpdesk connection, provider ticket identity, and
   cache source version.
+- Provider-source refreshes use an explicit persistent-cache bypass. Manual
+  ticket refresh, stale visible-tab refresh, notification-triggered ticket
+  refresh, and post-save detail refresh fetch provider source-of-truth rather
+  than returning a fresh database cache hit.
 - Provider detail refreshes write through to the selected-ticket detail cache.
 - Confirmed metadata and communication writes invalidate the selected-ticket
   detail cache before the post-write provider refresh; successful refreshes
@@ -189,6 +193,9 @@ Provider-backed surfaces may use these states:
 
 The workspace must not silently show stale data as fresh. Manual refresh should
 request provider source-of-truth data and update the visible freshness state.
+Refresh paths that are semantically provider-source refreshes must bypass
+fresh persistent detail cache reads. Normal initial selected-ticket detail loads
+and unopened tab loads may use a fresh cache entry.
 
 ## Reads That May Use Stale Data
 
@@ -234,7 +241,9 @@ Future AI prompts must not include:
 Before an AI request uses stale or persisted source data, the UI and service
 contract must make that freshness explicit. The default behavior for
 selected-ticket summaries is to reload selected-ticket detail on the server
-before generation.
+before generation. Until the separate AI output cache phase models AI source
+freshness in the UI and prompt contract, selected-ticket summary generation
+bypasses the persistent detail cache.
 
 ## Observability
 

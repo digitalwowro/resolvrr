@@ -74,6 +74,7 @@ describe("summarizeWorkspaceTicketAction", () => {
       "user-1",
       "ticket-1",
       { enabled: true },
+      { cacheMode: "bypass" },
     );
   });
 
