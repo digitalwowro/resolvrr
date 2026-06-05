@@ -1,32 +1,29 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TicketDetail } from "@/core/tickets";
-import { aiRuntimeConfigFromEnv } from "@/features/ai/provider-config";
 import { summarizeTicketDetail } from "@/features/ai/ticket-summary-service";
 import { ticketSummaryPromptContext } from "@/features/ai/ticket-summary-context";
 import { generateAiText } from "@/features/ai/text-generation";
-import type { AppEnv } from "@/config/env";
+import { safeProviderJson } from "@/security/provider-http";
+
+vi.mock("@/security/base-url-validation", () => ({
+  validateProviderBaseUrl: vi.fn(async (input: string) => ({
+    addresses: ["203.0.113.10"],
+    canonicalUrl: input.replace(/\/+$/u, ""),
+  })),
+}));
+
+vi.mock("@/security/provider-http", () => ({
+  safeProviderJson: vi.fn(),
+}));
 
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
-function appEnv(overrides: Partial<AppEnv> = {}): AppEnv {
-  return {
-    AI_ANTHROPIC_BASE_URL: "https://api.anthropic.com/v1",
-    AI_PROVIDER: "disabled",
-    AI_OPENAI_BASE_URL: "https://api.openai.test/v1",
-    ALLOWED_DEV_ORIGINS: "http://localhost:3005",
-    APP_BASE_URL: "http://localhost:3005",
-    APP_ENCRYPTION_KEY: "test encryption key long enough",
-    DATABASE_URL: "postgres://user:pass@localhost:5432/resolvrr",
-    HOSTNAME: "0.0.0.0",
-    NODE_ENV: "test",
-    PORT: 3005,
-    SESSION_SECRET: "test session secret long enough",
-    ...overrides,
-  };
-}
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 function ticketDetail(): TicketDetail {
   return {
@@ -67,9 +64,12 @@ function ticketDetail(): TicketDetail {
 
 describe("AI ticket summaries", () => {
   it("keeps AI disabled until provider config is complete", async () => {
-    const config = aiRuntimeConfigFromEnv(appEnv());
-
-    await expect(summarizeTicketDetail(config, ticketDetail())).resolves.toEqual({
+    await expect(
+      summarizeTicketDetail(
+        { status: "unconfigured", reason: "ai-disabled" },
+        ticketDetail(),
+      ),
+    ).resolves.toEqual({
       status: "unconfigured",
       reason: "ai-disabled",
       retryable: false,
@@ -87,15 +87,13 @@ describe("AI ticket summaries", () => {
   });
 
   it("calls OpenAI-compatible chat completions without storing output", async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          choices: [{ message: { content: "Situation: Login issue" } }],
-        }),
-        { status: 200 },
-      ),
-    );
-    vi.stubGlobal("fetch", fetchMock);
+    vi.mocked(safeProviderJson).mockResolvedValueOnce({
+      data: {
+        choices: [{ message: { content: "Situation: Login issue" } }],
+      },
+      headers: new Headers(),
+      status: 200,
+    });
 
     await expect(
       generateAiText(
@@ -114,23 +112,22 @@ describe("AI ticket summaries", () => {
       ),
     ).resolves.toEqual({ status: "available", text: "Situation: Login issue" });
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(safeProviderJson).toHaveBeenCalledWith(
       "https://api.openai.test/v1/chat/completions",
       expect.objectContaining({
+        allowedAddresses: ["203.0.113.10"],
         method: "POST",
         headers: expect.objectContaining({
           Authorization: "Bearer openai-key",
           "Content-Type": "application/json",
         }),
+        maxResponseBytes: 256 * 1024,
       }),
     );
   });
 
   it("maps malformed OpenAI-compatible 2xx responses to temporary failure", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => new Response("not-json", { status: 200 })),
-    );
+    vi.mocked(safeProviderJson).mockRejectedValueOnce(new Error("invalid-json"));
 
     await expect(
       generateAiText(
@@ -155,15 +152,13 @@ describe("AI ticket summaries", () => {
   });
 
   it("calls Anthropic-compatible messages with the required API version header", async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          content: [{ type: "text", text: "Situation: Login issue" }],
-        }),
-        { status: 200 },
-      ),
-    );
-    vi.stubGlobal("fetch", fetchMock);
+    vi.mocked(safeProviderJson).mockResolvedValueOnce({
+      data: {
+        content: [{ type: "text", text: "Situation: Login issue" }],
+      },
+      headers: new Headers(),
+      status: 200,
+    });
 
     await expect(
       generateAiText(
@@ -182,9 +177,10 @@ describe("AI ticket summaries", () => {
       ),
     ).resolves.toEqual({ status: "available", text: "Situation: Login issue" });
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(safeProviderJson).toHaveBeenCalledWith(
       "https://api.anthropic.test/v1/messages",
       expect.objectContaining({
+        allowedAddresses: ["203.0.113.10"],
         method: "POST",
         headers: expect.objectContaining({
           "anthropic-version": "2023-06-01",
@@ -196,14 +192,11 @@ describe("AI ticket summaries", () => {
   });
 
   it("maps Anthropic-compatible 2xx responses without text to temporary failure", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        new Response(JSON.stringify({ content: [{ type: "image" }] }), {
-          status: 200,
-        }),
-      ),
-    );
+    vi.mocked(safeProviderJson).mockResolvedValueOnce({
+      data: { content: [{ type: "image" }] },
+      headers: new Headers(),
+      status: 200,
+    });
 
     await expect(
       generateAiText(
@@ -229,17 +222,13 @@ describe("AI ticket summaries", () => {
 
   it("records selected-ticket summary telemetry without content or provider payloads", async () => {
     const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        new Response(
-          JSON.stringify({
-            choices: [{ message: { content: "Situation: Login issue" } }],
-          }),
-          { status: 200 },
-        ),
-      ),
-    );
+    vi.mocked(safeProviderJson).mockResolvedValueOnce({
+      data: {
+        choices: [{ message: { content: "Situation: Login issue" } }],
+      },
+      headers: new Headers(),
+      status: 200,
+    });
 
     await expect(
       summarizeTicketDetail(

@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Settings, User, X } from "lucide-react";
+import { Bot, Eye, Settings, User, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/components/ui/classnames";
@@ -11,6 +11,11 @@ import type {
   WorkspaceSettingsConnection,
 } from "@/features/helpdesk-connections/service-types";
 import type {
+  SaveUserWorkspaceAiSettingsAction,
+  SaveWorkspaceAiSettingsAction,
+  WorkspaceAiSettingsData,
+} from "@/features/ai";
+import type {
   DeleteWorkspaceSavedViewAction,
   LoadWorkspaceSavedViewsSettingsAction,
   ReorderWorkspaceSavedViewsAction,
@@ -19,9 +24,14 @@ import type {
   SetDefaultWorkspaceSavedViewAction,
 } from "@/features/saved-views/settings-model";
 import { WorkspacesSection } from "./workspace-settings-workspaces-section";
+import { AiSettingsSection } from "./workspace-ai-settings-section";
 import { ViewsSection } from "./workspace-settings-views-section";
 
-export type WorkspaceSettingsSection = "profile" | "workspaces" | "views";
+export type WorkspaceSettingsSection =
+  | "ai"
+  | "profile"
+  | "views"
+  | "workspaces";
 
 type WorkspaceSettingsDialogProps = {
   connections: WorkspaceSettingsConnection[];
@@ -29,13 +39,17 @@ type WorkspaceSettingsDialogProps = {
   deleteConnectionAction?: HelpdeskConnectionFormAction;
   deleteSavedViewAction?: DeleteWorkspaceSavedViewAction;
   disableConnectionAction?: HelpdeskConnectionFormAction;
+  initialAiSettingsData?: WorkspaceAiSettingsData;
   initialSection: WorkspaceSettingsSection;
   initialSavedViewData?: SavedViewSettingsData;
+  onAiSettingsDataChange?(data: WorkspaceAiSettingsData): void;
   loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
   onClose(): void;
   onSavedViewDataChange?(data: SavedViewSettingsData): void;
   providerOptions: ConnectionProviderOption[];
   reorderSavedViewsAction?: ReorderWorkspaceSavedViewsAction;
+  saveUserWorkspaceAiSettingsAction?: SaveUserWorkspaceAiSettingsAction;
+  saveWorkspaceAiSettingsAction?: SaveWorkspaceAiSettingsAction;
   saveSavedViewAction?: SaveWorkspaceSavedViewAction;
   setActiveConnectionAction?: HelpdeskConnectionFormAction;
   setDefaultSavedViewAction?: SetDefaultWorkspaceSavedViewAction;
@@ -60,13 +74,17 @@ export function WorkspaceSettingsDialog({
   deleteConnectionAction,
   deleteSavedViewAction,
   disableConnectionAction,
+  initialAiSettingsData,
   initialSection,
   initialSavedViewData,
   loadSavedViewsSettingsAction,
   onClose,
+  onAiSettingsDataChange,
   onSavedViewDataChange,
   providerOptions,
   reorderSavedViewsAction,
+  saveUserWorkspaceAiSettingsAction,
+  saveWorkspaceAiSettingsAction,
   saveSavedViewAction,
   setActiveConnectionAction,
   setDefaultSavedViewAction,
@@ -80,6 +98,7 @@ export function WorkspaceSettingsDialog({
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const [section, setSection] = useState<WorkspaceSettingsSection>(initialSection);
   const [connections, setConnections] = useState(initialConnections);
+  const [aiSettingsData, setAiSettingsData] = useState(initialAiSettingsData);
   const [savedViewData, setSavedViewData] = useState(initialSavedViewData);
 
   useEffect(() => {
@@ -105,6 +124,11 @@ export function WorkspaceSettingsDialog({
   function applySavedViewData(data: SavedViewSettingsData) {
     setSavedViewData(data);
     onSavedViewDataChange?.(data);
+  }
+
+  function applyAiSettingsData(data: WorkspaceAiSettingsData) {
+    setAiSettingsData(data);
+    onAiSettingsDataChange?.(data);
   }
 
   if (typeof document === "undefined") {
@@ -164,6 +188,14 @@ export function WorkspaceSettingsDialog({
               <Eye aria-hidden="true" className="size-4" />
               Views
             </button>
+            <button
+              className={sectionButtonClass(section === "ai")}
+              onClick={() => setSection("ai")}
+              type="button"
+            >
+              <Bot aria-hidden="true" className="size-4" />
+              AI Settings
+            </button>
           </nav>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
@@ -194,7 +226,7 @@ export function WorkspaceSettingsDialog({
               updateConnectionAction={updateConnectionAction}
               validateConnectionAction={validateConnectionAction}
             />
-          ) : (
+          ) : section === "views" ? (
             <ViewsSection
               key={savedViewData ? "views-ready" : "views-loading"}
               data={savedViewData}
@@ -203,6 +235,16 @@ export function WorkspaceSettingsDialog({
               reorderSavedViewsAction={reorderSavedViewsAction}
               saveSavedViewAction={saveSavedViewAction}
               setDefaultSavedViewAction={setDefaultSavedViewAction}
+              userRole={userRole}
+            />
+          ) : (
+            <AiSettingsSection
+              data={aiSettingsData}
+              onDataChange={applyAiSettingsData}
+              saveUserWorkspaceAiSettingsAction={
+                saveUserWorkspaceAiSettingsAction
+              }
+              saveWorkspaceAiSettingsAction={saveWorkspaceAiSettingsAction}
               userRole={userRole}
             />
           )}

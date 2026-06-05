@@ -8,10 +8,14 @@ vi.mock("@/auth/current-user", () => ({
 
 vi.mock("@/config/env", () => ({
   env: {
-    AI_ANTHROPIC_BASE_URL: "https://api.anthropic.com/v1",
-    AI_PROVIDER: "disabled",
-    AI_OPENAI_BASE_URL: "https://api.openai.com/v1",
     APP_ENCRYPTION_KEY: "test encryption key long enough",
+  },
+}));
+
+vi.mock("@/data/ai-settings-repository", () => ({
+  prismaAiSettingsRepository: {
+    getUserSetting: vi.fn(async () => null),
+    getWorkspaceSetting: vi.fn(async () => null),
   },
 }));
 

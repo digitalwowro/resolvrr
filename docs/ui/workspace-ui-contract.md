@@ -162,12 +162,18 @@ selected-ticket header area and run only from an explicit agent `Generate`
 action. Rendering a ticket, loading a route, refreshing a ticket, switching
 tabs, or editing staged metadata must not trigger an AI request.
 
-The summary panel must report disabled, not configured, unavailable, and
-rate-limited states without exposing raw provider responses. A generated summary
-is advisory text only: it must not update ticket metadata, staged
-communication, saved views, open tabs, or provider state. Customer-visible
-communication still requires explicit user review and the selected helpdesk
-provider write path.
+AI configuration lives in `Avatar -> Settings -> AI Settings` for the active
+workspace. Admins see workspace policy and default provider settings. Users see
+status only when the workspace uses an admin-managed key, and see their own
+provider settings form only when the workspace requires user-provided keys.
+Switching workspace is how users configure a different workspace.
+
+The summary panel must report disabled, missing workspace setup, missing user
+setup, unavailable, and rate-limited states without exposing raw provider
+responses. A generated summary is advisory text only: it must not update ticket
+metadata, staged communication, saved views, open tabs, or provider state.
+Customer-visible communication still requires explicit user review and the
+selected helpdesk provider write path.
 
 ## Production Data Boundary
 

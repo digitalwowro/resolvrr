@@ -11,15 +11,6 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   APP_ENCRYPTION_KEY: z.string().min(32),
   SESSION_SECRET: z.string().min(32),
-  AI_PROVIDER: z
-    .enum(["disabled", "openai-compatible", "anthropic-compatible"])
-    .default("disabled"),
-  AI_OPENAI_BASE_URL: z.url().default("https://api.openai.com/v1"),
-  AI_OPENAI_API_KEY: z.string().min(1).optional(),
-  AI_OPENAI_MODEL: z.string().min(1).optional(),
-  AI_ANTHROPIC_BASE_URL: z.url().default("https://api.anthropic.com/v1"),
-  AI_ANTHROPIC_API_KEY: z.string().min(1).optional(),
-  AI_ANTHROPIC_MODEL: z.string().min(1).optional(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

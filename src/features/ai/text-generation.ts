@@ -1,4 +1,9 @@
 import type { AiRuntimeConfig } from "./provider-config";
+import { validateProviderBaseUrl } from "@/security/base-url-validation";
+import {
+  safeProviderJson,
+  type SafeProviderJsonResult,
+} from "@/security/provider-http";
 import type {
   AiGenerationOperation,
   AiGenerationProviderProtocol,
@@ -13,6 +18,8 @@ type AiTextUnavailableReason =
   | "provider-auth-failed"
   | "provider-rate-limited"
   | "provider-temporary-failure";
+
+const maxAiProviderResponseBytes = 256 * 1024;
 
 export type AiTextGenerationResult =
   | { status: "available"; text: string }
@@ -69,16 +76,20 @@ function temporaryProviderFailure(): AiTextGenerationResult {
 }
 
 async function postJson(
-  url: string,
+  baseUrl: string,
+  path: string,
   headers: Record<string, string>,
   body: unknown,
-): Promise<Response | AiTextGenerationResult> {
+): Promise<SafeProviderJsonResult | AiTextGenerationResult> {
   const controller = new AbortController();
   const timeout = windowlessTimeout(() => controller.abort(), 30_000);
   try {
-    return await fetch(url, {
+    const validated = await validateProviderBaseUrl(baseUrl);
+    return await safeProviderJson(endpoint(validated.canonicalUrl, path), {
+      allowedAddresses: validated.addresses,
       body: JSON.stringify(body),
       headers: { "Content-Type": "application/json", ...headers },
+      maxResponseBytes: maxAiProviderResponseBytes,
       method: "POST",
       signal: controller.signal,
     });
@@ -130,14 +141,6 @@ function extractAnthropicText(payload: unknown): string | undefined {
     .trim();
 }
 
-async function parseResponseJson(response: Response): Promise<unknown | undefined> {
-  try {
-    return await response.json();
-  } catch {
-    return undefined;
-  }
-}
-
 function recordProviderRequestTiming(
   operation: AiGenerationOperation | undefined,
   providerProtocol: AiGenerationProviderProtocol,
@@ -165,7 +168,8 @@ async function openAiCompatibleText(
 ): Promise<AiTextGenerationResult> {
   const start = aiGenerationTimingStart();
   const response = await postJson(
-    endpoint(config.baseUrl, "chat/completions"),
+    config.baseUrl,
+    "chat/completions",
     { Authorization: `Bearer ${config.apiKey}` },
     {
       max_completion_tokens: request.maxOutputTokens,
@@ -176,7 +180,7 @@ async function openAiCompatibleText(
       model: config.model,
     },
   );
-  if (!(response instanceof Response)) {
+  if (typeof response.status !== "number") {
     recordProviderRequestTiming(
       request.telemetryOperation,
       config.provider,
@@ -185,7 +189,7 @@ async function openAiCompatibleText(
     );
     return response;
   }
-  if (!response.ok) {
+  if (response.status < 200 || response.status >= 300) {
     const unavailable = unavailableForStatus(response.status);
     recordProviderRequestTiming(
       request.telemetryOperation,
@@ -195,7 +199,7 @@ async function openAiCompatibleText(
     );
     return unavailable;
   }
-  const payload = await parseResponseJson(response);
+  const payload = response.data;
   if (payload === undefined) {
     const unavailable = temporaryProviderFailure();
     recordProviderRequestTiming(
@@ -225,7 +229,8 @@ async function anthropicCompatibleText(
 ): Promise<AiTextGenerationResult> {
   const start = aiGenerationTimingStart();
   const response = await postJson(
-    endpoint(config.baseUrl, "messages"),
+    config.baseUrl,
+    "messages",
     {
       "anthropic-version": "2023-06-01",
       "x-api-key": config.apiKey,
@@ -237,7 +242,7 @@ async function anthropicCompatibleText(
       system: request.systemInstruction,
     },
   );
-  if (!(response instanceof Response)) {
+  if (typeof response.status !== "number") {
     recordProviderRequestTiming(
       request.telemetryOperation,
       config.provider,
@@ -246,7 +251,7 @@ async function anthropicCompatibleText(
     );
     return response;
   }
-  if (!response.ok) {
+  if (response.status < 200 || response.status >= 300) {
     const unavailable = unavailableForStatus(response.status);
     recordProviderRequestTiming(
       request.telemetryOperation,
@@ -256,7 +261,7 @@ async function anthropicCompatibleText(
     );
     return unavailable;
   }
-  const payload = await parseResponseJson(response);
+  const payload = response.data;
   if (payload === undefined) {
     const unavailable = temporaryProviderFailure();
     recordProviderRequestTiming(

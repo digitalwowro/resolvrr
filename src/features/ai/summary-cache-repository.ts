@@ -32,6 +32,10 @@ export type AiSummaryCacheConnectionInvalidateInput = {
   userId: string;
 };
 
+export type AiSummaryCacheWorkspaceInvalidateInput = {
+  helpdeskConnectionId: string;
+};
+
 export type AiSummaryCacheRepository = {
   enabled: boolean;
   findFreshSummary(
@@ -40,6 +44,7 @@ export type AiSummaryCacheRepository = {
   storeSummary(input: AiSummaryCacheWriteInput): Promise<void>;
   invalidateTicket(input: AiSummaryCacheInvalidateInput): Promise<void>;
   invalidateConnection(input: AiSummaryCacheConnectionInvalidateInput): Promise<void>;
+  invalidateWorkspace(input: AiSummaryCacheWorkspaceInvalidateInput): Promise<void>;
 };
 
 export const noAiSummaryCacheRepository: AiSummaryCacheRepository = {
@@ -50,4 +55,5 @@ export const noAiSummaryCacheRepository: AiSummaryCacheRepository = {
   async storeSummary() {},
   async invalidateTicket() {},
   async invalidateConnection() {},
+  async invalidateWorkspace() {},
 };

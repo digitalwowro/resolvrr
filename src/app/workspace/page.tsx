@@ -6,7 +6,12 @@ import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
 import { prismaWorkspaceTabsRepository } from "@/data/workspace-tabs-repository";
 import type { TicketListQueryInput } from "@/core/providers";
 import { logoutAction } from "@/features/auth/actions";
-import { summarizeWorkspaceTicketAction } from "@/features/ai";
+import {
+  loadWorkspaceAiSettingsAction,
+  saveUserWorkspaceAiSettingsAction,
+  saveWorkspaceAiSettingsAction,
+  summarizeWorkspaceTicketAction,
+} from "@/features/ai";
 import {
   createHelpdeskConnectionAction,
   deleteHelpdeskConnectionAction,
@@ -219,9 +224,12 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
         currentUser: currentHelpdeskUser,
         canManageShared: user.role === "ADMIN",
       })}
+      initialAiSettingsData={await loadWorkspaceAiSettingsAction()}
       reorderSavedViewsAction={reorderWorkspaceSavedViewsAction}
       saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
       saveSavedViewAction={saveWorkspaceSavedViewAction}
+      saveUserWorkspaceAiSettingsAction={saveUserWorkspaceAiSettingsAction}
+      saveWorkspaceAiSettingsAction={saveWorkspaceAiSettingsAction}
       searchTicketLinkTargetsAction={searchWorkspaceTicketLinkTargetsAction}
       summarizeTicketAction={summarizeWorkspaceTicketAction}
       savedViews={workspaceSavedViews(

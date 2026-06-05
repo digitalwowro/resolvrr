@@ -1,0 +1,30 @@
+model WorkspaceAiSetting {
+  helpdeskConnectionId String              @id
+  policy               WorkspaceAiPolicy   @default(DISABLED)
+  providerProtocol     AiProviderProtocol?
+  baseUrl              String?
+  modelName            String?
+  encryptedApiKey      String?
+  keyVersion           String              @default("v1")
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  helpdeskConnection   HelpdeskConnection  @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+}
+
+model UserWorkspaceAiSetting {
+  id                   String             @id @default(cuid())
+  userId               String
+  helpdeskConnectionId String
+  providerProtocol     AiProviderProtocol
+  baseUrl              String
+  modelName            String
+  encryptedApiKey      String
+  keyVersion           String             @default("v1")
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpdeskConnection   HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, helpdeskConnectionId])
+  @@index([helpdeskConnectionId])
+}

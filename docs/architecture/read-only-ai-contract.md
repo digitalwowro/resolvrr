@@ -9,7 +9,7 @@ communication.
 - Selected-ticket summary generation from an explicit agent click.
 - Server-side ticket detail reload before prompt preparation.
 - Provider-neutral, sanitized ticket metadata and thread text only.
-- Disabled-by-default runtime configuration.
+- Workspace-scoped, disabled-by-default runtime configuration.
 - Durable selected-ticket summary cache for successful generated summaries.
 
 ## Boundaries
@@ -47,15 +47,32 @@ Prompt input must not include:
 
 ## Runtime Configuration
 
-AI is disabled unless `AI_PROVIDER` selects a configured protocol and the
-matching model and API key are present.
+AI runtime configuration is scoped to the active helpdesk connection, which the
+UI presents as the active workspace. It is managed from `Avatar -> Settings ->
+AI Settings`.
+
+Workspace AI policy can be:
+
+- `disabled`: summary generation returns an AI-disabled setup state.
+- `admin-managed`: admins save the workspace default provider settings and API
+  key; users see status only.
+- `user-provided`: each user must save their own provider settings and API key
+  for that workspace.
+
+There is no app-wide AI provider key in v1. Saved workspace and user API keys
+are encrypted at rest with `APP_ENCRYPTION_KEY`. Empty secret fields on edit
+preserve the existing saved key. Saves validate required fields, require HTTPS
+base URLs, and run a live provider validation request before persistence.
+Runtime AI provider calls revalidate the configured HTTPS base URL and use the
+same pinned-address, redirect-free server HTTP boundary as helpdesk provider
+requests.
 
 Supported protocol families:
 
-- `openai-compatible`: sends a Chat Completions request to
-  `AI_OPENAI_BASE_URL/chat/completions`.
-- `anthropic-compatible`: sends a Messages request to
-  `AI_ANTHROPIC_BASE_URL/messages`.
+- `openai-compatible`: sends a Chat Completions request to the configured HTTPS
+  base URL plus `/chat/completions`.
+- `anthropic-compatible`: sends a Messages request to the configured HTTPS base
+  URL plus `/messages`.
 
 Protocol support is about request/response shape, not helpdesk provider
 identity. API keys must stay server-side and must not be exposed to client
@@ -63,11 +80,11 @@ state, public logs, or generated output.
 
 ## Failure Behavior
 
-The summary UI reports disabled, missing config, provider auth failure, rate
-limit, temporary provider failure, or ticket-unavailable states without exposing
-raw provider responses. Failed AI calls must not alter the selected-ticket
-draft, ticket metadata, thread, open tabs, saved views, or helpdesk provider
-state.
+The summary UI reports disabled, missing workspace configuration, missing user
+configuration, invalid saved configuration, provider auth failure, rate limit,
+temporary provider failure, or ticket-unavailable states without exposing raw
+provider responses. Failed AI calls must not alter the selected-ticket draft,
+ticket metadata, thread, open tabs, saved views, or helpdesk provider state.
 
 ## Telemetry
 
@@ -90,5 +107,6 @@ loading, tab switching, background refresh, and local state changes must not
 trigger cache reads that generate AI output or AI provider calls.
 
 Generated summary cache entries are invalidated when confirmed provider writes
-change the selected ticket/thread source or when the helpdesk connection is
-updated, validated, disabled, or deleted.
+change the selected ticket/thread source, when the helpdesk connection is
+updated, validated, disabled, or deleted, and when workspace/user AI settings
+change in a way that could alter provider protocol, model, or available key.

@@ -12,7 +12,10 @@ conversation content.
 - SQL stores only a hash of the session token.
 - Helpdesk credentials are stored server-side, encrypted at rest, and scoped to
   the Resolvrr user and helpdesk connection.
-- Provider credentials must never be stored in cookies, localStorage,
+- AI provider API keys are stored server-side, encrypted at rest, and scoped to
+  either the active workspace default or a user plus workspace. They are managed
+  from `Avatar -> Settings -> AI Settings`.
+- Provider and AI credentials must never be stored in cookies, localStorage,
   sessionStorage, or client-readable state.
 
 ## Provider Data
@@ -41,6 +44,9 @@ conversation content.
 ## AI Prompt And Output Data
 
 - AI features are optional and must use sanitized provider-neutral source data.
+- AI runtime configuration is resolved from the active workspace policy:
+  disabled, admin-managed workspace key, or user-provided per-workspace key.
+  There is no app-wide AI key in v1.
 - Read-only selected-ticket summaries reload ticket detail on the server, then
   use selected-ticket metadata and sanitized thread text only under the
   cache/freshness rules in the architecture contract.

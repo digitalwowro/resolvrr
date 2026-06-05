@@ -1,0 +1,54 @@
+model HelpdeskConnection {
+  id                   String                   @id @default(cuid())
+  userId               String
+  providerKey          String
+  displayName          String
+  baseUrl              String
+  status               HelpdeskConnectionStatus @default(ACTIVE)
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+  user                 User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentials          ProviderCredential[]
+  savedViews           SavedView[]
+  ticketSnapshotCaches TicketSnapshotCache[]
+  threadSnapshotCaches ThreadSnapshotCache[]
+  aiSummaryCaches      AiSummaryCache[]
+  workspaceAiSetting   WorkspaceAiSetting?
+  userAiSettings       UserWorkspaceAiSetting[]
+  uiPreferences        UiPreference[]
+  providerMutationLogs ProviderMutationLog[]
+
+  @@index([userId])
+  @@index([providerKey])
+}
+
+model ProviderCredential {
+  id                   String             @id @default(cuid())
+  helpdeskConnectionId String
+  scheme               String
+  encryptedPayload     String
+  keyVersion           String             @default("v1")
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  helpdeskConnection   HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([helpdeskConnectionId, scheme])
+}
+
+model ProviderMutationLog {
+  id                   String             @id @default(cuid())
+  userId               String
+  helpdeskConnectionId String
+  providerKey          String
+  providerTicketId     String?
+  capability           String
+  status               String
+  errorKind            String?
+  durationMs           Int?
+  createdAt            DateTime           @default(now())
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpdeskConnection   HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([helpdeskConnectionId, createdAt])
+}

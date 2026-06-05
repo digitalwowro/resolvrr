@@ -52,10 +52,13 @@ export function TicketWorkspace({
   searchTicketLinkTargetsAction,
   summarizeTicketAction,
   savedViews,
+  initialAiSettingsData,
   initialSavedViewSettingsData,
   reorderSavedViewsAction,
   initialWorkspaceOpenTabsState,
   saveWorkspaceOpenTabsStateAction,
+  saveUserWorkspaceAiSettingsAction,
+  saveWorkspaceAiSettingsAction,
   saveSavedViewAction,
   selectedSavedViewId,
   selectedTicketId,
@@ -77,6 +80,7 @@ export function TicketWorkspace({
   const [savedViewSettingsData, setSavedViewSettingsData] = useState(
     initialSavedViewSettingsData,
   );
+  const [aiSettingsData, setAiSettingsData] = useState(initialAiSettingsData);
   const providedLoadTicketDetailAction = Boolean(loadTicketDetailAction);
   const effectiveLoadTicketDetailAction =
     loadTicketDetailAction ?? unavailableTicketDetailAction;
@@ -176,6 +180,7 @@ export function TicketWorkspace({
           disableConnectionAction={disableConnectionAction}
           initialSection={settingsSection}
           initialSavedViewData={savedViewSettingsData}
+          initialAiSettingsData={aiSettingsData}
           loadSavedViewsSettingsAction={loadSavedViewsSettingsAction}
           onClose={() => setSettingsOpen(false)}
           onSavedViewDataChange={(data) => {
@@ -192,7 +197,10 @@ export function TicketWorkspace({
           }}
           providerOptions={connectionProviderOptions}
           reorderSavedViewsAction={reorderSavedViewsAction}
+          onAiSettingsDataChange={setAiSettingsData}
           saveSavedViewAction={saveSavedViewAction}
+          saveUserWorkspaceAiSettingsAction={saveUserWorkspaceAiSettingsAction}
+          saveWorkspaceAiSettingsAction={saveWorkspaceAiSettingsAction}
           setActiveConnectionAction={
             setActiveConnectionAction as HelpdeskConnectionFormAction
           }
