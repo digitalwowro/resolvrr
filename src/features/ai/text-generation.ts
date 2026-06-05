@@ -1,4 +1,13 @@
 import type { AiRuntimeConfig } from "./provider-config";
+import type {
+  AiGenerationOperation,
+  AiGenerationProviderProtocol,
+} from "@/telemetry/ai-generation-timing";
+import {
+  aiGenerationTimingDuration,
+  aiGenerationTimingStart,
+  recordAiGenerationTiming,
+} from "@/telemetry/ai-generation-timing";
 
 type AiTextUnavailableReason =
   | "provider-auth-failed"
@@ -16,6 +25,7 @@ export type AiTextGenerationResult =
 export type AiTextGenerationRequest = {
   maxOutputTokens: number;
   systemInstruction: string;
+  telemetryOperation?: AiGenerationOperation;
   userPrompt: string;
 };
 
@@ -128,10 +138,32 @@ async function parseResponseJson(response: Response): Promise<unknown | undefine
   }
 }
 
+function recordProviderRequestTiming(
+  operation: AiGenerationOperation | undefined,
+  providerProtocol: AiGenerationProviderProtocol,
+  start: number,
+  result: AiTextGenerationResult,
+): void {
+  if (!operation) {
+    return;
+  }
+
+  recordAiGenerationTiming({
+    durationMs: aiGenerationTimingDuration(start),
+    operation,
+    phase: "provider-request",
+    providerProtocol,
+    reason: result.status === "unavailable" ? result.reason : undefined,
+    retryable: result.status === "unavailable" ? result.retryable : undefined,
+    status: result.status === "available" ? "ok" : "unavailable",
+  });
+}
+
 async function openAiCompatibleText(
   config: Extract<AiRuntimeConfig, { provider: "openai-compatible" }>,
   request: AiTextGenerationRequest,
 ): Promise<AiTextGenerationResult> {
+  const start = aiGenerationTimingStart();
   const response = await postJson(
     endpoint(config.baseUrl, "chat/completions"),
     { Authorization: `Bearer ${config.apiKey}` },
@@ -145,25 +177,53 @@ async function openAiCompatibleText(
     },
   );
   if (!(response instanceof Response)) {
+    recordProviderRequestTiming(
+      request.telemetryOperation,
+      config.provider,
+      start,
+      response,
+    );
     return response;
   }
   if (!response.ok) {
-    return unavailableForStatus(response.status);
+    const unavailable = unavailableForStatus(response.status);
+    recordProviderRequestTiming(
+      request.telemetryOperation,
+      config.provider,
+      start,
+      unavailable,
+    );
+    return unavailable;
   }
   const payload = await parseResponseJson(response);
   if (payload === undefined) {
-    return temporaryProviderFailure();
+    const unavailable = temporaryProviderFailure();
+    recordProviderRequestTiming(
+      request.telemetryOperation,
+      config.provider,
+      start,
+      unavailable,
+    );
+    return unavailable;
   }
   const text = extractOpenAiText(payload);
-  return text
-    ? { status: "available", text }
+  const result = text
+    ? { status: "available" as const, text }
     : temporaryProviderFailure();
+  recordProviderRequestTiming(
+    request.telemetryOperation,
+    config.provider,
+    start,
+    result,
+  );
+  return result;
 }
 
 async function anthropicCompatibleText(
   config: Extract<AiRuntimeConfig, { provider: "anthropic-compatible" }>,
   request: AiTextGenerationRequest,
 ): Promise<AiTextGenerationResult> {
+  const start = aiGenerationTimingStart();
   const response = await postJson(
     endpoint(config.baseUrl, "messages"),
     {
@@ -178,19 +238,46 @@ async function anthropicCompatibleText(
     },
   );
   if (!(response instanceof Response)) {
+    recordProviderRequestTiming(
+      request.telemetryOperation,
+      config.provider,
+      start,
+      response,
+    );
     return response;
   }
   if (!response.ok) {
-    return unavailableForStatus(response.status);
+    const unavailable = unavailableForStatus(response.status);
+    recordProviderRequestTiming(
+      request.telemetryOperation,
+      config.provider,
+      start,
+      unavailable,
+    );
+    return unavailable;
   }
   const payload = await parseResponseJson(response);
   if (payload === undefined) {
-    return temporaryProviderFailure();
+    const unavailable = temporaryProviderFailure();
+    recordProviderRequestTiming(
+      request.telemetryOperation,
+      config.provider,
+      start,
+      unavailable,
+    );
+    return unavailable;
   }
   const text = extractAnthropicText(payload);
-  return text
-    ? { status: "available", text }
+  const result = text
+    ? { status: "available" as const, text }
     : temporaryProviderFailure();
+  recordProviderRequestTiming(
+    request.telemetryOperation,
+    config.provider,
+    start,
+    result,
+  );
+  return result;
 }
 
 export async function generateAiText(
