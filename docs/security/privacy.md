@@ -41,6 +41,11 @@ conversation content.
   cache/freshness rules in the architecture contract.
 - Prompts, generated summaries, draft suggestions, and generated replies must
   not be logged.
+- AI telemetry may include only operation, phase, provider protocol family,
+  duration, status, unavailable reason, and retryability. It must not include
+  provider request bodies, provider response bodies, provider credentials, model
+  names, ticket IDs, article IDs, customer names, email addresses, prompts,
+  generated summaries, or ticket/thread content.
 - Generated output cache is separate from provider data cache and is not part of
   the read-only summary phase.
 - Customer-visible communication still happens only through the selected

@@ -1,10 +1,15 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TicketDetail } from "@/core/tickets";
 import { aiRuntimeConfigFromEnv } from "@/features/ai/provider-config";
 import { summarizeTicketDetail } from "@/features/ai/ticket-summary-service";
 import { ticketSummaryPromptContext } from "@/features/ai/ticket-summary-context";
 import { generateAiText } from "@/features/ai/text-generation";
 import type { AppEnv } from "@/config/env";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 function appEnv(overrides: Partial<AppEnv> = {}): AppEnv {
   return {
@@ -220,5 +225,71 @@ describe("AI ticket summaries", () => {
       reason: "provider-temporary-failure",
       retryable: true,
     });
+  });
+
+  it("records selected-ticket summary telemetry without content or provider payloads", async () => {
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: "Situation: Login issue" } }],
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    await expect(
+      summarizeTicketDetail(
+        {
+          status: "available",
+          apiKey: "openai-key",
+          baseUrl: "https://api.openai.test/v1",
+          model: "support-model",
+          provider: "openai-compatible",
+        },
+        ticketDetail(),
+      ),
+    ).resolves.toMatchObject({ status: "available" });
+
+    const calls = infoSpy.mock.calls.filter(
+      ([message]) => message === "AI generation timing",
+    );
+    expect(calls.length).toBeGreaterThanOrEqual(3);
+    expect(calls.map(([, metadata]) => metadata)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          operation: "ticket-summary",
+          phase: "prompt-context",
+          providerProtocol: "openai-compatible",
+          status: "ok",
+        }),
+        expect.objectContaining({
+          operation: "ticket-summary",
+          phase: "provider-request",
+          providerProtocol: "openai-compatible",
+          status: "ok",
+        }),
+        expect.objectContaining({
+          operation: "ticket-summary",
+          phase: "total-generation",
+          providerProtocol: "openai-compatible",
+          status: "ok",
+        }),
+      ]),
+    );
+
+    const logged = JSON.stringify(infoSpy.mock.calls);
+    expect(logged).not.toContain("Hello support");
+    expect(logged).not.toContain("Situation: Login issue");
+    expect(logged).not.toContain("Maya Patel");
+    expect(logged).not.toContain("maya@example.com");
+    expect(logged).not.toContain("article-secret-1");
+    expect(logged).not.toContain("ticket-1");
+    expect(logged).not.toContain("1001");
+    expect(logged).not.toContain("openai-key");
+    expect(logged).not.toContain("support-model");
   });
 });

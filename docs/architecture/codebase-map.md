@@ -674,6 +674,8 @@ added, moved, renamed, or removed.
       preserves safe rich-text article structure such as links, lists, headings, tables, and inline
       emphasis while dropping scripts and unsafe attributes.
   - `src/telemetry`: metadata-only provider operation audit and timing helpers.
+    - `ai-generation-timing.ts` (`src/telemetry/ai-generation-timing.ts`): sanitized AI timing
+      logger that records only operation phase, protocol family, duration, and outcome metadata.
     - `ticket-communication-audit.ts` (`src/telemetry/ticket-communication-audit.ts`): sanitized
       communication audit logger that records only communication kind and outcome metadata.
     - `ticket-mutation-audit.ts` (`src/telemetry/ticket-mutation-audit.ts`): sanitized metadata
@@ -774,8 +776,8 @@ added, moved, renamed, or removed.
       verifies the selected-ticket AI summary action reloads provider-neutral ticket detail
       server-side and rejects blank ticket requests without provider reads.
     - `ai-ticket-summary.test.ts` (`tests/features/ai-ticket-summary.test.ts`): verifies read-only
-      AI summary config defaults, sanitized prompt context, and OpenAI-compatible and
-      Anthropic-compatible request shapes.
+      AI summary config defaults, sanitized prompt context, safe telemetry, and
+      OpenAI-compatible and Anthropic-compatible request shapes.
     - `saved-view-management-permissions.test.ts`
       (`tests/features/saved-view-management-permissions.test.ts`): verifies saved view management
       permissions behavior.
