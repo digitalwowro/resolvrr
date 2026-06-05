@@ -16,10 +16,12 @@ import type {
 import type {
   TicketCommunicationCapabilities,
 } from "@/features/tickets/communication-model";
+import type { SummarizeWorkspaceTicketAction } from "@/features/ai";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import type { TicketMetadataSavedPatch } from "./metadata-draft";
 import { StateIcon } from "./ticket-table-cells";
 import { TicketMetadataEditor } from "./ticket-metadata-editor";
+import { TicketAiSummaryPanel } from "./ticket-ai-summary-panel";
 import { ticketPath } from "./workspace-url";
 export { TicketDetailLoadingShell } from "./ticket-detail-loading-shell";
 
@@ -35,6 +37,7 @@ type TicketDetailProps = {
   refreshing?: boolean;
   roundedTop?: boolean;
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
+  summarizeTicketAction: SummarizeWorkspaceTicketAction;
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
@@ -52,6 +55,7 @@ export function TicketDetail({
   refreshing = false,
   roundedTop = true,
   searchTicketLinkTargetsAction,
+  summarizeTicketAction,
   updateTicketMetadataAction,
 }: TicketDetailProps) {
   const [ticketLinkCopied, setTicketLinkCopied] = useState(false);
@@ -164,6 +168,11 @@ export function TicketDetail({
             Updated: <span className="font-semibold">{detail.updatedAt}</span>
           </span>
         </div>
+        <TicketAiSummaryPanel
+          detail={detail}
+          key={detail.id}
+          summarizeTicketAction={summarizeTicketAction}
+        />
       </div>
     </div>
   );

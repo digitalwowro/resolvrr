@@ -157,9 +157,17 @@ options for the matching field.
 
 ## AI Status
 
-AI features are deferred. The first workspace UI should omit AI status. If a
-future interim indicator is added before AI features are approved, it must only
-communicate unavailable or not configured state.
+Selected-ticket AI summaries are read-only and optional. They appear in the
+selected-ticket header area and run only from an explicit agent `Generate`
+action. Rendering a ticket, loading a route, refreshing a ticket, switching
+tabs, or editing staged metadata must not trigger an AI request.
+
+The summary panel must report disabled, not configured, unavailable, and
+rate-limited states without exposing raw provider responses. A generated summary
+is advisory text only: it must not update ticket metadata, staged
+communication, saved views, open tabs, or provider state. Customer-visible
+communication still requires explicit user review and the selected helpdesk
+provider write path.
 
 ## Production Data Boundary
 

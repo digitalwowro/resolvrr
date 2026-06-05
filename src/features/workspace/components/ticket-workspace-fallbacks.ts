@@ -1,4 +1,5 @@
 import type { LoadWorkspaceNotificationsAction, MarkWorkspaceNotificationsReadAction } from "@/features/notifications";
+import type { SummarizeWorkspaceTicketAction } from "@/features/ai";
 import type { LoadWorkspaceTicketDetailAction } from "@/features/tickets/detail-action-result";
 import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
 
@@ -27,5 +28,12 @@ export const unavailableNotificationMarkReadAction: MarkWorkspaceNotificationsRe
   async () => ({
     status: "failed",
     reason: "unsupported-capability",
+    retryable: false,
+  });
+
+export const unavailableTicketAiSummaryAction: SummarizeWorkspaceTicketAction =
+  async () => ({
+    status: "unconfigured",
+    reason: "ai-disabled",
     retryable: false,
   });
