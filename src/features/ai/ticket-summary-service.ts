@@ -3,6 +3,12 @@ import { ticketSummaryPromptContext } from "./ticket-summary-context";
 import type { TicketAiSummaryResult } from "./model";
 import type { AiRuntimeConfig } from "./provider-config";
 import { generateAiText } from "./text-generation";
+import { aiSummaryCacheKey } from "./summary-cache-key";
+import {
+  noAiSummaryCacheRepository,
+  type AiSummaryCacheKey,
+  type AiSummaryCacheRepository,
+} from "./summary-cache-repository";
 import {
   aiGenerationTimingDuration,
   aiGenerationTimingStart,
@@ -17,9 +23,60 @@ const summarySystemInstruction = [
   "Return plain text under 140 words with three short sections: Situation, Timeline, Next Risk.",
 ].join(" ");
 
+type TicketSummaryCacheOptions = {
+  cacheRepository?: AiSummaryCacheRepository;
+  encryptionKey: string;
+  scope: {
+    helpdeskConnectionId: string;
+    ticketExternalId: string;
+    userId: string;
+  };
+};
+
+async function readCachedSummary(input: {
+  cacheKey: AiSummaryCacheKey;
+  cacheRepository: AiSummaryCacheRepository;
+  encryptionKey: string;
+}): Promise<Extract<TicketAiSummaryResult, { status: "available" }> | null> {
+  if (!input.cacheRepository.enabled) {
+    return null;
+  }
+
+  try {
+    return await input.cacheRepository.findFreshSummary({
+      ...input.cacheKey,
+      encryptionKey: input.encryptionKey,
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function storeCachedSummary(input: {
+  cacheKey: AiSummaryCacheKey;
+  cacheRepository: AiSummaryCacheRepository;
+  encryptionKey: string;
+  result: Extract<TicketAiSummaryResult, { status: "available" }>;
+}): Promise<void> {
+  if (!input.cacheRepository.enabled) {
+    return;
+  }
+
+  try {
+    await input.cacheRepository.storeSummary({
+      ...input.cacheKey,
+      encryptionKey: input.encryptionKey,
+      result: input.result,
+    });
+  } catch {
+    return;
+  }
+}
+
 export async function summarizeTicketDetail(
   config: AiRuntimeConfig,
   detail: TicketDetail,
+  cacheOptions?: TicketSummaryCacheOptions,
 ): Promise<TicketAiSummaryResult> {
   const totalStart = aiGenerationTimingStart();
   if (config.status === "unconfigured") {
@@ -60,6 +117,34 @@ export async function summarizeTicketDetail(
     status: "ok",
   });
 
+  const cacheRepository =
+    cacheOptions?.cacheRepository ?? noAiSummaryCacheRepository;
+  const cacheKey = cacheOptions && config.status === "available"
+    ? aiSummaryCacheKey({
+        config,
+        context,
+        encryptionKey: cacheOptions.encryptionKey,
+        scope: cacheOptions.scope,
+      })
+    : undefined;
+  if (cacheKey && cacheOptions) {
+    const cached = await readCachedSummary({
+      cacheKey,
+      cacheRepository,
+      encryptionKey: cacheOptions.encryptionKey,
+    });
+    if (cached) {
+      recordAiGenerationTiming({
+        durationMs: aiGenerationTimingDuration(totalStart),
+        operation: "ticket-summary",
+        phase: "total-generation",
+        providerProtocol: config.provider,
+        status: "ok",
+      });
+      return cached;
+    }
+  }
+
   const result = await generateAiText(config, {
     maxOutputTokens: 260,
     systemInstruction: summarySystemInstruction,
@@ -87,7 +172,7 @@ export async function summarizeTicketDetail(
     status: "ok",
   });
 
-  return {
+  const summaryResult = {
     status: "available",
     generatedAt: new Date().toISOString(),
     source: {
@@ -96,5 +181,16 @@ export async function summarizeTicketDetail(
       ticketUpdatedAt: context.ticketUpdatedAt,
     },
     summary: result.text,
-  };
+  } satisfies Extract<TicketAiSummaryResult, { status: "available" }>;
+
+  if (cacheKey && cacheOptions) {
+    await storeCachedSummary({
+      cacheKey,
+      cacheRepository,
+      encryptionKey: cacheOptions.encryptionKey,
+      result: summaryResult,
+    });
+  }
+
+  return summaryResult;
 }

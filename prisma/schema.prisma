@@ -39,21 +39,22 @@ enum TicketPriority {
 }
 
 model User {
-  id                       String                    @id @default(cuid())
-  email                    String                    @unique
-  displayName              String?
-  role                     UserRole                  @default(USER)
-  createdAt                DateTime                  @default(now())
-  updatedAt                DateTime                  @updatedAt
-  passwordLogin            PasswordLogin?
-  sessions                 Session[]
-  helpdeskConnections      HelpdeskConnection[]
-  savedViews               SavedView[]
-  savedViewPreferences     UserSavedViewPreference[]
-  ticketSnapshotCaches     TicketSnapshotCache[]
-  threadSnapshotCaches     ThreadSnapshotCache[]
-  uiPreferences            UiPreference[]
-  providerMutationLogs     ProviderMutationLog[]
+  id                   String                    @id @default(cuid())
+  email                String                    @unique
+  displayName          String?
+  role                 UserRole                  @default(USER)
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  passwordLogin        PasswordLogin?
+  sessions             Session[]
+  helpdeskConnections  HelpdeskConnection[]
+  savedViews           SavedView[]
+  savedViewPreferences UserSavedViewPreference[]
+  ticketSnapshotCaches TicketSnapshotCache[]
+  threadSnapshotCaches ThreadSnapshotCache[]
+  aiSummaryCaches      AiSummaryCache[]
+  uiPreferences        UiPreference[]
+  providerMutationLogs ProviderMutationLog[]
 }
 
 model PasswordLogin {
@@ -77,19 +78,20 @@ model Session {
 }
 
 model HelpdeskConnection {
-  id                   String                    @id @default(cuid())
+  id                   String                   @id @default(cuid())
   userId               String
   providerKey          String
   displayName          String
   baseUrl              String
-  status               HelpdeskConnectionStatus  @default(ACTIVE)
-  createdAt            DateTime                  @default(now())
-  updatedAt            DateTime                  @updatedAt
-  user                 User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status               HelpdeskConnectionStatus @default(ACTIVE)
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+  user                 User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   credentials          ProviderCredential[]
   savedViews           SavedView[]
   ticketSnapshotCaches TicketSnapshotCache[]
   threadSnapshotCaches ThreadSnapshotCache[]
+  aiSummaryCaches      AiSummaryCache[]
   uiPreferences        UiPreference[]
   providerMutationLogs ProviderMutationLog[]
 
@@ -111,20 +113,20 @@ model ProviderCredential {
 }
 
 model SavedView {
-  id                   String                     @id @default(cuid())
+  id                   String                    @id @default(cuid())
   ownerUserId          String
   helpdeskConnectionId String?
   name                 String
-  visibility           SavedViewVisibility        @default(PERSONAL)
+  visibility           SavedViewVisibility       @default(PERSONAL)
   iconName             String?
   colorName            String?
   filterJson           Json
   seedKey              String?
-  isSystem             Boolean                    @default(false)
-  createdAt            DateTime                   @default(now())
-  updatedAt            DateTime                   @updatedAt
-  owner                User                       @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
-  helpdeskConnection   HelpdeskConnection?        @relation(fields: [helpdeskConnectionId], references: [id], onDelete: SetNull)
+  isSystem             Boolean                   @default(false)
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  owner                User                      @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  helpdeskConnection   HelpdeskConnection?       @relation(fields: [helpdeskConnectionId], references: [id], onDelete: SetNull)
   preferences          UserSavedViewPreference[]
   ticketSnapshotCaches TicketSnapshotCache[]
 
@@ -138,10 +140,10 @@ model UserSavedViewPreference {
   userId      String
   savedViewId String
   position    Int
-  isDefault   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isDefault   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   savedView   SavedView @relation(fields: [savedViewId], references: [id], onDelete: Cascade)
 
   @@id([userId, savedViewId])
@@ -197,6 +199,32 @@ model ThreadSnapshotCache {
   @@index([helpdeskConnectionId, expiresAt])
 }
 
+model AiSummaryCache {
+  id                    String             @id @default(cuid())
+  userId                String
+  helpdeskConnectionId  String
+  providerTicketId      String
+  operation             String
+  providerProtocol      String
+  modelFingerprint      String
+  promptVersion         String
+  sanitizationVersion   String
+  sourceFingerprint     String
+  sourceTicketNumber    String
+  sourceTicketUpdatedAt DateTime?
+  sourceArticleCount    Int
+  encryptedSummary      String
+  generatedAt           DateTime
+  fetchedAt             DateTime           @default(now())
+  expiresAt             DateTime
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpdeskConnection    HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, helpdeskConnectionId, providerTicketId, operation, providerProtocol, modelFingerprint, promptVersion, sanitizationVersion, sourceFingerprint], name: "ai_summary_cache_identity")
+  @@index([helpdeskConnectionId, expiresAt])
+  @@index([userId, helpdeskConnectionId, providerTicketId])
+}
+
 model UiPreference {
   id                   String              @id @default(cuid())
   userId               String
@@ -213,7 +241,7 @@ model UiPreference {
 }
 
 model ProviderMutationLog {
-  id                   String              @id @default(cuid())
+  id                   String             @id @default(cuid())
   userId               String
   helpdeskConnectionId String
   providerKey          String
@@ -222,9 +250,9 @@ model ProviderMutationLog {
   status               String
   errorKind            String?
   durationMs           Int?
-  createdAt            DateTime            @default(now())
-  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  helpdeskConnection   HelpdeskConnection  @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+  createdAt            DateTime           @default(now())
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpdeskConnection   HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([helpdeskConnectionId, createdAt])

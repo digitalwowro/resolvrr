@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
+import { prismaAiSummaryCacheRepository } from "@/data/ai-summary-cache-repository";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
 import { providerRegistry } from "@/providers";
@@ -143,6 +144,7 @@ export async function updateTicketMetadataAction(
       actionInput.ticketExternalId,
       actionInput.input,
       prismaTicketDetailCacheRepository,
+      prismaAiSummaryCacheRepository,
     );
 
     if (result.status === "failed") {
@@ -161,6 +163,7 @@ export async function updateTicketMetadataAction(
         actionInput.ticketExternalId,
         { body: actionInput.commentBody, bodyFormat: actionInput.bodyFormat },
         prismaTicketDetailCacheRepository,
+        prismaAiSummaryCacheRepository,
       ),
     );
     if (result.status === "failed") {
@@ -181,6 +184,7 @@ export async function updateTicketMetadataAction(
         actionInput.ticketExternalId,
         { body: actionInput.replyBody, bodyFormat: actionInput.bodyFormat },
         prismaTicketDetailCacheRepository,
+        prismaAiSummaryCacheRepository,
       ),
     );
     if (result.status === "failed") {

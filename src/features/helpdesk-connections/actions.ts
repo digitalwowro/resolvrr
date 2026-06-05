@@ -2,9 +2,11 @@
 
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
+import { prismaAiSummaryCacheRepository } from "@/data/ai-summary-cache-repository";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
 import { providerRegistry } from "@/providers";
+import { invalidateAiSummaryConnectionCache } from "@/features/ai/summary-cache-invalidation";
 import { type HelpdeskConnectionMessageCode } from "./messages";
 import {
   createConnection,
@@ -86,6 +88,11 @@ export async function updateHelpdeskConnectionAction(formData: FormData) {
       helpdeskConnectionId: connectionId,
       userId: user.id,
     });
+    await invalidateAiSummaryConnectionCache({
+      cacheRepository: prismaAiSummaryCacheRepository,
+      helpdeskConnectionId: connectionId,
+      userId: user.id,
+    });
   }
 
   return resultWithConnections(user.id, result);
@@ -102,6 +109,11 @@ export async function validateHelpdeskConnectionAction(formData: FormData) {
   );
   if (result.ok && result.connectionId) {
     await prismaTicketDetailCacheRepository.invalidateConnection({
+      helpdeskConnectionId: result.connectionId,
+      userId: user.id,
+    });
+    await invalidateAiSummaryConnectionCache({
+      cacheRepository: prismaAiSummaryCacheRepository,
       helpdeskConnectionId: result.connectionId,
       userId: user.id,
     });
@@ -133,6 +145,11 @@ export async function disableHelpdeskConnectionAction(formData: FormData) {
       helpdeskConnectionId: result.connectionId,
       userId: user.id,
     });
+    await invalidateAiSummaryConnectionCache({
+      cacheRepository: prismaAiSummaryCacheRepository,
+      helpdeskConnectionId: result.connectionId,
+      userId: user.id,
+    });
   }
 
   return resultWithConnections(user.id, result);
@@ -147,6 +164,11 @@ export async function deleteHelpdeskConnectionAction(formData: FormData) {
   );
   if (result.ok && result.connectionId) {
     await prismaTicketDetailCacheRepository.invalidateConnection({
+      helpdeskConnectionId: result.connectionId,
+      userId: user.id,
+    });
+    await invalidateAiSummaryConnectionCache({
+      cacheRepository: prismaAiSummaryCacheRepository,
       helpdeskConnectionId: result.connectionId,
       userId: user.id,
     });
