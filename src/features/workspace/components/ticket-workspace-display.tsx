@@ -3,12 +3,8 @@
 import { useCallback, useEffect } from "react";
 import type { DropdownOption } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
-import {
-  allTicketsSavedViewId,
-} from "@/features/saved-views/workspace";
-import {
-  workspaceTicketTabs,
-} from "@/features/tickets/workspace-adapter";
+import { allTicketsSavedViewId } from "@/features/saved-views/workspace";
+import { workspaceTicketTabs } from "@/features/tickets/workspace-adapter";
 import { useTicketWorkspaceDisplayState } from "./ticket-workspace-state";
 import { useTicketListPager } from "./use-ticket-list-pager";
 import { useTicketWorkspaceAutoRefresh } from "./use-ticket-workspace-auto-refresh";
@@ -19,10 +15,7 @@ import {
   TicketWorkspaceListArea,
 } from "./ticket-workspace-work-area";
 import type { TicketWorkspaceDisplayProps } from "./ticket-workspace-display-types";
-import {
-  WorkspaceHeaderChrome,
-  WorkspaceTabsChrome,
-} from "./ticket-workspace-chrome";
+import { WorkspaceHeaderChrome, WorkspaceTabsChrome } from "./ticket-workspace-chrome";
 
 export function TicketWorkspaceDisplay({
   connections,
@@ -45,6 +38,7 @@ export function TicketWorkspaceDisplay({
   rows,
   searchTicketLinkTargetsAction,
   savedViews,
+  summarizeTicketAction,
   initialWorkspaceOpenTabsState,
   saveWorkspaceOpenTabsStateAction,
   selectedSavedViewId,
@@ -243,6 +237,7 @@ export function TicketWorkspaceDisplay({
         recentlyViewedLinkTargets={recentlyViewedLinkTargets}
         roundedTop={tabOrientation === "vertical"}
         searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
+        summarizeTicketAction={summarizeTicketAction}
         refreshing={ticketDetailRefreshing}
         updateTicketMetadataAction={updateTicketMetadataAction}
       />

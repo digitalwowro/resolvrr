@@ -10,6 +10,7 @@ import type {
 import type {
   SearchWorkspaceTicketLinkTargetsAction,
 } from "@/features/tickets/link-target-search-action-result";
+import type { SummarizeWorkspaceTicketAction } from "@/features/ai";
 import type {
   SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
@@ -54,6 +55,7 @@ export type TicketWorkspaceDisplayProps = {
   refreshTicketDetailAfterMetadataSave: boolean;
   rows: WorkspaceTicketRow[];
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
+  summarizeTicketAction: SummarizeWorkspaceTicketAction;
   savedViews: WorkspaceSavedView[];
   initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
   saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;

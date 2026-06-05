@@ -20,6 +20,7 @@ import {
   unavailableLinkTargetSearchAction,
   unavailableNotificationMarkReadAction,
   unavailableNotificationsAction,
+  unavailableTicketAiSummaryAction,
   unavailableTicketDetailAction,
 } from "./ticket-workspace-fallbacks";
 import type { TicketWorkspaceProps } from "./ticket-workspace-types";
@@ -49,6 +50,7 @@ export function TicketWorkspace({
   metadataMutationCapabilities,
   rows,
   searchTicketLinkTargetsAction,
+  summarizeTicketAction,
   savedViews,
   initialSavedViewSettingsData,
   reorderSavedViewsAction,
@@ -83,6 +85,8 @@ export function TicketWorkspace({
   const effectiveMarkWorkspaceNotificationsReadAction =
     markWorkspaceNotificationsReadAction ??
     unavailableNotificationMarkReadAction;
+  const effectiveSummarizeTicketAction =
+    summarizeTicketAction ?? unavailableTicketAiSummaryAction;
   const effectiveMetadataMutationCapabilities =
     metadataMutationCapabilities ??
     (listResult.status === "available"
@@ -155,6 +159,7 @@ export function TicketWorkspace({
           searchTicketLinkTargetsAction={
             searchTicketLinkTargetsAction ?? unavailableLinkTargetSearchAction
           }
+          summarizeTicketAction={effectiveSummarizeTicketAction}
           tabs={tabs}
           totalListCount={listResult.totalCount}
           updateTicketMetadataAction={updateTicketMetadataAction}

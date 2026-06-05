@@ -5,6 +5,7 @@ import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
 import { prismaWorkspaceTabsRepository } from "@/data/workspace-tabs-repository";
 import type { TicketListQueryInput } from "@/core/providers";
 import { logoutAction } from "@/features/auth/actions";
+import { summarizeWorkspaceTicketAction } from "@/features/ai";
 import {
   createHelpdeskConnectionAction,
   deleteHelpdeskConnectionAction,
@@ -220,6 +221,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
       saveSavedViewAction={saveWorkspaceSavedViewAction}
       searchTicketLinkTargetsAction={searchWorkspaceTicketLinkTargetsAction}
+      summarizeTicketAction={summarizeWorkspaceTicketAction}
       savedViews={workspaceSavedViews(
         savedViews,
         listResult.status === "available"
