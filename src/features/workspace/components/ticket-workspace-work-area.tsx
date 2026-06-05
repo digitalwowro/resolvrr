@@ -198,7 +198,7 @@ export function TicketWorkspaceDetailArea({
   if (activeDetail?.status === "available") {
     return (
       <TicketDetail
-        key="work-area"
+        key={`work-area-${activeDetail.detail.id}`}
         detail={activeDetail.detail}
         communicationCapabilities={communicationCapabilities}
         metadataMutationCapabilities={metadataMutationCapabilities}

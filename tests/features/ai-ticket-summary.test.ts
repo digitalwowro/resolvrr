@@ -121,6 +121,34 @@ describe("AI ticket summaries", () => {
     );
   });
 
+  it("maps malformed OpenAI-compatible 2xx responses to temporary failure", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("not-json", { status: 200 })),
+    );
+
+    await expect(
+      generateAiText(
+        {
+          status: "available",
+          apiKey: "openai-key",
+          baseUrl: "https://api.openai.test/v1",
+          model: "support-model",
+          provider: "openai-compatible",
+        },
+        {
+          maxOutputTokens: 80,
+          systemInstruction: "Summarize.",
+          userPrompt: "Ticket body",
+        },
+      ),
+    ).resolves.toEqual({
+      status: "unavailable",
+      reason: "provider-temporary-failure",
+      retryable: true,
+    });
+  });
+
   it("calls Anthropic-compatible messages with the required API version header", async () => {
     const fetchMock = vi.fn(async () =>
       new Response(
@@ -160,5 +188,37 @@ describe("AI ticket summaries", () => {
         }),
       }),
     );
+  });
+
+  it("maps Anthropic-compatible 2xx responses without text to temporary failure", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(JSON.stringify({ content: [{ type: "image" }] }), {
+          status: 200,
+        }),
+      ),
+    );
+
+    await expect(
+      generateAiText(
+        {
+          status: "available",
+          apiKey: "anthropic-key",
+          baseUrl: "https://api.anthropic.test/v1",
+          model: "support-model",
+          provider: "anthropic-compatible",
+        },
+        {
+          maxOutputTokens: 80,
+          systemInstruction: "Summarize.",
+          userPrompt: "Ticket body",
+        },
+      ),
+    ).resolves.toEqual({
+      status: "unavailable",
+      reason: "provider-temporary-failure",
+      retryable: true,
+    });
   });
 });

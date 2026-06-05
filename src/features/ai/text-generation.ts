@@ -50,6 +50,14 @@ function unavailableForStatus(status: number): AiTextGenerationResult {
   };
 }
 
+function temporaryProviderFailure(): AiTextGenerationResult {
+  return {
+    status: "unavailable",
+    reason: "provider-temporary-failure",
+    retryable: true,
+  };
+}
+
 async function postJson(
   url: string,
   headers: Record<string, string>,
@@ -65,11 +73,7 @@ async function postJson(
       signal: controller.signal,
     });
   } catch {
-    return {
-      status: "unavailable",
-      reason: "provider-temporary-failure",
-      retryable: true,
-    };
+    return temporaryProviderFailure();
   } finally {
     clearTimeout(timeout);
   }
@@ -116,6 +120,14 @@ function extractAnthropicText(payload: unknown): string | undefined {
     .trim();
 }
 
+async function parseResponseJson(response: Response): Promise<unknown | undefined> {
+  try {
+    return await response.json();
+  } catch {
+    return undefined;
+  }
+}
+
 async function openAiCompatibleText(
   config: Extract<AiRuntimeConfig, { provider: "openai-compatible" }>,
   request: AiTextGenerationRequest,
@@ -138,14 +150,14 @@ async function openAiCompatibleText(
   if (!response.ok) {
     return unavailableForStatus(response.status);
   }
-  const text = extractOpenAiText(await response.json());
+  const payload = await parseResponseJson(response);
+  if (payload === undefined) {
+    return temporaryProviderFailure();
+  }
+  const text = extractOpenAiText(payload);
   return text
     ? { status: "available", text }
-    : {
-        status: "unavailable",
-        reason: "provider-temporary-failure",
-        retryable: true,
-      };
+    : temporaryProviderFailure();
 }
 
 async function anthropicCompatibleText(
@@ -171,14 +183,14 @@ async function anthropicCompatibleText(
   if (!response.ok) {
     return unavailableForStatus(response.status);
   }
-  const text = extractAnthropicText(await response.json());
+  const payload = await parseResponseJson(response);
+  if (payload === undefined) {
+    return temporaryProviderFailure();
+  }
+  const text = extractAnthropicText(payload);
   return text
     ? { status: "available", text }
-    : {
-        status: "unavailable",
-        reason: "provider-temporary-failure",
-        retryable: true,
-      };
+    : temporaryProviderFailure();
 }
 
 export async function generateAiText(

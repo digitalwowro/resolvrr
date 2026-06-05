@@ -4,7 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import {
+  workspaceOpenTabsStateVersion,
+  type WorkspaceOpenTabsState,
+} from "@/features/workspace/workspace-tab-state";
+import {
   availableList,
+  detailPropsFor,
+  highRow,
   noopAction,
   noopMutationAction,
   row,
@@ -177,5 +183,67 @@ describe("TicketWorkspace selected detail", () => {
       ticketExternalId: "ticket-1",
     });
     expect(await screen.findByText(/Situation: Login issue/u)).toBeInTheDocument();
+  });
+
+  it("resets AI summary state when switching selected tickets", async () => {
+    const user = userEvent.setup();
+    const firstDetail = selectedDetailProps();
+    const secondDetail = detailPropsFor(highRow);
+    const summarizeTicketAction = vi.fn(async () => ({
+      status: "available" as const,
+      generatedAt: "2026-05-24T08:36:00.000Z",
+      source: {
+        articleCount: 1,
+        ticketNumber: "#1001",
+        ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
+      },
+      summary: "Situation: Ticket A only summary",
+    }));
+
+    const loadTicketDetailAction = vi.fn(async () => secondDetail.detailResult);
+    const initialWorkspaceOpenTabsState = {
+      activePane: "ticket-1",
+      openTabs: [row, highRow],
+      recentTabs: [row, highRow],
+      tabOrientation: "horizontal",
+      updatedAt: "2026-06-02T00:00:00.000Z",
+      version: workspaceOpenTabsStateVersion,
+    } satisfies WorkspaceOpenTabsState;
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={firstDetail.detail}
+        detailResult={firstDetail.detailResult}
+        initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
+        listResult={availableList}
+        loadTicketDetailAction={loadTicketDetailAction}
+        logoutAction={noopAction}
+        rows={[row, highRow]}
+        selectedTicketId="ticket-1"
+        setActiveConnectionAction={noopAction}
+        summarizeTicketAction={summarizeTicketAction}
+        tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Generate" }));
+    expect(
+      await screen.findByText(/Situation: Ticket A only summary/u),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: /#1002/u }));
+
+    expect(
+      await screen.findByLabelText("Ticket detail #1002"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Situation: Ticket A only summary/u),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("No summary generated")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Generate" })).toBeInTheDocument();
   });
 });
