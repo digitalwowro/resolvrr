@@ -4,6 +4,7 @@ import type { DropdownOption, SortDirection } from "@/components/ui";
 import type { WorkspaceTicketDetailLoadResult } from "@/features/tickets/detail-action-result";
 import type { WorkspaceTicketLinkTarget } from "@/features/tickets/link-target-search-action-result";
 import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
+import type { SummarizeWorkspaceTicketAction } from "@/features/ai";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type {
   SelectedTicketUpdatePayload,
@@ -167,6 +168,7 @@ type TicketWorkspaceDetailAreaProps = {
   refreshing: boolean;
   roundedTop: boolean;
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
+  summarizeTicketAction: SummarizeWorkspaceTicketAction;
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
@@ -186,6 +188,7 @@ export function TicketWorkspaceDetailArea({
   refreshing,
   roundedTop,
   searchTicketLinkTargetsAction,
+  summarizeTicketAction,
   updateTicketMetadataAction,
 }: TicketWorkspaceDetailAreaProps) {
   if (activeDetail?.status === "unavailable") {
@@ -206,6 +209,7 @@ export function TicketWorkspaceDetailArea({
         recentlyViewedLinkTargets={recentlyViewedLinkTargets}
         roundedTop={roundedTop}
         searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
+        summarizeTicketAction={summarizeTicketAction}
         refreshing={refreshing}
         updateTicketMetadataAction={updateTicketMetadataAction}
       />

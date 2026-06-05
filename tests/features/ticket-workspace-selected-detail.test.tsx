@@ -135,4 +135,47 @@ describe("TicketWorkspace selected detail", () => {
       screen.queryByRole("button", { name: "Message details for Agent Smith" }),
     ).toBeNull();
   });
+
+  it("runs AI summary only from the explicit selected-ticket action", async () => {
+    const user = userEvent.setup();
+    const detailProps = selectedDetailProps();
+    const summarizeTicketAction = vi.fn(async () => ({
+      status: "available" as const,
+      generatedAt: "2026-05-24T08:36:00.000Z",
+      source: {
+        articleCount: 1,
+        ticketNumber: "#1001",
+        ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
+      },
+      summary: "Situation: Login issue\nTimeline: Customer reported it.",
+    }));
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={detailProps.detail}
+        detailResult={detailProps.detailResult}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        selectedTicketId="ticket-1"
+        setActiveConnectionAction={noopAction}
+        summarizeTicketAction={summarizeTicketAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    expect(screen.getByText("AI summary")).toBeInTheDocument();
+    expect(summarizeTicketAction).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Generate" }));
+
+    expect(summarizeTicketAction).toHaveBeenCalledWith({
+      ticketExternalId: "ticket-1",
+    });
+    expect(await screen.findByText(/Situation: Login issue/u)).toBeInTheDocument();
+  });
 });

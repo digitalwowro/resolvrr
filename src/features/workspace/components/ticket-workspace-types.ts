@@ -18,6 +18,7 @@ import type {
   LoadWorkspaceNotificationsAction,
   MarkWorkspaceNotificationsReadAction,
 } from "@/features/notifications";
+import type { SummarizeWorkspaceTicketAction } from "@/features/ai";
 import type {
   SaveWorkspaceOpenTabsStateAction,
   WorkspaceOpenTabsState,
@@ -59,6 +60,7 @@ export type TicketWorkspaceProps = {
   loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
   loadWorkspaceNotificationsAction?: LoadWorkspaceNotificationsAction;
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
+  summarizeTicketAction?: SummarizeWorkspaceTicketAction;
   logoutAction(formData: FormData): void | Promise<void>;
   markWorkspaceNotificationsReadAction?: MarkWorkspaceNotificationsReadAction;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;

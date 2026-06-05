@@ -105,7 +105,7 @@ added, moved, renamed, or removed.
         hook; row comparison stays in the owning feature.
   - `src/config`: typed runtime configuration.
     - `env.ts` (`src/config/env.ts`): Zod validation for required app, database, encryption,
-      session, and dev-origin variables.
+      session, dev-origin, and optional read-only AI variables.
   - `src/core`: provider-neutral domain contracts and canonical values.
     - `helpdesk-connections.ts` (`src/core/helpdesk-connections.ts`): explicit helpdesk connection
       domain types.
@@ -136,6 +136,22 @@ added, moved, renamed, or removed.
       and active helpdesk-connection scoped `UiPreference` repository for persisted workspace open
       tabs.
   - `src/features`: product feature boundaries that compose core contracts into workflows.
+    - `src/features/ai`: optional provider-neutral read-only AI summary feature.
+      - `index.ts` (`src/features/ai/index.ts`): AI feature exports.
+      - `model.ts` (`src/features/ai/model.ts`): read-only selected-ticket AI summary request,
+        result, unavailable-state, and action types.
+      - `provider-config.ts` (`src/features/ai/provider-config.ts`): disabled-by-default runtime AI
+        provider configuration derived from typed app environment variables.
+      - `text-generation.ts` (`src/features/ai/text-generation.ts`): OpenAI-compatible Chat
+        Completions and Anthropic-compatible Messages HTTP adapters for single text generation
+        requests, with safe error mapping and no prompt/output logging.
+      - `ticket-summary-actions.ts` (`src/features/ai/ticket-summary-actions.ts`): authenticated
+        server action that reloads selected-ticket detail server-side before summary generation.
+      - `ticket-summary-context.ts` (`src/features/ai/ticket-summary-context.ts`): prompt-context
+        builder that converts provider-neutral ticket detail and sanitized article HTML into
+        bounded plain text.
+      - `ticket-summary-service.ts` (`src/features/ai/ticket-summary-service.ts`): read-only
+        selected-ticket summary orchestration over AI runtime config and prompt context.
     - `src/features/auth`: auth server actions and form messages.
       - `actions.ts` (`src/features/auth/actions.ts`): login, register, and logout server actions.
       - `index.ts` (`src/features/auth/index.ts`): auth feature exports.
@@ -320,6 +336,9 @@ added, moved, renamed, or removed.
         - `ticket-add-link-search-results.tsx`
           (`src/features/workspace/components/ticket-add-link-search-results.tsx`): compact Add link
           modal candidate/result list and unavailable/empty/searching states.
+        - `ticket-ai-summary-panel.tsx`
+          (`src/features/workspace/components/ticket-ai-summary-panel.tsx`): selected-ticket
+          read-only AI summary panel that triggers generation only from an explicit user action.
         - `ticket-article-attachments.tsx`
           (`src/features/workspace/components/ticket-article-attachments.tsx`): read-only article
           attachment metadata presentation. It displays provider-neutral filename, content type, and
@@ -667,10 +686,15 @@ added, moved, renamed, or removed.
 
 - `docs`: public project documentation.
   - `docs/architecture`: architecture maps, provider boundaries, and ticket read contracts.
+    - `cache-and-privacy-contract.md` (`docs/architecture/cache-and-privacy-contract.md`):
+      provider-data cache, refresh/staleness, privacy, and AI prompt-readiness contract.
     - `codebase-map.md` (`docs/architecture/codebase-map.md`): this file-role map.
     - `overview.md` (`docs/architecture/overview.md`): core product and architecture boundaries.
     - `provider-plugins.md` (`docs/architecture/provider-plugins.md`): provider plugin ownership and
       registration rules.
+    - `read-only-ai-contract.md` (`docs/architecture/read-only-ai-contract.md`): optional
+      selected-ticket AI summary boundary, prompt data, runtime configuration, failure, and cache
+      rules.
     - `ticket-read-contract.md` (`docs/architecture/ticket-read-contract.md`): canonical
       provider-neutral ticket read model, controlled metadata mutation contract, thread article
       shape, capabilities, and non-goals.
@@ -746,6 +770,12 @@ added, moved, renamed, or removed.
     - `tooltip.test.tsx` (`tests/components/tooltip.test.tsx`): verifies tooltip hover,
       keyboard-visible focus, viewport positioning, portal rendering, and close behavior.
   - `tests/features`: feature workflow, workspace behavior, saved-view, and ticket-service tests.
+    - `ai-ticket-summary-action.test.ts` (`tests/features/ai-ticket-summary-action.test.ts`):
+      verifies the selected-ticket AI summary action reloads provider-neutral ticket detail
+      server-side and rejects blank ticket requests without provider reads.
+    - `ai-ticket-summary.test.ts` (`tests/features/ai-ticket-summary.test.ts`): verifies read-only
+      AI summary config defaults, sanitized prompt context, and OpenAI-compatible and
+      Anthropic-compatible request shapes.
     - `saved-view-management-permissions.test.ts`
       (`tests/features/saved-view-management-permissions.test.ts`): verifies saved view management
       permissions behavior.
