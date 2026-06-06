@@ -117,9 +117,11 @@ describe("TicketWorkspace AI settings active workspace switch", () => {
     await user.click(within(dialog).getByRole("button", { name: "AI Settings" }));
     expect(within(dialog).getByText("Sales")).toBeInTheDocument();
     expect(within(dialog).queryByDisplayValue("workspace-a-model")).toBeNull();
-    await user.click(within(dialog).getByRole("button", { name: "Save and test" }));
+    expect(
+      within(dialog).queryByRole("button", { name: "Save workspace policy" }),
+    ).toBeNull();
 
-    expect(saveWorkspaceAiSettingsAction).toHaveBeenCalledOnce();
+    expect(saveWorkspaceAiSettingsAction).not.toHaveBeenCalled();
   });
 });
 

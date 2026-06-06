@@ -93,13 +93,20 @@ describe("TicketWorkspace AI settings", () => {
         "https://platform.claude.com/docs/en/about-claude/models/overview",
       );
     await user.type(within(dialog).getByLabelText("Model"), "gpt-5.4-mini");
+    await user.click(within(dialog).getByRole("button", { name: "Anthropic" }));
+    expect(within(dialog).getByLabelText("Base URL")).toHaveValue(
+      "https://api.anthropic.com/v1",
+    );
+    await user.clear(within(dialog).getByLabelText("Base URL"));
     await user.type(
       within(dialog).getByLabelText("Base URL"),
       "https://api.openai.test/v1",
     );
     await user.type(within(dialog).getByLabelText("API key"), "workspace-key");
     expect(within(dialog).getByLabelText("API key")).toBeInTheDocument();
-    await user.click(within(dialog).getByRole("button", { name: "Save and test" }));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Save workspace key" }),
+    );
 
     expect(saveWorkspaceAiSettingsAction).toHaveBeenCalledOnce();
   });
@@ -198,7 +205,9 @@ describe("TicketWorkspace AI settings", () => {
       "https://api.openai.test/v1",
     );
     await user.type(within(dialog).getByLabelText("API key"), "openai-key");
-    await user.click(within(dialog).getByRole("button", { name: "Save and test" }));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Save personal key" }),
+    );
 
     expect(saveUserWorkspaceAiSettingsAction).toHaveBeenCalledOnce();
     expect(await within(dialog).findByText("AI key saved.")).toBeInTheDocument();
@@ -265,7 +274,9 @@ describe("TicketWorkspace AI settings", () => {
 
     expect(within(dialog).getByDisplayValue("existing-custom-model"))
       .toBeInTheDocument();
-    await user.click(within(dialog).getByRole("button", { name: "Save and test" }));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Save workspace key" }),
+    );
 
     expect(saveWorkspaceAiSettingsAction).toHaveBeenCalledOnce();
   });

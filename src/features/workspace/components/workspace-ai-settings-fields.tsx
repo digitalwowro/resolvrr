@@ -31,9 +31,11 @@ export function WorkspaceAiSettingsFields({
   disabled: boolean;
 }) {
   const modelInputId = useId();
+  const baseUrlInputId = useId();
   const initialProtocol = config?.providerProtocol ?? "openai-compatible";
   const [providerProtocol, setProviderProtocol] =
     useState<AiProviderProtocol>(initialProtocol);
+  const [baseUrl, setBaseUrl] = useState(config?.baseUrl ?? "");
   const defaultBaseUrl = providerBaseUrls[providerProtocol];
 
   return (
@@ -84,19 +86,41 @@ export function WorkspaceAiSettingsFields({
           type="text"
         />
       </div>
-      <label className="block">
-        <span className="text-sm font-medium text-slate-700">Base URL</span>
+      <div className="block">
+        <div className="flex items-center justify-between gap-3">
+          <label
+            className="text-sm font-medium text-slate-700"
+            htmlFor={baseUrlInputId}
+          >
+            Base URL
+          </label>
+          <div className="flex gap-2 text-xs">
+            {providerOptions.map((option) => (
+              <button
+                className="font-medium text-indigo-600 hover:text-indigo-700 disabled:text-slate-400"
+                disabled={disabled}
+                key={option.value}
+                onClick={() => setBaseUrl(providerBaseUrls[option.value])}
+                type="button"
+              >
+                {option.label.replace(" compatible", "")}
+              </button>
+            ))}
+          </div>
+        </div>
         <input
           autoComplete="off"
           className={inputClass}
-          defaultValue={config?.baseUrl}
           disabled={disabled}
+          id={baseUrlInputId}
           name="baseUrl"
+          onChange={(event) => setBaseUrl(event.currentTarget.value)}
           placeholder={defaultBaseUrl}
           required
           type="url"
+          value={baseUrl}
         />
-      </label>
+      </div>
       <label className="block md:col-span-3">
         <span className="text-sm font-medium text-slate-700">API key</span>
         <input

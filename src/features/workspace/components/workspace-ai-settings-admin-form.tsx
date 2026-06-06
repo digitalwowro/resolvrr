@@ -36,6 +36,10 @@ export function WorkspaceAiSettingsAdminForm({
 }) {
   const [pending, startTransition] = useTransition();
   const disabled = pending || !action || !data.activeWorkspace;
+  const policyChanged = selectedPolicy !== data.policy;
+  const showSubmit = selectedPolicy === "admin-managed" || policyChanged;
+  const submitLabel =
+    selectedPolicy === "admin-managed" ? "Save workspace key" : "Save workspace policy";
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,11 +86,13 @@ export function WorkspaceAiSettingsAdminForm({
           </div>
         </fieldset>
       ) : null}
-      <div className="mt-6 flex justify-end">
-        <Button disabled={disabled} loading={pending} type="submit" variant="primary">
-          Save and test
-        </Button>
-      </div>
+      {showSubmit ? (
+        <div className="mt-6 flex justify-end">
+          <Button disabled={disabled} loading={pending} type="submit" variant="primary">
+            {submitLabel}
+          </Button>
+        </div>
+      ) : null}
     </form>
   );
 }

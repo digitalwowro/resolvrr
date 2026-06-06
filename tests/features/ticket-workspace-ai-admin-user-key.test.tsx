@@ -82,6 +82,9 @@ describe("TicketWorkspace AI settings admin personal key", () => {
     await user.click(screen.getByRole("menuitem", { name: "Settings" }));
     const dialog = screen.getByRole("dialog", { name: "Settings" });
     await user.click(within(dialog).getByRole("button", { name: "AI Settings" }));
+    expect(
+      within(dialog).queryByRole("button", { name: "Save workspace policy" }),
+    ).toBeNull();
 
     const personalSection = within(dialog)
       .getByRole("heading", { name: "Personal workspace key" })
@@ -101,7 +104,7 @@ describe("TicketWorkspace AI settings admin personal key", () => {
     );
     await user.click(
       within(personalSection as HTMLElement).getByRole("button", {
-        name: "Save and test",
+        name: "Save personal key",
       }),
     );
 
@@ -151,6 +154,54 @@ describe("TicketWorkspace AI settings admin personal key", () => {
     expect(within(dialog).queryByRole("heading", {
       name: "Personal workspace key",
     })).toBeNull();
+    expect(
+      within(dialog).getByRole("button", { name: "Save workspace policy" }),
+    ).toBeInTheDocument();
+  });
+
+  it("waits for the users-provide-keys policy to be saved before showing the personal key form", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        initialAiSettingsData={{
+          activeWorkspace: { id: "connection-1", label: "Support" },
+          canManageWorkspace: true,
+          policy: "disabled",
+          userConfig: null,
+          workspaceConfig: null,
+          workspaceConfigConfigured: false,
+        }}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        saveUserWorkspaceAiSettingsAction={vi.fn()}
+        saveWorkspaceAiSettingsAction={vi.fn()}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="admin@example.com"
+        userRole="ADMIN"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", {
+      name: "Open profile menu, Support",
+    }));
+    await user.click(screen.getByRole("menuitem", { name: "Settings" }));
+    const dialog = screen.getByRole("dialog", { name: "Settings" });
+    await user.click(within(dialog).getByRole("button", { name: "AI Settings" }));
+
+    await selectDropdown(user, dialog, "Workspace AI", "Users provide keys");
+
+    expect(within(dialog).queryByRole("heading", {
+      name: "Personal workspace key",
+    })).toBeNull();
+    expect(
+      within(dialog).getByRole("button", { name: "Save workspace policy" }),
+    ).toBeInTheDocument();
   });
 });
 

@@ -125,7 +125,8 @@ export function AiSettingsSection({
               onResult={applyResult}
               selectedPolicy={selectedAdminPolicy}
             />
-            {selectedAdminPolicy === "user-provided" ? (
+            {selectedAdminPolicy === "user-provided" &&
+            data.policy === "user-provided" ? (
               <section>
                 <h4 className="mb-2 text-sm font-medium text-slate-700">
                   Personal workspace key

@@ -41,7 +41,7 @@ export function WorkspaceAiSettingsUserForm({
       <WorkspaceAiSettingsFields config={data.userConfig} disabled={disabled} />
       <div className="mt-6 flex justify-end">
         <Button disabled={disabled} loading={pending} type="submit" variant="primary">
-          Save and test
+          Save personal key
         </Button>
       </div>
     </form>
