@@ -107,11 +107,25 @@ export function AiSettingsSection({
           </div>
         ) : null}
         {isAdmin ? (
-          <WorkspaceAiSettingsAdminForm
-            action={saveWorkspaceAiSettingsAction}
-            data={data}
-            onResult={applyResult}
-          />
+          <div className="space-y-4">
+            <WorkspaceAiSettingsAdminForm
+              action={saveWorkspaceAiSettingsAction}
+              data={data}
+              onResult={applyResult}
+            />
+            {data.policy === "user-provided" ? (
+              <section>
+                <h4 className="mb-2 text-sm font-medium text-slate-700">
+                  Personal workspace key
+                </h4>
+                <WorkspaceAiSettingsUserForm
+                  action={saveUserWorkspaceAiSettingsAction}
+                  data={data}
+                  onResult={applyResult}
+                />
+              </section>
+            ) : null}
+          </div>
         ) : data.policy === "user-provided" ? (
           <WorkspaceAiSettingsUserForm
             action={saveUserWorkspaceAiSettingsAction}

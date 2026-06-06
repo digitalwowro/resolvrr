@@ -1,4 +1,5 @@
-import { useId, useState } from "react";
+import { useState } from "react";
+import { DropdownSelect, type DropdownOption } from "@/components/ui";
 import type { AiProviderProtocol, AiSettingsConfigView } from "@/features/ai";
 
 const inputClass =
@@ -8,23 +9,43 @@ const providerDefaults: Record<
   AiProviderProtocol,
   {
     baseUrl: string;
-    modelOptions: string[];
+    modelOptions: DropdownOption[];
   }
 > = {
   "anthropic-compatible": {
     baseUrl: "https://api.anthropic.com/v1",
     modelOptions: [
-      "claude-opus-4-8",
-      "claude-sonnet-4-6",
-      "claude-haiku-4-5-20251001",
-      "claude-haiku-4-5",
+      { label: "claude-opus-4-8", value: "claude-opus-4-8" },
+      { label: "claude-sonnet-4-6", value: "claude-sonnet-4-6" },
+      {
+        label: "claude-haiku-4-5-20251001",
+        value: "claude-haiku-4-5-20251001",
+      },
+      { label: "claude-haiku-4-5", value: "claude-haiku-4-5" },
     ],
   },
   "openai-compatible": {
     baseUrl: "https://api.openai.com/v1",
-    modelOptions: ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano"],
+    modelOptions: [
+      { label: "gpt-5.5", value: "gpt-5.5" },
+      { label: "gpt-5.4", value: "gpt-5.4" },
+      { label: "gpt-5.4-mini", value: "gpt-5.4-mini" },
+      { label: "gpt-5.4-nano", value: "gpt-5.4-nano" },
+    ],
   },
 };
+
+const providerOptions: Array<DropdownOption & { value: AiProviderProtocol }> = [
+  { label: "OpenAI compatible", value: "openai-compatible" },
+  { label: "Anthropic compatible", value: "anthropic-compatible" },
+];
+
+function modelOptionsFor(protocol: AiProviderProtocol, currentModel: string) {
+  const options = providerDefaults[protocol].modelOptions;
+  return currentModel && !options.some((option) => option.value === currentModel)
+    ? [{ label: currentModel, value: currentModel }, ...options]
+    : options;
+}
 
 export function WorkspaceAiSettingsFields({
   config,
@@ -33,47 +54,48 @@ export function WorkspaceAiSettingsFields({
   config: AiSettingsConfigView | null;
   disabled: boolean;
 }) {
-  const modelOptionsId = useId();
   const initialProtocol = config?.providerProtocol ?? "openai-compatible";
   const [providerProtocol, setProviderProtocol] =
     useState<AiProviderProtocol>(initialProtocol);
+  const [model, setModel] = useState(
+    config?.model ?? providerDefaults[initialProtocol].modelOptions[0]?.value ?? "",
+  );
   const defaults = providerDefaults[providerProtocol];
+  const modelOptions = modelOptionsFor(providerProtocol, model);
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <label className="block">
-        <span className="text-sm font-medium text-slate-700">Provider</span>
-        <select
-          className={inputClass}
+      <div className="block">
+        <input name="providerProtocol" type="hidden" value={providerProtocol} />
+        <DropdownSelect
+          ariaLabel="Provider"
+          className="block w-full [&>div]:w-full"
           disabled={disabled}
-          name="providerProtocol"
-          onChange={(event) =>
-            setProviderProtocol(event.currentTarget.value as AiProviderProtocol)
-          }
-          required
+          label="Provider"
+          onValueChange={(value) => {
+            const nextProtocol = value as AiProviderProtocol;
+            setProviderProtocol(nextProtocol);
+            setModel(providerDefaults[nextProtocol].modelOptions[0]?.value ?? "");
+          }}
+          options={providerOptions}
+          triggerClassName={inputClass}
           value={providerProtocol}
-        >
-          <option value="openai-compatible">OpenAI compatible</option>
-          <option value="anthropic-compatible">Anthropic compatible</option>
-        </select>
-      </label>
-      <label className="block">
-        <span className="text-sm font-medium text-slate-700">Model</span>
-        <input
-          autoComplete="off"
-          className={inputClass}
-          defaultValue={config?.model}
-          disabled={disabled}
-          list={modelOptionsId}
-          name="model"
-          required
         />
-        <datalist id={modelOptionsId}>
-          {defaults.modelOptions.map((model) => (
-            <option key={model} value={model} />
-          ))}
-        </datalist>
-      </label>
+      </div>
+      <div className="block">
+        <input name="model" type="hidden" value={model} />
+        <DropdownSelect
+          ariaLabel="Model"
+          className="block w-full [&>div]:w-full"
+          disabled={disabled}
+          label="Model"
+          onValueChange={setModel}
+          options={modelOptions}
+          placeholder="Select model"
+          triggerClassName={inputClass}
+          value={model}
+        />
+      </div>
       <label className="block md:col-span-2">
         <span className="text-sm font-medium text-slate-700">Base URL</span>
         <input

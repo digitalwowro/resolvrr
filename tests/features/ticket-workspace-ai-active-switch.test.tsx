@@ -101,7 +101,8 @@ describe("TicketWorkspace AI settings active workspace switch", () => {
     const dialog = screen.getByRole("dialog", { name: "Settings" });
     await user.click(within(dialog).getByRole("button", { name: "AI Settings" }));
     expect(within(dialog).getByText("Support")).toBeInTheDocument();
-    expect(within(dialog).getByDisplayValue("workspace-a-model")).toBeInTheDocument();
+    expect(within(dialog).getByRole("combobox", { name: "Model" }))
+      .toHaveTextContent("workspace-a-model");
 
     await user.click(within(dialog).getByRole("button", { name: "Workspaces" }));
     const salesWorkspace = within(dialog).getByText("Sales").closest("article");
@@ -115,7 +116,7 @@ describe("TicketWorkspace AI settings active workspace switch", () => {
 
     await user.click(within(dialog).getByRole("button", { name: "AI Settings" }));
     expect(within(dialog).getByText("Sales")).toBeInTheDocument();
-    expect(within(dialog).queryByDisplayValue("workspace-a-model")).toBeNull();
+    expect(within(dialog).queryByText("workspace-a-model")).toBeNull();
     await user.click(within(dialog).getByRole("button", { name: "Save and test" }));
 
     expect(saveWorkspaceAiSettingsAction).toHaveBeenCalledOnce();

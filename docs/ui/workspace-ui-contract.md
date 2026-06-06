@@ -166,9 +166,11 @@ AI configuration lives in `Avatar -> Settings -> AI Settings` for the active
 workspace. Admins see workspace policy and default provider settings. Users see
 status only when the workspace uses an admin-managed key, and see their own
 provider settings form only when the workspace requires user-provided keys.
-Provider settings suggest current first-party OpenAI and Anthropic model IDs,
-but the model field remains editable for compatible gateways with custom model
-names. Switching workspace is how users configure a different workspace.
+Admins also see their own provider settings form when the active workspace
+requires user-provided keys. Provider settings use approved dropdown primitives
+for workspace AI policy, provider protocol, and current first-party OpenAI and
+Anthropic model IDs. Switching workspace is how users configure a different
+workspace.
 
 The summary panel must report disabled, missing workspace setup, missing user
 setup, unavailable, and rate-limited states without exposing raw provider

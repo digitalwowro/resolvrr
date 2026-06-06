@@ -1,0 +1,107 @@
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { defaultWorkspaceTicketColumns } from "@/features/tickets";
+import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
+import {
+  availableList,
+  noopAction,
+  noopMutationAction,
+  row,
+} from "./ticket-workspace-test-utils";
+
+const routerPush = vi.fn();
+const routerRefresh = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: routerPush,
+    refresh: routerRefresh,
+  }),
+}));
+
+describe("TicketWorkspace AI settings admin personal key", () => {
+  beforeEach(() => {
+    routerPush.mockClear();
+    routerRefresh.mockClear();
+  });
+
+  it("lets admins save their own per-workspace key", async () => {
+    const user = userEvent.setup();
+    const saveUserWorkspaceAiSettingsAction = vi.fn(async (formData: FormData) => {
+      expect(formData.get("providerProtocol")).toBe("openai-compatible");
+      expect(formData.get("model")).toBe("gpt-5.5");
+      expect(formData.get("apiKey")).toBe("admin-personal-key");
+      return {
+        code: "ai-user-settings-saved" as const,
+        data: {
+          activeWorkspace: { id: "connection-1", label: "Support" },
+          canManageWorkspace: true,
+          policy: "user-provided" as const,
+          userConfig: {
+            baseUrl: "https://api.openai.test/v1",
+            hasApiKey: true,
+            model: "gpt-5.5",
+            providerProtocol: "openai-compatible" as const,
+          },
+          workspaceConfig: null,
+          workspaceConfigConfigured: false,
+        },
+        ok: true,
+      };
+    });
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        initialAiSettingsData={{
+          activeWorkspace: { id: "connection-1", label: "Support" },
+          canManageWorkspace: true,
+          policy: "user-provided",
+          userConfig: null,
+          workspaceConfig: null,
+          workspaceConfigConfigured: false,
+        }}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        saveUserWorkspaceAiSettingsAction={saveUserWorkspaceAiSettingsAction}
+        saveWorkspaceAiSettingsAction={vi.fn()}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="admin@example.com"
+        userRole="ADMIN"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", {
+      name: "Open profile menu, Support",
+    }));
+    await user.click(screen.getByRole("menuitem", { name: "Settings" }));
+    const dialog = screen.getByRole("dialog", { name: "Settings" });
+    await user.click(within(dialog).getByRole("button", { name: "AI Settings" }));
+
+    const personalSection = within(dialog)
+      .getByRole("heading", { name: "Personal workspace key" })
+      .closest("section");
+    expect(personalSection).toBeTruthy();
+    await user.type(
+      within(personalSection as HTMLElement).getByLabelText("Base URL"),
+      "https://api.openai.test/v1",
+    );
+    await user.type(
+      within(personalSection as HTMLElement).getByLabelText("API key"),
+      "admin-personal-key",
+    );
+    await user.click(
+      within(personalSection as HTMLElement).getByRole("button", {
+        name: "Save and test",
+      }),
+    );
+
+    expect(saveUserWorkspaceAiSettingsAction).toHaveBeenCalledOnce();
+    expect(await within(dialog).findByText("AI key saved.")).toBeInTheDocument();
+  });
+});

@@ -1048,6 +1048,9 @@ added, moved, renamed, or removed.
     - `ticket-workspace-ai-active-switch.test.tsx`
       (`tests/features/ticket-workspace-ai-active-switch.test.tsx`): verifies the open Settings
       dialog reloads AI settings after the active workspace changes.
+    - `ticket-workspace-ai-admin-user-key.test.tsx`
+      (`tests/features/ticket-workspace-ai-admin-user-key.test.tsx`): verifies admins can save
+      their own user-scoped per-workspace AI key when the workspace requires user-provided keys.
     - `ticket-workspace-settings.test.tsx` (`tests/features/ticket-workspace-settings.test.tsx`):
       verifies ticket workspace settings behavior.
     - `ticket-workspace-test-utils.tsx` (`tests/features/ticket-workspace-test-utils.tsx`): shared

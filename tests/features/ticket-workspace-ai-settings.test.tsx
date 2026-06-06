@@ -29,7 +29,7 @@ describe("TicketWorkspace AI settings", () => {
   it("shows active-workspace AI controls to admins", async () => {
     const user = userEvent.setup();
 
-    const { container } = render(
+    render(
       <TicketWorkspace
         columns={defaultWorkspaceTicketColumns}
         connections={[{ id: "connection-1", label: "Support", active: true }]}
@@ -61,34 +61,14 @@ describe("TicketWorkspace AI settings", () => {
     expect(within(dialog).getByRole("heading", { name: "AI Settings" }))
       .toBeInTheDocument();
     expect(within(dialog).getByLabelText("Workspace AI")).toBeInTheDocument();
-    await user.selectOptions(
-      within(dialog).getByLabelText("Workspace AI"),
-      "admin-managed",
-    );
-    const modelInput = within(dialog).getByLabelText("Model");
-    const listId = modelInput.getAttribute("list");
-    expect(listId).toBeTruthy();
-    const modelList = container.ownerDocument.getElementById(listId ?? "");
-    expect(modelList).toBeTruthy();
-    expect(
-      Array.from(modelList?.querySelectorAll("option") ?? []).map(
-        (option) => option.getAttribute("value"),
-      ),
-    ).toEqual(["gpt-5.5", "gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano"]);
-    await user.selectOptions(
-      within(dialog).getByLabelText("Provider"),
-      "anthropic-compatible",
-    );
-    expect(
-      Array.from(modelList?.querySelectorAll("option") ?? []).map(
-        (option) => option.getAttribute("value"),
-      ),
-    ).toEqual([
-      "claude-opus-4-8",
-      "claude-sonnet-4-6",
-      "claude-haiku-4-5-20251001",
-      "claude-haiku-4-5",
-    ]);
+    await selectDropdown(user, dialog, "Workspace AI", "Use workspace key");
+    await selectDropdown(user, dialog, "Model", "gpt-5.4-mini");
+    expect(within(dialog).getByRole("combobox", { name: "Model" }))
+      .toHaveTextContent("gpt-5.4-mini");
+    await selectDropdown(user, dialog, "Provider", "Anthropic compatible");
+    await selectDropdown(user, dialog, "Model", "claude-opus-4-8");
+    expect(within(dialog).getByRole("combobox", { name: "Model" }))
+      .toHaveTextContent("claude-opus-4-8");
     expect(within(dialog).getByLabelText("API key")).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Save and test" }))
       .toBeInTheDocument();
@@ -134,7 +114,7 @@ describe("TicketWorkspace AI settings", () => {
     const saveUserWorkspaceAiSettingsAction = vi.fn(async (formData: FormData) => {
       expect(formData.get("providerProtocol")).toBe("openai-compatible");
       expect(formData.get("baseUrl")).toBe("https://api.openai.test/v1");
-      expect(formData.get("model")).toBe("support-model");
+      expect(formData.get("model")).toBe("gpt-5.5");
       expect(formData.get("apiKey")).toBe("openai-key");
       return {
         code: "ai-user-settings-saved" as const,
@@ -186,7 +166,6 @@ describe("TicketWorkspace AI settings", () => {
       within(dialog).getByLabelText("Base URL"),
       "https://api.openai.test/v1",
     );
-    await user.type(within(dialog).getByLabelText("Model"), "support-model");
     await user.type(within(dialog).getByLabelText("API key"), "openai-key");
     await user.click(within(dialog).getByRole("button", { name: "Save and test" }));
 
@@ -195,3 +174,13 @@ describe("TicketWorkspace AI settings", () => {
   });
 
 });
+
+async function selectDropdown(
+  user: ReturnType<typeof userEvent.setup>,
+  root: HTMLElement,
+  label: string,
+  option: string,
+) {
+  await user.click(within(root).getByRole("combobox", { name: label }));
+  await user.click(within(root).getByRole("option", { name: option }));
+}

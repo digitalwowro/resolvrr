@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, type FormEvent } from "react";
-import { Button } from "@/components/ui";
+import { Button, DropdownSelect, type DropdownOption } from "@/components/ui";
 import type {
   SaveWorkspaceAiSettingsAction,
   WorkspaceAiPolicy,
@@ -12,6 +12,14 @@ import { WorkspaceAiSettingsFields } from "./workspace-ai-settings-fields";
 
 const inputClass =
   "mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50";
+
+const workspaceAiPolicyOptions: Array<
+  DropdownOption & { value: WorkspaceAiPolicy }
+> = [
+  { label: "Disabled", value: "disabled" },
+  { label: "Use workspace key", value: "admin-managed" },
+  { label: "Users provide keys", value: "user-provided" },
+];
 
 export function WorkspaceAiSettingsAdminForm({
   action,
@@ -48,25 +56,24 @@ export function WorkspaceAiSettingsAdminForm({
       key={`${data.activeWorkspace?.id ?? "none"}-${data.policy}-${data.workspaceConfig?.hasApiKey ?? false}`}
       onSubmit={submit}
     >
-      <label className="block">
-        <span className="text-sm font-medium text-slate-700">Workspace AI</span>
-        <select
-          className={inputClass}
+      <div className="block">
+        <input name="policy" type="hidden" value={policy} />
+        <DropdownSelect
+          ariaLabel="Workspace AI"
+          className="block w-full [&>div]:w-full"
           disabled={disabled}
-          name="policy"
-          onChange={(event) =>
+          label="Workspace AI"
+          onValueChange={(value) =>
             setPolicyDraft({
               key: policyKey,
-              value: event.currentTarget.value as WorkspaceAiPolicy,
+              value: value as WorkspaceAiPolicy,
             })
           }
+          options={workspaceAiPolicyOptions}
+          triggerClassName={inputClass}
           value={policy}
-        >
-          <option value="disabled">Disabled</option>
-          <option value="admin-managed">Use workspace key</option>
-          <option value="user-provided">Users provide keys</option>
-        </select>
-      </label>
+        />
+      </div>
       {policy === "admin-managed" ? (
         <fieldset className="mt-5 border-t border-slate-200 pt-4">
           <legend className="text-sm font-medium text-slate-700">
