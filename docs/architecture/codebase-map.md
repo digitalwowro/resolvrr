@@ -727,6 +727,8 @@ added, moved, renamed, or removed.
   - `src/telemetry`: metadata-only provider operation audit and timing helpers.
     - `ai-generation-timing.ts` (`src/telemetry/ai-generation-timing.ts`): sanitized AI timing
       logger that records only operation phase, protocol family, duration, and outcome metadata.
+    - `cache-age-bucket.ts` (`src/telemetry/cache-age-bucket.ts`): metadata-only cache freshness
+      age bucket helper used by provider detail and AI summary cache observability.
     - `ticket-communication-audit.ts` (`src/telemetry/ticket-communication-audit.ts`): sanitized
       communication audit logger that records only communication kind and outcome metadata.
     - `ticket-mutation-audit.ts` (`src/telemetry/ticket-mutation-audit.ts`): sanitized metadata

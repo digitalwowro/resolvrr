@@ -18,6 +18,17 @@ export type TicketDetailCacheWriteInput = TicketDetailCacheReadInput & {
   detail: TicketDetail;
 };
 
+export type TicketDetailCacheReadResult =
+  | {
+      ageBucket: string;
+      detail: TicketDetail;
+      status: "hit";
+    }
+  | {
+      ageBucket?: string;
+      status: "invalid-source" | "miss" | "stale";
+    };
+
 export type TicketDetailCacheInvalidateInput = {
   helpdeskConnectionId: string;
   ticketExternalId: TicketExternalId;
@@ -31,9 +42,7 @@ export type TicketDetailCacheConnectionInvalidateInput = {
 
 export type TicketDetailCacheRepository = {
   enabled: boolean;
-  findFreshTicketDetail(
-    input: TicketDetailCacheReadInput,
-  ): Promise<TicketDetail | null>;
+  readTicketDetail(input: TicketDetailCacheReadInput): Promise<TicketDetailCacheReadResult>;
   storeTicketDetail(input: TicketDetailCacheWriteInput): Promise<void>;
   invalidateTicketDetail(input: TicketDetailCacheInvalidateInput): Promise<void>;
   invalidateConnection(
@@ -43,8 +52,8 @@ export type TicketDetailCacheRepository = {
 
 export const noTicketDetailCacheRepository: TicketDetailCacheRepository = {
   enabled: false,
-  async findFreshTicketDetail() {
-    return null;
+  async readTicketDetail() {
+    return { status: "miss" };
   },
   async storeTicketDetail() {},
   async invalidateTicketDetail() {},

@@ -259,10 +259,13 @@ scope, selected-ticket identity, provider protocol, and model fingerprint match.
 
 ## Observability
 
-Telemetry may record metadata-only cache events:
+Telemetry records metadata-only cache events for the implemented provider detail
+cache and AI summary cache paths:
 
 - cache data kind;
-- hit, miss, stale hit, refresh started, refresh succeeded, refresh failed;
+- hit, miss, stale, bypass, refresh started, refresh succeeded, refresh
+  failed, regeneration started, regeneration succeeded, regeneration failed,
+  write succeeded, and write failed;
 - provider key and helpdesk connection ID;
 - normalized capability name;
 - duration and retryability;

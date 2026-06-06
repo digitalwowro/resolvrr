@@ -14,6 +14,7 @@ import type {
 } from "@/core/tickets";
 import type { TicketDetailCacheRepository } from "@/features/tickets/cache-repository";
 import { decryptSecret, encryptSecret } from "@/security/encryption";
+import { cacheAgeBucket } from "@/telemetry/cache-age-bucket";
 import { prisma } from "./prisma";
 
 const detailCacheSourceVersion = "ticket-detail-v1";
@@ -141,26 +142,35 @@ function cacheKey(input: {
 export const prismaTicketDetailCacheRepository: TicketDetailCacheRepository = {
   enabled: true,
 
-  async findFreshTicketDetail(input) {
+  async readTicketDetail(input) {
     const now = input.now ?? new Date();
     const cached = await prisma.ticketSnapshotCache.findUnique({
       where: cacheKey(input),
       select: {
         encryptedDetailJson: true,
         expiresAt: true,
+        fetchedAt: true,
         sourceVersion: true,
       },
     });
-    if (
-      !cached?.encryptedDetailJson ||
-      cached.sourceVersion !== detailCacheSourceVersion ||
-      cached.expiresAt <= now
-    ) {
-      return null;
+    if (!cached?.encryptedDetailJson) {
+      return { status: "miss" };
+    }
+
+    const ageBucket = cacheAgeBucket({ fetchedAt: cached.fetchedAt, now });
+    if (cached.sourceVersion !== detailCacheSourceVersion) {
+      return { ageBucket, status: "invalid-source" };
+    }
+    if (cached.expiresAt <= now) {
+      return { ageBucket, status: "stale" };
     }
 
     const decrypted = decryptSecret(cached.encryptedDetailJson, input.encryptionKey);
-    return restoreTicketDetail(JSON.parse(decrypted) as SerializedTicketDetail);
+    return {
+      ageBucket,
+      detail: restoreTicketDetail(JSON.parse(decrypted) as SerializedTicketDetail),
+      status: "hit",
+    };
   },
 
   async storeTicketDetail(input) {

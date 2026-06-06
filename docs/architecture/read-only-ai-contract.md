@@ -89,10 +89,11 @@ ticket metadata, thread, open tabs, saved views, or helpdesk provider state.
 ## Telemetry
 
 AI telemetry is metadata-only. It may record the operation, phase, provider
-protocol family, duration, status, unavailable reason, and retryability. It must
-not record prompts, generated summaries, provider request bodies, provider
-response bodies, provider credentials, model names, ticket IDs, article IDs,
-customer names, email addresses, or ticket/thread content.
+protocol family, cache data kind, cache event, freshness age bucket, duration,
+status, unavailable reason, and retryability. It must not record prompts,
+generated summaries, provider request bodies, provider response bodies,
+provider credentials, model names, ticket IDs, article IDs, customer names,
+email addresses, or ticket/thread content.
 
 ## Caching
 

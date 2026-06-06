@@ -37,17 +37,41 @@ async function readCachedSummary(input: {
   cacheKey: AiSummaryCacheKey;
   cacheRepository: AiSummaryCacheRepository;
   encryptionKey: string;
+  providerProtocol: "anthropic-compatible" | "openai-compatible";
 }): Promise<Extract<TicketAiSummaryResult, { status: "available" }> | null> {
   if (!input.cacheRepository.enabled) {
     return null;
   }
 
+  const start = aiGenerationTimingStart();
   try {
-    return await input.cacheRepository.findFreshSummary({
+    const cacheResult = await input.cacheRepository.readSummary({
       ...input.cacheKey,
       encryptionKey: input.encryptionKey,
     });
+    recordAiGenerationTiming({
+      cacheDataKind: "ai-summary",
+      cacheEvent: cacheResult.status,
+      durationMs: aiGenerationTimingDuration(start),
+      freshnessAgeBucket: cacheResult.ageBucket,
+      operation: "ticket-summary",
+      phase: "summary-cache-read",
+      providerProtocol: input.providerProtocol,
+      status: cacheResult.status === "hit" ? "ok" : "unavailable",
+    });
+    return cacheResult.status === "hit" ? cacheResult.result : null;
   } catch {
+    recordAiGenerationTiming({
+      cacheDataKind: "ai-summary",
+      cacheEvent: "read-failed",
+      durationMs: aiGenerationTimingDuration(start),
+      operation: "ticket-summary",
+      phase: "summary-cache-read",
+      providerProtocol: input.providerProtocol,
+      reason: "cache-error",
+      retryable: true,
+      status: "unavailable",
+    });
     return null;
   }
 }
@@ -56,19 +80,41 @@ async function storeCachedSummary(input: {
   cacheKey: AiSummaryCacheKey;
   cacheRepository: AiSummaryCacheRepository;
   encryptionKey: string;
+  providerProtocol: "anthropic-compatible" | "openai-compatible";
   result: Extract<TicketAiSummaryResult, { status: "available" }>;
 }): Promise<void> {
   if (!input.cacheRepository.enabled) {
     return;
   }
 
+  const start = aiGenerationTimingStart();
   try {
     await input.cacheRepository.storeSummary({
       ...input.cacheKey,
       encryptionKey: input.encryptionKey,
       result: input.result,
     });
+    recordAiGenerationTiming({
+      cacheDataKind: "ai-summary",
+      cacheEvent: "write-succeeded",
+      durationMs: aiGenerationTimingDuration(start),
+      operation: "ticket-summary",
+      phase: "summary-cache-write",
+      providerProtocol: input.providerProtocol,
+      status: "ok",
+    });
   } catch {
+    recordAiGenerationTiming({
+      cacheDataKind: "ai-summary",
+      cacheEvent: "write-failed",
+      durationMs: aiGenerationTimingDuration(start),
+      operation: "ticket-summary",
+      phase: "summary-cache-write",
+      providerProtocol: input.providerProtocol,
+      reason: "cache-error",
+      retryable: true,
+      status: "unavailable",
+    });
     return;
   }
 }
@@ -132,6 +178,7 @@ export async function summarizeTicketDetail(
       cacheKey,
       cacheRepository,
       encryptionKey: cacheOptions.encryptionKey,
+      providerProtocol: config.provider,
     });
     if (cached) {
       recordAiGenerationTiming({
@@ -145,6 +192,16 @@ export async function summarizeTicketDetail(
     }
   }
 
+  recordAiGenerationTiming({
+    cacheDataKind: "ai-summary",
+    cacheEvent: "regeneration-started",
+    durationMs: 0,
+    operation: "ticket-summary",
+    phase: "summary-cache-regeneration",
+    providerProtocol: config.provider,
+    status: "ok",
+  });
+  const regenerationStart = aiGenerationTimingStart();
   const result = await generateAiText(config, {
     maxOutputTokens: 260,
     systemInstruction: summarySystemInstruction,
@@ -152,6 +209,17 @@ export async function summarizeTicketDetail(
     userPrompt: context.prompt,
   });
   if (result.status === "unavailable") {
+    recordAiGenerationTiming({
+      cacheDataKind: "ai-summary",
+      cacheEvent: "regeneration-failed",
+      durationMs: aiGenerationTimingDuration(regenerationStart),
+      operation: "ticket-summary",
+      phase: "summary-cache-regeneration",
+      providerProtocol: config.provider,
+      reason: result.reason,
+      retryable: result.retryable,
+      status: "unavailable",
+    });
     recordAiGenerationTiming({
       durationMs: aiGenerationTimingDuration(totalStart),
       operation: "ticket-summary",
@@ -164,6 +232,15 @@ export async function summarizeTicketDetail(
     return result;
   }
 
+  recordAiGenerationTiming({
+    cacheDataKind: "ai-summary",
+    cacheEvent: "regeneration-succeeded",
+    durationMs: aiGenerationTimingDuration(regenerationStart),
+    operation: "ticket-summary",
+    phase: "summary-cache-regeneration",
+    providerProtocol: config.provider,
+    status: "ok",
+  });
   recordAiGenerationTiming({
     durationMs: aiGenerationTimingDuration(totalStart),
     operation: "ticket-summary",
@@ -188,6 +265,7 @@ export async function summarizeTicketDetail(
       cacheKey,
       cacheRepository,
       encryptionKey: cacheOptions.encryptionKey,
+      providerProtocol: config.provider,
       result: summaryResult,
     });
   }
