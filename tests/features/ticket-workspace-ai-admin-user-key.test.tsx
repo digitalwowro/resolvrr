@@ -104,4 +104,58 @@ describe("TicketWorkspace AI settings admin personal key", () => {
     expect(saveUserWorkspaceAiSettingsAction).toHaveBeenCalledOnce();
     expect(await within(dialog).findByText("AI key saved.")).toBeInTheDocument();
   });
+
+  it("hides the personal key form when users-provide-keys is not selected", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        initialAiSettingsData={{
+          activeWorkspace: { id: "connection-1", label: "Support" },
+          canManageWorkspace: true,
+          policy: "user-provided",
+          userConfig: null,
+          workspaceConfig: null,
+          workspaceConfigConfigured: false,
+        }}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        saveUserWorkspaceAiSettingsAction={vi.fn()}
+        saveWorkspaceAiSettingsAction={vi.fn()}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="admin@example.com"
+        userRole="ADMIN"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", {
+      name: "Open profile menu, Support",
+    }));
+    await user.click(screen.getByRole("menuitem", { name: "Settings" }));
+    const dialog = screen.getByRole("dialog", { name: "Settings" });
+    await user.click(within(dialog).getByRole("button", { name: "AI Settings" }));
+
+    expect(within(dialog).getByRole("heading", {
+      name: "Personal workspace key",
+    })).toBeInTheDocument();
+    await selectDropdown(user, dialog, "Workspace AI", "Disabled");
+    expect(within(dialog).queryByRole("heading", {
+      name: "Personal workspace key",
+    })).toBeNull();
+  });
 });
+
+async function selectDropdown(
+  user: ReturnType<typeof userEvent.setup>,
+  root: HTMLElement,
+  label: string,
+  option: string,
+) {
+  await user.click(within(root).getByRole("combobox", { name: label }));
+  await user.click(within(root).getByRole("option", { name: option }));
+}

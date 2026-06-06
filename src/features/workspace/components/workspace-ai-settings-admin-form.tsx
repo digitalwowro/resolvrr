@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
+import { useTransition, type FormEvent } from "react";
 import { Button, DropdownSelect, type DropdownOption } from "@/components/ui";
 import type {
   SaveWorkspaceAiSettingsAction,
@@ -25,17 +25,15 @@ export function WorkspaceAiSettingsAdminForm({
   action,
   data,
   onResult,
+  onSelectedPolicyChange,
+  selectedPolicy,
 }: {
   action?: SaveWorkspaceAiSettingsAction;
   data: WorkspaceAiSettingsData;
   onResult(result: WorkspaceAiSettingsActionResult): void;
+  onSelectedPolicyChange(policy: WorkspaceAiPolicy): void;
+  selectedPolicy: WorkspaceAiPolicy;
 }) {
-  const policyKey = `${data.activeWorkspace?.id ?? "none"}-${data.policy}`;
-  const [policyDraft, setPolicyDraft] = useState<{
-    key: string;
-    value: WorkspaceAiPolicy;
-  }>({ key: policyKey, value: data.policy });
-  const policy = policyDraft.key === policyKey ? policyDraft.value : data.policy;
   const [pending, startTransition] = useTransition();
   const disabled = pending || !action || !data.activeWorkspace;
 
@@ -57,24 +55,21 @@ export function WorkspaceAiSettingsAdminForm({
       onSubmit={submit}
     >
       <div className="block">
-        <input name="policy" type="hidden" value={policy} />
+        <input name="policy" type="hidden" value={selectedPolicy} />
         <DropdownSelect
           ariaLabel="Workspace AI"
           className="block w-full [&>div]:w-full"
           disabled={disabled}
           label="Workspace AI"
           onValueChange={(value) =>
-            setPolicyDraft({
-              key: policyKey,
-              value: value as WorkspaceAiPolicy,
-            })
+            onSelectedPolicyChange(value as WorkspaceAiPolicy)
           }
           options={workspaceAiPolicyOptions}
           triggerClassName={inputClass}
-          value={policy}
+          value={selectedPolicy}
         />
       </div>
-      {policy === "admin-managed" ? (
+      {selectedPolicy === "admin-managed" ? (
         <fieldset className="mt-5 border-t border-slate-200 pt-4">
           <legend className="text-sm font-medium text-slate-700">
             Workspace default

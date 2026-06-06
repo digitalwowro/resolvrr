@@ -9,6 +9,7 @@ import type {
   WorkspaceAiSettingsActionCode,
   WorkspaceAiSettingsActionResult,
   WorkspaceAiSettingsData,
+  WorkspaceAiPolicy,
 } from "@/features/ai";
 import { WorkspaceAiSettingsAdminForm } from "./workspace-ai-settings-admin-form";
 import { WorkspaceAiSettingsUserForm } from "./workspace-ai-settings-user-form";
@@ -72,6 +73,13 @@ export function AiSettingsSection({
   const data = initialData ?? defaultData;
   const isAdmin = userRole === "ADMIN";
   const activeWorkspaceId = data.activeWorkspace?.id ?? null;
+  const adminPolicyKey = `${activeWorkspaceId ?? "none"}-${data.policy}`;
+  const [adminPolicyDraft, setAdminPolicyDraft] = useState<{
+    key: string;
+    value: WorkspaceAiPolicy;
+  }>({ key: adminPolicyKey, value: data.policy });
+  const selectedAdminPolicy =
+    adminPolicyDraft.key === adminPolicyKey ? adminPolicyDraft.value : data.policy;
   const visibleMessage =
     message?.workspaceId === activeWorkspaceId ? message : null;
 
@@ -111,9 +119,13 @@ export function AiSettingsSection({
             <WorkspaceAiSettingsAdminForm
               action={saveWorkspaceAiSettingsAction}
               data={data}
+              onSelectedPolicyChange={(policy) =>
+                setAdminPolicyDraft({ key: adminPolicyKey, value: policy })
+              }
               onResult={applyResult}
+              selectedPolicy={selectedAdminPolicy}
             />
-            {data.policy === "user-provided" ? (
+            {selectedAdminPolicy === "user-provided" ? (
               <section>
                 <h4 className="mb-2 text-sm font-medium text-slate-700">
                   Personal workspace key
