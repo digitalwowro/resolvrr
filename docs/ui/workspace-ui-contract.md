@@ -168,9 +168,10 @@ status only when the workspace uses an admin-managed key, and see their own
 provider settings form only when the workspace requires user-provided keys.
 Admins also see their own provider settings form when the active workspace
 requires user-provided keys. Provider settings use approved dropdown primitives
-for workspace AI policy, provider protocol, and current first-party OpenAI and
-Anthropic model IDs. Switching workspace is how users configure a different
-workspace.
+for workspace AI policy and provider protocol. Model IDs use a plain text input
+so compatible gateways, aliases, and future models can be entered exactly, with
+links to OpenAI and Anthropic model reference pages. Switching workspace is how
+users configure a different workspace.
 
 The summary panel must report disabled, missing workspace setup, missing user
 setup, unavailable, and rate-limited states without exposing raw provider

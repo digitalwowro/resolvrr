@@ -28,6 +28,29 @@ describe("TicketWorkspace AI settings", () => {
 
   it("shows active-workspace AI controls to admins", async () => {
     const user = userEvent.setup();
+    const saveWorkspaceAiSettingsAction = vi.fn(async (formData: FormData) => {
+      expect(formData.get("providerProtocol")).toBe("openai-compatible");
+      expect(formData.get("baseUrl")).toBe("https://api.openai.test/v1");
+      expect(formData.get("model")).toBe("gpt-5.4-mini");
+      expect(formData.get("apiKey")).toBe("workspace-key");
+      return {
+        code: "ai-settings-saved" as const,
+        data: {
+          activeWorkspace: { id: "connection-1", label: "Support" },
+          canManageWorkspace: true,
+          policy: "admin-managed" as const,
+          userConfig: null,
+          workspaceConfig: {
+            baseUrl: "https://api.openai.test/v1",
+            hasApiKey: true,
+            model: "gpt-5.4-mini",
+            providerProtocol: "openai-compatible" as const,
+          },
+          workspaceConfigConfigured: true,
+        },
+        ok: true,
+      };
+    });
 
     render(
       <TicketWorkspace
@@ -44,7 +67,7 @@ describe("TicketWorkspace AI settings", () => {
         listResult={availableList}
         logoutAction={noopAction}
         rows={[row]}
-        saveWorkspaceAiSettingsAction={vi.fn()}
+        saveWorkspaceAiSettingsAction={saveWorkspaceAiSettingsAction}
         setActiveConnectionAction={noopAction}
         tabs={[{ ...row }]}
         updateTicketMetadataAction={noopMutationAction}
@@ -62,16 +85,23 @@ describe("TicketWorkspace AI settings", () => {
       .toBeInTheDocument();
     expect(within(dialog).getByLabelText("Workspace AI")).toBeInTheDocument();
     await selectDropdown(user, dialog, "Workspace AI", "Use workspace key");
-    await selectDropdown(user, dialog, "Model", "gpt-5.4-mini");
-    expect(within(dialog).getByRole("combobox", { name: "Model" }))
-      .toHaveTextContent("gpt-5.4-mini");
-    await selectDropdown(user, dialog, "Provider", "Anthropic compatible");
-    await selectDropdown(user, dialog, "Model", "claude-opus-4-8");
-    expect(within(dialog).getByRole("combobox", { name: "Model" }))
-      .toHaveTextContent("claude-opus-4-8");
+    expect(within(dialog).getByRole("link", { name: "OpenAI" }))
+      .toHaveAttribute("href", "https://developers.openai.com/api/docs/models");
+    expect(within(dialog).getByRole("link", { name: "Anthropic" }))
+      .toHaveAttribute(
+        "href",
+        "https://platform.claude.com/docs/en/about-claude/models/overview",
+      );
+    await user.type(within(dialog).getByLabelText("Model"), "gpt-5.4-mini");
+    await user.type(
+      within(dialog).getByLabelText("Base URL"),
+      "https://api.openai.test/v1",
+    );
+    await user.type(within(dialog).getByLabelText("API key"), "workspace-key");
     expect(within(dialog).getByLabelText("API key")).toBeInTheDocument();
-    expect(within(dialog).getByRole("button", { name: "Save and test" }))
-      .toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Save and test" }));
+
+    expect(saveWorkspaceAiSettingsAction).toHaveBeenCalledOnce();
   });
 
   it("shows users status only for admin-managed AI settings", async () => {
@@ -114,7 +144,7 @@ describe("TicketWorkspace AI settings", () => {
     const saveUserWorkspaceAiSettingsAction = vi.fn(async (formData: FormData) => {
       expect(formData.get("providerProtocol")).toBe("openai-compatible");
       expect(formData.get("baseUrl")).toBe("https://api.openai.test/v1");
-      expect(formData.get("model")).toBe("gpt-5.5");
+      expect(formData.get("model")).toBe("company-support-model");
       expect(formData.get("apiKey")).toBe("openai-key");
       return {
         code: "ai-user-settings-saved" as const,
@@ -162,6 +192,7 @@ describe("TicketWorkspace AI settings", () => {
     await user.click(screen.getByRole("menuitem", { name: "Settings" }));
     const dialog = screen.getByRole("dialog", { name: "Settings" });
     await user.click(within(dialog).getByRole("button", { name: "AI Settings" }));
+    await user.type(within(dialog).getByLabelText("Model"), "company-support-model");
     await user.type(
       within(dialog).getByLabelText("Base URL"),
       "https://api.openai.test/v1",
@@ -171,6 +202,72 @@ describe("TicketWorkspace AI settings", () => {
 
     expect(saveUserWorkspaceAiSettingsAction).toHaveBeenCalledOnce();
     expect(await within(dialog).findByText("AI key saved.")).toBeInTheDocument();
+  });
+
+  it("submits existing saved custom model IDs unchanged", async () => {
+    const user = userEvent.setup();
+    const saveWorkspaceAiSettingsAction = vi.fn(async (formData: FormData) => {
+      expect(formData.get("providerProtocol")).toBe("openai-compatible");
+      expect(formData.get("model")).toBe("existing-custom-model");
+      expect(formData.get("apiKey")).toBe("");
+      return {
+        code: "ai-settings-saved" as const,
+        data: {
+          activeWorkspace: { id: "connection-1", label: "Support" },
+          canManageWorkspace: true,
+          policy: "admin-managed" as const,
+          userConfig: null,
+          workspaceConfig: {
+            baseUrl: "https://api.openai.test/v1",
+            hasApiKey: true,
+            model: "existing-custom-model",
+            providerProtocol: "openai-compatible" as const,
+          },
+          workspaceConfigConfigured: true,
+        },
+        ok: true,
+      };
+    });
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        initialAiSettingsData={{
+          activeWorkspace: { id: "connection-1", label: "Support" },
+          canManageWorkspace: true,
+          policy: "admin-managed",
+          userConfig: null,
+          workspaceConfig: {
+            baseUrl: "https://api.openai.test/v1",
+            hasApiKey: true,
+            model: "existing-custom-model",
+            providerProtocol: "openai-compatible",
+          },
+          workspaceConfigConfigured: true,
+        }}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        saveWorkspaceAiSettingsAction={saveWorkspaceAiSettingsAction}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="admin@example.com"
+        userRole="ADMIN"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Open profile menu, Support" }));
+    await user.click(screen.getByRole("menuitem", { name: "Settings" }));
+    const dialog = screen.getByRole("dialog", { name: "Settings" });
+    await user.click(within(dialog).getByRole("button", { name: "AI Settings" }));
+
+    expect(within(dialog).getByDisplayValue("existing-custom-model"))
+      .toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Save and test" }));
+
+    expect(saveWorkspaceAiSettingsAction).toHaveBeenCalledOnce();
   });
 
 });

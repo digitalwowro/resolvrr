@@ -30,7 +30,7 @@ describe("TicketWorkspace AI settings admin personal key", () => {
     const user = userEvent.setup();
     const saveUserWorkspaceAiSettingsAction = vi.fn(async (formData: FormData) => {
       expect(formData.get("providerProtocol")).toBe("openai-compatible");
-      expect(formData.get("model")).toBe("gpt-5.5");
+      expect(formData.get("model")).toBe("company-support-model");
       expect(formData.get("apiKey")).toBe("admin-personal-key");
       return {
         code: "ai-user-settings-saved" as const,
@@ -41,7 +41,7 @@ describe("TicketWorkspace AI settings admin personal key", () => {
           userConfig: {
             baseUrl: "https://api.openai.test/v1",
             hasApiKey: true,
-            model: "gpt-5.5",
+            model: "company-support-model",
             providerProtocol: "openai-compatible" as const,
           },
           workspaceConfig: null,
@@ -87,6 +87,10 @@ describe("TicketWorkspace AI settings admin personal key", () => {
       .getByRole("heading", { name: "Personal workspace key" })
       .closest("section");
     expect(personalSection).toBeTruthy();
+    await user.type(
+      within(personalSection as HTMLElement).getByLabelText("Model"),
+      "company-support-model",
+    );
     await user.type(
       within(personalSection as HTMLElement).getByLabelText("Base URL"),
       "https://api.openai.test/v1",
