@@ -64,7 +64,7 @@ export function WorkspaceAiSettingsFields({
   const modelOptions = modelOptionsFor(providerProtocol, model);
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-4 md:grid-cols-3">
       <div className="block">
         <input name="providerProtocol" type="hidden" value={providerProtocol} />
         <DropdownSelect
@@ -96,7 +96,7 @@ export function WorkspaceAiSettingsFields({
           value={model}
         />
       </div>
-      <label className="block md:col-span-2">
+      <label className="block">
         <span className="text-sm font-medium text-slate-700">Base URL</span>
         <input
           autoComplete="off"
@@ -109,7 +109,7 @@ export function WorkspaceAiSettingsFields({
           type="url"
         />
       </label>
-      <label className="block md:col-span-2">
+      <label className="block md:col-span-3">
         <span className="text-sm font-medium text-slate-700">API key</span>
         <input
           autoComplete="off"
