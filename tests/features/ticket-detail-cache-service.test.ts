@@ -56,6 +56,7 @@ function aiCacheRepository(
     findFreshSummary: vi.fn(async () => null),
     invalidateConnection: vi.fn(async () => undefined),
     invalidateTicket: vi.fn(async () => undefined),
+    invalidateWorkspace: vi.fn(async () => undefined),
     storeSummary: vi.fn(async () => undefined),
     ...overrides,
   };

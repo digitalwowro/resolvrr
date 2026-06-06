@@ -1,11 +1,27 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TicketDetail } from "@/core/tickets";
 import type { AiSummaryCacheRepository } from "@/features/ai/summary-cache-repository";
 import { summarizeTicketDetail } from "@/features/ai/ticket-summary-service";
+import { safeProviderJson } from "@/security/provider-http";
+
+vi.mock("@/security/base-url-validation", () => ({
+  validateProviderBaseUrl: vi.fn(async (input: string) => ({
+    addresses: ["203.0.113.10"],
+    canonicalUrl: input.replace(/\/+$/u, ""),
+  })),
+}));
+
+vi.mock("@/security/provider-http", () => ({
+  safeProviderJson: vi.fn(),
+}));
 
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
 });
 
 function ticketDetail(): TicketDetail {
@@ -53,6 +69,7 @@ function aiCacheRepository(
     findFreshSummary: vi.fn(async () => null),
     invalidateConnection: vi.fn(async () => undefined),
     invalidateTicket: vi.fn(async () => undefined),
+    invalidateWorkspace: vi.fn(async () => undefined),
     storeSummary: vi.fn(async () => undefined),
     ...overrides,
   };
@@ -74,8 +91,6 @@ const openAiConfig = {
 
 describe("AI ticket summary output cache", () => {
   it("reuses a fresh generated summary cache hit without calling the AI provider", async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
     const cachedSummary = {
       status: "available" as const,
       generatedAt: "2026-05-24T08:40:00.000Z",
@@ -98,7 +113,7 @@ describe("AI ticket summary output cache", () => {
       }),
     ).resolves.toEqual(cachedSummary);
 
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(safeProviderJson).not.toHaveBeenCalled();
     expect(cache.findFreshSummary).toHaveBeenCalledWith(
       expect.objectContaining({
         encryptionKey: "test encryption key long enough",
@@ -113,17 +128,13 @@ describe("AI ticket summary output cache", () => {
   });
 
   it("stores successful generated summaries without storing prompts", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        new Response(
-          JSON.stringify({
-            choices: [{ message: { content: "Situation: Fresh summary" } }],
-          }),
-          { status: 200 },
-        ),
-      ),
-    );
+    vi.mocked(safeProviderJson).mockResolvedValueOnce({
+      data: {
+        choices: [{ message: { content: "Situation: Fresh summary" } }],
+      },
+      headers: new Headers(),
+      status: 200,
+    });
     const cache = aiCacheRepository();
 
     await expect(

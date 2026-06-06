@@ -18,7 +18,13 @@ import type {
   LoadWorkspaceNotificationsAction,
   MarkWorkspaceNotificationsReadAction,
 } from "@/features/notifications";
-import type { SummarizeWorkspaceTicketAction } from "@/features/ai";
+import type {
+  LoadWorkspaceAiSettingsAction,
+  SaveUserWorkspaceAiSettingsAction,
+  SaveWorkspaceAiSettingsAction,
+  SummarizeWorkspaceTicketAction,
+  WorkspaceAiSettingsData,
+} from "@/features/ai";
 import type {
   SaveWorkspaceOpenTabsStateAction,
   WorkspaceOpenTabsState,
@@ -59,8 +65,10 @@ export type TicketWorkspaceProps = {
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
   loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
   loadWorkspaceNotificationsAction?: LoadWorkspaceNotificationsAction;
+  loadWorkspaceAiSettingsAction?: LoadWorkspaceAiSettingsAction;
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
   summarizeTicketAction?: SummarizeWorkspaceTicketAction;
+  initialAiSettingsData?: WorkspaceAiSettingsData;
   logoutAction(formData: FormData): void | Promise<void>;
   markWorkspaceNotificationsReadAction?: MarkWorkspaceNotificationsReadAction;
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
@@ -70,6 +78,8 @@ export type TicketWorkspaceProps = {
   reorderSavedViewsAction?: ReorderWorkspaceSavedViewsAction;
   initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
   saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
+  saveUserWorkspaceAiSettingsAction?: SaveUserWorkspaceAiSettingsAction;
+  saveWorkspaceAiSettingsAction?: SaveWorkspaceAiSettingsAction;
   saveSavedViewAction?: SaveWorkspaceSavedViewAction;
   selectedSavedViewId?: string;
   selectedTicketId?: string;

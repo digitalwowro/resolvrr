@@ -12,16 +12,16 @@ root `.env`, `docs/deploy/.env.example`, and `src/config/env.ts` in sync.
 - `DATABASE_URL`: PostgreSQL connection URL using host port `55432`.
 - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`: Docker Postgres settings.
 - `APP_ENCRYPTION_KEY`: base64-encoded 32-byte key for server-side encrypted
-  provider credentials and sensitive cache payloads.
+  provider credentials, workspace/user AI credentials, and sensitive cache
+  payloads.
 - `SESSION_SECRET`: server-side session secret material.
-- `AI_PROVIDER`: optional read-only AI protocol. Use `disabled`,
-  `openai-compatible`, or `anthropic-compatible`.
-- `AI_OPENAI_BASE_URL`, `AI_OPENAI_API_KEY`, `AI_OPENAI_MODEL`: server-side
-  OpenAI-compatible Chat Completions settings. Required only when
-  `AI_PROVIDER=openai-compatible`.
-- `AI_ANTHROPIC_BASE_URL`, `AI_ANTHROPIC_API_KEY`, `AI_ANTHROPIC_MODEL`:
-  server-side Anthropic-compatible Messages settings. Required only when
-  `AI_PROVIDER=anthropic-compatible`.
+
+Read-only AI provider credentials are not configured through environment
+variables. Admins configure the active workspace from `Avatar -> Settings ->
+AI Settings`. A workspace can disable AI, use an encrypted workspace key, or
+require each user to save an encrypted per-workspace key. OpenAI-compatible and
+Anthropic-compatible provider settings require an HTTPS base URL, model, and API
+key; saves run a live provider validation request before persistence.
 
 Do not expose provider credentials, passwords, tokens, cookies, customer ticket
 content, AI credentials, prompts, generated summaries, or raw provider payloads

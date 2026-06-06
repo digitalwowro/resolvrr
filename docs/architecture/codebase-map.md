@@ -28,7 +28,7 @@ added, moved, renamed, or removed.
 - `package-lock.json`: npm dependency lockfile, created by `npm install`.
 - `package.json`: npm scripts and pinned application dependencies.
 - `postcss.config.mjs`: Tailwind CSS PostCSS integration.
-- `prisma.config.ts`: Prisma 7 CLI configuration and database URL loading.
+- `prisma.config.ts`: Prisma 7 CLI configuration, schema-folder selection, and database URL loading.
 - `tsconfig.json`: strict TypeScript configuration and `@/*` source alias.
 - `vitest.config.ts`: unit and component test configuration.
 
@@ -124,6 +124,8 @@ added, moved, renamed, or removed.
     - `tickets.ts` (`src/core/tickets.ts`): canonical ticket values and provider-neutral
       ticket/thread/link/subscription/mutation/communication types.
   - `src/data`: server-only database access boundaries.
+    - `ai-settings-repository.ts` (`src/data/ai-settings-repository.ts`):
+      Prisma-backed encrypted workspace and per-user AI settings repository.
     - `ai-summary-cache-repository.ts` (`src/data/ai-summary-cache-repository.ts`):
       Prisma-backed encrypted selected-ticket AI summary output cache repository.
     - `auth-repository.ts` (`src/data/auth-repository.ts`): Prisma-backed auth repository.
@@ -145,17 +147,34 @@ added, moved, renamed, or removed.
       - `index.ts` (`src/features/ai/index.ts`): AI feature exports.
       - `model.ts` (`src/features/ai/model.ts`): read-only selected-ticket AI summary request,
         result, unavailable-state, and action types.
-      - `provider-config.ts` (`src/features/ai/provider-config.ts`): disabled-by-default runtime AI
-        provider configuration derived from typed app environment variables.
+      - `provider-config.ts` (`src/features/ai/provider-config.ts`): provider-neutral runtime AI
+        provider configuration result types.
+      - `settings-actions.ts` (`src/features/ai/settings-actions.ts`): authenticated server actions
+        for loading and saving active-workspace AI settings.
+      - `settings-form.ts` (`src/features/ai/settings-form.ts`): FormData parsing and HTTPS base URL
+        validation for workspace and user AI settings.
+      - `settings-live-validation.ts` (`src/features/ai/settings-live-validation.ts`): safe live AI
+        provider validation request wrapper used before settings persistence.
+      - `settings-model.ts` (`src/features/ai/settings-model.ts`): provider-neutral serializable AI
+        settings data, policy, protocol, action, and result types.
+      - `settings-mutation-service.ts` (`src/features/ai/settings-mutation-service.ts`):
+        workspace/user AI settings save orchestration, admin gating, blank-secret preservation, and
+        generated-summary cache invalidation.
+      - `settings-repository.ts` (`src/features/ai/settings-repository.ts`): provider-neutral AI
+        settings persistence contract and stored config shapes.
+      - `settings-service.ts` (`src/features/ai/settings-service.ts`): active-workspace AI settings
+        loading, runtime resolution, decrypted config handling, and validation helpers.
       - `summary-cache-invalidation.ts` (`src/features/ai/summary-cache-invalidation.ts`):
-        best-effort generated-summary cache invalidation helpers for ticket and connection changes.
+        best-effort generated-summary cache invalidation helpers for ticket, connection, and
+        workspace AI settings changes.
       - `summary-cache-key.ts` (`src/features/ai/summary-cache-key.ts`): prompt/model/source
         fingerprint key builder for generated-summary cache entries.
       - `summary-cache-repository.ts` (`src/features/ai/summary-cache-repository.ts`):
         provider-neutral generated-summary cache repository contract and disabled no-op repository.
       - `text-generation.ts` (`src/features/ai/text-generation.ts`): OpenAI-compatible Chat
         Completions and Anthropic-compatible Messages HTTP adapters for single text generation
-        requests, with safe error mapping and no prompt/output logging.
+        requests, with pinned-address provider HTTP, safe error mapping, and no prompt/output
+        logging.
       - `ticket-summary-actions.ts` (`src/features/ai/ticket-summary-actions.ts`): authenticated
         server action that reloads selected-ticket detail server-side before summary generation.
       - `ticket-summary-context.ts` (`src/features/ai/ticket-summary-context.ts`): prompt-context
@@ -574,6 +593,18 @@ added, moved, renamed, or removed.
         - `workspace-header.tsx` (`src/features/workspace/components/workspace-header.tsx`):
           production workspace header presentation with brand, global search, tab layout controls,
           and an avatar/profile menu fed by real connection/action props.
+        - `workspace-ai-settings-admin-form.tsx`
+          (`src/features/workspace/components/workspace-ai-settings-admin-form.tsx`): admin-only
+          active-workspace AI policy and workspace-default provider settings form.
+        - `workspace-ai-settings-fields.tsx`
+          (`src/features/workspace/components/workspace-ai-settings-fields.tsx`): shared
+          provider-neutral AI protocol, HTTPS base URL, model, and API key input fields.
+        - `workspace-ai-settings-section.tsx`
+          (`src/features/workspace/components/workspace-ai-settings-section.tsx`): Settings dialog
+          AI Settings section that routes admin controls, user status, and user-provided key forms.
+        - `workspace-ai-settings-user-form.tsx`
+          (`src/features/workspace/components/workspace-ai-settings-user-form.tsx`): user
+          per-workspace AI provider settings form for user-provided-key workspaces.
         - `workspace-notifications-panel.tsx`
           (`src/features/workspace/components/workspace-notifications-panel.tsx`): workspace
           notifications panel workspace UI component.
@@ -591,7 +622,7 @@ added, moved, renamed, or removed.
           settings connections workspace helper module.
         - `workspace-settings-dialog.tsx`
           (`src/features/workspace/components/workspace-settings-dialog.tsx`): 90vw/90vh Settings
-          shell with Profile, Workspaces, and Views sections.
+          shell with Profile, Workspaces, Views, and AI Settings sections.
         - `workspace-settings-view-conditions.tsx`
           (`src/features/workspace/components/workspace-settings-view-conditions.tsx`):
           provider-neutral condition builder used by the Views settings section.
@@ -745,6 +776,14 @@ added, moved, renamed, or removed.
     - `workspace-ui-contract.md` (`docs/ui/workspace-ui-contract.md`): approved workspace layout and
       interaction contract.
 - `prisma`: Prisma schema and migrations.
+  - `ai-settings.prisma` (`prisma/ai-settings.prisma`): workspace-default and per-user workspace AI
+    settings schema.
+  - `app-policy.prisma` (`prisma/app-policy.prisma`): app policy key/value schema.
+  - `auth.prisma` (`prisma/auth.prisma`): user, password login, and session schema.
+  - `caches.prisma` (`prisma/caches.prisma`): selected-ticket detail/thread cache and generated AI
+    summary cache schema.
+  - `helpdesk-connections.prisma` (`prisma/helpdesk-connections.prisma`): helpdesk connection,
+    provider credential, and provider mutation log schema.
   - `prisma/migrations`: database migration history.
     - `prisma/migrations/20260519062146_init`: contains related 20260519062146_init files.
       - `migration.sql` (`prisma/migrations/20260519062146_init/migration.sql`): initial SQL schema
@@ -763,9 +802,17 @@ added, moved, renamed, or removed.
       20260605213000_add_ai_summary_cache files.
       - `migration.sql` (`prisma/migrations/20260605213000_add_ai_summary_cache/migration.sql`):
         migration adding encrypted selected-ticket AI summary output cache storage.
+    - `prisma/migrations/20260606003000_add_workspace_ai_settings`: contains related
+      20260606003000_add_workspace_ai_settings files.
+      - `migration.sql`
+        (`prisma/migrations/20260606003000_add_workspace_ai_settings/migration.sql`):
+        migration adding workspace policy/default AI settings and per-user workspace AI settings.
     - `migration_lock.toml` (`prisma/migrations/migration_lock.toml`): Prisma migration provider
       lockfile.
-  - `schema.prisma` (`prisma/schema.prisma`): provider-neutral SQL schema.
+  - `saved-views.prisma` (`prisma/saved-views.prisma`): saved view and user saved-view preference
+    schema.
+  - `schema.prisma` (`prisma/schema.prisma`): Prisma generator, datasource, and shared enum schema.
+  - `ui-preferences.prisma` (`prisma/ui-preferences.prisma`): user/workspace UI preference schema.
 - `scripts`: repository maintenance, docs, cache, generated-file, and boundary-audit scripts.
   - `cache-clear.mjs` (`scripts/cache-clear.mjs`): clears local Next, TypeScript, and test caches
     and can optionally stop/start a user service.
@@ -810,6 +857,18 @@ added, moved, renamed, or removed.
     - `ai-ticket-summary.test.ts` (`tests/features/ai-ticket-summary.test.ts`): verifies read-only
       AI summary config defaults, sanitized prompt context, safe telemetry, and OpenAI-compatible
       and Anthropic-compatible request shapes.
+    - `ai-settings-secret-preservation.test.ts`
+      (`tests/features/ai-settings-secret-preservation.test.ts`): verifies blank AI secret edits
+      preserve existing encrypted keys and reject corrupt stored secret envelopes.
+    - `ai-settings-live-validation.test.ts`
+      (`tests/features/ai-settings-live-validation.test.ts`): verifies workspace AI provider live
+      validation success and failure mapping for supported protocol families.
+    - `ai-settings-data-shape.test.ts` (`tests/features/ai-settings-data-shape.test.ts`):
+      verifies workspace AI settings client-readable data hides admin-managed provider metadata
+      from non-admin users while preserving configured status.
+    - `ai-settings-service.test.ts` (`tests/features/ai-settings-service.test.ts`): verifies
+      workspace AI runtime resolution, admin/user settings mutations, encrypted key storage, live
+      validation failure behavior, permissions, and generated-summary cache invalidation.
     - `saved-view-management-permissions.test.ts`
       (`tests/features/saved-view-management-permissions.test.ts`): verifies saved view management
       permissions behavior.
@@ -983,6 +1042,15 @@ added, moved, renamed, or removed.
     - `ticket-workspace-selected-detail.test.tsx`
       (`tests/features/ticket-workspace-selected-detail.test.tsx`): verifies selected ticket detail,
       thread rendering, secondary metadata chips/links, article recipients, and attachment display.
+    - `ticket-workspace-ai-settings.test.tsx`
+      (`tests/features/ticket-workspace-ai-settings.test.tsx`): verifies Settings AI section
+      visibility and save behavior for admins, admin-managed users, and user-provided-key users.
+    - `ticket-workspace-ai-active-switch.test.tsx`
+      (`tests/features/ticket-workspace-ai-active-switch.test.tsx`): verifies the open Settings
+      dialog reloads AI settings after the active workspace changes.
+    - `ticket-workspace-ai-admin-user-key.test.tsx`
+      (`tests/features/ticket-workspace-ai-admin-user-key.test.tsx`): verifies admins can save
+      their own user-scoped per-workspace AI key when the workspace requires user-provided keys.
     - `ticket-workspace-settings.test.tsx` (`tests/features/ticket-workspace-settings.test.tsx`):
       verifies ticket workspace settings behavior.
     - `ticket-workspace-test-utils.tsx` (`tests/features/ticket-workspace-test-utils.tsx`): shared

@@ -162,12 +162,27 @@ selected-ticket header area and run only from an explicit agent `Generate`
 action. Rendering a ticket, loading a route, refreshing a ticket, switching
 tabs, or editing staged metadata must not trigger an AI request.
 
-The summary panel must report disabled, not configured, unavailable, and
-rate-limited states without exposing raw provider responses. A generated summary
-is advisory text only: it must not update ticket metadata, staged
-communication, saved views, open tabs, or provider state. Customer-visible
-communication still requires explicit user review and the selected helpdesk
-provider write path.
+AI configuration lives in `Avatar -> Settings -> AI Settings` for the active
+workspace. Admins see workspace policy and default provider settings. Users see
+status only when the workspace uses an admin-managed key, and see their own
+provider settings form only when the workspace requires user-provided keys.
+Admins also see their own provider settings form when the active workspace
+requires user-provided keys. Provider settings use approved dropdown primitives
+for workspace AI policy and provider protocol. Model IDs and base URLs use
+plain text inputs so compatible gateways, aliases, and future models can be
+entered exactly. Model inputs link to OpenAI and Anthropic model reference
+pages; base URL inputs provide default-fill actions for the first-party OpenAI
+and Anthropic API URLs while preserving custom entry. Switching workspace is how
+users configure a different workspace. When a workspace is saved in
+user-provided-key mode, admins see only their personal key save action until the
+workspace policy changes again.
+
+The summary panel must report disabled, missing workspace setup, missing user
+setup, unavailable, and rate-limited states without exposing raw provider
+responses. A generated summary is advisory text only: it must not update ticket
+metadata, staged communication, saved views, open tabs, or provider state.
+Customer-visible communication still requires explicit user review and the
+selected helpdesk provider write path.
 
 ## Production Data Boundary
 

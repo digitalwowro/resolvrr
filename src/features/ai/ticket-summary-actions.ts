@@ -2,6 +2,7 @@
 
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
+import { prismaAiSettingsRepository } from "@/data/ai-settings-repository";
 import { prismaAiSummaryCacheRepository } from "@/data/ai-summary-cache-repository";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
@@ -11,7 +12,7 @@ import type {
   SummarizeWorkspaceTicketAction,
   TicketAiSummaryResult,
 } from "./model";
-import { aiRuntimeConfigFromEnv } from "./provider-config";
+import { resolveWorkspaceAiRuntimeConfig } from "./settings-service";
 import { summarizeTicketDetail } from "./ticket-summary-service";
 
 function unavailableTicketSummary(
@@ -45,8 +46,17 @@ export const summarizeWorkspaceTicketAction: SummarizeWorkspaceTicketAction =
       return unavailableTicketSummary(detailResult.retryable);
     }
 
+    const aiConfig = detailResult.helpdeskConnectionId
+      ? await resolveWorkspaceAiRuntimeConfig(
+          prismaAiSettingsRepository,
+          env.APP_ENCRYPTION_KEY,
+          user.id,
+          detailResult.helpdeskConnectionId,
+        )
+      : { status: "unconfigured" as const, reason: "no-active-workspace" as const };
+
     return summarizeTicketDetail(
-      aiRuntimeConfigFromEnv(env),
+      aiConfig,
       detailResult.detail,
       detailResult.helpdeskConnectionId
         ? {

@@ -42,6 +42,10 @@ job queues remain out of scope. Read-only AI behavior is defined separately in
   cache keys include user, active helpdesk connection, selected ticket, prompt
   version, sanitization version, provider protocol, model fingerprint, and
   source fingerprint/freshness metadata.
+- Workspace and per-user AI settings are encrypted server-side configuration,
+  not cache data. Changing active-workspace AI policy/default config invalidates
+  generated summaries for that workspace; changing a user's per-workspace AI
+  config invalidates generated summaries for that user and connection.
 - The current cache implementation does not cache list query pages, lookup data,
   background refresh jobs, webhooks, or provider raw payloads.
 
@@ -178,6 +182,8 @@ confirms the write:
 - Saved-view changes invalidate list snapshots keyed by that saved view.
 - Helpdesk connection credential, active connection, or permission changes
   invalidate all snapshots scoped to that connection for that user.
+- AI settings changes invalidate generated selected-ticket summaries scoped to
+  the affected workspace or user/connection.
 
 Invalidation must not be treated as provider write success. Provider write
 success still comes only from the provider write result. Refresh failure after a

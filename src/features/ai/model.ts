@@ -24,8 +24,10 @@ export type TicketAiSummaryResult =
       status: "unconfigured";
       reason:
         | "ai-disabled"
-        | "missing-anthropic-compatible-config"
-        | "missing-openai-compatible-config";
+        | "invalid-ai-config"
+        | "missing-user-ai-config"
+        | "missing-workspace-ai-config"
+        | "no-active-workspace";
       retryable: false;
     }
   | {

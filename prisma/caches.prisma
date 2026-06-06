@@ -1,0 +1,74 @@
+model TicketSnapshotCache {
+  id                   String             @id @default(cuid())
+  userId               String
+  helpdeskConnectionId String
+  sourceSavedViewId    String?
+  providerTicketId     String
+  ticketNumber         String
+  title                String
+  customerDisplayName  String?
+  customerExternalId   String?
+  ownerDisplayName     String?
+  ownerExternalId      String?
+  groupDisplayName     String?
+  groupExternalId      String?
+  state                TicketState?
+  priority             TicketPriority?
+  pendingUntil         DateTime?
+  providerUpdatedAt    DateTime?
+  tagNamesJson         Json
+  capabilityJson       Json?
+  encryptedDetailJson  String?
+  sourceVersion        String             @default("ticket-detail-v1")
+  fetchedAt            DateTime           @default(now())
+  expiresAt            DateTime
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpdeskConnection   HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+  sourceSavedView      SavedView?         @relation(fields: [sourceSavedViewId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, helpdeskConnectionId, providerTicketId])
+  @@index([helpdeskConnectionId, expiresAt])
+  @@index([sourceSavedViewId])
+}
+
+model ThreadSnapshotCache {
+  id                        String             @id @default(cuid())
+  userId                    String
+  helpdeskConnectionId      String
+  providerTicketId          String
+  messageMetadataJson       Json
+  encryptedSanitizedContent String?
+  fetchedAt                 DateTime           @default(now())
+  expiresAt                 DateTime
+  user                      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpdeskConnection        HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, helpdeskConnectionId, providerTicketId])
+  @@index([helpdeskConnectionId, expiresAt])
+}
+
+model AiSummaryCache {
+  id                    String             @id @default(cuid())
+  userId                String
+  helpdeskConnectionId  String
+  providerTicketId      String
+  operation             String
+  providerProtocol      String
+  modelFingerprint      String
+  promptVersion         String
+  sanitizationVersion   String
+  sourceFingerprint     String
+  sourceTicketNumber    String
+  sourceTicketUpdatedAt DateTime?
+  sourceArticleCount    Int
+  encryptedSummary      String
+  generatedAt           DateTime
+  fetchedAt             DateTime           @default(now())
+  expiresAt             DateTime
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpdeskConnection    HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, helpdeskConnectionId, providerTicketId, operation, providerProtocol, modelFingerprint, promptVersion, sanitizationVersion, sourceFingerprint], name: "ai_summary_cache_identity")
+  @@index([helpdeskConnectionId, expiresAt])
+  @@index([userId, helpdeskConnectionId, providerTicketId])
+}

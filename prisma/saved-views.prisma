@@ -1,0 +1,37 @@
+model SavedView {
+  id                   String                    @id @default(cuid())
+  ownerUserId          String
+  helpdeskConnectionId String?
+  name                 String
+  visibility           SavedViewVisibility       @default(PERSONAL)
+  iconName             String?
+  colorName            String?
+  filterJson           Json
+  seedKey              String?
+  isSystem             Boolean                   @default(false)
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  owner                User                      @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  helpdeskConnection   HelpdeskConnection?       @relation(fields: [helpdeskConnectionId], references: [id], onDelete: SetNull)
+  preferences          UserSavedViewPreference[]
+  ticketSnapshotCaches TicketSnapshotCache[]
+
+  @@index([ownerUserId])
+  @@index([helpdeskConnectionId])
+  @@index([helpdeskConnectionId, seedKey])
+  @@index([visibility])
+}
+
+model UserSavedViewPreference {
+  userId      String
+  savedViewId String
+  position    Int
+  isDefault   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  savedView   SavedView @relation(fields: [savedViewId], references: [id], onDelete: Cascade)
+
+  @@id([userId, savedViewId])
+  @@index([userId, position])
+}

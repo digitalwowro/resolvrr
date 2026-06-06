@@ -22,8 +22,23 @@ function summaryStatusText(result: TicketAiSummaryResult | undefined) {
   if (result.status === "available") {
     return `Source updated ${result.source.ticketUpdatedAt}; ${result.source.articleCount} articles`;
   }
+  if (result.status === "unconfigured" && result.reason === "ai-disabled") {
+    return "AI is disabled for this workspace";
+  }
+  if (
+    result.status === "unconfigured" &&
+    result.reason === "missing-workspace-ai-config"
+  ) {
+    return "Workspace AI settings need setup";
+  }
+  if (
+    result.status === "unconfigured" &&
+    result.reason === "missing-user-ai-config"
+  ) {
+    return "Add your AI key in Settings";
+  }
   if (result.status === "unconfigured") {
-    return "AI summary is not configured";
+    return "AI settings need attention";
   }
   if (result.reason === "provider-rate-limited") {
     return "AI provider is rate limited";
