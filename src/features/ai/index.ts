@@ -13,6 +13,7 @@ export type {
   LoadWorkspaceAiSettingsAction,
   SaveUserWorkspaceAiSettingsAction,
   SaveWorkspaceAiSettingsAction,
+  AiProviderProtocol,
   AiSettingsConfigView,
   WorkspaceAiSettingsData,
   WorkspaceAiPolicy,

@@ -11,6 +11,7 @@ import type {
   WorkspaceSettingsConnection,
 } from "@/features/helpdesk-connections/service-types";
 import type {
+  LoadWorkspaceAiSettingsAction,
   SaveUserWorkspaceAiSettingsAction,
   SaveWorkspaceAiSettingsAction,
   WorkspaceAiSettingsData,
@@ -42,6 +43,7 @@ type WorkspaceSettingsDialogProps = {
   initialAiSettingsData?: WorkspaceAiSettingsData;
   initialSection: WorkspaceSettingsSection;
   initialSavedViewData?: SavedViewSettingsData;
+  loadWorkspaceAiSettingsAction?: LoadWorkspaceAiSettingsAction;
   onAiSettingsDataChange?(data: WorkspaceAiSettingsData): void;
   loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
   onClose(): void;
@@ -77,6 +79,7 @@ export function WorkspaceSettingsDialog({
   initialAiSettingsData,
   initialSection,
   initialSavedViewData,
+  loadWorkspaceAiSettingsAction,
   loadSavedViewsSettingsAction,
   onClose,
   onAiSettingsDataChange,
@@ -129,6 +132,14 @@ export function WorkspaceSettingsDialog({
   function applyAiSettingsData(data: WorkspaceAiSettingsData) {
     setAiSettingsData(data);
     onAiSettingsDataChange?.(data);
+  }
+
+  function reloadAiSettingsAfterWorkspaceChange() {
+    setAiSettingsData(undefined);
+    if (!loadWorkspaceAiSettingsAction) {
+      return;
+    }
+    void loadWorkspaceAiSettingsAction().then(applyAiSettingsData);
   }
 
   if (typeof document === "undefined") {
@@ -220,6 +231,7 @@ export function WorkspaceSettingsDialog({
               createConnectionAction={createConnectionAction}
               deleteConnectionAction={deleteConnectionAction}
               disableConnectionAction={disableConnectionAction}
+              onActiveWorkspaceChange={reloadAiSettingsAfterWorkspaceChange}
               onConnectionsChange={setConnections}
               providerOptions={providerOptions}
               setActiveConnectionAction={setActiveConnectionAction}

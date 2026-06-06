@@ -203,6 +203,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       detailResult={workspaceDetailResult}
       disableConnectionAction={disableHelpdeskConnectionAction}
       listResult={listResult}
+      loadWorkspaceAiSettingsAction={loadWorkspaceAiSettingsAction}
       loadTicketDetailAction={loadWorkspaceTicketDetailAction}
       loadTicketListPageAction={loadWorkspaceTicketListPageAction}
       loadWorkspaceNotificationsAction={loadWorkspaceNotificationsAction}

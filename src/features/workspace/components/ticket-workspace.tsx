@@ -45,6 +45,7 @@ export function TicketWorkspace({
   loadTicketListPageAction,
   loadSavedViewsSettingsAction,
   loadWorkspaceNotificationsAction,
+  loadWorkspaceAiSettingsAction,
   logoutAction,
   markWorkspaceNotificationsReadAction,
   metadataMutationCapabilities,
@@ -181,6 +182,7 @@ export function TicketWorkspace({
           initialSection={settingsSection}
           initialSavedViewData={savedViewSettingsData}
           initialAiSettingsData={aiSettingsData}
+          loadWorkspaceAiSettingsAction={loadWorkspaceAiSettingsAction}
           loadSavedViewsSettingsAction={loadSavedViewsSettingsAction}
           onClose={() => setSettingsOpen(false)}
           onSavedViewDataChange={(data) => {

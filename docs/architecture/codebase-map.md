@@ -863,6 +863,9 @@ added, moved, renamed, or removed.
     - `ai-settings-live-validation.test.ts`
       (`tests/features/ai-settings-live-validation.test.ts`): verifies workspace AI provider live
       validation success and failure mapping for supported protocol families.
+    - `ai-settings-data-shape.test.ts` (`tests/features/ai-settings-data-shape.test.ts`):
+      verifies workspace AI settings client-readable data hides admin-managed provider metadata
+      from non-admin users while preserving configured status.
     - `ai-settings-service.test.ts` (`tests/features/ai-settings-service.test.ts`): verifies
       workspace AI runtime resolution, admin/user settings mutations, encrypted key storage, live
       validation failure behavior, permissions, and generated-summary cache invalidation.
@@ -1042,6 +1045,9 @@ added, moved, renamed, or removed.
     - `ticket-workspace-ai-settings.test.tsx`
       (`tests/features/ticket-workspace-ai-settings.test.tsx`): verifies Settings AI section
       visibility and save behavior for admins, admin-managed users, and user-provided-key users.
+    - `ticket-workspace-ai-active-switch.test.tsx`
+      (`tests/features/ticket-workspace-ai-active-switch.test.tsx`): verifies the open Settings
+      dialog reloads AI settings after the active workspace changes.
     - `ticket-workspace-settings.test.tsx` (`tests/features/ticket-workspace-settings.test.tsx`):
       verifies ticket workspace settings behavior.
     - `ticket-workspace-test-utils.tsx` (`tests/features/ticket-workspace-test-utils.tsx`): shared

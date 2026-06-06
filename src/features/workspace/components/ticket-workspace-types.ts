@@ -19,6 +19,7 @@ import type {
   MarkWorkspaceNotificationsReadAction,
 } from "@/features/notifications";
 import type {
+  LoadWorkspaceAiSettingsAction,
   SaveUserWorkspaceAiSettingsAction,
   SaveWorkspaceAiSettingsAction,
   SummarizeWorkspaceTicketAction,
@@ -64,6 +65,7 @@ export type TicketWorkspaceProps = {
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
   loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
   loadWorkspaceNotificationsAction?: LoadWorkspaceNotificationsAction;
+  loadWorkspaceAiSettingsAction?: LoadWorkspaceAiSettingsAction;
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
   summarizeTicketAction?: SummarizeWorkspaceTicketAction;
   initialAiSettingsData?: WorkspaceAiSettingsData;

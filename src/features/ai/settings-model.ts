@@ -23,6 +23,7 @@ export type WorkspaceAiSettingsData = {
   policy: WorkspaceAiPolicy;
   userConfig: AiSettingsConfigView | null;
   workspaceConfig: AiSettingsConfigView | null;
+  workspaceConfigConfigured: boolean;
 };
 
 export type WorkspaceAiSettingsActionCode =

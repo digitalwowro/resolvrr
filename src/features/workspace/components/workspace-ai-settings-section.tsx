@@ -19,6 +19,7 @@ const defaultData: WorkspaceAiSettingsData = {
   policy: "disabled",
   userConfig: null,
   workspaceConfig: null,
+  workspaceConfigConfigured: false,
 };
 
 const messageText: Record<WorkspaceAiSettingsActionCode, string> = {
@@ -44,7 +45,7 @@ function userStatus(data: WorkspaceAiSettingsData) {
     return "AI is disabled for this workspace.";
   }
   if (data.policy === "admin-managed") {
-    return data.workspaceConfig
+    return data.workspaceConfigConfigured
       ? "AI is enabled by the workspace admin."
       : "AI is not configured for this workspace.";
   }

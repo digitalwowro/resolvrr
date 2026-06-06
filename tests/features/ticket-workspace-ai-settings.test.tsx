@@ -29,7 +29,7 @@ describe("TicketWorkspace AI settings", () => {
   it("shows active-workspace AI controls to admins", async () => {
     const user = userEvent.setup();
 
-    render(
+    const { container } = render(
       <TicketWorkspace
         columns={defaultWorkspaceTicketColumns}
         connections={[{ id: "connection-1", label: "Support", active: true }]}
@@ -39,6 +39,7 @@ describe("TicketWorkspace AI settings", () => {
           policy: "disabled",
           userConfig: null,
           workspaceConfig: null,
+          workspaceConfigConfigured: false,
         }}
         listResult={availableList}
         logoutAction={noopAction}
@@ -64,6 +65,30 @@ describe("TicketWorkspace AI settings", () => {
       within(dialog).getByLabelText("Workspace AI"),
       "admin-managed",
     );
+    const modelInput = within(dialog).getByLabelText("Model");
+    const listId = modelInput.getAttribute("list");
+    expect(listId).toBeTruthy();
+    const modelList = container.ownerDocument.getElementById(listId ?? "");
+    expect(modelList).toBeTruthy();
+    expect(
+      Array.from(modelList?.querySelectorAll("option") ?? []).map(
+        (option) => option.getAttribute("value"),
+      ),
+    ).toEqual(["gpt-5.5", "gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano"]);
+    await user.selectOptions(
+      within(dialog).getByLabelText("Provider"),
+      "anthropic-compatible",
+    );
+    expect(
+      Array.from(modelList?.querySelectorAll("option") ?? []).map(
+        (option) => option.getAttribute("value"),
+      ),
+    ).toEqual([
+      "claude-opus-4-8",
+      "claude-sonnet-4-6",
+      "claude-haiku-4-5-20251001",
+      "claude-haiku-4-5",
+    ]);
     expect(within(dialog).getByLabelText("API key")).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Save and test" }))
       .toBeInTheDocument();
@@ -81,12 +106,8 @@ describe("TicketWorkspace AI settings", () => {
           canManageWorkspace: false,
           policy: "admin-managed",
           userConfig: null,
-          workspaceConfig: {
-            baseUrl: "https://api.openai.test/v1",
-            hasApiKey: true,
-            model: "support-model",
-            providerProtocol: "openai-compatible",
-          },
+          workspaceConfig: null,
+          workspaceConfigConfigured: true,
         }}
         listResult={availableList}
         logoutAction={noopAction}
@@ -128,6 +149,7 @@ describe("TicketWorkspace AI settings", () => {
             providerProtocol: "openai-compatible" as const,
           },
           workspaceConfig: null,
+          workspaceConfigConfigured: false,
         },
         ok: true,
       };
@@ -143,6 +165,7 @@ describe("TicketWorkspace AI settings", () => {
           policy: "user-provided",
           userConfig: null,
           workspaceConfig: null,
+          workspaceConfigConfigured: false,
         }}
         listResult={availableList}
         logoutAction={noopAction}
@@ -170,4 +193,5 @@ describe("TicketWorkspace AI settings", () => {
     expect(saveUserWorkspaceAiSettingsAction).toHaveBeenCalledOnce();
     expect(await within(dialog).findByText("AI key saved.")).toBeInTheDocument();
   });
+
 });

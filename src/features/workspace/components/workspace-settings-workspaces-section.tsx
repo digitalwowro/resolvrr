@@ -46,11 +46,16 @@ function formDataWithConnectionId(connectionId: string) {
   return formData;
 }
 
+function activeConnection(connections: WorkspaceSettingsConnection[]) {
+  return connections.find((connection) => connection.active) ?? null;
+}
+
 export function WorkspacesSection({
   connections,
   createConnectionAction,
   deleteConnectionAction,
   disableConnectionAction,
+  onActiveWorkspaceChange,
   onConnectionsChange,
   providerOptions,
   setActiveConnectionAction,
@@ -61,6 +66,7 @@ export function WorkspacesSection({
   createConnectionAction?: HelpdeskConnectionFormAction;
   deleteConnectionAction?: HelpdeskConnectionFormAction;
   disableConnectionAction?: HelpdeskConnectionFormAction;
+  onActiveWorkspaceChange?(): void;
   onConnectionsChange(connections: WorkspaceSettingsConnection[]): void;
   providerOptions: ConnectionProviderOption[];
   setActiveConnectionAction?: HelpdeskConnectionFormAction;
@@ -75,6 +81,8 @@ export function WorkspacesSection({
   const pending = Boolean(pendingKey) || isPending;
 
   function applyResult(result: HelpdeskConnectionActionResult) {
+    const previousActive = activeConnection(connections);
+    const nextActive = activeConnection(result.connections);
     onConnectionsChange(result.connections);
     setMessage({
       ok: result.ok,
@@ -82,6 +90,12 @@ export function WorkspacesSection({
     });
     if (result.ok) {
       setEditing(null);
+      if (
+        previousActive?.id !== nextActive?.id ||
+        previousActive?.label !== nextActive?.label
+      ) {
+        onActiveWorkspaceChange?.();
+      }
       router.refresh();
     }
   }

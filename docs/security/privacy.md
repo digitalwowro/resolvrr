@@ -15,6 +15,9 @@ conversation content.
 - AI provider API keys are stored server-side, encrypted at rest, and scoped to
   either the active workspace default or a user plus workspace. They are managed
   from `Avatar -> Settings -> AI Settings`.
+- Non-admin AI settings state may expose whether admin-managed AI is configured
+  for the active workspace, but not the workspace provider URL, model, protocol,
+  or key status metadata.
 - Provider and AI credentials must never be stored in cookies, localStorage,
   sessionStorage, or client-readable state.
 

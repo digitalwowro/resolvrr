@@ -59,6 +59,7 @@ export async function settingsDataForWorkspace(
       policy: "disabled",
       userConfig: null,
       workspaceConfig: null,
+      workspaceConfigConfigured: false,
     };
   }
 
@@ -72,7 +73,11 @@ export async function settingsDataForWorkspace(
     canManageWorkspace: user.role === "ADMIN",
     policy: workspaceSetting?.policy ?? "disabled",
     userConfig: configView(userConfig),
-    workspaceConfig: configView(workspaceSetting?.config ?? null),
+    workspaceConfig:
+      user.role === "ADMIN"
+        ? configView(workspaceSetting?.config ?? null)
+        : null,
+    workspaceConfigConfigured: Boolean(workspaceSetting?.config),
   };
 }
 
