@@ -6,7 +6,10 @@ import {
   type TicketReadOperation,
 } from "@/telemetry/ticket-read-timing";
 import type { TicketProviderContext } from "./connection-context";
-import type { TicketDetailCacheRepository } from "./cache-repository";
+import type {
+  TicketDetailCacheReadResult,
+  TicketDetailCacheRepository,
+} from "./cache-repository";
 
 type TicketDetailCacheContext = {
   cacheRepository: TicketDetailCacheRepository;
@@ -30,6 +33,10 @@ function timingContext(input: TicketDetailCacheTimingContext) {
   };
 }
 
+function cacheReadEvent(status: TicketDetailCacheReadResult["status"]) {
+  return status === "invalid-source" ? "stale" : status;
+}
+
 export async function readFreshTicketDetailCache(
   input: TicketDetailCacheContext,
 ): Promise<TicketDetail | null> {
@@ -39,7 +46,7 @@ export async function readFreshTicketDetailCache(
 
   const start = ticketReadTimingStart();
   try {
-    const detail = await input.cacheRepository.findFreshTicketDetail({
+    const cacheResult = await input.cacheRepository.readTicketDetail({
       encryptionKey: input.encryptionKey,
       helpdeskConnectionId: input.providerContext.context.connection.id,
       ticketExternalId: input.ticketExternalId,
@@ -47,15 +54,20 @@ export async function readFreshTicketDetailCache(
     });
     recordTicketReadTiming({
       ...timingContext(input),
+      cacheDataKind: "ticket-detail",
+      cacheEvent: cacheReadEvent(cacheResult.status),
       durationMs: ticketReadTimingDuration(start),
+      freshnessAgeBucket: cacheResult.ageBucket,
       phase: "cache-detail-read",
-      reason: detail ? undefined : "cache-miss",
-      status: detail ? "ok" : "unavailable",
+      reason: cacheResult.status === "invalid-source" ? "invalid-source" : undefined,
+      status: cacheResult.status === "hit" ? "ok" : "unavailable",
     });
-    return detail;
+    return cacheResult.status === "hit" ? cacheResult.detail : null;
   } catch {
     recordTicketReadTiming({
       ...timingContext(input),
+      cacheDataKind: "ticket-detail",
+      cacheEvent: "read-failed",
       durationMs: ticketReadTimingDuration(start),
       phase: "cache-detail-read",
       reason: "cache-error",
@@ -84,6 +96,8 @@ export async function storeTicketDetailCache(
     });
     recordTicketReadTiming({
       ...timingContext(input),
+      cacheDataKind: "ticket-detail",
+      cacheEvent: "write-succeeded",
       durationMs: ticketReadTimingDuration(start),
       phase: "cache-detail-write",
       status: "ok",
@@ -91,6 +105,8 @@ export async function storeTicketDetailCache(
   } catch {
     recordTicketReadTiming({
       ...timingContext(input),
+      cacheDataKind: "ticket-detail",
+      cacheEvent: "write-failed",
       durationMs: ticketReadTimingDuration(start),
       phase: "cache-detail-write",
       reason: "cache-error",

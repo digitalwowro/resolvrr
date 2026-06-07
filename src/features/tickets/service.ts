@@ -159,12 +159,65 @@ export async function loadWorkspaceTicketDetail(
         },
       };
     }
+  } else {
+    recordTicketReadTiming({
+      cacheDataKind: "ticket-detail",
+      cacheEvent: "bypass",
+      connectionId: providerContext.value.context.connection.id,
+      durationMs: 0,
+      operation: "detail",
+      phase: "cache-detail-read",
+      providerKey: providerContext.value.context.connection.providerKey,
+      status: "ok",
+    });
   }
 
-  const [result, lookupData] = await Promise.all([
-    dispatchTicketDetailRead(providerContext.value, ticketExternalId),
-    dispatchTicketLookupDataRead(providerContext.value),
-  ]);
+  recordTicketReadTiming({
+    cacheDataKind: "ticket-detail",
+    cacheEvent: "refresh-started",
+    connectionId: providerContext.value.context.connection.id,
+    durationMs: 0,
+    operation: "detail",
+    phase: "provider-detail-refresh",
+    providerKey: providerContext.value.context.connection.providerKey,
+    status: "ok",
+  });
+  const refreshStart = ticketReadTimingStart();
+  let result: TicketDetailReadResult;
+  let lookupData: Awaited<ReturnType<typeof dispatchTicketLookupDataRead>>;
+  try {
+    [result, lookupData] = await Promise.all([
+      dispatchTicketDetailRead(providerContext.value, ticketExternalId),
+      dispatchTicketLookupDataRead(providerContext.value),
+    ]);
+    recordTicketReadTiming({
+      cacheDataKind: "ticket-detail",
+      cacheEvent:
+        result.status === "available" ? "refresh-succeeded" : "refresh-failed",
+      connectionId: providerContext.value.context.connection.id,
+      durationMs: ticketReadTimingDuration(refreshStart),
+      operation: "detail",
+      phase: "provider-detail-refresh",
+      providerKey: providerContext.value.context.connection.providerKey,
+      reason: result.status === "unavailable" ? result.reason : undefined,
+      retryable: result.status === "unavailable" ? result.retryable : undefined,
+      status: result.status === "available" ? "ok" : "unavailable",
+    });
+  } catch (error) {
+    recordTicketReadTiming({
+      cacheDataKind: "ticket-detail",
+      cacheEvent: "refresh-failed",
+      connectionId: providerContext.value.context.connection.id,
+      durationMs: ticketReadTimingDuration(refreshStart),
+      operation: "detail",
+      phase: "provider-detail-refresh",
+      providerKey: providerContext.value.context.connection.providerKey,
+      reason: error instanceof Error ? error.name : "unknown-error",
+      retryable: true,
+      status: "error",
+    });
+    throw error;
+  }
   recordTicketReadTiming({
     connectionId: providerContext.value.context.connection.id,
     durationMs: ticketReadTimingDuration(totalStart),

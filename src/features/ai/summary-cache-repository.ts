@@ -21,6 +21,17 @@ export type AiSummaryCacheWriteInput = AiSummaryCacheReadInput & {
   result: Extract<TicketAiSummaryResult, { status: "available" }>;
 };
 
+export type AiSummaryCacheReadResult =
+  | {
+      ageBucket: string;
+      result: Extract<TicketAiSummaryResult, { status: "available" }>;
+      status: "hit";
+    }
+  | {
+      ageBucket?: string;
+      status: "miss" | "stale";
+    };
+
 export type AiSummaryCacheInvalidateInput = {
   helpdeskConnectionId: string;
   ticketExternalId: string;
@@ -38,9 +49,7 @@ export type AiSummaryCacheWorkspaceInvalidateInput = {
 
 export type AiSummaryCacheRepository = {
   enabled: boolean;
-  findFreshSummary(
-    input: AiSummaryCacheReadInput,
-  ): Promise<Extract<TicketAiSummaryResult, { status: "available" }> | null>;
+  readSummary(input: AiSummaryCacheReadInput): Promise<AiSummaryCacheReadResult>;
   storeSummary(input: AiSummaryCacheWriteInput): Promise<void>;
   invalidateTicket(input: AiSummaryCacheInvalidateInput): Promise<void>;
   invalidateConnection(input: AiSummaryCacheConnectionInvalidateInput): Promise<void>;
@@ -49,8 +58,8 @@ export type AiSummaryCacheRepository = {
 
 export const noAiSummaryCacheRepository: AiSummaryCacheRepository = {
   enabled: false,
-  async findFreshSummary() {
-    return null;
+  async readSummary() {
+    return { status: "miss" };
   },
   async storeSummary() {},
   async invalidateTicket() {},

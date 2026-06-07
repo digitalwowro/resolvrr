@@ -11,6 +11,7 @@ export type TicketReadTimingPhase =
   | "cache-detail-write"
   | "cache-detail-invalidation"
   | "provider-detail-metadata-request"
+  | "provider-detail-refresh"
   | "provider-secondary-tags-request"
   | "provider-secondary-links-request"
   | "provider-secondary-subscription-request"
@@ -29,9 +30,25 @@ export type TicketReadTimingPhase =
 
 export type TicketReadTimingStatus = "ok" | "unavailable" | "error";
 
+export type TicketReadCacheDataKind = "ticket-detail";
+export type TicketReadCacheEvent =
+  | "bypass"
+  | "hit"
+  | "miss"
+  | "read-failed"
+  | "refresh-failed"
+  | "refresh-started"
+  | "refresh-succeeded"
+  | "stale"
+  | "write-failed"
+  | "write-succeeded";
+
 type TicketReadTimingInput = {
+  cacheDataKind?: TicketReadCacheDataKind;
+  cacheEvent?: TicketReadCacheEvent;
   connectionId?: string;
   durationMs: number;
+  freshnessAgeBucket?: string;
   operation: TicketReadOperation;
   phase: TicketReadTimingPhase;
   providerKey?: string;
@@ -58,7 +75,10 @@ export function recordTicketReadTiming(input: TicketReadTimingInput) {
     "Ticket read timing",
     safeLogMetadata({
       connectionId: input.connectionId,
+      cacheDataKind: input.cacheDataKind,
+      cacheEvent: input.cacheEvent,
       durationMs: input.durationMs,
+      freshnessAgeBucket: input.freshnessAgeBucket,
       operation: input.operation,
       phase: input.phase,
       providerKey: input.providerKey,

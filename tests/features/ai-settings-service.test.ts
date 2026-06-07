@@ -122,10 +122,10 @@ function aiSettingsRepository(): AiSettingsRepository & {
 function aiSummaryCache(): AiSummaryCacheRepository {
   return {
     enabled: true,
-    findFreshSummary: vi.fn(async () => null),
     invalidateConnection: vi.fn(async () => undefined),
     invalidateTicket: vi.fn(async () => undefined),
     invalidateWorkspace: vi.fn(async () => undefined),
+    readSummary: vi.fn(async () => ({ status: "miss" as const })),
     storeSummary: vi.fn(async () => undefined),
   };
 }

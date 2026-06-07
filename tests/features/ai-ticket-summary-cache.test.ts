@@ -66,10 +66,10 @@ function aiCacheRepository(
 ): AiSummaryCacheRepository {
   return {
     enabled: true,
-    findFreshSummary: vi.fn(async () => null),
     invalidateConnection: vi.fn(async () => undefined),
     invalidateTicket: vi.fn(async () => undefined),
     invalidateWorkspace: vi.fn(async () => undefined),
+    readSummary: vi.fn(async () => ({ status: "miss" as const })),
     storeSummary: vi.fn(async () => undefined),
     ...overrides,
   };
@@ -91,6 +91,7 @@ const openAiConfig = {
 
 describe("AI ticket summary output cache", () => {
   it("reuses a fresh generated summary cache hit without calling the AI provider", async () => {
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
     const cachedSummary = {
       status: "available" as const,
       generatedAt: "2026-05-24T08:40:00.000Z",
@@ -102,7 +103,11 @@ describe("AI ticket summary output cache", () => {
       summary: "Situation: Cached summary",
     };
     const cache = aiCacheRepository({
-      findFreshSummary: vi.fn(async () => cachedSummary),
+      readSummary: vi.fn(async () => ({
+        ageBucket: "lt-1m",
+        result: cachedSummary,
+        status: "hit" as const,
+      })),
     });
 
     await expect(
@@ -114,7 +119,24 @@ describe("AI ticket summary output cache", () => {
     ).resolves.toEqual(cachedSummary);
 
     expect(safeProviderJson).not.toHaveBeenCalled();
-    expect(cache.findFreshSummary).toHaveBeenCalledWith(
+    expect(infoSpy.mock.calls.map(([, metadata]) => metadata)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          cacheDataKind: "ai-summary",
+          cacheEvent: "hit",
+          freshnessAgeBucket: "lt-1m",
+          phase: "summary-cache-read",
+          providerProtocol: "openai-compatible",
+          status: "ok",
+        }),
+      ]),
+    );
+    const logged = JSON.stringify(infoSpy.mock.calls);
+    expect(logged).not.toContain("Situation: Cached summary");
+    expect(logged).not.toContain("ticket-1");
+    expect(logged).not.toContain("1001");
+    expect(logged).not.toContain("support-model");
+    expect(cache.readSummary).toHaveBeenCalledWith(
       expect.objectContaining({
         encryptionKey: "test encryption key long enough",
         helpdeskConnectionId: "connection-1",
@@ -128,6 +150,7 @@ describe("AI ticket summary output cache", () => {
   });
 
   it("stores successful generated summaries without storing prompts", async () => {
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
     vi.mocked(safeProviderJson).mockResolvedValueOnce({
       data: {
         choices: [{ message: { content: "Situation: Fresh summary" } }],
@@ -162,7 +185,45 @@ describe("AI ticket summary output cache", () => {
         userId: "user-1",
       }),
     );
+    expect(infoSpy.mock.calls.map(([, metadata]) => metadata)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          cacheDataKind: "ai-summary",
+          cacheEvent: "miss",
+          phase: "summary-cache-read",
+          providerProtocol: "openai-compatible",
+          status: "unavailable",
+        }),
+        expect.objectContaining({
+          cacheDataKind: "ai-summary",
+          cacheEvent: "regeneration-started",
+          phase: "summary-cache-regeneration",
+          providerProtocol: "openai-compatible",
+          status: "ok",
+        }),
+        expect.objectContaining({
+          cacheDataKind: "ai-summary",
+          cacheEvent: "regeneration-succeeded",
+          phase: "summary-cache-regeneration",
+          providerProtocol: "openai-compatible",
+          status: "ok",
+        }),
+        expect.objectContaining({
+          cacheDataKind: "ai-summary",
+          cacheEvent: "write-succeeded",
+          phase: "summary-cache-write",
+          providerProtocol: "openai-compatible",
+          status: "ok",
+        }),
+      ]),
+    );
     expect(JSON.stringify(vi.mocked(cache.storeSummary).mock.calls))
       .not.toContain("Hello support");
+    const logged = JSON.stringify(infoSpy.mock.calls);
+    expect(logged).not.toContain("Hello support");
+    expect(logged).not.toContain("Situation: Fresh summary");
+    expect(logged).not.toContain("ticket-1");
+    expect(logged).not.toContain("1001");
+    expect(logged).not.toContain("support-model");
   });
 });
