@@ -19,6 +19,13 @@ vi.mock("@/data/ai-settings-repository", () => ({
   },
 }));
 
+vi.mock("@/data/ai-prompts-repository", () => ({
+  prismaAiPromptRepository: {
+    getUserPromptOverride: vi.fn(async () => null),
+    getWorkspacePrompt: vi.fn(async () => null),
+  },
+}));
+
 vi.mock("@/data/helpdesk-connections-repository", () => ({
   prismaHelpdeskConnectionsRepository: {},
 }));

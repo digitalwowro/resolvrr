@@ -1,0 +1,29 @@
+model WorkspaceAiPrompt {
+  id                   String             @id @default(cuid())
+  helpdeskConnectionId String
+  promptKey            String
+  encryptedPrompt      String
+  keyVersion           String             @default("v1")
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  helpdeskConnection   HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([helpdeskConnectionId, promptKey])
+  @@index([helpdeskConnectionId])
+}
+
+model UserAiPromptOverride {
+  id                   String             @id @default(cuid())
+  userId               String
+  helpdeskConnectionId String
+  promptKey            String
+  encryptedPrompt      String
+  keyVersion           String             @default("v1")
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpdeskConnection   HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, helpdeskConnectionId, promptKey])
+  @@index([helpdeskConnectionId])
+}

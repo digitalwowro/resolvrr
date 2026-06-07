@@ -13,6 +13,7 @@ import type {
   WorkspaceAiSettingsActionResult,
   WorkspaceAiSettingsData,
 } from "./settings-model";
+import { hasUserOverridablePrompts } from "./prompt-registry";
 
 export const secretKeyVersion = "v1";
 
@@ -55,7 +56,9 @@ export async function settingsDataForWorkspace(
   if (!workspace) {
     return {
       activeWorkspace: null,
+      allowUserPromptOverrides: false,
       canManageWorkspace: user.role === "ADMIN",
+      canViewPromptCenter: false,
       policy: "disabled",
       userConfig: null,
       workspaceConfig: null,
@@ -70,7 +73,14 @@ export async function settingsDataForWorkspace(
 
   return {
     activeWorkspace: workspace,
+    allowUserPromptOverrides:
+      workspaceSetting?.allowUserPromptOverrides ?? false,
     canManageWorkspace: user.role === "ADMIN",
+    canViewPromptCenter:
+      (workspaceSetting?.policy ?? "disabled") !== "disabled" &&
+      (user.role === "ADMIN" ||
+        ((workspaceSetting?.allowUserPromptOverrides ?? false) &&
+          hasUserOverridablePrompts())),
     policy: workspaceSetting?.policy ?? "disabled",
     userConfig: configView(userConfig),
     workspaceConfig:

@@ -78,6 +78,26 @@ Protocol support is about request/response shape, not helpdesk provider
 identity. API keys must stay server-side and must not be exposed to client
 state, public logs, or generated output.
 
+## Prompt Configuration
+
+AI prompt operations are registered in code before they can be edited or used.
+Each registered prompt defines its stable key, built-in default, maximum length,
+and whether user-specific overrides are allowed. The selected-ticket summary
+prompt is admin-managed only so summary output stays consistent across users.
+
+Prompt defaults are scoped to the active workspace and managed from `Avatar ->
+Settings -> Prompt Center` when AI is enabled. Prompt bodies are encrypted at
+rest with `APP_ENCRYPTION_KEY`. Admins may allow personal prompt overrides for
+future prompt operations that the code registry marks as user-overridable.
+Turning that workspace option off preserves saved user prompt rows but makes
+admin defaults the only effective prompts. Stored user prompts must not be read
+as effective prompts while the option is off.
+
+Selected-ticket summary generation resolves only the workspace/admin summary
+prompt, then combines it with the server-built provider-neutral ticket context.
+The ticket context remains non-editable and is still generated from sanitized
+ticket data on the server.
+
 ## Failure Behavior
 
 The summary UI reports disabled, missing workspace configuration, missing user
@@ -98,10 +118,11 @@ email addresses, or ticket/thread content.
 ## Caching
 
 Successful selected-ticket summaries may be cached in encrypted server-side
-storage. Cache keys include prompt contract version, model identity fingerprint,
-selected-ticket identity, source fingerprint/freshness, sanitization version,
-user, and active helpdesk connection. Prompt text, raw provider payloads, model
-names, and generated summaries must not be logged.
+storage. Cache keys include prompt contract version, effective prompt text
+fingerprint, model identity fingerprint, selected-ticket identity, source
+fingerprint/freshness, sanitization version, user, and active helpdesk
+connection. Prompt text, raw provider payloads, model names, and generated
+summaries must not be logged.
 
 The cache is read only from the explicit summary action. Rendering, route
 loading, tab switching, background refresh, and local state changes must not

@@ -23,7 +23,8 @@ tickets and conversations.
 - Read-only AI summary behavior is defined in
   `docs/architecture/read-only-ai-contract.md`; it is optional, explicit-action
   only, cannot write to helpdesk providers, and resolves encrypted AI provider
-  settings from the active workspace policy.
+  settings plus workspace-scoped prompt defaults from the active workspace
+  policy.
 
 ## First Release Shape
 
@@ -33,4 +34,4 @@ saved view preferences, and the workspace ticket workflow. Broader team
 management, workflow automation, public APIs, assisted AI actions, and durable
 assisted AI output beyond selected-ticket summaries are deferred. Read-only AI
 summaries are limited to internal selected-ticket summaries configured from the
-workspace-scoped Settings surface.
+workspace-scoped Settings surface, including admin-managed prompt defaults.

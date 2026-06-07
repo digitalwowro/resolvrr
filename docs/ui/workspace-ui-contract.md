@@ -184,6 +184,16 @@ metadata, staged communication, saved views, open tabs, or provider state.
 Customer-visible communication still requires explicit user review and the
 selected helpdesk provider write path.
 
+When workspace AI is enabled, admins also see `Prompt Center` in Settings.
+Prompt Center lists registered admin-managed prompts and allows editing or
+resetting workspace defaults. The current summary prompt is admin-only. Prompt
+Center also includes the workspace option that allows personal prompt overrides
+for future registry-approved user-editable prompts; disabling the option keeps
+saved personal prompt rows stored but inactive. Regular users see Prompt Center
+only when AI is enabled, personal overrides are allowed, and at least one
+registered prompt is user-editable. In the current slice no regular-user
+prompt editor appears because the summary prompt is admin-only.
+
 ## Production Data Boundary
 
 The real `/workspace` route must not mix synthetic tickets with provider-backed

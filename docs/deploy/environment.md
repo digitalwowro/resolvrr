@@ -13,7 +13,7 @@ root `.env`, `docs/deploy/.env.example`, and `src/config/env.ts` in sync.
 - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`: Docker Postgres settings.
 - `APP_ENCRYPTION_KEY`: base64-encoded 32-byte key for server-side encrypted
   provider credentials, workspace/user AI credentials, and sensitive cache
-  payloads.
+  payloads, including AI prompt defaults and user prompt overrides.
 - `SESSION_SECRET`: server-side session secret material.
 
 Read-only AI provider credentials are not configured through environment

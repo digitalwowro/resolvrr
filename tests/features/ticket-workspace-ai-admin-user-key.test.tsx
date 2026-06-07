@@ -36,7 +36,9 @@ describe("TicketWorkspace AI settings admin personal key", () => {
         code: "ai-user-settings-saved" as const,
         data: {
           activeWorkspace: { id: "connection-1", label: "Support" },
+          allowUserPromptOverrides: false,
           canManageWorkspace: true,
+          canViewPromptCenter: false,
           policy: "user-provided" as const,
           userConfig: {
             baseUrl: "https://api.openai.test/v1",
@@ -57,7 +59,9 @@ describe("TicketWorkspace AI settings admin personal key", () => {
         connections={[{ id: "connection-1", label: "Support", active: true }]}
         initialAiSettingsData={{
           activeWorkspace: { id: "connection-1", label: "Support" },
+          allowUserPromptOverrides: false,
           canManageWorkspace: true,
+          canViewPromptCenter: false,
           policy: "user-provided",
           userConfig: null,
           workspaceConfig: null,
@@ -121,7 +125,9 @@ describe("TicketWorkspace AI settings admin personal key", () => {
         connections={[{ id: "connection-1", label: "Support", active: true }]}
         initialAiSettingsData={{
           activeWorkspace: { id: "connection-1", label: "Support" },
+          allowUserPromptOverrides: false,
           canManageWorkspace: true,
+          canViewPromptCenter: false,
           policy: "user-provided",
           userConfig: null,
           workspaceConfig: null,
@@ -168,7 +174,9 @@ describe("TicketWorkspace AI settings admin personal key", () => {
         connections={[{ id: "connection-1", label: "Support", active: true }]}
         initialAiSettingsData={{
           activeWorkspace: { id: "connection-1", label: "Support" },
+          allowUserPromptOverrides: false,
           canManageWorkspace: true,
+          canViewPromptCenter: false,
           policy: "disabled",
           userConfig: null,
           workspaceConfig: null,

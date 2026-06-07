@@ -19,7 +19,9 @@ export type AiSettingsConfigView = {
 
 export type WorkspaceAiSettingsData = {
   activeWorkspace: { id: string; label: string } | null;
+  allowUserPromptOverrides: boolean;
   canManageWorkspace: boolean;
+  canViewPromptCenter: boolean;
   policy: WorkspaceAiPolicy;
   userConfig: AiSettingsConfigView | null;
   workspaceConfig: AiSettingsConfigView | null;

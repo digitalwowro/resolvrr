@@ -35,7 +35,9 @@ describe("TicketWorkspace AI settings active workspace switch", () => {
         code: "ai-settings-saved" as const,
         data: {
           activeWorkspace: { id: "connection-2", label: "Sales" },
+          allowUserPromptOverrides: false,
           canManageWorkspace: true,
+          canViewPromptCenter: false,
           policy: "disabled" as const,
           userConfig: null,
           workspaceConfig: null,
@@ -46,7 +48,9 @@ describe("TicketWorkspace AI settings active workspace switch", () => {
     });
     const loadWorkspaceAiSettingsAction = vi.fn(async () => ({
       activeWorkspace: { id: "connection-2", label: "Sales" },
+          allowUserPromptOverrides: false,
       canManageWorkspace: true,
+          canViewPromptCenter: false,
       policy: "disabled" as const,
       userConfig: null,
       workspaceConfig: null,
@@ -70,7 +74,9 @@ describe("TicketWorkspace AI settings active workspace switch", () => {
         ]}
         initialAiSettingsData={{
           activeWorkspace: { id: "connection-1", label: "Support" },
+          allowUserPromptOverrides: false,
           canManageWorkspace: true,
+          canViewPromptCenter: false,
           policy: "admin-managed",
           userConfig: null,
           workspaceConfig: {

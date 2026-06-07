@@ -7,9 +7,15 @@ import { prismaWorkspaceTabsRepository } from "@/data/workspace-tabs-repository"
 import type { TicketListQueryInput } from "@/core/providers";
 import { logoutAction } from "@/features/auth/actions";
 import {
+  loadAiPromptCenterAction,
   loadWorkspaceAiSettingsAction,
+  resetUserAiPromptOverrideAction,
+  resetWorkspaceAiPromptAction,
+  saveAiPromptOverridePolicyAction,
   saveUserWorkspaceAiSettingsAction,
+  saveUserAiPromptOverrideAction,
   saveWorkspaceAiSettingsAction,
+  saveWorkspaceAiPromptAction,
   summarizeWorkspaceTicketAction,
 } from "@/features/ai";
 import {
@@ -203,6 +209,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       detailResult={workspaceDetailResult}
       disableConnectionAction={disableHelpdeskConnectionAction}
       listResult={listResult}
+      loadAiPromptCenterAction={loadAiPromptCenterAction}
       loadWorkspaceAiSettingsAction={loadWorkspaceAiSettingsAction}
       loadTicketDetailAction={loadWorkspaceTicketDetailAction}
       loadTicketListPageAction={loadWorkspaceTicketListPageAction}
@@ -227,10 +234,15 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       })}
       initialAiSettingsData={await loadWorkspaceAiSettingsAction()}
       reorderSavedViewsAction={reorderWorkspaceSavedViewsAction}
+      resetUserAiPromptOverrideAction={resetUserAiPromptOverrideAction}
+      resetWorkspaceAiPromptAction={resetWorkspaceAiPromptAction}
+      saveAiPromptOverridePolicyAction={saveAiPromptOverridePolicyAction}
       saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
       saveSavedViewAction={saveWorkspaceSavedViewAction}
       saveUserWorkspaceAiSettingsAction={saveUserWorkspaceAiSettingsAction}
+      saveUserAiPromptOverrideAction={saveUserAiPromptOverrideAction}
       saveWorkspaceAiSettingsAction={saveWorkspaceAiSettingsAction}
+      saveWorkspaceAiPromptAction={saveWorkspaceAiPromptAction}
       searchTicketLinkTargetsAction={searchWorkspaceTicketLinkTargetsAction}
       summarizeTicketAction={summarizeWorkspaceTicketAction}
       savedViews={workspaceSavedViews(

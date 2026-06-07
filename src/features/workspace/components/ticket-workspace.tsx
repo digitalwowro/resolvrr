@@ -43,6 +43,7 @@ export function TicketWorkspace({
   listResult,
   loadTicketDetailAction,
   loadTicketListPageAction,
+  loadAiPromptCenterAction,
   loadSavedViewsSettingsAction,
   loadWorkspaceNotificationsAction,
   loadWorkspaceAiSettingsAction,
@@ -57,9 +58,14 @@ export function TicketWorkspace({
   initialSavedViewSettingsData,
   reorderSavedViewsAction,
   initialWorkspaceOpenTabsState,
+  resetUserAiPromptOverrideAction,
+  resetWorkspaceAiPromptAction,
+  saveAiPromptOverridePolicyAction,
   saveWorkspaceOpenTabsStateAction,
   saveUserWorkspaceAiSettingsAction,
+  saveUserAiPromptOverrideAction,
   saveWorkspaceAiSettingsAction,
+  saveWorkspaceAiPromptAction,
   saveSavedViewAction,
   selectedSavedViewId,
   selectedTicketId,
@@ -183,6 +189,7 @@ export function TicketWorkspace({
           initialSavedViewData={savedViewSettingsData}
           initialAiSettingsData={aiSettingsData}
           loadWorkspaceAiSettingsAction={loadWorkspaceAiSettingsAction}
+          loadAiPromptCenterAction={loadAiPromptCenterAction}
           loadSavedViewsSettingsAction={loadSavedViewsSettingsAction}
           onClose={() => setSettingsOpen(false)}
           onSavedViewDataChange={(data) => {
@@ -198,11 +205,16 @@ export function TicketWorkspace({
             );
           }}
           providerOptions={connectionProviderOptions}
+          resetUserAiPromptOverrideAction={resetUserAiPromptOverrideAction}
+          resetWorkspaceAiPromptAction={resetWorkspaceAiPromptAction}
           reorderSavedViewsAction={reorderSavedViewsAction}
           onAiSettingsDataChange={setAiSettingsData}
+          saveAiPromptOverridePolicyAction={saveAiPromptOverridePolicyAction}
           saveSavedViewAction={saveSavedViewAction}
           saveUserWorkspaceAiSettingsAction={saveUserWorkspaceAiSettingsAction}
+          saveUserAiPromptOverrideAction={saveUserAiPromptOverrideAction}
           saveWorkspaceAiSettingsAction={saveWorkspaceAiSettingsAction}
+          saveWorkspaceAiPromptAction={saveWorkspaceAiPromptAction}
           setActiveConnectionAction={
             setActiveConnectionAction as HelpdeskConnectionFormAction
           }

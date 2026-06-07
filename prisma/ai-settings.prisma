@@ -1,14 +1,15 @@
 model WorkspaceAiSetting {
-  helpdeskConnectionId String              @id
-  policy               WorkspaceAiPolicy   @default(DISABLED)
-  providerProtocol     AiProviderProtocol?
-  baseUrl              String?
-  modelName            String?
-  encryptedApiKey      String?
-  keyVersion           String              @default("v1")
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
-  helpdeskConnection   HelpdeskConnection  @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+  helpdeskConnectionId      String              @id
+  policy                    WorkspaceAiPolicy   @default(DISABLED)
+  allowUserPromptOverrides  Boolean             @default(false)
+  providerProtocol          AiProviderProtocol?
+  baseUrl                   String?
+  modelName                 String?
+  encryptedApiKey           String?
+  keyVersion                String              @default("v1")
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  helpdeskConnection        HelpdeskConnection  @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
 }
 
 model UserWorkspaceAiSetting {

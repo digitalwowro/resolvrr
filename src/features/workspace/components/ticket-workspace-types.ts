@@ -20,8 +20,14 @@ import type {
 } from "@/features/notifications";
 import type {
   LoadWorkspaceAiSettingsAction,
+  LoadAiPromptCenterAction,
+  ResetUserAiPromptOverrideAction,
+  ResetWorkspaceAiPromptAction,
+  SaveAiPromptOverridePolicyAction,
   SaveUserWorkspaceAiSettingsAction,
+  SaveUserAiPromptOverrideAction,
   SaveWorkspaceAiSettingsAction,
+  SaveWorkspaceAiPromptAction,
   SummarizeWorkspaceTicketAction,
   WorkspaceAiSettingsData,
 } from "@/features/ai";
@@ -66,6 +72,7 @@ export type TicketWorkspaceProps = {
   loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
   loadWorkspaceNotificationsAction?: LoadWorkspaceNotificationsAction;
   loadWorkspaceAiSettingsAction?: LoadWorkspaceAiSettingsAction;
+  loadAiPromptCenterAction?: LoadAiPromptCenterAction;
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
   summarizeTicketAction?: SummarizeWorkspaceTicketAction;
   initialAiSettingsData?: WorkspaceAiSettingsData;
@@ -78,8 +85,13 @@ export type TicketWorkspaceProps = {
   reorderSavedViewsAction?: ReorderWorkspaceSavedViewsAction;
   initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
   saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
+  resetUserAiPromptOverrideAction?: ResetUserAiPromptOverrideAction;
+  resetWorkspaceAiPromptAction?: ResetWorkspaceAiPromptAction;
+  saveAiPromptOverridePolicyAction?: SaveAiPromptOverridePolicyAction;
   saveUserWorkspaceAiSettingsAction?: SaveUserWorkspaceAiSettingsAction;
+  saveUserAiPromptOverrideAction?: SaveUserAiPromptOverrideAction;
   saveWorkspaceAiSettingsAction?: SaveWorkspaceAiSettingsAction;
+  saveWorkspaceAiPromptAction?: SaveWorkspaceAiPromptAction;
   saveSavedViewAction?: SaveWorkspaceSavedViewAction;
   selectedSavedViewId?: string;
   selectedTicketId?: string;

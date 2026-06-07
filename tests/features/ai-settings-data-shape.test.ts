@@ -32,6 +32,7 @@ function repository(
 }
 
 const configuredWorkspace: StoredWorkspaceAiSetting = {
+  allowUserPromptOverrides: false,
   config: {
     baseUrl: "https://api.openai.test/v1",
     encryptedApiKey: "encrypted-key",
@@ -82,6 +83,7 @@ describe("workspace AI settings data shape", () => {
     await expect(
       settingsDataForWorkspace(
         repository({
+          allowUserPromptOverrides: false,
           config: null,
           helpdeskConnectionId: "connection-1",
           policy: "admin-managed",

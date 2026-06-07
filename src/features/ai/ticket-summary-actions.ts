@@ -2,6 +2,7 @@
 
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
+import { prismaAiPromptRepository } from "@/data/ai-prompts-repository";
 import { prismaAiSettingsRepository } from "@/data/ai-settings-repository";
 import { prismaAiSummaryCacheRepository } from "@/data/ai-summary-cache-repository";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
@@ -14,6 +15,8 @@ import type {
 } from "./model";
 import { resolveWorkspaceAiRuntimeConfig } from "./settings-service";
 import { summarizeTicketDetail } from "./ticket-summary-service";
+import { resolveEffectiveAiPrompt } from "./prompt-service";
+import { ticketSummaryPromptKey } from "./prompt-registry";
 
 function unavailableTicketSummary(
   retryable: boolean,
@@ -52,8 +55,18 @@ export const summarizeWorkspaceTicketAction: SummarizeWorkspaceTicketAction =
           env.APP_ENCRYPTION_KEY,
           user.id,
           detailResult.helpdeskConnectionId,
-        )
+      )
       : { status: "unconfigured" as const, reason: "no-active-workspace" as const };
+    const summaryPrompt = detailResult.helpdeskConnectionId
+      ? await resolveEffectiveAiPrompt({
+          encryptionKey: env.APP_ENCRYPTION_KEY,
+          helpdeskConnectionId: detailResult.helpdeskConnectionId,
+          promptKey: ticketSummaryPromptKey,
+          promptRepository: prismaAiPromptRepository,
+          settingsRepository: prismaAiSettingsRepository,
+          userId: user.id,
+        })
+      : undefined;
 
     return summarizeTicketDetail(
       aiConfig,
@@ -69,5 +82,6 @@ export const summarizeWorkspaceTicketAction: SummarizeWorkspaceTicketAction =
             },
           }
         : undefined,
+      summaryPrompt,
     );
   };

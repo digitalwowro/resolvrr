@@ -2,10 +2,10 @@ import { createHmac } from "node:crypto";
 import type { AiRuntimeConfig } from "./provider-config";
 import type { AiSummaryCacheKey } from "./summary-cache-repository";
 import {
-  ticketSummaryPromptVersion,
   ticketSummarySanitizationVersion,
   type TicketSummaryPromptContext,
 } from "./ticket-summary-context";
+import type { EffectiveAiPrompt } from "./prompt-service";
 
 type AvailableAiRuntimeConfig = Extract<AiRuntimeConfig, { status: "available" }>;
 
@@ -27,6 +27,7 @@ export function aiSummaryCacheKey(input: {
   config: AvailableAiRuntimeConfig;
   context: TicketSummaryPromptContext;
   encryptionKey: string;
+  prompt: Pick<EffectiveAiPrompt, "prompt" | "version">;
   scope: AiSummaryCacheScope;
 }): AiSummaryCacheKey {
   return {
@@ -41,14 +42,15 @@ export function aiSummaryCacheKey(input: {
       ].join("\n"),
     ),
     operation: "ticket-summary",
-    promptVersion: ticketSummaryPromptVersion,
+    promptVersion: input.prompt.version,
     providerProtocol: input.config.provider,
     sanitizationVersion: ticketSummarySanitizationVersion,
     sourceFingerprint: fingerprint(
       input.encryptionKey,
       "ai-summary-source",
       [
-        ticketSummaryPromptVersion,
+        input.prompt.version,
+        input.prompt.prompt,
         ticketSummarySanitizationVersion,
         input.context.ticketUpdatedAt,
         String(input.context.articleCount),

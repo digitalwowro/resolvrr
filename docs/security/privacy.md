@@ -65,5 +65,10 @@ conversation content.
   source fingerprint/freshness, prompt version, sanitization version, provider
   protocol, and model fingerprint. Prompt text, raw provider payloads, model
   names, and generated summaries must not be logged.
+- Workspace AI prompt defaults and user prompt overrides are encrypted at rest.
+  User prompt override rows may remain stored when admins disable personal
+  prompt overrides, but effective prompt resolution must ignore them while the
+  workspace option is off. Prompt bodies must not be logged or exposed outside
+  the settings UI that is authorized to edit them.
 - Customer-visible communication still happens only through the selected
   helpdesk provider after explicit user review and submit.

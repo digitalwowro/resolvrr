@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Eye, Settings, User, X } from "lucide-react";
+import { Bot, Eye, MessageSquareText, Settings, User, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/components/ui/classnames";
@@ -11,7 +11,14 @@ import type {
   WorkspaceSettingsConnection,
 } from "@/features/helpdesk-connections/service-types";
 import type {
+  AiPromptCenterData,
+  LoadAiPromptCenterAction,
   LoadWorkspaceAiSettingsAction,
+  ResetUserAiPromptOverrideAction,
+  ResetWorkspaceAiPromptAction,
+  SaveAiPromptOverridePolicyAction,
+  SaveUserAiPromptOverrideAction,
+  SaveWorkspaceAiPromptAction,
   SaveUserWorkspaceAiSettingsAction,
   SaveWorkspaceAiSettingsAction,
   WorkspaceAiSettingsData,
@@ -26,10 +33,12 @@ import type {
 } from "@/features/saved-views/settings-model";
 import { WorkspacesSection } from "./workspace-settings-workspaces-section";
 import { AiSettingsSection } from "./workspace-ai-settings-section";
+import { AiPromptsSection } from "./workspace-ai-prompts-section";
 import { ViewsSection } from "./workspace-settings-views-section";
 
 export type WorkspaceSettingsSection =
   | "ai"
+  | "prompts"
   | "profile"
   | "views"
   | "workspaces";
@@ -43,13 +52,19 @@ type WorkspaceSettingsDialogProps = {
   initialAiSettingsData?: WorkspaceAiSettingsData;
   initialSection: WorkspaceSettingsSection;
   initialSavedViewData?: SavedViewSettingsData;
+  loadAiPromptCenterAction?: LoadAiPromptCenterAction;
   loadWorkspaceAiSettingsAction?: LoadWorkspaceAiSettingsAction;
   onAiSettingsDataChange?(data: WorkspaceAiSettingsData): void;
   loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
   onClose(): void;
   onSavedViewDataChange?(data: SavedViewSettingsData): void;
   providerOptions: ConnectionProviderOption[];
+  resetUserAiPromptOverrideAction?: ResetUserAiPromptOverrideAction;
+  resetWorkspaceAiPromptAction?: ResetWorkspaceAiPromptAction;
   reorderSavedViewsAction?: ReorderWorkspaceSavedViewsAction;
+  saveAiPromptOverridePolicyAction?: SaveAiPromptOverridePolicyAction;
+  saveUserAiPromptOverrideAction?: SaveUserAiPromptOverrideAction;
+  saveWorkspaceAiPromptAction?: SaveWorkspaceAiPromptAction;
   saveUserWorkspaceAiSettingsAction?: SaveUserWorkspaceAiSettingsAction;
   saveWorkspaceAiSettingsAction?: SaveWorkspaceAiSettingsAction;
   saveSavedViewAction?: SaveWorkspaceSavedViewAction;
@@ -79,13 +94,19 @@ export function WorkspaceSettingsDialog({
   initialAiSettingsData,
   initialSection,
   initialSavedViewData,
+  loadAiPromptCenterAction,
   loadWorkspaceAiSettingsAction,
   loadSavedViewsSettingsAction,
   onClose,
   onAiSettingsDataChange,
   onSavedViewDataChange,
   providerOptions,
+  resetUserAiPromptOverrideAction,
+  resetWorkspaceAiPromptAction,
   reorderSavedViewsAction,
+  saveAiPromptOverridePolicyAction,
+  saveUserAiPromptOverrideAction,
+  saveWorkspaceAiPromptAction,
   saveUserWorkspaceAiSettingsAction,
   saveWorkspaceAiSettingsAction,
   saveSavedViewAction,
@@ -102,6 +123,7 @@ export function WorkspaceSettingsDialog({
   const [section, setSection] = useState<WorkspaceSettingsSection>(initialSection);
   const [connections, setConnections] = useState(initialConnections);
   const [aiSettingsData, setAiSettingsData] = useState(initialAiSettingsData);
+  const [promptCenterData, setPromptCenterData] = useState<AiPromptCenterData>();
   const [savedViewData, setSavedViewData] = useState(initialSavedViewData);
 
   useEffect(() => {
@@ -124,6 +146,13 @@ export function WorkspaceSettingsDialog({
     });
   }, [loadSavedViewsSettingsAction, onSavedViewDataChange, savedViewData, section]);
 
+  useEffect(() => {
+    if (section !== "prompts" || promptCenterData || !loadAiPromptCenterAction) {
+      return;
+    }
+    void loadAiPromptCenterAction().then(setPromptCenterData);
+  }, [loadAiPromptCenterAction, promptCenterData, section]);
+
   function applySavedViewData(data: SavedViewSettingsData) {
     setSavedViewData(data);
     onSavedViewDataChange?.(data);
@@ -131,15 +160,32 @@ export function WorkspaceSettingsDialog({
 
   function applyAiSettingsData(data: WorkspaceAiSettingsData) {
     setAiSettingsData(data);
+    setPromptCenterData(undefined);
+    if (!data.canViewPromptCenter && section === "prompts") {
+      setSection("ai");
+    }
     onAiSettingsDataChange?.(data);
   }
 
   function reloadAiSettingsAfterWorkspaceChange() {
     setAiSettingsData(undefined);
+    setPromptCenterData(undefined);
     if (!loadWorkspaceAiSettingsAction) {
       return;
     }
     void loadWorkspaceAiSettingsAction().then(applyAiSettingsData);
+  }
+
+  function applyPromptCenterData(data: AiPromptCenterData) {
+    setPromptCenterData(data);
+    setAiSettingsData((current) =>
+      current && current.activeWorkspace?.id === data.activeWorkspace?.id
+        ? {
+            ...current,
+            allowUserPromptOverrides: data.allowUserPromptOverrides,
+          }
+        : current,
+    );
   }
 
   if (typeof document === "undefined") {
@@ -207,6 +253,16 @@ export function WorkspaceSettingsDialog({
               <Bot aria-hidden="true" className="size-4" />
               AI Settings
             </button>
+            {aiSettingsData?.canViewPromptCenter ? (
+              <button
+                className={sectionButtonClass(section === "prompts")}
+                onClick={() => setSection("prompts")}
+                type="button"
+              >
+                <MessageSquareText aria-hidden="true" className="size-4" />
+                Prompt Center
+              </button>
+            ) : null}
           </nav>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
@@ -248,6 +304,19 @@ export function WorkspaceSettingsDialog({
               saveSavedViewAction={saveSavedViewAction}
               setDefaultSavedViewAction={setDefaultSavedViewAction}
               userRole={userRole}
+            />
+          ) : section === "prompts" ? (
+            <AiPromptsSection
+              data={promptCenterData}
+              loadAction={loadAiPromptCenterAction}
+              onDataChange={applyPromptCenterData}
+              resetUserAiPromptOverrideAction={resetUserAiPromptOverrideAction}
+              resetWorkspaceAiPromptAction={resetWorkspaceAiPromptAction}
+              saveAiPromptOverridePolicyAction={
+                saveAiPromptOverridePolicyAction
+              }
+              saveUserAiPromptOverrideAction={saveUserAiPromptOverrideAction}
+              saveWorkspaceAiPromptAction={saveWorkspaceAiPromptAction}
             />
           ) : (
             <AiSettingsSection

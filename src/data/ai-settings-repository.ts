@@ -87,6 +87,12 @@ function configData(input: Pick<UpsertWorkspaceAiSettingInput, "config">) {
       };
 }
 
+function promptOverrideData(input: UpsertWorkspaceAiSettingInput) {
+  return typeof input.allowUserPromptOverrides === "boolean"
+    ? { allowUserPromptOverrides: input.allowUserPromptOverrides }
+    : {};
+}
+
 export const prismaAiSettingsRepository: AiSettingsRepository = {
   async deleteUserSettingsForWorkspace(helpdeskConnectionId) {
     await prisma.userWorkspaceAiSetting.deleteMany({
@@ -125,6 +131,7 @@ export const prismaAiSettingsRepository: AiSettingsRepository = {
     }
 
     return {
+      allowUserPromptOverrides: setting.allowUserPromptOverrides,
       config: configFromRecord(setting),
       helpdeskConnectionId,
       policy: toPolicy(setting.policy),
@@ -163,11 +170,13 @@ export const prismaAiSettingsRepository: AiSettingsRepository = {
       where: { helpdeskConnectionId: input.helpdeskConnectionId },
       create: {
         ...configData(input),
+        allowUserPromptOverrides: input.allowUserPromptOverrides ?? false,
         helpdeskConnectionId: input.helpdeskConnectionId,
         policy: toDbPolicy(input.policy),
       },
       update: {
         ...configData(input),
+        ...promptOverrideData(input),
         policy: toDbPolicy(input.policy),
       },
     });

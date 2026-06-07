@@ -124,6 +124,8 @@ added, moved, renamed, or removed.
     - `tickets.ts` (`src/core/tickets.ts`): canonical ticket values and provider-neutral
       ticket/thread/link/subscription/mutation/communication types.
   - `src/data`: server-only database access boundaries.
+    - `ai-prompts-repository.ts` (`src/data/ai-prompts-repository.ts`):
+      Prisma-backed encrypted workspace AI prompt default and user prompt override repository.
     - `ai-settings-repository.ts` (`src/data/ai-settings-repository.ts`):
       Prisma-backed encrypted workspace and per-user AI settings repository.
     - `ai-summary-cache-repository.ts` (`src/data/ai-summary-cache-repository.ts`):
@@ -147,6 +149,21 @@ added, moved, renamed, or removed.
       - `index.ts` (`src/features/ai/index.ts`): AI feature exports.
       - `model.ts` (`src/features/ai/model.ts`): read-only selected-ticket AI summary request,
         result, unavailable-state, and action types.
+      - `prompt-actions.ts` (`src/features/ai/prompt-actions.ts`): authenticated server actions for
+        loading Prompt Center data, saving/resetting prompt defaults and overrides, and saving the
+        workspace override policy.
+      - `prompt-model.ts` (`src/features/ai/prompt-model.ts`): serializable Prompt Center data,
+        prompt view models, action codes, and action types.
+      - `prompt-mutation-service.ts` (`src/features/ai/prompt-mutation-service.ts`): prompt save,
+        reset, override-policy orchestration, admin/user gating, encryption, and summary-cache
+        invalidation.
+      - `prompt-registry.ts` (`src/features/ai/prompt-registry.ts`): registered AI prompt keys,
+        defaults, editability, and maximum-length metadata.
+      - `prompt-repository.ts` (`src/features/ai/prompt-repository.ts`): provider-neutral prompt
+        persistence contract for encrypted workspace defaults and user overrides.
+      - `prompt-service.ts` (`src/features/ai/prompt-service.ts`): Prompt Center loading and
+        effective prompt resolution that ignores user overrides unless workspace policy and registry
+        editability both allow them.
       - `provider-config.ts` (`src/features/ai/provider-config.ts`): provider-neutral runtime AI
         provider configuration result types.
       - `settings-actions.ts` (`src/features/ai/settings-actions.ts`): authenticated server actions
@@ -605,6 +622,10 @@ added, moved, renamed, or removed.
         - `workspace-ai-settings-user-form.tsx`
           (`src/features/workspace/components/workspace-ai-settings-user-form.tsx`): user
           per-workspace AI provider settings form for user-provided-key workspaces.
+        - `workspace-ai-prompts-section.tsx`
+          (`src/features/workspace/components/workspace-ai-prompts-section.tsx`): Settings dialog
+          Prompt Center section for admin-managed workspace prompts and future personal prompt
+          overrides.
         - `workspace-notifications-panel.tsx`
           (`src/features/workspace/components/workspace-notifications-panel.tsx`): workspace
           notifications panel workspace UI component.
@@ -778,8 +799,10 @@ added, moved, renamed, or removed.
     - `workspace-ui-contract.md` (`docs/ui/workspace-ui-contract.md`): approved workspace layout and
       interaction contract.
 - `prisma`: Prisma schema and migrations.
+  - `ai-prompts.prisma` (`prisma/ai-prompts.prisma`): encrypted workspace AI prompt defaults and
+    user prompt override schema.
   - `ai-settings.prisma` (`prisma/ai-settings.prisma`): workspace-default and per-user workspace AI
-    settings schema.
+    settings schema, including workspace prompt override policy.
   - `app-policy.prisma` (`prisma/app-policy.prisma`): app policy key/value schema.
   - `auth.prisma` (`prisma/auth.prisma`): user, password login, and session schema.
   - `caches.prisma` (`prisma/caches.prisma`): selected-ticket detail/thread cache and generated AI
@@ -809,6 +832,11 @@ added, moved, renamed, or removed.
       - `migration.sql`
         (`prisma/migrations/20260606003000_add_workspace_ai_settings/migration.sql`):
         migration adding workspace policy/default AI settings and per-user workspace AI settings.
+    - `prisma/migrations/20260607120000_add_ai_prompt_center`: contains related
+      20260607120000_add_ai_prompt_center files.
+      - `migration.sql` (`prisma/migrations/20260607120000_add_ai_prompt_center/migration.sql`):
+        migration adding encrypted workspace prompt defaults, user prompt overrides, and the
+        workspace user-override policy flag.
     - `migration_lock.toml` (`prisma/migrations/migration_lock.toml`): Prisma migration provider
       lockfile.
   - `saved-views.prisma` (`prisma/saved-views.prisma`): saved view and user saved-view preference

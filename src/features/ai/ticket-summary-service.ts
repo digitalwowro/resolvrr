@@ -5,6 +5,11 @@ import type { AiRuntimeConfig } from "./provider-config";
 import { generateAiText } from "./text-generation";
 import { aiSummaryCacheKey } from "./summary-cache-key";
 import {
+  ticketSummaryDefaultPrompt,
+  ticketSummaryPromptVersion,
+} from "./prompt-registry";
+import type { EffectiveAiPrompt } from "./prompt-service";
+import {
   noAiSummaryCacheRepository,
   type AiSummaryCacheKey,
   type AiSummaryCacheRepository,
@@ -14,14 +19,6 @@ import {
   aiGenerationTimingStart,
   recordAiGenerationTiming,
 } from "@/telemetry/ai-generation-timing";
-
-const summarySystemInstruction = [
-  "You summarize helpdesk tickets for internal support agents.",
-  "Use only the provided ticket data.",
-  "Do not invent facts, next actions, identifiers, or customer commitments.",
-  "Do not write a customer reply.",
-  "Return plain text under 140 words with three short sections: Situation, Timeline, Next Risk.",
-].join(" ");
 
 type TicketSummaryCacheOptions = {
   cacheRepository?: AiSummaryCacheRepository;
@@ -123,6 +120,10 @@ export async function summarizeTicketDetail(
   config: AiRuntimeConfig,
   detail: TicketDetail,
   cacheOptions?: TicketSummaryCacheOptions,
+  prompt: Pick<EffectiveAiPrompt, "prompt" | "version"> = {
+    prompt: ticketSummaryDefaultPrompt,
+    version: ticketSummaryPromptVersion,
+  },
 ): Promise<TicketAiSummaryResult> {
   const totalStart = aiGenerationTimingStart();
   if (config.status === "unconfigured") {
@@ -170,6 +171,7 @@ export async function summarizeTicketDetail(
         config,
         context,
         encryptionKey: cacheOptions.encryptionKey,
+        prompt,
         scope: cacheOptions.scope,
       })
     : undefined;
@@ -204,7 +206,7 @@ export async function summarizeTicketDetail(
   const regenerationStart = aiGenerationTimingStart();
   const result = await generateAiText(config, {
     maxOutputTokens: 260,
-    systemInstruction: summarySystemInstruction,
+    systemInstruction: prompt.prompt,
     telemetryOperation: "ticket-summary",
     userPrompt: context.prompt,
   });

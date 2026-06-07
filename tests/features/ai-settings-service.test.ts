@@ -111,6 +111,10 @@ function aiSettingsRepository(): AiSettingsRepository & {
     },
     async upsertWorkspaceSetting(input) {
       this.workspaceSetting = {
+        allowUserPromptOverrides:
+          input.allowUserPromptOverrides ??
+          this.workspaceSetting?.allowUserPromptOverrides ??
+          false,
         config: input.config ?? null,
         helpdeskConnectionId: input.helpdeskConnectionId,
         policy: input.policy,
@@ -148,6 +152,7 @@ describe("workspace AI settings service", () => {
     ).resolves.toEqual({ status: "unconfigured", reason: "ai-disabled" });
 
     repository.workspaceSetting = {
+      allowUserPromptOverrides: false,
       config: {
         baseUrl: "https://api.openai.test/v1",
         encryptedApiKey: encryptSecret("openai-key", encryptionKey),
@@ -171,6 +176,7 @@ describe("workspace AI settings service", () => {
     });
 
     repository.workspaceSetting = {
+      allowUserPromptOverrides: false,
       config: null,
       helpdeskConnectionId: "connection-1",
       policy: "user-provided",
@@ -239,6 +245,7 @@ describe("workspace AI settings service", () => {
   it("lets users save their own key only when workspace policy requires it", async () => {
     const repository = aiSettingsRepository();
     repository.workspaceSetting = {
+      allowUserPromptOverrides: false,
       config: null,
       helpdeskConnectionId: "connection-1",
       policy: "user-provided",

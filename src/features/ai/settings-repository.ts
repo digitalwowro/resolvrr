@@ -12,12 +12,14 @@ export type StoredAiProviderConfig = {
 };
 
 export type StoredWorkspaceAiSetting = {
+  allowUserPromptOverrides: boolean;
   config: StoredAiProviderConfig | null;
   helpdeskConnectionId: string;
   policy: WorkspaceAiPolicy;
 };
 
 export type UpsertWorkspaceAiSettingInput = {
+  allowUserPromptOverrides?: boolean;
   config?: StoredAiProviderConfig | null;
   helpdeskConnectionId: string;
   policy: WorkspaceAiPolicy;
