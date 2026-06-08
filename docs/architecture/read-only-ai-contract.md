@@ -1,7 +1,9 @@
 # Read-Only AI Contract
 
-Read-only AI is an optional workspace capability for internal support-agent
-summaries. It never writes to the helpdesk provider and never sends customer
+This document describes the implemented selected-ticket summary slice of the
+broader AI Assistant v1 product surface defined in
+`docs/architecture/ai-v1-product-surface.md`. Summaries are read-only advisory
+output. They never write to the helpdesk provider and never send customer
 communication.
 
 ## Scope
@@ -9,7 +11,7 @@ communication.
 - Selected-ticket summary generation from an explicit agent click.
 - Server-side ticket detail reload before prompt preparation.
 - Provider-neutral, sanitized ticket metadata and thread text only.
-- Workspace-scoped, disabled-by-default runtime configuration.
+- Workspace-scoped runtime configuration controlled by workspace AI policy.
 - Durable selected-ticket summary cache for successful generated summaries.
 
 ## Boundaries
@@ -42,8 +44,8 @@ Prompt input must not include:
 - raw provider article IDs;
 - attachment bytes or provider attachment URLs;
 - unsanitized HTML;
-- customer reply drafts unless a later approved phase explicitly defines that
-  prompt contract.
+- customer reply drafts. Drafting and reply-generation prompts are separate AI
+  Assistant contracts, not selected-ticket summary context.
 
 ## Runtime Configuration
 

@@ -46,20 +46,26 @@ conversation content.
 
 ## AI Prompt And Output Data
 
-- AI features are optional and must use sanitized provider-neutral source data.
+- AI Assistant features are a core v1 product capability and must use sanitized
+  provider-neutral source data.
 - AI runtime configuration is resolved from the active workspace policy:
   disabled, admin-managed workspace key, or user-provided per-workspace key.
   There is no app-wide AI key in v1.
 - Read-only selected-ticket summaries reload ticket detail on the server, then
   use selected-ticket metadata and sanitized thread text only under the
   cache/freshness rules in the architecture contract.
-- Prompts, generated summaries, draft suggestions, and generated replies must
-  not be logged.
+- V1 AI Assistant operations use selected-ticket metadata and sanitized thread
+  text only. Linked tickets, saved views, customer-wide history, knowledge base
+  content, workspace-wide search results, and arbitrary provider records are not
+  v1 AI context.
+- Prompts, generated summaries, draft suggestions, generated replies, My Style
+  text, and reviewed-action suggestions must not be logged.
 - AI telemetry may include only operation, phase, provider protocol family,
   duration, status, unavailable reason, and retryability. It must not include
   provider request bodies, provider response bodies, provider credentials, model
   names, ticket IDs, article IDs, customer names, email addresses, prompts,
-  generated summaries, or ticket/thread content.
+  generated summaries, draft suggestions, generated replies, My Style text,
+  reviewed-action suggestions, or ticket/thread content.
 - Generated selected-ticket summaries may be cached server-side as encrypted
   output scoped by user, active helpdesk connection, selected ticket,
   source fingerprint/freshness, prompt version, sanitization version, provider
@@ -70,5 +76,10 @@ conversation content.
   prompt overrides, but effective prompt resolution must ignore them while the
   workspace option is off. Prompt bodies must not be logged or exposed outside
   the settings UI that is authorized to edit them.
+- My Style is user-specific writing guidance for future drafting operations.
+  It must follow the same no-logging posture as prompts and generated output.
+- Reviewed agentic actions may prepare suggestions for existing
+  provider-neutral update paths, but provider writes still require explicit user
+  review and the normal submit/update path.
 - Customer-visible communication still happens only through the selected
   helpdesk provider after explicit user review and submit.

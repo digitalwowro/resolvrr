@@ -155,12 +155,19 @@ dropdown. If a provider lacks the capability, the field renders as ordinary
 read-only metadata; owner and group editing also require available lookup
 options for the matching field.
 
-## AI Status
+## AI Assistant
 
-Selected-ticket AI summaries are read-only and optional. They appear in the
-selected-ticket header area and run only from an explicit agent `Generate`
-action. Rendering a ticket, loading a route, refreshing a ticket, switching
-tabs, or editing staged metadata must not trigger an AI request.
+The AI Assistant is a core v1 workspace capability. Its controls are embedded
+where the work happens: selected-ticket summaries in the summary panel, future
+proofread/rephrase and reply-draft actions inside inline composer workflows,
+and future reviewed action preparation near the ticket update surface that owns
+the affected provider-neutral update.
+
+Selected-ticket AI summaries are the currently implemented read-only AI
+Assistant slice. They appear in the selected-ticket header area and run only
+from an explicit agent `Generate` action. Rendering a ticket, loading a route,
+refreshing a ticket, switching tabs, or editing staged metadata must not
+trigger an AI request.
 
 AI configuration lives in `Avatar -> Settings -> AI Settings` for the active
 workspace. Admins see workspace policy and default provider settings. Users see
@@ -183,6 +190,14 @@ responses. A generated summary is advisory text only: it must not update ticket
 metadata, staged communication, saved views, open tabs, or provider state.
 Customer-visible communication still requires explicit user review and the
 selected helpdesk provider write path.
+
+V1 proofread/rephrase, reply drafts, and reviewed action preparation use only
+selected-ticket metadata and sanitized thread context. They must not use linked
+tickets, saved views, customer-wide history, knowledge base content, or
+workspace-wide context. AI Assistant output is a draft or suggestion until the
+user explicitly accepts or submits through the existing update/send workflow.
+The AI Assistant must not auto-send customer communication or run autonomous
+provider writes.
 
 When workspace AI is enabled, admins also see `Prompt Center` in Settings.
 Prompt Center lists registered admin-managed prompts and allows editing or

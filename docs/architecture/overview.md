@@ -20,18 +20,17 @@ tickets and conversations.
   `docs/architecture/cache-and-privacy-contract.md`; current durable cache
   slices are limited to selected-ticket detail/thread snapshots and generated
   selected-ticket summaries.
-- Read-only AI summary behavior is defined in
-  `docs/architecture/read-only-ai-contract.md`; it is optional, explicit-action
-  only, cannot write to helpdesk providers, and resolves encrypted AI provider
-  settings plus workspace-scoped prompt defaults from the active workspace
-  policy.
+- The AI Assistant v1 product surface is defined in
+  `docs/architecture/ai-v1-product-surface.md`. Current implemented AI slices
+  are selected-ticket summaries, workspace AI settings, Prompt Center, and
+  generated-summary cache. Summary-specific behavior is defined in
+  `docs/architecture/read-only-ai-contract.md`.
 
 ## First Release Shape
 
-The first release targets a conservative multi-user foundation: email/password
-Resolvrr users, SQL-backed sessions, per-user helpdesk connections, per-user
-saved view preferences, and the workspace ticket workflow. Broader team
-management, workflow automation, public APIs, assisted AI actions, and durable
-assisted AI output beyond selected-ticket summaries are deferred. Read-only AI
-summaries are limited to internal selected-ticket summaries configured from the
-workspace-scoped Settings surface, including admin-managed prompt defaults.
+The first release targets a multi-user support workspace with AI Assistant as a
+core product capability. The v1 AI surface includes selected-ticket summaries,
+Prompt Center, My Style, proofread/rephrase, suggested reply drafts, and
+reviewed action preparation for existing provider-neutral update paths. Broader
+team management, workflow automation, scheduled/background jobs, public APIs,
+and autonomous provider writes are deferred.

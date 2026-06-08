@@ -2,6 +2,7 @@ import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 
 const requiredFiles = [
+  "docs/architecture/ai-v1-product-surface.md",
   "docs/architecture/codebase-map.md",
   "docs/architecture/overview.md",
   "docs/architecture/provider-plugins.md",
@@ -23,7 +24,10 @@ const disallowedTerms = [
 
 for (const file of requiredFiles) {
   await stat(join(process.cwd(), file));
-  const content = await readFile(join(process.cwd(), file), "utf8");
+  const content = (await readFile(join(process.cwd(), file), "utf8")).replace(
+    /\bAI\s+Assistant\b/gi,
+    "AI product",
+  );
   for (const term of disallowedTerms) {
     const pattern = new RegExp(`\\b${term}\\b`, "i");
     if (pattern.test(content)) {

@@ -105,7 +105,7 @@ added, moved, renamed, or removed.
         hook; row comparison stays in the owning feature.
   - `src/config`: typed runtime configuration.
     - `env.ts` (`src/config/env.ts`): Zod validation for required app, database, encryption,
-      session, dev-origin, and optional read-only AI variables.
+      session, dev-origin, and runtime variables.
   - `src/core`: provider-neutral domain contracts and canonical values.
     - `helpdesk-connections.ts` (`src/core/helpdesk-connections.ts`): explicit helpdesk connection
       domain types.
@@ -145,7 +145,9 @@ added, moved, renamed, or removed.
       and active helpdesk-connection scoped `UiPreference` repository for persisted workspace open
       tabs.
   - `src/features`: product feature boundaries that compose core contracts into workflows.
-    - `src/features/ai`: optional provider-neutral read-only AI summary feature.
+    - `src/features/ai`: provider-neutral AI Assistant runtime feature boundary, currently
+      including selected-ticket summaries, AI settings, Prompt Center, provider validation, and
+      generated-summary cache integration.
       - `index.ts` (`src/features/ai/index.ts`): AI feature exports.
       - `model.ts` (`src/features/ai/model.ts`): read-only selected-ticket AI summary request,
         result, unavailable-state, and action types.
@@ -393,8 +395,8 @@ added, moved, renamed, or removed.
           (`src/features/workspace/components/ticket-add-link-search-results.tsx`): compact Add link
           modal candidate/result list and unavailable/empty/searching states.
         - `ticket-ai-summary-panel.tsx`
-          (`src/features/workspace/components/ticket-ai-summary-panel.tsx`): selected-ticket
-          read-only AI summary panel that triggers generation only from an explicit user action.
+          (`src/features/workspace/components/ticket-ai-summary-panel.tsx`): selected-ticket AI
+          Assistant summary panel that triggers generation only from an explicit user action.
         - `ticket-article-attachments.tsx`
           (`src/features/workspace/components/ticket-article-attachments.tsx`): read-only article
           attachment metadata presentation. It displays provider-neutral filename, content type, and
@@ -762,15 +764,18 @@ added, moved, renamed, or removed.
 
 - `docs`: public project documentation.
   - `docs/architecture`: architecture maps, provider boundaries, and ticket read contracts.
+    - `ai-v1-product-surface.md` (`docs/architecture/ai-v1-product-surface.md`): AI Assistant v1
+      product surface, terminology, selected-ticket context boundary, review requirements, and
+      automation exclusions.
     - `cache-and-privacy-contract.md` (`docs/architecture/cache-and-privacy-contract.md`):
       provider-data cache, refresh/staleness, privacy, and AI prompt-readiness contract.
     - `codebase-map.md` (`docs/architecture/codebase-map.md`): this file-role map.
     - `overview.md` (`docs/architecture/overview.md`): core product and architecture boundaries.
     - `provider-plugins.md` (`docs/architecture/provider-plugins.md`): provider plugin ownership and
       registration rules.
-    - `read-only-ai-contract.md` (`docs/architecture/read-only-ai-contract.md`): optional
-      selected-ticket AI summary boundary, prompt data, runtime configuration, failure, and cache
-      rules.
+    - `read-only-ai-contract.md` (`docs/architecture/read-only-ai-contract.md`): implemented
+      selected-ticket AI Assistant summary boundary, prompt data, runtime configuration, failure,
+      and cache rules.
     - `ticket-read-contract.md` (`docs/architecture/ticket-read-contract.md`): canonical
       provider-neutral ticket read model, controlled metadata mutation contract, thread article
       shape, capabilities, and non-goals.
@@ -846,8 +851,8 @@ added, moved, renamed, or removed.
 - `scripts`: repository maintenance, docs, cache, generated-file, and boundary-audit scripts.
   - `cache-clear.mjs` (`scripts/cache-clear.mjs`): clears local Next, TypeScript, and test caches
     and can optionally stop/start a user service.
-  - `check-docs.mjs` (`scripts/check-docs.mjs`): checks required public docs exist and avoids
-    disallowed process-origin wording.
+  - `check-docs.mjs` (`scripts/check-docs.mjs`): checks required public docs exist, allows the
+    approved AI Assistant product term, and avoids disallowed process-origin wording.
   - `check-next-env.mjs` (`scripts/check-next-env.mjs`): verifies generated Next TypeScript
     references are restored to the committed stable form.
   - `restore-next-env.mjs` (`scripts/restore-next-env.mjs`): restores the committed stable
