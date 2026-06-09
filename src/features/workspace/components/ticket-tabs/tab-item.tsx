@@ -62,16 +62,22 @@ export function ListTab({
         aria-label={`Return to list: ${savedViewLabel}`}
         aria-selected={active}
         className={cn(
-          "inline-flex h-9 min-w-16 translate-y-px items-center justify-center gap-2 rounded-t-md border px-3 text-indigo-700",
+          "relative inline-flex h-9 min-w-16 items-center justify-center gap-2 overflow-hidden rounded-md border bg-white px-3 text-slate-900",
           active
-            ? "relative z-10 border-indigo-200 border-b-indigo-50 bg-indigo-50"
-            : "border-x-indigo-500 border-t-indigo-500 border-b-indigo-200 bg-indigo-500 text-white hover:border-x-indigo-600 hover:border-t-indigo-600 hover:border-b-indigo-200 hover:bg-indigo-600",
+            ? "z-10 border-slate-300"
+            : "border-slate-200 hover:border-slate-300 hover:bg-slate-50",
         )}
         onClick={onSelect}
         role="tab"
         type="button"
       >
-        <BriefcaseBusiness aria-hidden="true" className="size-3.5 shrink-0" />
+        {active ? (
+          <span
+            aria-hidden="true"
+            className="absolute inset-x-0 bottom-0 h-[3px] rounded-full bg-indigo-950"
+          />
+        ) : null}
+        <List aria-hidden="true" className="size-3.5 shrink-0 text-slate-500" />
         <span>List</span>
       </button>
     </Tooltip>

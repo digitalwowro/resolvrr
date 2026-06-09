@@ -25,8 +25,10 @@ type WorkspaceHeaderChromeProps = {
   onOpenSettings(section: WorkspaceSettingsSection): void;
   onOpenNotificationTicket(tab: WorkspaceTicketTab): void;
   onRefreshTicket(ticketId: string): void;
+  onSearchQueryChange(query: string): void;
   onTabOrientationChange(orientation: TicketTabOrientation): void;
   recentTickets: WorkspaceTicketTab[];
+  searchQuery: string;
   setActiveConnectionAction(
     formData: FormData,
   ): void | Promise<void | HelpdeskConnectionActionResult>;
@@ -43,8 +45,10 @@ export function WorkspaceHeaderChrome({
   onOpenNotificationTicket,
   onOpenSettings,
   onRefreshTicket,
+  onSearchQueryChange,
   onTabOrientationChange,
   recentTickets,
+  searchQuery,
   setActiveConnectionAction,
   tabOrientation,
   userEmail,
@@ -54,6 +58,7 @@ export function WorkspaceHeaderChrome({
       key="controls"
       onTabOrientationChange={onTabOrientationChange}
       tabOrientation={tabOrientation}
+      tone="dark"
     />
   );
   const notifications = (
@@ -64,6 +69,7 @@ export function WorkspaceHeaderChrome({
       onOpenTicket={onOpenNotificationTicket}
       onRefreshTicket={onRefreshTicket}
       recentTickets={recentTickets}
+      tone="dark"
     />
   );
 
@@ -74,6 +80,8 @@ export function WorkspaceHeaderChrome({
       notifications={notifications}
       logoutAction={logoutAction}
       onOpenSettings={onOpenSettings}
+      onSearchQueryChange={onSearchQueryChange}
+      searchQuery={searchQuery}
       setActiveConnectionAction={setActiveConnectionAction}
       userEmail={userEmail}
     />

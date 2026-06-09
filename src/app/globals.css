@@ -1,9 +1,27 @@
 @import "tailwindcss";
 
 body {
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    "SF Pro Display",
+    "Segoe UI",
+    sans-serif;
+
   @apply overflow-hidden bg-slate-50 text-sm text-slate-700;
 }
 
 a:not([class]) {
   color: var(--color-indigo-600);
+}
+
+.ticket-tab-title {
+  container-type: inline-size;
+}
+
+@container (max-width: 2.25rem) {
+  .ticket-tab-title-text {
+    display: none;
+  }
 }

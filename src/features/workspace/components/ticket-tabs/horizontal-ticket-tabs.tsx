@@ -1,17 +1,11 @@
 "use client";
 
-import { TriangleAlert } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { TicketTab, Tooltip } from "@/components/ui";
-import { cn } from "@/components/ui/classnames";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { TicketTab } from "@/components/ui";
 import type {
   WorkspaceTicketTab,
 } from "@/features/tickets/workspace-adapter";
-import {
-  horizontalTicketTabDensity,
-  visibleIconTicketTabCount,
-} from "./density";
-import { ListTab, stateColor, stateIcon, ticketTabTooltip } from "./tab-item";
+import { ListTab, stateColor, ticketTabTooltip } from "./tab-item";
 import { useDraggableTicketTabs } from "./use-draggable-ticket-tabs";
 
 type HorizontalTicketTabsProps = {
@@ -35,44 +29,10 @@ export function HorizontalTicketTabs({
   savedViewLabel,
   tabs,
 }: HorizontalTicketTabsProps) {
-  const listRef = useRef<HTMLDivElement | null>(null);
-  const [rowWidth, setRowWidth] = useState(0);
-
-  useEffect(() => {
-    const element = listRef.current;
-
-    if (!element) {
-      return;
-    }
-
-    const measuredElement = element;
-
-    function updateWidth() {
-      setRowWidth(measuredElement.getBoundingClientRect().width);
-    }
-
-    updateWidth();
-
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", updateWidth);
-      return () => window.removeEventListener("resize", updateWidth);
-    }
-
-    const observer = new ResizeObserver(updateWidth);
-    observer.observe(measuredElement);
-    return () => observer.disconnect();
-  }, []);
-
-  const density = useMemo(
-    () => horizontalTicketTabDensity(rowWidth, tabs.length),
-    [rowWidth, tabs.length],
-  );
-  const visibleTabCount =
-    density === "icon"
-      ? visibleIconTicketTabCount(rowWidth, tabs.length)
-      : tabs.length;
-  const visibleTabs = tabs.slice(0, visibleTabCount);
-  const hiddenCount = Math.max(0, tabs.length - visibleTabs.length);
+  const ticketTabsRowRef = useRef<HTMLDivElement | null>(null);
+  const fullNumberMeasureRef = useRef<HTMLSpanElement | null>(null);
+  const [ticketTabsRowWidth, setTicketTabsRowWidth] = useState(0);
+  const [fullNumberLabelWidth, setFullNumberLabelWidth] = useState(0);
   const {
     announcement,
     containerRef: dragContainerRef,
@@ -81,22 +41,67 @@ export function HorizontalTicketTabs({
   } = useDraggableTicketTabs({
     onReorder: onReorderTicket,
     orientation: "horizontal",
-    tabs: visibleTabs,
+    tabs,
   });
+  const longestTicketNumber = useMemo(
+    () => tabs.reduce((longest, tab) => (
+      tab.number.length > longest.length ? tab.number : longest
+    ), ""),
+    [tabs],
+  );
+  const compressTicketNumbers = useMemo(
+    () => shouldCompressHorizontalTicketNumbers({
+      fullNumberLabelWidth,
+      tabs,
+      ticketTabsRowWidth,
+    }),
+    [fullNumberLabelWidth, tabs, ticketTabsRowWidth],
+  );
 
-  function setTabListRef(element: HTMLDivElement | null) {
-    listRef.current = element;
+  useLayoutEffect(() => {
+    const element = ticketTabsRowRef.current;
+
+    if (!element) {
+      return;
+    }
+
+    const measuredElement = element;
+
+    function updateMeasurements() {
+      setTicketTabsRowWidth(measuredElement.getBoundingClientRect().width);
+      setFullNumberLabelWidth(
+        fullNumberMeasureRef.current?.getBoundingClientRect().width ?? 0,
+      );
+    }
+
+    updateMeasurements();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", updateMeasurements);
+      return () => window.removeEventListener("resize", updateMeasurements);
+    }
+
+    const observer = new ResizeObserver(updateMeasurements);
+    observer.observe(measuredElement);
+    if (fullNumberMeasureRef.current) {
+      observer.observe(fullNumberMeasureRef.current);
+    }
+    return () => observer.disconnect();
+  }, [longestTicketNumber]);
+
+  function setTicketTabsRowRef(element: HTMLDivElement | null) {
+    ticketTabsRowRef.current = element;
     dragContainerRef.current = element;
   }
 
   return (
-    <div className="relative flex min-w-0 shrink-0 items-end gap-1 border-b border-indigo-200 bg-slate-50">
+    <div className="relative mb-2 flex min-w-0 shrink-0 items-end gap-2 overflow-hidden">
       <div aria-live="polite" className="sr-only">
         {announcement}
       </div>
       <div
         aria-label="Open tickets"
-        className="flex min-w-0 flex-1 gap-1"
+        className="flex min-w-0 flex-1 gap-2 overflow-hidden"
         role="tablist"
       >
         <ListTab
@@ -105,13 +110,18 @@ export function HorizontalTicketTabs({
           savedViewLabel={savedViewLabel}
         />
         <div
-          className={
-            density === "icon"
-              ? "relative flex min-w-0 flex-1 gap-0"
-              : "relative flex min-w-0 flex-1 gap-1"
-          }
-          ref={setTabListRef}
+          className="relative flex min-w-0 flex-1 gap-2 overflow-hidden"
+          ref={setTicketTabsRowRef}
         >
+          {longestTicketNumber ? (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none invisible absolute -z-10 whitespace-nowrap"
+              ref={fullNumberMeasureRef}
+            >
+              {longestTicketNumber}
+            </span>
+          ) : null}
           {insertionIndicatorStyle ? (
             <span
               aria-hidden="true"
@@ -119,9 +129,8 @@ export function HorizontalTicketTabs({
               style={insertionIndicatorStyle}
             />
           ) : null}
-          {visibleTabs.map((tab, index) => {
+          {tabs.map((tab, index) => {
             const key = tab.stateKey ?? "unknown";
-            const Icon = stateIcon[key];
             const reorderProps = tabReorderProps(tab.id, index);
             const tabActive = tab.id === activeTicketId;
 
@@ -129,20 +138,10 @@ export function HorizontalTicketTabs({
               <TicketTab
                 accentClassName={stateColor[key]}
                 active={tabActive}
-                className={density === "full" ? "max-w-sm" : undefined}
-                containerClassName={cn(
-                  reorderProps.className,
-                  !tabActive && "!translate-y-0",
-                )}
+                compressNumber={compressTicketNumbers}
+                containerClassName={reorderProps.className}
                 containerRef={reorderProps.ref}
                 containerStyle={reorderProps.style}
-                density={density}
-                icon={
-                  <Icon
-                    aria-hidden="true"
-                    className={`size-3.5 shrink-0 ${stateColor[key]}`}
-                  />
-                }
                 key={tab.id}
                 label={tab.number}
                 onContainerClickCapture={reorderProps.onClickCapture}
@@ -154,25 +153,46 @@ export function HorizontalTicketTabs({
                 onSelect={() => onSelectTicket(tab.id)}
                 onTabKeyDown={reorderProps.onKeyDown}
                 title={tab.title}
-                tooltip={density === "icon" ? ticketTabTooltip(tab) : undefined}
+                tooltip={ticketTabTooltip(tab)}
               />
             );
           })}
-          {hiddenCount > 0 ? (
-            <Tooltip
-              content={`${hiddenCount} more tabs are open. Close tabs to show more, or switch to vertical tabs.`}
-              side="bottom"
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-t-md border border-b-0 border-rose-200 bg-rose-50 hover:bg-rose-100">
-                <TriangleAlert
-                  aria-label={`${hiddenCount} more tabs`}
-                  className="size-3.5 text-rose-600"
-                />
-              </div>
-            </Tooltip>
-          ) : null}
         </div>
       </div>
     </div>
   );
+}
+
+type ShouldCompressHorizontalTicketNumbersInput = {
+  fullNumberLabelWidth?: number;
+  tabs: WorkspaceTicketTab[];
+  ticketTabsRowWidth: number;
+};
+
+export function shouldCompressHorizontalTicketNumbers({
+  fullNumberLabelWidth = 0,
+  tabs,
+  ticketTabsRowWidth,
+}: ShouldCompressHorizontalTicketNumbersInput) {
+  if (ticketTabsRowWidth <= 0 || tabs.length === 0) {
+    return false;
+  }
+
+  const ticketTabGapWidth = 8;
+  const ticketTabStaticWidth = 50;
+  const estimatedNumberCharacterWidth = 8;
+  const longestTicketNumberLength = Math.max(
+    ...tabs.map((tab) => tab.number.length),
+  );
+  const tabWidth =
+    (ticketTabsRowWidth - Math.max(0, tabs.length - 1) * ticketTabGapWidth) /
+    tabs.length;
+  const numberLabelWidth = Math.ceil(fullNumberLabelWidth) || (
+    longestTicketNumberLength * estimatedNumberCharacterWidth
+  );
+  const fullNumberWidth =
+    ticketTabStaticWidth +
+    numberLabelWidth;
+
+  return tabWidth < fullNumberWidth;
 }

@@ -10,6 +10,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { Tooltip } from "@/components/ui";
+import { cn } from "@/components/ui/classnames";
 import { useOutsideClick } from "@/components/ui/use-outside-click";
 import type {
   LoadWorkspaceNotificationsAction,
@@ -29,6 +30,7 @@ type WorkspaceNotificationsProps = {
   onOpenTicket(tab: WorkspaceTicketTab): void;
   onRefreshTicket(ticketExternalId: string): void;
   recentTickets: WorkspaceTicketTab[];
+  tone?: "dark" | "default";
 };
 
 export function WorkspaceNotifications({
@@ -38,6 +40,7 @@ export function WorkspaceNotifications({
   onOpenTicket,
   onRefreshTicket,
   recentTickets,
+  tone = "default",
 }: WorkspaceNotificationsProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const activeHandledRef = useRef(new Set<string>());
@@ -217,14 +220,19 @@ export function WorkspaceNotifications({
           aria-expanded={open}
           aria-haspopup="dialog"
           aria-label={triggerLabel}
-          className="relative inline-grid size-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          className={cn(
+            "relative inline-grid size-8 place-items-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
+            tone === "dark"
+              ? "text-indigo-100 hover:text-white focus-visible:outline-white"
+              : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus-visible:outline-indigo-600",
+          )}
           onClick={() => setOpen((current) => !current)}
           onKeyDown={handleTriggerKeyDown}
           type="button"
         >
-          <Bell aria-hidden="true" className="size-4" />
+          <Bell aria-hidden="true" className="size-5" />
           {unreadCount > 0 ? (
-            <span className="absolute -right-1 -top-1 grid min-w-4 place-items-center rounded-full bg-indigo-600 px-1 text-[10px] font-semibold leading-4 text-white">
+            <span className="absolute -right-1 -top-1 grid min-w-4 place-items-center rounded-full bg-white px-1 text-[10px] font-semibold leading-4 text-indigo-900">
               {unreadCount}
             </span>
           ) : null}

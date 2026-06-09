@@ -342,10 +342,8 @@ added, moved, renamed, or removed.
       boundaries.
       - `src/features/workspace/components`: workspace UI composition and local client state
         modules.
-        - `src/features/workspace/components/ticket-tabs`: ticket tab layout, drag, density, and
+        - `src/features/workspace/components/ticket-tabs`: ticket tab layout, drag, and
           rendering modules.
-          - `density.ts` (`src/features/workspace/components/ticket-tabs/density.ts`): density
-            workspace helper module.
           - `drag-announcement.ts`
             (`src/features/workspace/components/ticket-tabs/drag-announcement.ts`): drag
             announcement workspace helper module.
@@ -1025,10 +1023,8 @@ added, moved, renamed, or removed.
       (`tests/features/ticket-staged-metadata-workspace.test.tsx`): verifies staged single-ticket
       metadata update behavior, changed-field treatment, discard, selected-ticket rebasing, and
       saved-refresh-failed UI handling.
-    - `ticket-tab-density.test.ts` (`tests/features/ticket-tab-density.test.ts`): verifies ticket
-      tab density behavior.
     - `ticket-tab-metadata-sync.test.tsx` (`tests/features/ticket-tab-metadata-sync.test.tsx`):
-      verifies a successful staged state update immediately updates the active tab top-border state
+      verifies a successful staged state update immediately updates the active tab bottom-accent state
       color before server refresh rehydrates the workspace.
     - `ticket-workspace-client-detail-cache.test.tsx`
       (`tests/features/ticket-workspace-client-detail-cache.test.tsx`): verifies selected-ticket

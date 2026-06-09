@@ -52,7 +52,7 @@ function renderWorkspace(action: MutationAction) {
   );
 }
 
-function activeTicketTabAccent() {
+function activeTicketTabBottomAccent() {
   const tab = screen.getByRole("tab", { name: "#1001 Cannot log in" });
   const accent = tab.parentElement?.querySelector('span[aria-hidden="true"]');
   expect(accent).toBeInstanceOf(HTMLElement);
@@ -65,7 +65,7 @@ describe("Ticket tab metadata sync", () => {
     routerRefresh.mockClear();
   });
 
-  it("updates the active tab top border color after a saved state change", async () => {
+  it("updates the active tab bottom accent color after a saved state change", async () => {
     const user = userEvent.setup();
     const action = vi.fn<MutationAction>(async () => ({
       status: "saved" as const,
@@ -74,13 +74,13 @@ describe("Ticket tab metadata sync", () => {
     }));
     renderWorkspace(action);
 
-    expect(activeTicketTabAccent()).toHaveClass("text-indigo-600");
+    expect(activeTicketTabBottomAccent()).toHaveClass("text-indigo-600");
 
     await user.click(screen.getByRole("combobox", { name: "Ticket state" }));
     await user.click(screen.getByRole("option", { name: "Closed" }));
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() => expect(action).toHaveBeenCalledOnce());
-    expect(activeTicketTabAccent()).toHaveClass("text-emerald-600");
+    expect(activeTicketTabBottomAccent()).toHaveClass("text-emerald-600");
   });
 });

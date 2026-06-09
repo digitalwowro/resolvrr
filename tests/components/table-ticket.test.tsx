@@ -26,12 +26,11 @@ describe("TicketTab", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps icon-only ticket tabs closeable from keyboard", async () => {
+  it("keeps ticket tabs closeable from keyboard", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(
       <TicketTab
-        density="icon"
         label="Ticket 102"
         onClose={onClose}
         onSelect={vi.fn()}
@@ -44,32 +43,31 @@ describe("TicketTab", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps inactive icon-only tabs selectable without showing close", async () => {
+  it("keeps inactive tabs selectable with a visible close button", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const onClose = vi.fn();
     render(
       <TicketTab
-        density="icon"
         label="Ticket 103"
         onClose={onClose}
         onSelect={onSelect}
       />,
     );
 
+    expect(
+      screen.getByRole("button", { name: "Close Ticket 103" }),
+    ).toBeInTheDocument();
+
     await user.click(screen.getByRole("tab", { name: "Ticket 103" }));
 
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
-    expect(
-      screen.queryByRole("button", { name: "Close Ticket 103" }),
-    ).not.toBeInTheDocument();
   });
 
-  it("keeps compact ticket tabs wide enough for ID-only labels", () => {
+  it("uses fluid tab sizing while keeping ID-only labels readable", () => {
     render(
       <TicketTab
-        density="compact"
         icon={<span aria-hidden="true" />}
         label="#99999999"
         onClose={vi.fn()}
@@ -78,17 +76,73 @@ describe("TicketTab", () => {
     );
 
     expect(screen.getByRole("tab", { name: "#99999999" }).parentElement)
-      .toHaveClass("min-w-32", "max-w-36");
+      .toHaveClass("min-w-16", "max-w-64", "flex-[1_1_0]");
+    expect(screen.getByRole("tab", { name: "#99999999" }).parentElement)
+      .not.toHaveClass("max-w-36");
     expect(
       screen.getByRole("button", { name: "Close #99999999" }),
-    ).toBeInTheDocument();
+    ).toHaveClass("size-3", "hover:text-slate-700");
+    expect(
+      screen.getByRole("button", { name: "Close #99999999" }),
+    ).not.toHaveClass("size-5", "hover:bg-slate-200");
   });
 
-  it("shows the close affordance for active icon-only tabs", () => {
+  it("uses the same shrinking flex wrapper when tab tooltips are enabled", () => {
+    const { container } = render(
+      <TicketTab
+        label="#99999991"
+        onClose={vi.fn()}
+        onSelect={vi.fn()}
+        title="A long ticket title"
+        tooltip="Ticket details"
+      />,
+    );
+
+    expect(screen.getByRole("tab", { name: "#99999991 A long ticket title" })
+      .parentElement?.parentElement)
+      .toHaveClass("min-w-16", "max-w-64", "flex-[1_1_0]");
+    expect(container.querySelector(".ticket-tab-label")).toHaveClass(
+      "min-w-0",
+      "overflow-hidden",
+    );
+    expect(container.querySelector(".ticket-tab-number-full")).toHaveTextContent(
+      "#99999991",
+    );
+    expect(container.querySelector(".ticket-tab-number-full")).not.toHaveClass(
+      "truncate",
+    );
+    expect(container.querySelector(".ticket-tab-number-compressed")).toBeNull();
+    expect(container.querySelector(".ticket-tab-title")).toHaveTextContent(
+      "A long ticket title",
+    );
+    expect(container.querySelector(".ticket-tab-title-text")).toHaveClass(
+      "truncate",
+      "font-semibold",
+    );
+  });
+
+  it("renders compressed ticket numbers with the final two digits preserved", () => {
+    const { container } = render(
+      <TicketTab
+        compressNumber
+        label="#99999991"
+        onClose={vi.fn()}
+        onSelect={vi.fn()}
+        title="A long ticket title"
+      />,
+    );
+
+    expect(screen.getByRole("tab", { name: "#99999991 A long ticket title" }))
+      .toBeInTheDocument();
+    expect(container.querySelector(".ticket-tab-number-compressed"))
+      .toHaveTextContent("#...91");
+    expect(container.querySelector(".ticket-tab-number-full")).toBeNull();
+  });
+
+  it("shows the close affordance for active tabs", () => {
     render(
       <TicketTab
         active
-        density="icon"
         label="Ticket 104"
         onClose={vi.fn()}
         onSelect={vi.fn()}
@@ -118,11 +172,14 @@ describe("TicketTab", () => {
       "text-indigo-600",
     );
     expect(screen.getByRole("tab", { name: "Ticket 105" }).parentElement).toContainHTML(
-      "opacity-100",
+      "bottom-0",
+    );
+    expect(screen.getByRole("tab", { name: "Ticket 105" }).parentElement).toContainHTML(
+      "inset-x-0",
     );
   });
 
-  it("tones down inactive accent lines", () => {
+  it("uses a short lower-left marker for inactive accent lines", () => {
     render(
       <TicketTab
         accentClassName="text-rose-600"
@@ -132,7 +189,13 @@ describe("TicketTab", () => {
     );
 
     expect(screen.getByRole("tab", { name: "Ticket 106" }).parentElement).toContainHTML(
-      "opacity-40",
+      "bottom-0.5",
+    );
+    expect(screen.getByRole("tab", { name: "Ticket 106" }).parentElement).toContainHTML(
+      "left-2.5",
+    );
+    expect(screen.getByRole("tab", { name: "Ticket 106" }).parentElement).toContainHTML(
+      "w-5",
     );
   });
 });

@@ -25,6 +25,7 @@ import type { TicketTableGroup } from "./ticket-table-types";
 type TicketTableProps = {
   activeTicketId?: string;
   columns: WorkspaceTicketColumn[];
+  emptyMessage?: string;
   groupedRows?: TicketTableGroup[];
   groupBy: WorkspaceTicketGroupKey;
   onRowSelect(ticketId: string): void;
@@ -107,6 +108,7 @@ function LoadMoreTongue({
 export function TicketTable({
   activeTicketId,
   columns,
+  emptyMessage = "No tickets were returned by the active helpdesk workspace.",
   groupedRows,
   groupBy,
   onRowSelect,
@@ -159,7 +161,7 @@ export function TicketTable({
           "border-x border-slate-200 p-6 text-sm text-slate-600",
         )}
       >
-        No tickets were returned by the active helpdesk workspace.
+        {emptyMessage}
       </section>
     );
   }

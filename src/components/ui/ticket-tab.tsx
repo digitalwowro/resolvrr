@@ -18,7 +18,7 @@ type TicketTabProps = {
   icon?: ReactNode;
   accentClassName?: string;
   className?: string;
-  density?: "full" | "compact" | "icon";
+  compressNumber?: boolean;
   tooltip?: ReactNode;
   active?: boolean;
   unread?: boolean;
@@ -43,7 +43,7 @@ export function TicketTab({
   icon,
   accentClassName,
   className,
-  density = "full",
+  compressNumber = false,
   tooltip,
   active = false,
   unread = false,
@@ -61,34 +61,47 @@ export function TicketTab({
   onSelect,
   onClose,
 }: TicketTabProps) {
-  const labelText =
-    density === "full" && title ? (
-      <>
-        {label} <span className="font-semibold">{title}</span>
-      </>
-    ) : (
-      <span className={density === "icon" ? "sr-only" : undefined}>
-        {density === "full" && !title ? (
-          <span className="font-semibold">{label}</span>
-        ) : (
-          label
-        )}
+  const compressedNumberLabel = compressedTicketNumberLabel(label);
+  const labelNumber = (
+    <span
+      className={cn(
+        "ticket-tab-number inline-flex min-w-0 items-baseline overflow-hidden",
+        title || compressNumber ? "shrink-0" : "flex-1 font-semibold",
+      )}
+    >
+      {compressNumber && compressedNumberLabel ? (
+        <span className="ticket-tab-number-compressed shrink-0">
+          {compressedNumberLabel}
+        </span>
+      ) : (
+        <span className="ticket-tab-number-full shrink-0">{label}</span>
+      )}
+    </span>
+  );
+  const labelText = title ? (
+    <span className="ticket-tab-label min-w-0 flex flex-1 items-baseline overflow-hidden">
+      {labelNumber}
+      <span className="ticket-tab-title ml-1 min-w-0 flex-1 shrink-[999] overflow-hidden">
+        <span className="ticket-tab-title-text block min-w-0 truncate font-semibold">
+          {title}
+        </span>
       </span>
-    );
-  const showClose = onClose && (density !== "icon" || active);
+    </span>
+  ) : (
+    <span className="ticket-tab-label min-w-0 flex flex-1 items-baseline overflow-hidden">
+      {labelNumber}
+    </span>
+  );
+  const showClose = Boolean(onClose);
 
   const tab = (
     <div
       className={cn(
-        "group relative inline-flex h-9 min-w-0 translate-y-px items-center gap-1.5 overflow-hidden rounded-t-md border",
-        density === "full" && "flex-1 px-3",
-        density === "compact" && "min-w-32 max-w-36 flex-1 px-2",
-        density === "icon" &&
-          "min-w-7 flex-1 justify-center px-1 hover:bg-white",
+        "group relative inline-flex h-9 min-w-16 max-w-64 flex-[1_1_0] items-center gap-1.5 overflow-hidden rounded-md border bg-white px-3",
         className,
         active
-          ? "z-10 border-indigo-200 border-b-white bg-white"
-          : "border-slate-200 border-b-transparent bg-slate-50 hover:bg-white",
+          ? "z-10 border-slate-300"
+          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50",
         containerClassName,
       )}
       onClickCapture={onContainerClickCapture}
@@ -103,8 +116,8 @@ export function TicketTab({
         <span
           aria-hidden="true"
           className={cn(
-            "absolute inset-x-0 top-0 h-[3px]",
-            active ? "opacity-100" : "opacity-40",
+            "absolute h-[3px] rounded-full",
+            active ? "inset-x-0 bottom-0" : "bottom-0.5 left-2.5 w-5",
             accentClassName,
           )}
           style={{ backgroundColor: "currentColor" }}
@@ -112,17 +125,11 @@ export function TicketTab({
       ) : null}
       <button
         aria-selected={active}
-        aria-label={density === "icon" ? label : undefined}
-        className={cn(
-          "flex min-w-0 flex-1 items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
-          density === "icon" && active &&
-            "size-5 flex-none justify-center group-hover:hidden group-focus-within:hidden",
-          density === "icon" && !active && "h-5 flex-none justify-center",
-        )}
+        aria-label={title ? `${label} ${title}` : compressNumber ? label : undefined}
+        className="flex min-w-0 flex-1 items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
         onKeyDown={(event) => {
           if (
             onClose &&
-            density === "icon" &&
             (event.key === "Delete" || event.key === "Backspace")
           ) {
             event.preventDefault();
@@ -139,25 +146,14 @@ export function TicketTab({
         {loading ? <span className="sr-only">{label} loading</span> : null}
         {icon}
         {unread ? <span className="sr-only">Unread</span> : null}
-        {density === "icon" ? (
-          <span className="sr-only">{label}</span>
-        ) : (
-          <span className="min-w-0 truncate">{labelText}</span>
-        )}
+        {labelText}
         {dirty ? <span className="sr-only">Unsaved changes</span> : null}
       </button>
       {showClose ? (
-        <Tooltip
-          className={cn(
-            "shrink-0",
-            density === "icon" &&
-              "hidden group-hover:inline-flex group-focus-within:inline-flex",
-          )}
-          content={`Close ${label}`}
-        >
+        <Tooltip className="shrink-0" content={`Close ${label}`}>
           <button
             aria-label={`Close ${label}`}
-            className="grid size-5 shrink-0 place-items-center rounded-md text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+            className="grid size-3 shrink-0 place-items-center text-slate-400 hover:text-slate-700"
             onClick={onClose}
             onPointerDown={(event) => event.stopPropagation()}
             type="button"
@@ -171,13 +167,26 @@ export function TicketTab({
 
   return tooltip ? (
     <Tooltip
-      className={density === "icon" ? "min-w-7 flex-1" : undefined}
+      className="min-w-16 max-w-64 flex-[1_1_0]"
       content={tooltip}
-      side={density === "icon" ? "bottom" : "top"}
+      side="top"
     >
       {tab}
     </Tooltip>
   ) : (
     tab
   );
+}
+
+function compressedTicketNumberLabel(label: string) {
+  const match = /^(.*?)(\d+)$/u.exec(label);
+  if (!match || match[2].length < 2) {
+    return null;
+  }
+
+  const marker = match[1];
+  const digits = match[2];
+  const suffix = digits.slice(-2);
+
+  return `${marker}...${suffix}`;
 }

@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DropdownOption } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import { allTicketsSavedViewId } from "@/features/saved-views/workspace";
+import type { WorkspaceTicketListGroup } from "@/features/tickets/list-page-action-result";
 import { workspaceTicketTabs } from "@/features/tickets/workspace-adapter";
+import type { WorkspaceTicketRow } from "@/features/tickets/workspace-adapter";
 import { useTicketWorkspaceDisplayState } from "./ticket-workspace-state";
 import { useTicketListPager } from "./use-ticket-list-pager";
 import { useTicketWorkspaceAutoRefresh } from "./use-ticket-workspace-auto-refresh";
@@ -15,7 +17,67 @@ import {
   TicketWorkspaceListArea,
 } from "./ticket-workspace-work-area";
 import type { TicketWorkspaceDisplayProps } from "./ticket-workspace-display-types";
-import { WorkspaceHeaderChrome, WorkspaceTabsChrome } from "./ticket-workspace-chrome";
+import {
+  WorkspaceHeaderChrome,
+  WorkspaceTabsChrome,
+} from "./ticket-workspace-chrome";
+
+function normalizedWorkspaceSearch(query: string) {
+  return query.trim().toLocaleLowerCase();
+}
+
+function ticketMatchesWorkspaceSearch(
+  ticket: WorkspaceTicketRow,
+  normalizedQuery: string,
+) {
+  return [
+    ticket.number,
+    ticket.title,
+    ticket.customer,
+    ticket.owner,
+    ticket.group,
+    ticket.state,
+    ticket.priority,
+  ].some((value) => value.toLocaleLowerCase().includes(normalizedQuery));
+}
+
+function filterLoadedTickets(
+  rows: WorkspaceTicketRow[],
+  normalizedQuery: string,
+) {
+  if (!normalizedQuery) {
+    return rows;
+  }
+
+  return rows.filter((row) =>
+    ticketMatchesWorkspaceSearch(row, normalizedQuery),
+  );
+}
+
+function filterLoadedTicketGroups(
+  groups: WorkspaceTicketListGroup[] | undefined,
+  normalizedQuery: string,
+) {
+  if (!groups || !normalizedQuery) {
+    return groups;
+  }
+
+  return groups.flatMap((group) => {
+    const rows = filterLoadedTickets(group.rows, normalizedQuery);
+    return rows.length > 0
+      ? [
+          {
+            id: group.id,
+            key: group.key,
+            label: group.label,
+            value: group.value,
+            rows,
+            loadedCount: rows.length,
+          },
+        ]
+      : [];
+  });
+}
 
 export function TicketWorkspaceDisplay({
   connections,
@@ -49,6 +111,7 @@ export function TicketWorkspaceDisplay({
   updateTicketMetadataAction,
   userEmail,
 }: TicketWorkspaceDisplayProps) {
+  const [workspaceSearchQuery, setWorkspaceSearchQuery] = useState("");
   const listPager = useTicketListPager({
     initialSavedViewId: selectedSavedViewId,
     initialRows: rows,
@@ -61,6 +124,16 @@ export function TicketWorkspaceDisplay({
     ticketTabs,
     workspaceTicketTabs(listPager.rows),
   );
+  const normalizedSearchQuery = normalizedWorkspaceSearch(workspaceSearchQuery);
+  const searchFilteredRows = useMemo(
+    () => filterLoadedTickets(listPager.rows, normalizedSearchQuery),
+    [listPager.rows, normalizedSearchQuery],
+  );
+  const searchFilteredGroups = useMemo(
+    () => filterLoadedTicketGroups(listPager.groups, normalizedSearchQuery),
+    [listPager.groups, normalizedSearchQuery],
+  );
+  const searchActive = normalizedSearchQuery.length > 0;
   const {
     activeDetail,
     activeTicketId,
@@ -107,7 +180,7 @@ export function TicketWorkspaceDisplay({
     onProviderSortChange: listPager.reloadFirstPage,
     providerSortEnabled,
     refreshTicketDetailAfterMetadataSave,
-    rows: listPager.rows,
+    rows: searchFilteredRows,
     initialWorkspaceOpenTabsState,
     saveWorkspaceOpenTabsStateAction,
     selectedTicketId,
@@ -118,8 +191,10 @@ export function TicketWorkspaceDisplay({
     (groupBy === "state" || groupBy === "priority") &&
     listPager.groupBy === groupBy &&
     listPager.groups !== undefined;
-  const tableGroupedRows = providerGroupedActive ? listPager.groups : groupedRows;
-  const tableRows = providerGroupedActive ? listPager.rows : sortedRows;
+  const tableGroupedRows = providerGroupedActive
+    ? searchFilteredGroups
+    : groupedRows;
+  const tableRows = providerGroupedActive ? searchFilteredRows : sortedRows;
   const recentlyViewedLinkTargets = recentTicketTabs.map(tabLinkTarget);
   const activeTicketSummary = activeTicketId
     ? tableRows.find((ticket) => ticket.id === activeTicketId) ??
@@ -191,15 +266,20 @@ export function TicketWorkspaceDisplay({
       <TicketWorkspaceListArea
         activeTicketId={activeTicketId}
         allSelected={allSelected}
-        canLoadMore={!providerGroupedActive && listPager.canLoadMore}
+        canLoadMore={
+          !searchActive && !providerGroupedActive && listPager.canLoadMore
+        }
         columns={columns}
+        emptyMessage={
+          searchActive ? "No loaded tickets match this filter." : undefined
+        }
         groupedRows={tableGroupedRows}
         groupBy={groupBy}
         groupLoadMoreError={listPager.groupError}
         loadingGroupId={listPager.loadingGroupId}
         loadingMore={listPager.loading}
         loadMoreError={listPager.errorReason}
-        loadedCount={listPager.loadedCount}
+        loadedCount={searchActive ? tableRows.length : listPager.loadedCount}
         onColumnToggle={toggleColumn}
         onGroupByChange={handleWorkspaceGroupByChange}
         onLoadMore={listPager.loadMore}
@@ -220,7 +300,7 @@ export function TicketWorkspaceDisplay({
         selectedSavedViewId={listPager.savedViewId}
         sortingEnabled={sortingEnabled && !providerGroupedActive}
         sortDirectionFor={sortDirectionFor}
-        totalCount={listPager.totalCount}
+        totalCount={searchActive ? undefined : listPager.totalCount}
         visibleColumns={visibleColumnSet}
       />
     ) : (
@@ -268,8 +348,10 @@ export function TicketWorkspaceDisplay({
         onOpenNotificationTicket={showNotificationTicket}
         onOpenSettings={onOpenSettings}
         onRefreshTicket={refreshTicketDetailById}
+        onSearchQueryChange={setWorkspaceSearchQuery}
         onTabOrientationChange={setTabOrientation}
         recentTickets={recentTicketTabs}
+        searchQuery={workspaceSearchQuery}
         setActiveConnectionAction={setActiveConnectionAction}
         tabOrientation={tabOrientation}
         userEmail={userEmail}

@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import {
+  shouldCompressHorizontalTicketNumbers,
+} from "@/features/workspace/components/ticket-tabs/horizontal-ticket-tabs";
+import {
   workspaceOpenTabsStateVersion,
   type WorkspaceOpenTabsState,
 } from "@/features/workspace/workspace-tab-state";
@@ -34,6 +37,32 @@ describe("TicketWorkspace horizontal tabs", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it("compresses every ticket number when the row cannot fit one full number", () => {
+    const tabs = [
+      { ...row, number: "#99999991" },
+      { ...highRow, number: "#99999992" },
+    ];
+
+    expect(shouldCompressHorizontalTicketNumbers({
+      tabs,
+      ticketTabsRowWidth: 252,
+    })).toBe(false);
+    expect(shouldCompressHorizontalTicketNumbers({
+      tabs,
+      ticketTabsRowWidth: 251,
+    })).toBe(true);
+    expect(shouldCompressHorizontalTicketNumbers({
+      fullNumberLabelWidth: 80,
+      tabs,
+      ticketTabsRowWidth: 268,
+    })).toBe(false);
+    expect(shouldCompressHorizontalTicketNumbers({
+      fullNumberLabelWidth: 80,
+      tabs,
+      ticketTabsRowWidth: 267,
+    })).toBe(true);
   });
 
   it("keeps ticket tabs open when switching to List and updates the URL locally", async () => {

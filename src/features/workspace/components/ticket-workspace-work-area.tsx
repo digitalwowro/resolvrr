@@ -41,6 +41,7 @@ export type TicketWorkspaceListAreaProps = {
   allSelected: boolean;
   canLoadMore: boolean;
   columns: WorkspaceTicketColumn[];
+  emptyMessage?: string;
   groupBy: WorkspaceTicketGroupKey;
   groupedRows?: TicketTableGroup[];
   groupLoadMoreError?: { groupId: string; reason: string };
@@ -77,6 +78,7 @@ export function TicketWorkspaceListArea({
   allSelected,
   canLoadMore,
   columns,
+  emptyMessage,
   groupBy,
   groupedRows,
   groupLoadMoreError,
@@ -129,6 +131,7 @@ export function TicketWorkspaceListArea({
       <TicketTable
         activeTicketId={activeTicketId}
         columns={columns}
+        emptyMessage={emptyMessage}
         groupedRows={groupBy === "none" ? undefined : groupedRows}
         groupBy={groupBy}
         onRowSelect={onRowSelect}

@@ -70,7 +70,7 @@ describe("TicketWorkspace horizontal tabs", () => {
       .toHaveAttribute("aria-selected", "true");
   });
 
-  it("caps full ticket tab width and keeps the close button visible", () => {
+  it("caps fluid ticket tabs and keeps the close button visible", () => {
     const detailProps = selectedDetailProps();
     render(
       <TicketWorkspace
@@ -97,7 +97,12 @@ describe("TicketWorkspace horizontal tabs", () => {
 
     const ticketTab = screen.getByRole("tab", { name: /#1001/u });
 
-    expect(ticketTab.parentElement).toHaveClass("max-w-sm");
+    expect(ticketTab.parentElement).toHaveClass(
+      "min-w-16",
+      "max-w-64",
+      "flex-[1_1_0]",
+    );
+    expect(ticketTab.parentElement).not.toHaveClass("max-w-48");
     expect(ticketTab.querySelector(".truncate")).not.toBeNull();
     expect(screen.getByRole("button", { name: "Close #1001" })).toBeInTheDocument();
     expect(

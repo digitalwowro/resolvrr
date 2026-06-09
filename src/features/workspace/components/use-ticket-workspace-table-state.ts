@@ -62,18 +62,40 @@ export function useTicketWorkspaceTableState({
     sortDirection,
     sortKey,
   ]);
+  const sortedRowIds = useMemo(
+    () => new Set(sortedRows.map((row) => row.id)),
+    [sortedRows],
+  );
+  const selectedVisibleRowIds = useMemo(
+    () =>
+      new Set(
+        [...selectedRowIds].filter((ticketId) => sortedRowIds.has(ticketId)),
+      ),
+    [selectedRowIds, sortedRowIds],
+  );
   const allSelected =
-    sortedRows.length > 0 && selectedRowIds.size === sortedRows.length;
-  const partiallySelected = selectedRowIds.size > 0 && !allSelected;
+    sortedRows.length > 0 &&
+    sortedRows.every((row) => selectedRowIds.has(row.id));
+  const partiallySelected = selectedVisibleRowIds.size > 0 && !allSelected;
   const visibleColumnSet = useMemo(
     () => new Set<WorkspaceTicketColumnKey>(visibleColumns),
     [visibleColumns],
   );
 
   function toggleSelectAll() {
-    setSelectedRowIds(
-      allSelected ? new Set() : new Set(sortedRows.map((row) => row.id)),
-    );
+    setSelectedRowIds((current) => {
+      const next = new Set(current);
+      if (sortedRows.every((row) => current.has(row.id))) {
+        for (const row of sortedRows) {
+          next.delete(row.id);
+        }
+      } else {
+        for (const row of sortedRows) {
+          next.add(row.id);
+        }
+      }
+      return next;
+    });
   }
 
   function toggleRow(ticketId: string) {
@@ -132,7 +154,7 @@ export function useTicketWorkspaceTableState({
     groupedRows,
     handleGroupByChange,
     partiallySelected,
-    selectedRowIds,
+    selectedRowIds: selectedVisibleRowIds,
     sortDirectionFor,
     sortingEnabled: providerSortEnabled || localSortEnabled,
     sortedRows,

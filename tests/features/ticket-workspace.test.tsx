@@ -5,6 +5,7 @@ import { TicketWorkspace } from "@/features/workspace/components/ticket-workspac
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
 import {
   availableList,
+  highRow,
   noopAction,
   noopMutationAction,
   row,
@@ -109,6 +110,42 @@ describe("TicketWorkspace", () => {
     expect(within(table).getByText("Cannot log in")).toBeInTheDocument();
     expect(within(table).getByText("Maya Patel")).toBeInTheDocument();
     expect(screen.queryByText("Billing follow-up for annual renewal")).toBeNull();
+  });
+
+  it("focuses and filters loaded tickets from the header search", async () => {
+    const user = userEvent.setup();
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row, highRow]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    const search = screen.getByRole("searchbox", {
+      name: "Filter loaded tickets",
+    });
+
+    expect(search).toHaveAttribute(
+      "placeholder",
+      "Filter loaded tickets by number, title, customer, or owner",
+    );
+
+    await user.keyboard("{Control>}k{/Control}");
+
+    expect(search).toHaveFocus();
+
+    await user.type(search, "webhook");
+
+    const table = screen.getByRole("table", { name: "Tickets" });
+    expect(within(table).getByText("Webhook failed")).toBeInTheDocument();
+    expect(within(table).queryByText("Cannot log in")).toBeNull();
   });
 
   it("renders the real workspace profile menu actions", async () => {
