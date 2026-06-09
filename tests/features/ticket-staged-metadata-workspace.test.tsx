@@ -150,7 +150,8 @@ describe("TicketWorkspace staged metadata updates", () => {
       "Discard changes",
       "Update",
     ]);
-    expect(actionBar).toHaveClass("sticky", "bottom-0");
+    expect(actionBar).toHaveClass("shrink-0", "border-t", "bg-white");
+    expect(actionBar).not.toHaveClass("sticky");
     await user.click(screen.getByRole("button", { name: "Discard changes" }));
 
     expect(action).not.toHaveBeenCalled();
@@ -182,16 +183,17 @@ describe("TicketWorkspace staged metadata updates", () => {
     expect(screen.getByRole("button", { name: "Discard changes" })).toBeDisabled();
   });
 
-  it("keeps staged values when switching tab orientation", async () => {
+  it("keeps staged values while tab orientation controls are hidden in detail", async () => {
     const user = userEvent.setup();
     const action = vi.fn<MutationAction>(noopMutationAction);
     renderWorkspace({ action });
 
     await user.click(screen.getByRole("combobox", { name: "Ticket state" }));
     await user.click(screen.getByRole("option", { name: "Closed" }));
-    await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
 
     expect(action).not.toHaveBeenCalled();
+    expect(screen.queryByRole("group", { name: "Tab layout" }))
+      .not.toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Ticket state" })).toHaveTextContent(
       "Closed",
     );

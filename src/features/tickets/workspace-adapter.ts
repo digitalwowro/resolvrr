@@ -9,7 +9,7 @@ import {
   type TicketLink,
   type TicketListItem,
 } from "@/core/tickets";
-import { formatWorkspaceDateTime } from "./date-time-format";
+import { formatWorkspaceRelativeTime } from "./date-time-format";
 import type {
   WorkspaceArticleContact,
   WorkspaceAttachment,
@@ -22,7 +22,7 @@ import type {
 export * from "./workspace-adapter-types";
 
 function labelDate(date: Date | undefined): string {
-  return date ? formatWorkspaceDateTime(date) : "Unknown";
+  return date ? formatWorkspaceRelativeTime(date) : "Unknown";
 }
 
 function participantName(value: { name?: string; email?: string } | undefined) {
@@ -103,6 +103,7 @@ export function workspaceTicketRow(ticket: TicketListItem): WorkspaceTicketRow {
     title: ticket.title,
     customer: participantName(ticket.customer),
     customerExternalId: ticket.customer?.externalId,
+    customerOrganization: ticket.customer?.organization,
     owner: participantName(ticket.owner),
     ownerExternalId: ticket.owner?.externalId,
     group: groupName(ticket.group),
@@ -151,6 +152,7 @@ export function workspaceTicketTabs(tickets: WorkspaceTicketRow[]): WorkspaceTic
     title: ticket.title,
     customer: ticket.customer,
     customerExternalId: ticket.customerExternalId,
+    customerOrganization: ticket.customerOrganization,
     owner: ticket.owner,
     group: ticket.group,
     state: ticket.state,

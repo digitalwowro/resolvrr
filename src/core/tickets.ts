@@ -65,6 +65,7 @@ export type TicketParticipant = {
   externalId?: string;
   name?: string;
   email?: string;
+  organization?: string;
   role?: TicketParticipantRole;
 };
 

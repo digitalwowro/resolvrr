@@ -16,6 +16,7 @@ export type TicketReadTimingPhase =
   | "provider-secondary-links-request"
   | "provider-secondary-subscription-request"
   | "provider-secondary-group-lookup-request"
+  | "provider-organization-lookup-request"
   | "provider-tag-lookup-request"
   | "provider-link-target-lookup-request"
   | "provider-metadata-mutation-current-ticket-request"

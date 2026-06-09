@@ -173,6 +173,58 @@ describe("Zammad ticket read assets", () => {
     ]);
   });
 
+  it("maps the customer organization from Zammad full-payload assets", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          record_ids: [42],
+          assets: {
+            Ticket: {
+              42: {
+                ...rawTicket,
+                customer: "nicole.braun@zammad.org",
+                customer_id: 7,
+                organization_id: 3,
+              },
+            },
+            User: {
+              7: {
+                id: 7,
+                firstname: "Nicole",
+                lastname: "Braun",
+                email: "nicole.braun@zammad.org",
+                organization_id: 3,
+              },
+            },
+            Organization: {
+              3: { id: 3, name: "Acme Corp" },
+            },
+          },
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [],
+      });
+
+    const result = await zammadProviderPlugin.getTicketDetail?.(
+      providerContext(),
+      "42",
+    );
+
+    expect(result?.ticket.customer).toMatchObject({
+      externalId: "7",
+      name: "Nicole Braun",
+      email: "nicole.braun@zammad.org",
+      organization: "Acme Corp",
+      role: "customer",
+    });
+    expect(result?.ticket.group?.name).toBe("Users");
+  });
+
   it("resolves user display names when Zammad omits full user assets", async () => {
     mockedSafeProviderJson
       .mockResolvedValueOnce({
@@ -235,6 +287,55 @@ describe("Zammad ticket read assets", () => {
       name: "Games Bond",
       email: "games.bond@zammad.isp.fun",
       role: "agent",
+    });
+  });
+
+  it("fetches the customer organization when Zammad only returns an organization id", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [
+          {
+            ...rawTicket,
+            customer: "nicole.braun@zammad.org",
+            customer_id: 7,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          id: 7,
+          firstname: "Nicole",
+          lastname: "Braun",
+          email: "nicole.braun@zammad.org",
+          organization_id: 3,
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { id: 3, name: "Acme Corp" },
+      });
+
+    const result = await zammadProviderPlugin.listTickets?.(providerContext(), {
+      filter: {},
+      pageSize: 10,
+    });
+
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      3,
+      "https://helpdesk.example.com/api/v1/organizations/3",
+      expect.any(Object),
+    );
+    expect(result?.tickets[0]?.customer).toMatchObject({
+      externalId: "7",
+      name: "Nicole Braun",
+      email: "nicole.braun@zammad.org",
+      organization: "Acme Corp",
+      role: "customer",
     });
   });
 });

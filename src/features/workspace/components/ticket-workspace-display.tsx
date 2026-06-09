@@ -289,6 +289,7 @@ export function TicketWorkspaceDisplay({
         onSavedViewChange={handleSavedViewChange}
         onSelectAll={toggleSelectAll}
         onSort={toggleSort}
+        onTabOrientationChange={setTabOrientation}
         onToggleRow={toggleRow}
         partiallySelected={partiallySelected}
         providerGroupingEnabled={providerGroupingEnabled}
@@ -300,6 +301,7 @@ export function TicketWorkspaceDisplay({
         selectedSavedViewId={listPager.savedViewId}
         sortingEnabled={sortingEnabled && !providerGroupedActive}
         sortDirectionFor={sortDirectionFor}
+        tabOrientation={tabOrientation}
         totalCount={searchActive ? undefined : listPager.totalCount}
         visibleColumns={visibleColumnSet}
       />
@@ -349,27 +351,34 @@ export function TicketWorkspaceDisplay({
         onOpenSettings={onOpenSettings}
         onRefreshTicket={refreshTicketDetailById}
         onSearchQueryChange={setWorkspaceSearchQuery}
-        onTabOrientationChange={setTabOrientation}
         recentTickets={recentTicketTabs}
         searchQuery={workspaceSearchQuery}
         setActiveConnectionAction={setActiveConnectionAction}
-        tabOrientation={tabOrientation}
         userEmail={userEmail}
       />
       <section
         className={cn(
-          "flex min-h-0 flex-1 overflow-hidden pt-4",
+          "flex min-h-0 flex-1 overflow-hidden",
           tabOrientation === "horizontal" && "flex-col",
+          tabOrientation === "vertical" && "pt-4",
         )}
       >
         {tabOrientation === "vertical" ? tabsPanel : null}
-        <div
-          key="workspace-content"
-          className="flex min-w-0 flex-1 flex-col overflow-hidden px-4"
-        >
-          {tabOrientation === "horizontal" ? tabsPanel : null}
-          {workArea}
-        </div>
+        {tabOrientation === "horizontal" ? (
+          <div className="shrink-0 border-b border-slate-200 bg-slate-50 px-4 pb-2 pt-4">
+            {tabsPanel}
+          </div>
+        ) : null}
+        {listActive || tabOrientation === "vertical" ? (
+          <div
+            key="workspace-content"
+            className="flex min-w-0 flex-1 flex-col overflow-hidden px-4"
+          >
+            {workArea}
+          </div>
+        ) : (
+          workArea
+        )}
       </section>
     </>
   );

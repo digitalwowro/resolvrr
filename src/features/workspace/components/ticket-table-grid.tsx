@@ -97,12 +97,12 @@ export function ticketGridTableClass({ roundedTop = true } = {}) {
 }
 
 export const ticketGridHeaderWrapperClass =
-  "shrink-0 overflow-y-hidden border-x border-b border-indigo-200 bg-indigo-50 [scrollbar-gutter:stable]";
+  "shrink-0 overflow-y-hidden border-x border-b border-slate-200 bg-slate-50 [scrollbar-gutter:stable]";
 export const ticketGridBodyScrollerClass =
   "min-h-0 flex-1 overflow-auto border-x border-slate-200 [scrollbar-gutter:stable]";
 
 const headerCellClass =
-  "flex h-10 items-center bg-indigo-50 px-3 text-left text-xs font-semibold";
+  "flex h-10 items-center bg-slate-50 px-3 text-left text-xs font-semibold";
 const bodyCellClass = "flex h-11 items-center border-b border-slate-100 px-3";
 
 export function TicketGridCell({

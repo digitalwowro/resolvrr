@@ -171,7 +171,10 @@ export function TicketThreadArticle({
   return (
     <article
       aria-label={`${articleTypeLabel[article.direction]} from ${article.author}`}
-      className={cn("overflow-hidden rounded-md border", articleClass[article.direction])}
+      className={cn(
+        "overflow-hidden rounded-md border",
+        articleClass[article.direction],
+      )}
     >
       <div>
         {hasRecipientDetails ? (

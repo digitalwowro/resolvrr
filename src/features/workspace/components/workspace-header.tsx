@@ -134,7 +134,7 @@ export function WorkspaceHeader({
   }
 
   return (
-    <header className="flex h-12 shrink-0 items-center gap-2 border-b border-indigo-900 bg-indigo-950 px-3">
+    <header className="flex h-12 shrink-0 items-center gap-2 border-b border-indigo-900 bg-indigo-950 px-4">
       <div className="flex shrink-0 items-center">
         {logoAvailable ? (
           /* eslint-disable-next-line @next/next/no-img-element -- Static brand asset supplied in public/brand. */

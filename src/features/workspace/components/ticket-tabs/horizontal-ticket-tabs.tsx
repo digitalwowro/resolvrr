@@ -95,7 +95,7 @@ export function HorizontalTicketTabs({
   }
 
   return (
-    <div className="relative mb-2 flex min-w-0 shrink-0 items-end gap-2 overflow-hidden">
+    <div className="relative flex min-w-0 shrink-0 items-end gap-2 overflow-hidden bg-slate-50">
       <div aria-live="polite" className="sr-only">
         {announcement}
       </div>

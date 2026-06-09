@@ -31,6 +31,11 @@ describe("TicketWorkspace selected detail", () => {
   it("renders selected detail through the production detail/thread components", async () => {
     const user = userEvent.setup();
     const detailProps = selectedDetailProps();
+    detailProps.detail.customerOrganization = "Acme Corp";
+    if (detailProps.detailResult.status !== "available") {
+      throw new Error("Expected available detail");
+    }
+    detailProps.detailResult.detail.customerOrganization = "Acme Corp";
     detailProps.detail.links = [
       {
         id: "ticket-2",
@@ -88,9 +93,15 @@ describe("TicketWorkspace selected detail", () => {
     );
 
     expect(screen.getByLabelText("Ticket detail #1001")).toBeInTheDocument();
-    expect(screen.getByLabelText("Ticket state: Open")).toBeInTheDocument();
+    expect(screen.getByLabelText("Ticket state: Open")).toHaveClass(
+      "bg-indigo-50",
+      "text-indigo-700",
+    );
     expect(
       screen.getByRole("heading", { name: "Cannot log in" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Customer organization: Acme Corp"),
     ).toBeInTheDocument();
     expect(screen.getAllByText("Maya Patel").length).toBeGreaterThan(0);
     expect(screen.getByText("Following")).toBeInTheDocument();
@@ -147,11 +158,11 @@ describe("TicketWorkspace selected detail", () => {
     const detailProps = selectedDetailProps();
     const summarizeTicketAction = vi.fn(async () => ({
       status: "available" as const,
-      generatedAt: "2026-05-24T08:36:00.000Z",
+      generatedAt: new Date(Date.now() - 2.5 * 60 * 1000).toISOString(),
       source: {
         articleCount: 1,
         ticketNumber: "#1001",
-        ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
+        ticketUpdatedAt: new Date(Date.now() - 6.5 * 60 * 1000).toISOString(),
       },
       summary: "Situation: Login issue\nTimeline: Customer reported it.",
     }));
@@ -183,6 +194,10 @@ describe("TicketWorkspace selected detail", () => {
       ticketExternalId: "ticket-1",
     });
     expect(await screen.findByText(/Situation: Login issue/u)).toBeInTheDocument();
+    expect(screen.getByText("Generated 2m ago")).toBeInTheDocument();
+    expect(
+      screen.queryByText("AI can make mistakes. Please verify important details."),
+    ).toBeNull();
   });
 
   it("resets AI summary state when switching selected tickets", async () => {

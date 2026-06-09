@@ -199,6 +199,9 @@ export function mapTicket(
   const group =
     namedReferenceValue(ticket.group) ??
     namedAssetValue(assets?.Group, ticket.group_id);
+  const organization =
+    namedReferenceValue(ticket.organization) ??
+    namedAssetValue(assets?.Organization, ticket.organization_id);
 
   const mappedTicket: Ticket = {
     externalId: String(ticket.id),
@@ -208,6 +211,7 @@ export function mapTicket(
       assets,
       fallback: ticket.customer,
       id: ticket.customer_id,
+      organization,
       role: "customer",
     }),
     owner: participantFromReference({

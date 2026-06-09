@@ -1,4 +1,5 @@
 import type { WorkspaceNotification } from "@/features/notifications";
+import { formatWorkspaceRelativeTime } from "@/features/tickets/date-time-format";
 import type { WorkspaceTicketTab } from "@/features/tickets/workspace-adapter";
 
 export const notificationTypeLabels: Record<
@@ -33,24 +34,5 @@ export function notificationTab(
 
 export function relativeTime(value: string): string {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "Unknown time";
-  }
-
-  const seconds = Math.round((date.getTime() - Date.now()) / 1000);
-  const absolute = Math.abs(seconds);
-  const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
-  if (absolute < 60) {
-    return formatter.format(seconds, "second");
-  }
-  const minutes = Math.round(seconds / 60);
-  if (Math.abs(minutes) < 60) {
-    return formatter.format(minutes, "minute");
-  }
-  const hours = Math.round(minutes / 60);
-  if (Math.abs(hours) < 24) {
-    return formatter.format(hours, "hour");
-  }
-  const days = Math.round(hours / 24);
-  return formatter.format(days, "day");
+  return formatWorkspaceRelativeTime(date);
 }

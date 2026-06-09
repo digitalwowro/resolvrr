@@ -24,9 +24,9 @@ export function TicketMetadataActionBar({
   const [navigation, setNavigation] = usePostUpdateNavigationPreference();
 
   return (
-    <div
+    <section
       aria-label="Staged metadata actions"
-      className="sticky bottom-0 z-10 border-t border-slate-200 bg-white/95 p-2 shadow-[0_-3px_8px_rgba(15,23,42,0.08)] backdrop-blur"
+      className="shrink-0 border-t border-slate-200 bg-white px-4 py-2"
       role="group"
     >
       <div className="flex items-end justify-between gap-2">
@@ -59,6 +59,6 @@ export function TicketMetadataActionBar({
           </Button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

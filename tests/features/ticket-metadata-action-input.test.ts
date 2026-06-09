@@ -107,6 +107,24 @@ describe("ticket metadata action input", () => {
     });
   });
 
+  it("keeps malformed script fragments out of staged rich communication html", () => {
+    const result = ticketMetadataMutationActionInput({
+      communication: {
+        bodyFormat: "html",
+        commentBody:
+          "<p>Checked <scrip<script>alert(1)</script>t>bad</script></p>",
+      },
+      ticketExternalId: "ticket-1",
+    });
+
+    expect(result.status).toBe("valid");
+    if (result.status !== "valid") {
+      throw new Error("Expected valid communication input");
+    }
+    expect(result.commentBody).toBe("<p>Checked alert(1)t&gt;bad</p>");
+    expect(result.commentBody).not.toContain("<script");
+  });
+
   it("rejects unsupported or orphan link relation values", () => {
     expect(
       ticketMetadataMutationActionInput({

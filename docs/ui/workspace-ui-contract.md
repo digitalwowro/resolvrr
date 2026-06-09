@@ -16,6 +16,23 @@ operational, calm, and keyboard-accessible.
 - Initial table columns: select, `#`, `Title`, `Customer`, `Owner`, `State`,
   `Priority`, `Pending till`, and `Updated at`.
 
+## Time Display
+
+Workspace time labels use compact relative wording so agents can scan recency and
+upcoming deadlines consistently. Invalid or unavailable timestamps render as
+`Unknown`.
+
+Relative time labels use these thresholds:
+
+- Under 60 seconds: `now`.
+- Under 60 minutes: `5m ago` or `in 15m`.
+- Under 24 hours: `2h ago` or `in 2h`.
+- Beyond 24 hours: `yesterday`, `tomorrow`, `5d ago`, or `in 5d`.
+
+Do not mix absolute date/time labels into ticket list, ticket detail, thread
+metadata, AI summary source/status labels, or notification surfaces unless a
+later feature explicitly adds a separate audit timestamp affordance.
+
 ## Workspace Selection
 
 The UI may call connected helpdesk instances workspaces. Workspace selection

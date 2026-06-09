@@ -65,6 +65,9 @@ export function ticketSummaryPromptContext(
     `State: ${detail.ticket.state ?? "unknown"}`,
     `Priority: ${detail.ticket.priority ?? "unknown"}`,
     `Customer: ${participantLabel(detail.ticket.customer)}`,
+    ...(detail.ticket.customer?.organization
+      ? [`Customer organization: ${detail.ticket.customer.organization}`]
+      : []),
     `Owner: ${participantLabel(detail.ticket.owner)}`,
     `Group: ${detail.ticket.group?.name ?? "Unassigned"}`,
     `Tags: ${detail.ticket.tags.join(", ") || "none"}`,

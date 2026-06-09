@@ -51,7 +51,7 @@ export function TicketThread({
   }, [articles.length, onScrolledToLatest, scrollAfterArticleCount]);
 
   return (
-    <section className="px-4 py-4">
+    <section className="py-4 pl-4 pr-0">
       <div className="space-y-3">
         {articles.map((article, index) => {
           const latest = index === 0;

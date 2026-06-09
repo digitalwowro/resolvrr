@@ -15,6 +15,7 @@ export type {
 } from "@/core/tickets";
 export {
   formatWorkspaceDateTime,
+  formatWorkspaceRelativeTime,
 } from "./date-time-format";
 export {
   loadWorkspaceTicketDetail,

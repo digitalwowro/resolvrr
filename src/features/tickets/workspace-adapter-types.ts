@@ -37,6 +37,7 @@ export type WorkspaceTicketRow = {
   title: string;
   customer: string;
   customerExternalId?: string;
+  customerOrganization?: string;
   owner: string;
   ownerExternalId?: string;
   group: string;
@@ -59,6 +60,7 @@ export type WorkspaceTicketTab = {
   title: string;
   customer: string;
   customerExternalId?: string;
+  customerOrganization?: string;
   owner: string;
   group: string;
   state: string;
@@ -107,6 +109,7 @@ export type WorkspaceTicketDetail = {
   title: string;
   customer: string;
   customerExternalId?: string;
+  customerOrganization?: string;
   owner: string;
   ownerExternalId?: string;
   group: string;

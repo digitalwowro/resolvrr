@@ -87,8 +87,6 @@ describe("TicketWorkspace vertical tabs", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
-
     expect(
       screen.queryByRole("checkbox", { name: "Select all tickets" }),
     ).not.toBeInTheDocument();
@@ -97,6 +95,7 @@ describe("TicketWorkspace vertical tabs", () => {
     ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
+    await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
 
     expect(screen.getByRole("table", { name: "Tickets" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Cannot log in/u })).toBeInTheDocument();
@@ -135,8 +134,8 @@ describe("TicketWorkspace vertical tabs", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
+    await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
     await user.click(screen.getByRole("row", { name: /Webhook failed/u }));
 
     expect(screen.getByRole("tab", { name: /Cannot log in/u })).toBeInTheDocument();
@@ -175,6 +174,7 @@ describe("TicketWorkspace vertical tabs", () => {
       />,
     );
 
+    await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
     await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
 
     const firstTab = screen.getByRole("tab", { name: /Cannot log in/u });
@@ -209,7 +209,7 @@ describe("TicketWorkspace vertical tabs", () => {
       expect(screen.getAllByRole("tab")[1]).toHaveTextContent("Webhook failed"),
     );
     expect(screen.getAllByRole("tab")[2]).toHaveTextContent("Cannot log in");
-    expect(screen.getByLabelText("Ticket detail #1001")).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Tickets" })).toBeInTheDocument();
   });
 
   it("reactivates older ticket tabs and shows their cached detail", async () => {
@@ -253,8 +253,8 @@ describe("TicketWorkspace vertical tabs", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
     await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
+    await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
     const replaceState = vi.spyOn(window.history, "replaceState");
     routerPush.mockClear();
 

@@ -13,6 +13,10 @@ import {
   type ZammadUser,
 } from "./schemas";
 import { zammadBaseUrl, zammadGetJson } from "./client";
+import {
+  missingZammadOrganizationIds,
+  readOptionalZammadOrganizationAssets,
+} from "./organization-assets";
 import { zammadTicketListPath } from "./ticket-search-query";
 import { listZammadGroupedTickets } from "./ticket-groups";
 function pageFromCursor(cursor: string | undefined): number {
@@ -171,10 +175,16 @@ function mergeListAssets(
   users: Record<string, ZammadUser>,
   states: Record<string, ZammadGenericNamedAsset>,
   priorities: Record<string, ZammadGenericNamedAsset>,
+  organizationAssets?: ZammadAssets,
 ): ZammadAssets {
   return {
     ...assets,
+    ...organizationAssets,
     User: { ...assets?.User, ...users },
+    Organization: {
+      ...assets?.Organization,
+      ...organizationAssets?.Organization,
+    },
     State: { ...assets?.State, ...states },
     TicketPriority: { ...assets?.TicketPriority, ...priorities },
   };
@@ -235,7 +245,27 @@ async function mapZammadTicketListPayload(
       ? fetchZammadNamedAssets(context, "/api/v1/ticket_priorities")
       : Promise.resolve({}),
   ]);
-  const assets = mergeListAssets(payload.assets, users, states, priorities);
+  const assetsWithLookups = mergeListAssets(
+    payload.assets,
+    users,
+    states,
+    priorities,
+  );
+  const organizationAssets = await readOptionalZammadOrganizationAssets(
+    context,
+    missingZammadOrganizationIds({
+      assets: assetsWithLookups,
+      tickets: payload.tickets,
+    }),
+    "list",
+  );
+  const assets = mergeListAssets(
+    payload.assets,
+    users,
+    states,
+    priorities,
+    organizationAssets,
+  );
   const totalCount = query.count?.includeTotal ? payload.totalCount : undefined;
 
   return {

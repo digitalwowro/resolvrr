@@ -55,9 +55,13 @@ function userByEmail(
   });
 }
 
-export function namedReferenceValue(
-  value: ZammadTicket["group"] | ZammadTicket["state"] | ZammadTicket["priority"],
-): string | undefined {
+type ZammadNamedReference =
+  | string
+  | { name?: string | null; name_last?: string | null }
+  | null
+  | undefined;
+
+export function namedReferenceValue(value: ZammadNamedReference): string | undefined {
   if (typeof value === "string") {
     return cleanString(value);
   }
@@ -106,19 +110,32 @@ export function zammadUserEmail(
   return isEmailLike(login) ? login : undefined;
 }
 
+export function zammadUserOrganizationName(
+  user: ZammadUser | undefined,
+  assets?: ZammadAssets,
+): string | undefined {
+  return (
+    namedReferenceValue(user?.organization) ??
+    namedAssetValue(assets?.Organization, user?.organization_id)
+  );
+}
+
 function participantFromUser(
   user: ZammadUser | undefined,
   role: TicketParticipantRole,
+  assets?: ZammadAssets,
 ): TicketParticipant | undefined {
   const name = zammadUserDisplayName(user) ?? zammadUserEmail(user);
   if (!name) {
     return undefined;
   }
 
+  const organization = zammadUserOrganizationName(user, assets);
   return {
     externalId: relationId(user?.id),
     name,
     email: zammadUserEmail(user),
+    ...(organization ? { organization } : {}),
     role,
   };
 }
@@ -171,24 +188,40 @@ export function participantFromReference({
   assets,
   fallback,
   id,
+  organization,
   role,
 }: {
   assets?: ZammadAssets;
   fallback: ZammadTicket["customer"] | ZammadTicket["owner"];
   id: string | number | null | undefined;
+  organization?: string;
   role: TicketParticipantRole;
 }): TicketParticipant | undefined {
+  const withOrganization = (
+    participant: TicketParticipant | undefined,
+  ): TicketParticipant | undefined => {
+    if (!participant || !organization || participant.organization) {
+      return participant;
+    }
+    return { ...participant, organization };
+  };
+
   const assetParticipant = participantFromUser(
     assetById(assets?.User, id),
     role,
+    assets,
   );
   if (assetParticipant) {
-    return assetParticipant;
+    return withOrganization(assetParticipant);
   }
 
-  const referenceParticipant = participantFromUser(userReference(fallback), role);
+  const referenceParticipant = participantFromUser(
+    userReference(fallback),
+    role,
+    assets,
+  );
   if (referenceParticipant) {
-    return referenceParticipant;
+    return withOrganization(referenceParticipant);
   }
 
   if (typeof fallback !== "string") {
@@ -198,7 +231,13 @@ export function participantFromReference({
   const parsed = addressParts(fallback);
   const name = parsed.name ?? parsed.email;
   return name
-    ? { externalId: relationId(id), name, email: parsed.email, role }
+    ? {
+        externalId: relationId(id),
+        name,
+        email: parsed.email,
+        ...(organization ? { organization } : {}),
+        role,
+      }
     : undefined;
 }
 
@@ -208,7 +247,7 @@ export function articleAuthor(
   role: TicketParticipantRole,
 ): TicketParticipant {
   const createdByUser = assetById(assets?.User, article.created_by_id);
-  const assetParticipant = participantFromUser(createdByUser, role);
+  const assetParticipant = participantFromUser(createdByUser, role, assets);
   const fromParticipant = participantFromAddress(article.from, role);
   const outboundEmail =
     !article.internal && article.sender?.toLowerCase().includes("agent");
@@ -232,6 +271,7 @@ export function articleAuthor(
   const referenceParticipant = participantFromUser(
     userReference(article.created_by),
     role,
+    assets,
   );
   if (referenceParticipant) {
     return referenceParticipant;
@@ -259,6 +299,7 @@ export function recipientParticipant(
   const assetParticipant = participantFromUser(
     userByEmail(assets, parsed.email),
     "unknown",
+    assets,
   );
   if (assetParticipant) {
     return assetParticipant;

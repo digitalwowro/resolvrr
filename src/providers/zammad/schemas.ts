@@ -3,9 +3,24 @@ import { z } from "zod";
 const zammadNullableStringSchema = z.string().nullish();
 const zammadIdSchema = z.union([z.number(), z.string()]).nullish();
 
+const zammadNamedReferenceSchema = z
+  .union([
+    z.string(),
+    z
+      .object({
+        id: z.number().optional(),
+        name: zammadNullableStringSchema,
+        name_last: zammadNullableStringSchema,
+      })
+      .passthrough(),
+  ])
+  .nullish();
+
 export const zammadUserSchema = z
   .object({
     id: z.number().optional(),
+    organization_id: zammadIdSchema,
+    organization: zammadNamedReferenceSchema,
     firstname: zammadNullableStringSchema,
     lastname: zammadNullableStringSchema,
     fullname: zammadNullableStringSchema,
@@ -25,19 +40,6 @@ const zammadExpandedUserReferenceSchema = z
   .union([z.string(), zammadUserSchema])
   .nullish();
 
-const zammadNamedReferenceSchema = z
-  .union([
-    z.string(),
-    z
-      .object({
-        id: z.number().optional(),
-        name: zammadNullableStringSchema,
-        name_last: zammadNullableStringSchema,
-      })
-      .passthrough(),
-  ])
-  .nullish();
-
 export const zammadTicketSchema = z
   .object({
     id: z.number(),
@@ -45,11 +47,13 @@ export const zammadTicketSchema = z
     title: z.string(),
     customer_id: zammadIdSchema,
     owner_id: zammadIdSchema,
+    organization_id: zammadIdSchema,
     group_id: zammadIdSchema,
     state_id: zammadIdSchema,
     priority_id: zammadIdSchema,
     customer: zammadExpandedUserReferenceSchema,
     owner: zammadExpandedUserReferenceSchema,
+    organization: zammadNamedReferenceSchema,
     group: zammadNamedReferenceSchema,
     state: zammadNamedReferenceSchema,
     priority: zammadNamedReferenceSchema,
@@ -111,11 +115,16 @@ export const zammadGroupSchema = zammadGenericNamedAssetSchema.extend({
 
 export const zammadGroupListResponseSchema = z.array(zammadGroupSchema);
 
+export const zammadOrganizationSchema = zammadGenericNamedAssetSchema.extend({
+  active: z.boolean().optional(),
+});
+
 export const zammadAssetsSchema = z
   .object({
     Ticket: z.record(z.string(), zammadTicketSchema).optional(),
     TicketArticle: z.record(z.string(), zammadArticleSchema).optional(),
     User: z.record(z.string(), zammadUserSchema).optional(),
+    Organization: z.record(z.string(), zammadOrganizationSchema).optional(),
     Group: z.record(z.string(), zammadGenericNamedAssetSchema).optional(),
     State: z.record(z.string(), zammadGenericNamedAssetSchema).optional(),
     TicketPriority: z.record(z.string(), zammadGenericNamedAssetSchema).optional(),
@@ -146,5 +155,6 @@ export type ZammadArticle = z.infer<typeof zammadArticleSchema>;
 export type ZammadAssets = z.infer<typeof zammadAssetsSchema>;
 export type ZammadGenericNamedAsset = z.infer<typeof zammadGenericNamedAssetSchema>;
 export type ZammadGroup = z.infer<typeof zammadGroupSchema>;
+export type ZammadOrganization = z.infer<typeof zammadOrganizationSchema>;
 export type ZammadUser = z.infer<typeof zammadUserSchema>;
 export type ZammadFullTicketPayload = z.infer<typeof zammadFullTicketPayloadSchema>;

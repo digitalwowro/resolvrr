@@ -48,10 +48,10 @@ function TabLayoutSwitch({
     <div
       aria-label="Tab layout"
       className={cn(
-        "inline-flex h-8 items-center rounded-md",
+        "inline-flex h-6 items-center overflow-hidden rounded-md",
         dark
           ? "gap-1"
-          : "border border-slate-200 bg-white p-0.5",
+          : "border border-slate-200 bg-white",
       )}
       role="group"
     >
@@ -60,7 +60,7 @@ function TabLayoutSwitch({
           aria-label="Horizontal tabs"
           aria-pressed={value === "horizontal"}
           className={cn(
-            "grid size-8 place-items-center rounded-sm",
+            "grid size-6 place-items-center",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1",
             dark
               ? "text-indigo-200 hover:text-white focus-visible:outline-white"
@@ -71,7 +71,7 @@ function TabLayoutSwitch({
           onClick={() => onChange("horizontal")}
           type="button"
         >
-          <PanelTop aria-hidden="true" className="size-5" />
+          <PanelTop aria-hidden="true" className="size-4" />
         </button>
       </Tooltip>
       <Tooltip content="Vertical tabs" side="bottom">
@@ -79,7 +79,7 @@ function TabLayoutSwitch({
           aria-label="Vertical tabs"
           aria-pressed={value === "vertical"}
           className={cn(
-            "grid size-8 place-items-center rounded-sm",
+            "grid size-6 place-items-center",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1",
             dark
               ? "text-indigo-200 hover:text-white focus-visible:outline-white"
@@ -90,7 +90,7 @@ function TabLayoutSwitch({
           onClick={() => onChange("vertical")}
           type="button"
         >
-          <PanelLeft aria-hidden="true" className="size-5" />
+          <PanelLeft aria-hidden="true" className="size-4" />
         </button>
       </Tooltip>
     </div>

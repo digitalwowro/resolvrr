@@ -48,7 +48,11 @@ function ticketDetail(): TicketDetail {
       ],
     },
     ticket: {
-      customer: { name: "Maya Patel", email: "maya@example.com" },
+      customer: {
+        name: "Maya Patel",
+        email: "maya@example.com",
+        organization: "Acme Corp",
+      },
       externalId: "ticket-1",
       group: { name: "Users" },
       number: "1001",
@@ -80,6 +84,7 @@ describe("AI ticket summaries", () => {
     const context = ticketSummaryPromptContext(ticketDetail());
 
     expect(context.prompt).toContain("Ticket: #1001");
+    expect(context.prompt).toContain("Customer organization: Acme Corp");
     expect(context.prompt).toContain("Hello support");
     expect(context.prompt).not.toContain("<strong>");
     expect(context.prompt).not.toContain("ignored()");

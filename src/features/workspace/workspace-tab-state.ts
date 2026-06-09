@@ -57,6 +57,9 @@ function tabFromStorage(value: unknown): WorkspaceTicketTab | undefined {
     ...(optionalStringValue(record.customerExternalId)
       ? { customerExternalId: optionalStringValue(record.customerExternalId) }
       : {}),
+    ...(optionalStringValue(record.customerOrganization)
+      ? { customerOrganization: optionalStringValue(record.customerOrganization) }
+      : {}),
     owner,
     group,
     state,
@@ -148,6 +151,9 @@ export function workspaceTabFromDetail(
     customer: detail.customer,
     ...(detail.customerExternalId
       ? { customerExternalId: detail.customerExternalId }
+      : {}),
+    ...(detail.customerOrganization
+      ? { customerOrganization: detail.customerOrganization }
       : {}),
     owner: detail.owner,
     group: detail.group,

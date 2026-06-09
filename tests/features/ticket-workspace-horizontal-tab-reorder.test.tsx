@@ -94,11 +94,12 @@ describe("TicketWorkspace horizontal tabs", () => {
       ),
     );
 
+    await user.click(screen.getByRole("tab", { name: "Return to list: All tickets" }));
     await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
     await waitFor(() =>
       expect(saveWorkspaceOpenTabsStateAction).toHaveBeenLastCalledWith(
         expect.objectContaining({
-          activePane: "ticket-1",
+          activePane: "list",
           tabOrientation: "vertical",
         }),
       ),

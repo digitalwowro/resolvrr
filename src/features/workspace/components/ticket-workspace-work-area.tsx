@@ -22,6 +22,7 @@ import type {
 import { TicketDetail, TicketDetailLoadingShell } from "./ticket-detail";
 import { TicketListToolbar } from "./ticket-list-toolbar";
 import { TicketTable, type TicketTableGroup } from "./ticket-table";
+import type { TicketTabOrientation } from "./ticket-tabs-panel";
 import { ticketGroupOptions } from "./ticket-table-grouping";
 import {
   DetailLoadingState,
@@ -58,6 +59,7 @@ export type TicketWorkspaceListAreaProps = {
   onSavedViewChange(savedViewId: string): void | Promise<void>;
   onSelectAll(): void;
   onSort(key: WorkspaceTicketSortKey): void;
+  onTabOrientationChange(orientation: TicketTabOrientation): void;
   onToggleRow(ticketId: string): void;
   partiallySelected: boolean;
   providerGroupingEnabled: boolean;
@@ -69,6 +71,7 @@ export type TicketWorkspaceListAreaProps = {
   selectedSavedViewId: string;
   sortingEnabled: boolean;
   sortDirectionFor(key: WorkspaceTicketSortKey): SortDirection | undefined;
+  tabOrientation: TicketTabOrientation;
   totalCount?: number;
   visibleColumns: Set<WorkspaceTicketColumnKey>;
 };
@@ -95,6 +98,7 @@ export function TicketWorkspaceListArea({
   onSavedViewChange,
   onSelectAll,
   onSort,
+  onTabOrientationChange,
   onToggleRow,
   partiallySelected,
   providerGroupingEnabled,
@@ -106,13 +110,13 @@ export function TicketWorkspaceListArea({
   selectedSavedViewId,
   sortingEnabled,
   sortDirectionFor,
+  tabOrientation,
   totalCount,
   visibleColumns,
 }: TicketWorkspaceListAreaProps) {
   return (
     <div key="work-area" className="flex min-h-0 flex-1 flex-col">
       <TicketListToolbar
-        allSelected={allSelected}
         columns={columns}
         groupBy={groupBy}
         groupOptions={ticketGroupOptions(providerGroupingEnabled)}
@@ -120,23 +124,26 @@ export function TicketWorkspaceListArea({
         onGroupByChange={onGroupByChange}
         onRefresh={onRefresh}
         onSavedViewChange={onSavedViewChange}
-        onSelectAll={onSelectAll}
-        partiallySelected={partiallySelected}
+        onTabOrientationChange={onTabOrientationChange}
         refreshing={refreshing}
         roundedTop={roundedTop}
         savedViewOptions={savedViewOptions}
         selectedSavedViewId={selectedSavedViewId}
+        tabOrientation={tabOrientation}
         visibleColumns={visibleColumns}
       />
       <TicketTable
         activeTicketId={activeTicketId}
+        allSelected={allSelected}
         columns={columns}
         emptyMessage={emptyMessage}
         groupedRows={groupBy === "none" ? undefined : groupedRows}
         groupBy={groupBy}
         onRowSelect={onRowSelect}
+        onSelectAll={onSelectAll}
         onSort={onSort}
         onToggleRow={onToggleRow}
+        partiallySelected={partiallySelected}
         canLoadMore={canLoadMore}
         groupLoadMoreError={groupLoadMoreError}
         loadingGroupId={loadingGroupId}

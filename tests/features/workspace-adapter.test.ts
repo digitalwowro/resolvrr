@@ -6,7 +6,7 @@ import {
 } from "@/features/tickets";
 
 describe("workspace ticket adapter date formatting", () => {
-  it("uses the shared workspace date/time format for rows and detail threads", () => {
+  it("uses the shared workspace relative time format for rows and detail threads", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-05-25T12:00:00Z"));
 
@@ -15,7 +15,7 @@ describe("workspace ticket adapter date formatting", () => {
         externalId: "ticket-1",
         number: "1001",
         title: "Cannot log in",
-        customer: { name: "Maya Patel" },
+        customer: { name: "Maya Patel", organization: "Acme Corp" },
         owner: { name: "Agent Smith" },
         group: { name: "Users" },
         state: "open",
@@ -86,15 +86,17 @@ describe("workspace ticket adapter date formatting", () => {
         measuredAt: new Date("2026-05-25T12:00:00Z"),
       } satisfies TicketDetail);
 
-      expect(row?.createdAt).toBe("Dec 31, 2025, 23:30");
-      expect(row?.pendingTill).toBe("May 27, 06:00");
-      expect(row?.updatedAt).toBe("May 17, 16:49");
-      expect(detail.updatedAt).toBe("May 17, 16:49");
+      expect(row?.createdAt).toBe("145d ago");
+      expect(row?.customerOrganization).toBe("Acme Corp");
+      expect(row?.pendingTill).toBe("in 2d");
+      expect(row?.updatedAt).toBe("8d ago");
+      expect(detail.customerOrganization).toBe("Acme Corp");
+      expect(detail.updatedAt).toBe("8d ago");
       expect(detail.articles.map((article) => article.id)).toEqual([
         "article-1",
         "article-older",
       ]);
-      expect(detail.articles[0]?.meta).toBe("May 27, 06:00");
+      expect(detail.articles[0]?.meta).toBe("in 2d");
       expect(detail.articles[0]?.from).toEqual({
         email: "maya@example.com",
         label: "Maya Patel",

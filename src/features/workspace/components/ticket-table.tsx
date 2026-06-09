@@ -1,6 +1,6 @@
 "use client";
 
-import type { SortDirection } from "@/components/ui";
+import { Checkbox, Tooltip, type SortDirection } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type {
   WorkspaceTicketColumn,
@@ -24,6 +24,7 @@ import type { TicketTableGroup } from "./ticket-table-types";
 
 type TicketTableProps = {
   activeTicketId?: string;
+  allSelected: boolean;
   columns: WorkspaceTicketColumn[];
   emptyMessage?: string;
   groupedRows?: TicketTableGroup[];
@@ -31,6 +32,8 @@ type TicketTableProps = {
   onRowSelect(ticketId: string): void;
   onSort(key: WorkspaceTicketSortKey): void;
   onToggleRow(ticketId: string): void;
+  onSelectAll(): void;
+  partiallySelected: boolean;
   canLoadMore?: boolean;
   groupLoadMoreError?: { groupId: string; reason: string };
   loadedCount?: number;
@@ -107,13 +110,16 @@ function LoadMoreTongue({
 
 export function TicketTable({
   activeTicketId,
+  allSelected,
   columns,
   emptyMessage = "No tickets were returned by the active helpdesk workspace.",
   groupedRows,
   groupBy,
   onRowSelect,
+  onSelectAll,
   onSort,
   onToggleRow,
+  partiallySelected,
   canLoadMore = false,
   groupLoadMoreError,
   loadedCount,
@@ -196,7 +202,21 @@ export function TicketTable({
             role="rowgroup"
           >
             <div className="contents" role="row">
-              <TicketGridStaticHeaderCell />
+              <TicketGridStaticHeaderCell>
+                <Tooltip content="Select all tickets" side="bottom">
+                  <Checkbox
+                    checked={allSelected}
+                    className="h-6 !items-center"
+                    checkboxClassName="!size-5"
+                    checkIconClassName="!size-3"
+                    hideLabel
+                    indeterminate={partiallySelected}
+                    label="Select all tickets"
+                    name="workspace-select-all"
+                    onChange={onSelectAll}
+                  />
+                </Tooltip>
+              </TicketGridStaticHeaderCell>
               <TicketGridHeaderCell
                 label="#"
                 onSort={sortHandler("number")}

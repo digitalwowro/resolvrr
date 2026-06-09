@@ -3,6 +3,10 @@ import type { TicketDetail } from "@/core/tickets";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
 import { mapArticle, mapTicket } from "./mapping";
 import {
+  missingZammadOrganizationIds,
+  readOptionalZammadOrganizationAssets,
+} from "./organization-assets";
+import {
   zammadArticleListResponseSchema,
   zammadFullTicketPayloadSchema,
   zammadTicketSchema,
@@ -150,14 +154,21 @@ function mergeDetailAssets(
   assets: ZammadAssets | undefined,
   users: Record<string, ZammadUser>,
   secondaryAssets: ZammadAssets | undefined,
+  organizationAssets?: ZammadAssets,
 ): ZammadAssets {
   return {
     ...assets,
     ...secondaryAssets,
+    ...organizationAssets,
     User: {
       ...assets?.User,
       ...secondaryAssets?.User,
       ...users,
+    },
+    Organization: {
+      ...assets?.Organization,
+      ...secondaryAssets?.Organization,
+      ...organizationAssets?.Organization,
     },
     Group: {
       ...assets?.Group,
@@ -230,7 +241,25 @@ export async function getZammadTicketDetail(
         ),
         readZammadSecondaryTicketData(context, ticket.data, existingAssets),
       ]);
-      const assets = mergeDetailAssets(existingAssets, users, secondary.assets);
+      const assetsWithSecondary = mergeDetailAssets(
+        existingAssets,
+        users,
+        secondary.assets,
+      );
+      const organizationAssets = await readOptionalZammadOrganizationAssets(
+        context,
+        missingZammadOrganizationIds({
+          assets: assetsWithSecondary,
+          tickets: [ticket.data],
+        }),
+        "detail",
+      );
+      const assets = mergeDetailAssets(
+        existingAssets,
+        users,
+        secondary.assets,
+        organizationAssets,
+      );
 
       return {
         ticket: {

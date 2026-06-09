@@ -248,13 +248,8 @@ describe("TicketWorkspace", () => {
       screen.queryByRole("toolbar", { name: "Ticket list controls" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByLabelText("System status")).not.toBeInTheDocument();
-    expect(screen.getByRole("group", { name: "Tab layout" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Horizontal tabs" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Vertical tabs" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Horizontal tabs" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    expect(screen.queryByRole("group", { name: "Tab layout" }))
+      .not.toBeInTheDocument();
     const tablist = screen.getByRole("tablist", { name: "Open tickets" });
     expect(within(tablist).getAllByRole("tab")[0]).toHaveAccessibleName(
       "Return to list: All tickets",
@@ -272,5 +267,12 @@ describe("TicketWorkspace", () => {
     expect(screen.getByRole("combobox", { name: "Saved view" })).toBeEnabled();
     expect(screen.getByRole("combobox", { name: "Group tickets by" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Column visibility" })).toBeEnabled();
+    expect(screen.getByRole("group", { name: "Tab layout" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Horizontal tabs" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Vertical tabs" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Horizontal tabs" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 });
