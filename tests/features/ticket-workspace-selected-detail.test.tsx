@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
@@ -140,8 +140,8 @@ describe("TicketWorkspace selected detail", () => {
     });
     await user.click(mayaDetails);
 
-    expect(within(mayaDetails).getAllByText("From:")).toHaveLength(1);
-    expect(screen.getByText("<maya@example.com>")).toBeInTheDocument();
+    expect(screen.getByText("From:")).toBeInTheDocument();
+    expect(screen.getByText("(maya@example.com)")).toBeInTheDocument();
     expect(screen.getByText("To:")).toBeInTheDocument();
     expect(screen.getByText("Support Team")).toBeInTheDocument();
     expect(screen.getByText("(support@example.com)")).toBeInTheDocument();

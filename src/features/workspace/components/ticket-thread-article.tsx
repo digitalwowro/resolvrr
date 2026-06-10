@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, CornerUpLeft, MessageSquarePlus, UsersRound } from "lucide-react";
+import { ChevronDown, MessageSquarePlus, Reply, ReplyAll } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/components/ui/classnames";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
@@ -17,12 +17,9 @@ import {
 import {
   actionSelectedClass,
   actionStateClass,
-  actionBorderClass,
-  actionSurfaceClass,
-  articleClass,
   articleTypeLabel,
+  articleTypeTokenClass,
   avatarClass,
-  composerPanelClass,
 } from "./ticket-thread-article-styles";
 
 type TicketThreadArticleProps = {
@@ -31,6 +28,7 @@ type TicketThreadArticleProps = {
   communicationDraft: TicketCommunicationDraft;
   communicationCapabilities: TicketCommunicationCapabilities;
   disabled: boolean;
+  isFirst: boolean;
   onCommunicationDraftChange(draft: TicketCommunicationDraft): void;
   onCloseComposer(): void;
   onOpenComposer(mode: InlineCommunicationMode): void;
@@ -58,8 +56,8 @@ function ContactLine({
 
   return (
     <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-baseline gap-2">
-      <span className="text-xs">{label}:</span>
-      <div className="min-w-0 leading-tight">
+      <span className="text-xs text-slate-500">{label}:</span>
+      <div className="min-w-0 leading-tight text-slate-600">
         {contacts.map((contact, index) => (
           <span
             className="mr-2 inline-flex min-w-0 items-baseline gap-1"
@@ -97,8 +95,9 @@ function ThreadActionButton({
 }) {
   return (
     <button
+      aria-label={children}
       className={cn(
-        "inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-semibold",
+        "inline-grid size-7 place-items-center rounded-md text-slate-500",
         "disabled:cursor-not-allowed disabled:opacity-50",
         isSelected
           ? actionSelectedClass[type]
@@ -106,11 +105,11 @@ function ThreadActionButton({
       )}
       disabled={disabled}
       onClick={onClick}
-      title={title}
+      title={title ?? children}
       type="button"
     >
       {icon}
-      {children}
+      <span className="sr-only">{children}</span>
     </button>
   );
 }
@@ -126,6 +125,7 @@ export function TicketThreadArticle({
   communicationDraft,
   communicationCapabilities,
   disabled,
+  isFirst,
   onCommunicationDraftChange,
   onCloseComposer,
   onOpenComposer,
@@ -138,150 +138,151 @@ export function TicketThreadArticle({
   const canComment = communicationCapabilities.internalNotes;
   const hasActions = canReply || canComment;
 
-  const headerContent = (
-    <>
-      <div className="flex min-w-0 flex-1 items-baseline gap-2">
-        <span className="shrink-0 text-xs">From:</span>
-        <span className="truncate text-xs font-semibold">{article.author}</span>
-        {article.authorEmail ? (
-          <span className="truncate text-xs">&lt;{article.authorEmail}&gt;</span>
-        ) : null}
-        <span className="shrink-0 text-xs">·</span>
-        <span className="truncate text-xs">{article.meta}</span>
-        {hasRecipientDetails ? (
-          <ChevronDown
-            aria-hidden="true"
-            className={cn(
-              "size-4 shrink-0 self-center transition-transform",
-              isExpanded ? "rotate-180" : "",
-            )}
-          />
-        ) : null}
-      </div>
-      {hasRecipientDetails && isExpanded ? (
-        <div className="min-w-0 leading-tight">
-          <ContactLine contacts={article.to} label="To" />
-          <ContactLine contacts={article.cc} label="Cc" />
-          <ContactLine contacts={article.bcc} label="Bcc" />
-        </div>
-      ) : null}
-    </>
+  const senderControl = hasRecipientDetails ? (
+    <button
+      aria-expanded={isExpanded}
+      aria-label={`Message details for ${article.author}`}
+      className="inline-flex min-w-0 items-center gap-1 rounded-sm text-left font-semibold text-slate-950 hover:text-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+      onClick={() => setIsExpanded((current) => !current)}
+      type="button"
+    >
+      <span className="truncate">{article.author}</span>
+      <ChevronDown
+        aria-hidden="true"
+        className={cn(
+          "size-4 shrink-0 text-slate-500 transition-transform",
+          isExpanded ? "rotate-180" : "",
+        )}
+      />
+    </button>
+  ) : (
+    <span className="min-w-0 truncate font-semibold text-slate-950">
+      {article.author}
+    </span>
   );
 
   return (
     <article
       aria-label={`${articleTypeLabel[article.direction]} from ${article.author}`}
-      className={cn(
-        "overflow-hidden rounded-md border",
-        articleClass[article.direction],
-      )}
+      className="group bg-white transition-colors hover:bg-slate-50/70 focus-within:bg-slate-50/70"
     >
-      <div>
-        {hasRecipientDetails ? (
-          <button
-            aria-expanded={isExpanded}
-            aria-label={`Message details for ${article.author}`}
-            className="flex w-full items-start gap-3 px-3 pt-3 text-left"
-            onClick={() => setIsExpanded((current) => !current)}
-            type="button"
-          >
-            <ArticleAvatar article={article} />
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              {headerContent}
-            </div>
-          </button>
-        ) : (
-          <div className="flex w-full items-center gap-3 px-3 pt-3 text-left">
-            <ArticleAvatar article={article} />
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              {headerContent}
-            </div>
-          </div>
+      <div
+        className={cn(
+          "relative flex gap-3 pb-4 pr-4",
+          isFirst ? "pt-0" : "pt-4",
         )}
-      </div>
-      <div className="px-3 py-3">
-        <div
-          className={cn(
-            "max-w-none text-sm leading-5 text-slate-900",
-            "whitespace-normal break-words",
-            "[&_a]:font-medium [&_a]:underline-offset-2 [&_a:hover]:underline",
-            "[&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-slate-300 [&_blockquote]:pl-3 [&_blockquote]:text-slate-700",
-            "[&_br]:block [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.85em]",
-            "[&_h1]:mb-2 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:font-semibold",
-            "[&_li]:my-0.5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_pre]:my-3 [&_pre]:overflow-auto [&_pre]:rounded [&_pre]:bg-slate-950 [&_pre]:p-3 [&_pre]:text-slate-50 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6",
-            "[&_strong]:font-semibold [&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-200 [&_td]:p-2 [&_th]:border [&_th]:border-slate-200 [&_th]:bg-slate-50 [&_th]:p-2 [&_th]:text-left [&_th]:font-semibold",
-          )}
-          dangerouslySetInnerHTML={{ __html: article.sanitizedHtml }}
-        />
-        <TicketArticleAttachments attachments={article.attachments} />
-      </div>
-      {hasActions ? (
-        <div
-          aria-label={`Message actions for ${article.author}`}
-          className={cn(
-            "flex items-center gap-2 border-t px-3 py-2",
-            actionBorderClass[article.direction],
-            actionSurfaceClass[article.direction],
-          )}
-        >
-          {canReply ? (
-            <>
-              <ThreadActionButton
-                icon={<CornerUpLeft aria-hidden="true" className="size-3.5" />}
-                isSelected={activeMode === "reply"}
-                onClick={() => onOpenComposer("reply")}
-                type={article.direction}
-              >
-                Reply
-              </ThreadActionButton>
-              <ThreadActionButton
-                disabled
-                icon={<UsersRound aria-hidden="true" className="size-3.5" />}
-                isSelected={false}
-                onClick={() => undefined}
-                title="Reply all is not available yet."
-                type={article.direction}
-              >
-                Reply all
-              </ThreadActionButton>
-            </>
-          ) : null}
-          {canComment ? (
-            <ThreadActionButton
-              icon={<MessageSquarePlus aria-hidden="true" className="size-3.5" />}
-              isSelected={activeMode === "comment"}
-              onClick={() => onOpenComposer("comment")}
-              type={article.direction}
+      >
+        <ArticleAvatar article={article} />
+        <div className="min-w-0 flex-1">
+          <div
+            className={cn(
+              "flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm",
+              hasActions && "pr-28",
+            )}
+          >
+            {senderControl}
+            <span
+              className={cn(
+                "shrink-0 text-xs",
+                articleTypeTokenClass[article.direction],
+              )}
             >
-              Comment
-            </ThreadActionButton>
+              {articleTypeLabel[article.direction]}
+            </span>
+            <span aria-hidden="true" className="text-slate-300">
+              ·
+            </span>
+            <span className="shrink-0 text-xs text-slate-500">
+              {article.meta}
+            </span>
+          </div>
+          {hasRecipientDetails && isExpanded ? (
+            <div className="mt-2 min-w-0 leading-tight">
+              <ContactLine contacts={[article.from]} label="From" />
+              <ContactLine contacts={article.to} label="To" />
+              <ContactLine contacts={article.cc} label="Cc" />
+              <ContactLine contacts={article.bcc} label="Bcc" />
+            </div>
+          ) : null}
+          <div
+            className={cn(
+              "mt-2 max-w-none text-sm leading-5 text-slate-900",
+              "whitespace-normal break-words",
+              "[&_a]:font-medium [&_a]:underline-offset-2 [&_a:hover]:underline",
+              "[&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-slate-300 [&_blockquote]:pl-3 [&_blockquote]:text-slate-700",
+              "[&_br]:block [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.85em]",
+              "[&_h1]:mb-2 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:font-semibold",
+              "[&_li]:my-0.5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_pre]:my-3 [&_pre]:overflow-auto [&_pre]:rounded [&_pre]:bg-slate-950 [&_pre]:p-3 [&_pre]:text-slate-50 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6",
+              "[&_strong]:font-semibold [&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-200 [&_td]:p-2 [&_th]:border [&_th]:border-slate-200 [&_th]:bg-slate-50 [&_th]:p-2 [&_th]:text-left [&_th]:font-semibold",
+            )}
+            dangerouslySetInnerHTML={{ __html: article.sanitizedHtml }}
+          />
+          <TicketArticleAttachments attachments={article.attachments} />
+          {hasActions ? (
+            <div
+              aria-label={`Message actions for ${article.author}`}
+              className="pointer-events-none absolute right-4 top-4 flex items-center gap-1 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+            >
+              {canReply ? (
+                <>
+                  <ThreadActionButton
+                    icon={<Reply aria-hidden="true" className="size-4" />}
+                    isSelected={activeMode === "reply"}
+                    onClick={() => onOpenComposer("reply")}
+                    type={article.direction}
+                  >
+                    Reply
+                  </ThreadActionButton>
+                  <ThreadActionButton
+                    disabled
+                    icon={<ReplyAll aria-hidden="true" className="size-4" />}
+                    isSelected={false}
+                    onClick={() => undefined}
+                    title="Reply all is not available yet."
+                    type={article.direction}
+                  >
+                    Reply all
+                  </ThreadActionButton>
+                </>
+              ) : null}
+              {canComment ? (
+                <ThreadActionButton
+                  icon={
+                    <MessageSquarePlus aria-hidden="true" className="size-4" />
+                  }
+                  isSelected={activeMode === "comment"}
+                  onClick={() => onOpenComposer("comment")}
+                  type={article.direction}
+                >
+                  Comment
+                </ThreadActionButton>
+              ) : null}
+            </div>
+          ) : null}
+          {activeMode ? (
+            <TicketInlineCommunicationComposer
+              article={article}
+              body={
+                activeMode === "comment"
+                  ? communicationDraft.commentBody
+                  : communicationDraft.replyBody
+              }
+              disabled={disabled}
+              key={`${article.id}-${activeMode}`}
+              mode={activeMode}
+              onBodyChange={(body) =>
+                onCommunicationDraftChange({
+                  ...communicationDraft,
+                  ...(activeMode === "comment"
+                    ? { commentBody: body }
+                    : { replyBody: body }),
+                })
+              }
+              onClose={onCloseComposer}
+            />
           ) : null}
         </div>
-      ) : null}
-      {activeMode ? (
-        <TicketInlineCommunicationComposer
-          article={article}
-          articleClassName={articleClass[article.direction]}
-          body={
-            activeMode === "comment"
-              ? communicationDraft.commentBody
-              : communicationDraft.replyBody
-          }
-          disabled={disabled}
-          panelClassName={composerPanelClass[article.direction]}
-          key={`${article.id}-${activeMode}`}
-          mode={activeMode}
-          onBodyChange={(body) =>
-            onCommunicationDraftChange({
-              ...communicationDraft,
-              ...(activeMode === "comment"
-                ? { commentBody: body }
-                : { replyBody: body }),
-            })
-          }
-          onClose={onCloseComposer}
-        />
-      ) : null}
+      </div>
     </article>
   );
 }
@@ -290,7 +291,7 @@ function ArticleAvatar({ article }: { article: WorkspaceArticle }) {
   return (
     <div
       className={cn(
-        "grid size-6 shrink-0 place-items-center rounded-full text-[10px] font-semibold",
+        "grid size-8 shrink-0 place-items-center rounded-full text-xs font-semibold",
         avatarClass[article.direction],
       )}
     >

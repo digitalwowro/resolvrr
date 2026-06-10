@@ -248,8 +248,11 @@ describe("TicketWorkspace", () => {
       screen.queryByRole("toolbar", { name: "Ticket list controls" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByLabelText("System status")).not.toBeInTheDocument();
-    expect(screen.queryByRole("group", { name: "Tab layout" }))
-      .not.toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Tab layout" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Horizontal tabs" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     const tablist = screen.getByRole("tablist", { name: "Open tickets" });
     expect(within(tablist).getAllByRole("tab")[0]).toHaveAccessibleName(
       "Return to list: All tickets",

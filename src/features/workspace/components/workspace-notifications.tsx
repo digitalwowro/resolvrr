@@ -88,14 +88,18 @@ export function WorkspaceNotifications({
         ? "loading"
         : current,
     );
-    const result = await loadNotificationsAction();
-    lastRefreshAtRef.current = Date.now();
-    if (result.status === "available") {
-      setNotifications(result.notifications);
-      setLoadStatus("idle");
-      return;
+    try {
+      const result = await loadNotificationsAction();
+      lastRefreshAtRef.current = Date.now();
+      if (result.status === "available") {
+        setNotifications(result.notifications);
+        setLoadStatus("idle");
+        return;
+      }
+      setLoadStatus("failed");
+    } catch {
+      setLoadStatus("failed");
     }
-    setLoadStatus("failed");
   }, [loadNotificationsAction]);
 
   useEffect(() => {
@@ -142,15 +146,20 @@ export function WorkspaceNotifications({
         ),
       );
       setMarkingIds((current) => new Set([...current, ...ids]));
-      const result = await markNotificationsReadAction({ notificationIds: ids });
-      if (result.status !== "saved") {
+      try {
+        const result = await markNotificationsReadAction({ notificationIds: ids });
+        if (result.status !== "saved") {
+          void refreshNotifications();
+        }
+      } catch {
         void refreshNotifications();
+      } finally {
+        setMarkingIds((current) => {
+          const next = new Set(current);
+          ids.forEach((id) => next.delete(id));
+          return next;
+        });
       }
-      setMarkingIds((current) => {
-        const next = new Set(current);
-        ids.forEach((id) => next.delete(id));
-        return next;
-      });
     },
     [markNotificationsReadAction, refreshNotifications],
   );

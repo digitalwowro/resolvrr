@@ -63,7 +63,7 @@ describe("TicketWorkspace inline communication composers", () => {
         }),
       );
       expect(within(article).getByRole("button", { name: "Reply" })).toHaveClass(
-        "bg-indigo-200",
+        "bg-slate-100",
       );
       expect(
         within(article).getByRole("button", { name: "Reply all" }),
@@ -98,7 +98,7 @@ describe("TicketWorkspace inline communication composers", () => {
       }),
     ).not.toBeInTheDocument();
     expect(within(article).getByRole("button", { name: "Reply" }))
-      .not.toHaveClass("bg-indigo-200");
+      .not.toHaveClass("bg-slate-100");
   });
 
   it("stages a reply and sends it through workspace Update", async () => {
@@ -247,7 +247,7 @@ describe("TicketWorkspace inline communication composers", () => {
       );
       expect(
         await screen.findByRole("article", {
-          name: "Employee reply from Agent Smith",
+          name: "Agent reply from Agent Smith",
         }),
       ).toBeInTheDocument();
       await waitFor(() =>

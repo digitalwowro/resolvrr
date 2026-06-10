@@ -51,8 +51,8 @@ export function TicketThread({
   }, [articles.length, onScrolledToLatest, scrollAfterArticleCount]);
 
   return (
-    <section className="py-4 pl-4 pr-0">
-      <div className="space-y-3">
+    <section className="pb-4 pl-4 pr-0">
+      <div className="divide-y divide-slate-200">
         {articles.map((article, index) => {
           const latest = index === 0;
           return (
@@ -67,6 +67,7 @@ export function TicketThread({
                 communicationDraft={communicationDraft}
                 communicationCapabilities={communicationCapabilities}
                 disabled={disabled}
+                isFirst={index === 0}
                 onCommunicationDraftChange={onCommunicationDraftChange}
                 onCloseComposer={() => setActiveComposer(null)}
                 onOpenComposer={(mode) =>

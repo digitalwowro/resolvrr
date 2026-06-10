@@ -48,10 +48,10 @@ function TabLayoutSwitch({
     <div
       aria-label="Tab layout"
       className={cn(
-        "inline-flex h-6 items-center overflow-hidden rounded-md",
+        "inline-flex items-center overflow-hidden rounded-md",
         dark
-          ? "gap-1"
-          : "border border-slate-200 bg-white",
+          ? "h-8 gap-1"
+          : "h-6 border border-slate-200 bg-white",
       )}
       role="group"
     >
@@ -60,10 +60,11 @@ function TabLayoutSwitch({
           aria-label="Horizontal tabs"
           aria-pressed={value === "horizontal"}
           className={cn(
-            "grid size-6 place-items-center",
+            "grid place-items-center",
+            dark ? "size-8" : "size-6",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1",
             dark
-              ? "text-indigo-200 hover:text-white focus-visible:outline-white"
+              ? "text-indigo-100 hover:text-white focus-visible:outline-white"
               : "text-slate-600 hover:bg-slate-50 focus-visible:outline-indigo-600",
             value === "horizontal" &&
               (dark ? "text-white" : "bg-indigo-50 text-indigo-700"),
@@ -71,7 +72,7 @@ function TabLayoutSwitch({
           onClick={() => onChange("horizontal")}
           type="button"
         >
-          <PanelTop aria-hidden="true" className="size-4" />
+          <PanelTop aria-hidden="true" className={dark ? "size-5" : "size-4"} />
         </button>
       </Tooltip>
       <Tooltip content="Vertical tabs" side="bottom">
@@ -79,10 +80,11 @@ function TabLayoutSwitch({
           aria-label="Vertical tabs"
           aria-pressed={value === "vertical"}
           className={cn(
-            "grid size-6 place-items-center",
+            "grid place-items-center",
+            dark ? "size-8" : "size-6",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1",
             dark
-              ? "text-indigo-200 hover:text-white focus-visible:outline-white"
+              ? "text-indigo-100 hover:text-white focus-visible:outline-white"
               : "text-slate-600 hover:bg-slate-50 focus-visible:outline-indigo-600",
             value === "vertical" &&
               (dark ? "text-white" : "bg-indigo-50 text-indigo-700"),
@@ -90,7 +92,7 @@ function TabLayoutSwitch({
           onClick={() => onChange("vertical")}
           type="button"
         >
-          <PanelLeft aria-hidden="true" className="size-4" />
+          <PanelLeft aria-hidden="true" className={dark ? "size-5" : "size-4"} />
         </button>
       </Tooltip>
     </div>

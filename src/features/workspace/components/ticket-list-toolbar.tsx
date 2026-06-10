@@ -23,8 +23,6 @@ import type {
   WorkspaceTicketGroupKey,
 } from "@/features/tickets/workspace-adapter";
 import { TicketColumnVisibilityAction } from "./ticket-column-visibility-action";
-import type { TicketTabOrientation } from "./ticket-tabs-panel";
-import { WorkspaceControls } from "./workspace-controls";
 
 type TicketListToolbarProps = {
   columns: WorkspaceTicketColumn[];
@@ -34,12 +32,10 @@ type TicketListToolbarProps = {
   onGroupByChange(groupBy: WorkspaceTicketGroupKey): void;
   onRefresh(): void;
   onSavedViewChange(savedViewId: string): void;
-  onTabOrientationChange(orientation: TicketTabOrientation): void;
   refreshing?: boolean;
   roundedTop?: boolean;
   savedViewOptions: DropdownOption[];
   selectedSavedViewId: string;
-  tabOrientation: TicketTabOrientation;
   visibleColumns: Set<WorkspaceTicketColumnKey>;
 };
 
@@ -51,12 +47,10 @@ export function TicketListToolbar({
   onGroupByChange,
   onRefresh,
   onSavedViewChange,
-  onTabOrientationChange,
   refreshing = false,
   roundedTop = false,
   savedViewOptions,
   selectedSavedViewId,
-  tabOrientation,
   visibleColumns,
 }: TicketListToolbarProps) {
   const savedViewOptionsWithIcon = savedViewOptions.map((option) => ({
@@ -145,10 +139,6 @@ export function TicketListToolbar({
           showLabel
           triggerClassName="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 text-xs font-normal text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
           visibleColumns={visibleColumns}
-        />
-        <WorkspaceControls
-          onTabOrientationChange={onTabOrientationChange}
-          tabOrientation={tabOrientation}
         />
       </div>
     </div>

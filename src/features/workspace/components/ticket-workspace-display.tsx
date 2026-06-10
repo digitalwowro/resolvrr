@@ -289,7 +289,6 @@ export function TicketWorkspaceDisplay({
         onSavedViewChange={handleSavedViewChange}
         onSelectAll={toggleSelectAll}
         onSort={toggleSort}
-        onTabOrientationChange={setTabOrientation}
         onToggleRow={toggleRow}
         partiallySelected={partiallySelected}
         providerGroupingEnabled={providerGroupingEnabled}
@@ -301,7 +300,6 @@ export function TicketWorkspaceDisplay({
         selectedSavedViewId={listPager.savedViewId}
         sortingEnabled={sortingEnabled && !providerGroupedActive}
         sortDirectionFor={sortDirectionFor}
-        tabOrientation={tabOrientation}
         totalCount={searchActive ? undefined : listPager.totalCount}
         visibleColumns={visibleColumnSet}
       />
@@ -351,9 +349,11 @@ export function TicketWorkspaceDisplay({
         onOpenSettings={onOpenSettings}
         onRefreshTicket={refreshTicketDetailById}
         onSearchQueryChange={setWorkspaceSearchQuery}
+        onTabOrientationChange={setTabOrientation}
         recentTickets={recentTicketTabs}
         searchQuery={workspaceSearchQuery}
         setActiveConnectionAction={setActiveConnectionAction}
+        tabOrientation={tabOrientation}
         userEmail={userEmail}
       />
       <section

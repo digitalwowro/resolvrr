@@ -109,7 +109,7 @@ describe("TicketWorkspace inline communication composers", () => {
     });
 
     const article = screen.getByRole("article", {
-      name: "Internal note from Agent Smith",
+      name: "Internal comment from Agent Smith",
     });
 
     expect(

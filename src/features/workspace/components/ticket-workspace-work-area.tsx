@@ -22,7 +22,6 @@ import type {
 import { TicketDetail, TicketDetailLoadingShell } from "./ticket-detail";
 import { TicketListToolbar } from "./ticket-list-toolbar";
 import { TicketTable, type TicketTableGroup } from "./ticket-table";
-import type { TicketTabOrientation } from "./ticket-tabs-panel";
 import { ticketGroupOptions } from "./ticket-table-grouping";
 import {
   DetailLoadingState,
@@ -59,7 +58,6 @@ export type TicketWorkspaceListAreaProps = {
   onSavedViewChange(savedViewId: string): void | Promise<void>;
   onSelectAll(): void;
   onSort(key: WorkspaceTicketSortKey): void;
-  onTabOrientationChange(orientation: TicketTabOrientation): void;
   onToggleRow(ticketId: string): void;
   partiallySelected: boolean;
   providerGroupingEnabled: boolean;
@@ -71,7 +69,6 @@ export type TicketWorkspaceListAreaProps = {
   selectedSavedViewId: string;
   sortingEnabled: boolean;
   sortDirectionFor(key: WorkspaceTicketSortKey): SortDirection | undefined;
-  tabOrientation: TicketTabOrientation;
   totalCount?: number;
   visibleColumns: Set<WorkspaceTicketColumnKey>;
 };
@@ -98,7 +95,6 @@ export function TicketWorkspaceListArea({
   onSavedViewChange,
   onSelectAll,
   onSort,
-  onTabOrientationChange,
   onToggleRow,
   partiallySelected,
   providerGroupingEnabled,
@@ -110,7 +106,6 @@ export function TicketWorkspaceListArea({
   selectedSavedViewId,
   sortingEnabled,
   sortDirectionFor,
-  tabOrientation,
   totalCount,
   visibleColumns,
 }: TicketWorkspaceListAreaProps) {
@@ -124,12 +119,10 @@ export function TicketWorkspaceListArea({
         onGroupByChange={onGroupByChange}
         onRefresh={onRefresh}
         onSavedViewChange={onSavedViewChange}
-        onTabOrientationChange={onTabOrientationChange}
         refreshing={refreshing}
         roundedTop={roundedTop}
         savedViewOptions={savedViewOptions}
         selectedSavedViewId={selectedSavedViewId}
-        tabOrientation={tabOrientation}
         visibleColumns={visibleColumns}
       />
       <TicketTable
