@@ -49,6 +49,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Check file sizes
+        run: npm run size:check
+
       - name: Test
         run: npm test
 
