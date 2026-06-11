@@ -70,13 +70,14 @@ export function ViewConditionsEditor({
               >
                 <select
                   className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm"
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    const field = event.currentTarget.value as SavedViewConditionField;
                     replaceCondition(index, {
                       ...condition,
-                      field: event.currentTarget.value as SavedViewConditionField,
+                      field,
                       values: [],
-                    })
-                  }
+                    });
+                  }}
                   value={condition.field}
                 >
                   <option value="owner">Owner</option>
@@ -86,12 +87,14 @@ export function ViewConditionsEditor({
                 </select>
                 <select
                   className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm"
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    const operator = event.currentTarget
+                      .value as SavedViewConditionOperator;
                     replaceCondition(index, {
                       ...condition,
-                      operator: event.currentTarget.value as SavedViewConditionOperator,
-                    })
-                  }
+                      operator,
+                    });
+                  }}
                   value={condition.operator}
                 >
                   <option value="is">is</option>

@@ -34,12 +34,13 @@ export function ViewDetailsForm({
         <input
           className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           maxLength={savedViewTitleMaxLength}
-          onChange={(event) =>
+          onChange={(event) => {
+            const { value } = event.currentTarget;
             setDraft((current) => ({
               ...current,
-              name: event.currentTarget.value,
-            }))
-          }
+              name: value,
+            }));
+          }}
           required
           value={draft.name}
         />
@@ -49,12 +50,13 @@ export function ViewDetailsForm({
         <select
           className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           disabled={userRole !== "ADMIN"}
-          onChange={(event) =>
+          onChange={(event) => {
+            const visibility = event.currentTarget.value as SavedViewVisibility;
             setDraft((current) => ({
               ...current,
-              visibility: event.currentTarget.value as SavedViewVisibility,
-            }))
-          }
+              visibility,
+            }));
+          }}
           value={draft.visibility}
         >
           <option value="personal">Personal</option>
@@ -65,12 +67,13 @@ export function ViewDetailsForm({
         <span className="text-sm font-medium text-slate-700">Custom icon</span>
         <input
           className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-          onChange={(event) =>
+          onChange={(event) => {
+            const { value } = event.currentTarget;
             setDraft((current) => ({
               ...current,
-              iconName: event.currentTarget.value,
-            }))
-          }
+              iconName: value,
+            }));
+          }}
           placeholder="briefcase-business"
           value={draft.iconName}
         />
