@@ -1,17 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { DropdownOption } from "@/components/ui";
-import { cn } from "@/components/ui/classnames";
-import { allTicketsSavedViewId } from "@/features/saved-views/workspace";
-import type { WorkspaceTicketListGroup } from "@/features/tickets/list-page-action-result";
+import { useMemo, useState } from "react";
 import { workspaceTicketTabs } from "@/features/tickets/workspace-adapter";
-import type { WorkspaceTicketRow } from "@/features/tickets/workspace-adapter";
 import { useTicketWorkspaceDisplayState } from "./ticket-workspace-state";
 import { useTicketListPager } from "./use-ticket-list-pager";
 import { useTicketWorkspaceAutoRefresh } from "./use-ticket-workspace-auto-refresh";
 import { mergeTicketTabs } from "./ticket-tabs-merge";
 import { tabLinkTarget } from "./ticket-workspace-link-targets";
+import { TicketWorkspaceContent } from "./ticket-workspace-content";
+import {
+  activeTicketSummaryFromWorkspace,
+  isProviderGroupedListActive,
+} from "./ticket-workspace-display-derived";
+import {
+  filterLoadedTicketGroups,
+  filterLoadedTickets,
+  normalizedWorkspaceSearch,
+} from "./ticket-workspace-display-filters";
 import {
   TicketWorkspaceDetailArea,
   TicketWorkspaceListArea,
@@ -21,63 +26,7 @@ import {
   WorkspaceHeaderChrome,
   WorkspaceTabsChrome,
 } from "./ticket-workspace-chrome";
-
-function normalizedWorkspaceSearch(query: string) {
-  return query.trim().toLocaleLowerCase();
-}
-
-function ticketMatchesWorkspaceSearch(
-  ticket: WorkspaceTicketRow,
-  normalizedQuery: string,
-) {
-  return [
-    ticket.number,
-    ticket.title,
-    ticket.customer,
-    ticket.owner,
-    ticket.group,
-    ticket.state,
-    ticket.priority,
-  ].some((value) => value.toLocaleLowerCase().includes(normalizedQuery));
-}
-
-function filterLoadedTickets(
-  rows: WorkspaceTicketRow[],
-  normalizedQuery: string,
-) {
-  if (!normalizedQuery) {
-    return rows;
-  }
-
-  return rows.filter((row) =>
-    ticketMatchesWorkspaceSearch(row, normalizedQuery),
-  );
-}
-
-function filterLoadedTicketGroups(
-  groups: WorkspaceTicketListGroup[] | undefined,
-  normalizedQuery: string,
-) {
-  if (!groups || !normalizedQuery) {
-    return groups;
-  }
-
-  return groups.flatMap((group) => {
-    const rows = filterLoadedTickets(group.rows, normalizedQuery);
-    return rows.length > 0
-      ? [
-          {
-            id: group.id,
-            key: group.key,
-            label: group.label,
-            value: group.value,
-            rows,
-            loadedCount: rows.length,
-          },
-        ]
-      : [];
-  });
-}
+import { useTicketWorkspaceSavedViewSelection } from "./use-ticket-workspace-saved-view-selection";
 
 export function TicketWorkspaceDisplay({
   connections,
@@ -186,30 +135,32 @@ export function TicketWorkspaceDisplay({
     selectedTicketId,
     ticketTabs: pagedTicketTabs,
   });
-  const providerGroupedActive =
-    providerGroupingEnabled &&
-    (groupBy === "state" || groupBy === "priority") &&
-    listPager.groupBy === groupBy &&
-    listPager.groups !== undefined;
+  const providerGroupedActive = isProviderGroupedListActive({
+    groupBy,
+    listGroupBy: listPager.groupBy,
+    listGroups: listPager.groups,
+    providerGroupingEnabled,
+  });
   const tableGroupedRows = providerGroupedActive
     ? searchFilteredGroups
     : groupedRows;
   const tableRows = providerGroupedActive ? searchFilteredRows : sortedRows;
   const recentlyViewedLinkTargets = recentTicketTabs.map(tabLinkTarget);
-  const activeTicketSummary = activeTicketId
-    ? tableRows.find((ticket) => ticket.id === activeTicketId) ??
-      openTicketTabs.find((ticket) => ticket.id === activeTicketId)
-    : undefined;
-  const savedViewOptions: DropdownOption[] = savedViews.map((savedView) => ({
-    value: savedView.id,
-    label: savedView.disabledReason
-      ? `${savedView.label} (${savedView.disabledLabel ?? "unsupported"})`
-      : savedView.label,
-    disabled: Boolean(savedView.disabledReason),
-  }));
-  const activeSavedView =
-    savedViews.find((savedView) => savedView.id === listPager.savedViewId) ??
-    savedViews.find((savedView) => savedView.id === allTicketsSavedViewId);
+  const activeTicketSummary = activeTicketSummaryFromWorkspace({
+    activeTicketId,
+    openTicketTabs,
+    tableRows,
+  });
+  const {
+    activeSavedView,
+    handleSavedViewChange,
+    savedViewOptions,
+  } = useTicketWorkspaceSavedViewSelection({
+    clearRowSelection,
+    handleGroupByChange,
+    listPager,
+    savedViews,
+  });
 
   useTicketWorkspaceAutoRefresh({
     activeTicketId,
@@ -234,27 +185,6 @@ export function TicketWorkspaceDisplay({
       listPager.reloadFirstPage();
     }
   }
-
-  const handleSavedViewChange = useCallback(async (nextSavedViewId: string) => {
-    const result = await listPager.reloadSavedView(nextSavedViewId);
-    if (result.status !== "available") {
-      return;
-    }
-    clearRowSelection();
-    handleGroupByChange(result.groupBy ?? "none");
-  }, [clearRowSelection, handleGroupByChange, listPager]);
-
-  useEffect(() => {
-    if (savedViews.some((savedView) => savedView.id === listPager.savedViewId)) {
-      return;
-    }
-    const nextSavedView =
-      savedViews.find((savedView) => savedView.isDefault) ?? savedViews[0];
-    if (!nextSavedView || nextSavedView.disabledReason) {
-      return;
-    }
-    void handleSavedViewChange(nextSavedView.id);
-  }, [handleSavedViewChange, listPager.savedViewId, savedViews]);
 
   function handleRefreshList() {
     refreshList();
@@ -355,29 +285,12 @@ export function TicketWorkspaceDisplay({
         tabOrientation={tabOrientation}
         userEmail={userEmail}
       />
-      <section
-        className={cn(
-          "flex min-h-0 flex-1 overflow-hidden",
-          tabOrientation === "horizontal" && "flex-col",
-        )}
-      >
-        {tabOrientation === "vertical" ? tabsPanel : null}
-        {tabOrientation === "horizontal" ? (
-          <div className="shrink-0 border-b border-slate-200 bg-slate-50 px-4 pb-2 pt-4">
-            {tabsPanel}
-          </div>
-        ) : null}
-        {listActive || tabOrientation === "vertical" ? (
-          <div
-            key="workspace-content"
-            className="flex min-w-0 flex-1 flex-col overflow-hidden px-4"
-          >
-            {workArea}
-          </div>
-        ) : (
-          workArea
-        )}
-      </section>
+      <TicketWorkspaceContent
+        listActive={listActive}
+        tabOrientation={tabOrientation}
+        tabsPanel={tabsPanel}
+        workArea={workArea}
+      />
     </>
   );
 }

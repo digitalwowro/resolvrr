@@ -1,0 +1,26 @@
+export type ArticleBodyHiddenKind =
+  | "quoted-reply"
+  | "signature"
+  | "trimmed-content";
+
+export type ArticleBodyTrimResult =
+  | {
+      collapsed: false;
+      visibleHtml: string;
+    }
+  | {
+      collapsed: true;
+      hiddenHtml: string;
+      hiddenKind: ArticleBodyHiddenKind;
+      visibleHtml: string;
+    };
+
+export type HtmlLine = {
+  htmlStart: number;
+  text: string;
+};
+
+export type CollapseCandidate = {
+  hiddenKind: ArticleBodyHiddenKind;
+  htmlStart: number;
+};

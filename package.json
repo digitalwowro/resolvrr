@@ -19,6 +19,7 @@
     "prisma:migrate": "prisma migrate dev",
     "db:compose:config": "docker compose -p resolvrr config --quiet",
     "docs:check": "node scripts/check-docs.mjs",
+    "size:check": "node scripts/check-file-sizes.mjs",
     "audit:zammad-boundary": "node scripts/zammad-boundary-audit.mjs",
     "cache:clear": "node scripts/cache-clear.mjs",
     "next-env:check": "node scripts/check-next-env.mjs",

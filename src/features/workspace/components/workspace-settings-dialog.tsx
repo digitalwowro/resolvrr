@@ -1,9 +1,8 @@
 "use client";
 
-import { Bot, Eye, MessageSquareText, Settings, User, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { cn } from "@/components/ui/classnames";
 import type { AuthUserRole } from "@/auth/types";
 import type {
   ConnectionProviderOption,
@@ -34,14 +33,11 @@ import type {
 import { WorkspacesSection } from "./workspace-settings-workspaces-section";
 import { AiSettingsSection } from "./workspace-ai-settings-section";
 import { AiPromptsSection } from "./workspace-ai-prompts-section";
+import { WorkspaceSettingsNav } from "./workspace-settings-nav";
+import type { WorkspaceSettingsSection } from "./workspace-settings-types";
 import { ViewsSection } from "./workspace-settings-views-section";
 
-export type WorkspaceSettingsSection =
-  | "ai"
-  | "prompts"
-  | "profile"
-  | "views"
-  | "workspaces";
+export type { WorkspaceSettingsSection } from "./workspace-settings-types";
 
 type WorkspaceSettingsDialogProps = {
   connections: WorkspaceSettingsConnection[];
@@ -75,15 +71,6 @@ type WorkspaceSettingsDialogProps = {
   userRole: AuthUserRole;
   validateConnectionAction?: HelpdeskConnectionFormAction;
 };
-
-function sectionButtonClass(active: boolean) {
-  return cn(
-    "flex h-9 w-full items-center gap-2 rounded-md px-3 text-left text-sm",
-    active
-      ? "bg-indigo-50 font-semibold text-indigo-700"
-      : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
-  );
-}
 
 export function WorkspaceSettingsDialog({
   connections: initialConnections,
@@ -213,58 +200,13 @@ export function WorkspaceSettingsDialog({
         className="flex h-[90vh] w-[90vw] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl"
         role="dialog"
       >
-        <aside className="flex w-56 shrink-0 flex-col border-r border-slate-200 bg-slate-50">
-          <div className="border-b border-slate-200 px-4 py-4">
-            <h2 className="text-sm font-semibold text-slate-950" id={titleId}>
-              Settings
-            </h2>
-            <p className="mt-1 truncate text-xs text-slate-500">{userEmail}</p>
-          </div>
-          <nav className="flex-1 space-y-1 p-3" aria-label="Settings sections">
-            <button
-              className={sectionButtonClass(section === "profile")}
-              onClick={() => setSection("profile")}
-              type="button"
-            >
-              <User aria-hidden="true" className="size-4" />
-              My Profile
-            </button>
-            <button
-              className={sectionButtonClass(section === "workspaces")}
-              onClick={() => setSection("workspaces")}
-              type="button"
-            >
-              <Settings aria-hidden="true" className="size-4" />
-              Workspaces
-            </button>
-            <button
-              className={sectionButtonClass(section === "views")}
-              onClick={() => setSection("views")}
-              type="button"
-            >
-              <Eye aria-hidden="true" className="size-4" />
-              Views
-            </button>
-            <button
-              className={sectionButtonClass(section === "ai")}
-              onClick={() => setSection("ai")}
-              type="button"
-            >
-              <Bot aria-hidden="true" className="size-4" />
-              AI Settings
-            </button>
-            {aiSettingsData?.canViewPromptCenter ? (
-              <button
-                className={sectionButtonClass(section === "prompts")}
-                onClick={() => setSection("prompts")}
-                type="button"
-              >
-                <MessageSquareText aria-hidden="true" className="size-4" />
-                Prompt Center
-              </button>
-            ) : null}
-          </nav>
-        </aside>
+        <WorkspaceSettingsNav
+          activeSection={section}
+          onSectionChange={setSection}
+          promptCenterAvailable={Boolean(aiSettingsData?.canViewPromptCenter)}
+          titleId={titleId}
+          userEmail={userEmail}
+        />
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex h-12 shrink-0 items-center justify-end border-b border-slate-200 px-4">
             <button

@@ -399,6 +399,22 @@ added, moved, renamed, or removed.
           (`src/features/workspace/components/ticket-article-attachments.tsx`): read-only article
           attachment metadata presentation. It displays provider-neutral filename, content type, and
           byte size values only; downloads and previews are intentionally not exposed here.
+        - `ticket-article-body-html.ts`
+          (`src/features/workspace/components/ticket-article-body-html.ts`): sanitized article HTML
+          line extraction, plain-text conversion, trailing-empty-block trimming, and open-tag repair
+          helpers for body trimming.
+        - `ticket-article-body-trim-candidates.ts`
+          (`src/features/workspace/components/ticket-article-body-trim-candidates.ts`): quoted
+          reply, forwarded-message, and signature collapse candidate heuristics for article bodies.
+        - `ticket-article-body-trim-types.ts`
+          (`src/features/workspace/components/ticket-article-body-trim-types.ts`): article body
+          trim result and candidate type contracts.
+        - `ticket-article-body-trim.ts`
+          (`src/features/workspace/components/ticket-article-body-trim.ts`): public article body
+          trimming orchestrator used by the article body renderer.
+        - `ticket-article-body.tsx`
+          (`src/features/workspace/components/ticket-article-body.tsx`): sanitized article HTML
+          renderer with collapsed quote/signature disclosure.
         - `ticket-assignment-fields.tsx`
           (`src/features/workspace/components/ticket-assignment-fields.tsx`): owner/group assignment
           sidebar controls that render editable dropdowns only when the provider advertises write
@@ -517,6 +533,9 @@ added, moved, renamed, or removed.
         - `ticket-table-grouping.ts` (`src/features/workspace/components/ticket-table-grouping.ts`):
           provider-neutral local presentation grouping and sorting helpers for loaded workspace
           rows.
+        - `ticket-table-load-more.tsx`
+          (`src/features/workspace/components/ticket-table-load-more.tsx`): ticket table load-more
+          tongue control and count-label helpers for grouped and ungrouped list pagination.
         - `ticket-table-row.tsx` (`src/features/workspace/components/ticket-table-row.tsx`):
           production ticket table row rendering and row cell value mapping.
         - `ticket-table-types.ts` (`src/features/workspace/components/ticket-table-types.ts`):
@@ -531,6 +550,9 @@ added, moved, renamed, or removed.
         - `ticket-thread-article-styles.ts`
           (`src/features/workspace/components/ticket-thread-article-styles.ts`): narrow class-map
           companion for thread article variants and action selected states.
+        - `ticket-thread-article-parts.tsx`
+          (`src/features/workspace/components/ticket-thread-article-parts.tsx`): thread article
+          avatar, recipient detail, reply/comment action, and replyability subcomponents.
         - `ticket-thread-article.tsx`
           (`src/features/workspace/components/ticket-thread-article.tsx`): production article-card
           presentation with sanitized rich-text rendering, display-name-first From/To/Cc/Bcc
@@ -543,6 +565,15 @@ added, moved, renamed, or removed.
         - `ticket-workspace-chrome.tsx`
           (`src/features/workspace/components/ticket-workspace-chrome.tsx`): ticket workspace chrome
           workspace UI component.
+        - `ticket-workspace-content.tsx`
+          (`src/features/workspace/components/ticket-workspace-content.tsx`): orientation-aware
+          workspace content shell that places the tabs panel and active work area.
+        - `ticket-workspace-display-derived.ts`
+          (`src/features/workspace/components/ticket-workspace-display-derived.ts`): derived
+          provider-grouping and active-ticket summary helpers for workspace display composition.
+        - `ticket-workspace-display-filters.ts`
+          (`src/features/workspace/components/ticket-workspace-display-filters.ts`): loaded-ticket
+          search normalization and local loaded-row/group filtering helpers.
         - `ticket-workspace-display-types.ts`
           (`src/features/workspace/components/ticket-workspace-display-types.ts`): type contracts
           for ticket workspace display.
@@ -560,6 +591,9 @@ added, moved, renamed, or removed.
           (`src/features/workspace/components/ticket-workspace-persisted-tabs.ts`): focused helper
           for deriving initial open, recent, and active workspace tabs from saved server UI state
           and direct selected-ticket detail.
+        - `ticket-workspace-saved-view-options.ts`
+          (`src/features/workspace/components/ticket-workspace-saved-view-options.ts`): saved-view
+          dropdown option and active saved-view label helpers for the workspace display.
         - `ticket-workspace-state-types.ts`
           (`src/features/workspace/components/ticket-workspace-state-types.ts`): shared workspace
           display state prop and active-pane types.
@@ -596,6 +630,9 @@ added, moved, renamed, or removed.
         - `use-ticket-workspace-auto-refresh.ts`
           (`src/features/workspace/components/use-ticket-workspace-auto-refresh.ts`): use ticket
           workspace auto refresh workspace helper module.
+        - `use-ticket-workspace-saved-view-selection.ts`
+          (`src/features/workspace/components/use-ticket-workspace-saved-view-selection.ts`):
+          saved-view change and fallback-selection hook for workspace display state.
         - `use-ticket-workspace-table-state.ts`
           (`src/features/workspace/components/use-ticket-workspace-table-state.ts`): use ticket
           workspace table state workspace helper module.
@@ -622,6 +659,9 @@ added, moved, renamed, or removed.
         - `workspace-ai-settings-user-form.tsx`
           (`src/features/workspace/components/workspace-ai-settings-user-form.tsx`): user
           per-workspace AI provider settings form for user-provided-key workspaces.
+        - `workspace-ai-prompt-forms.tsx`
+          (`src/features/workspace/components/workspace-ai-prompt-forms.tsx`): Prompt Center
+          workspace prompt, personal prompt, and action-message form components.
         - `workspace-ai-prompts-section.tsx`
           (`src/features/workspace/components/workspace-ai-prompts-section.tsx`): Settings dialog
           Prompt Center section for admin-managed workspace prompts and future personal prompt
@@ -644,6 +684,12 @@ added, moved, renamed, or removed.
         - `workspace-settings-dialog.tsx`
           (`src/features/workspace/components/workspace-settings-dialog.tsx`): 90vw/90vh Settings
           shell with Profile, Workspaces, Views, and AI Settings sections.
+        - `workspace-settings-nav.tsx`
+          (`src/features/workspace/components/workspace-settings-nav.tsx`): Settings dialog sidebar
+          navigation and section button presentation.
+        - `workspace-settings-types.ts`
+          (`src/features/workspace/components/workspace-settings-types.ts`): shared Settings section
+          identifier type.
         - `workspace-settings-view-conditions.tsx`
           (`src/features/workspace/components/workspace-settings-view-conditions.tsx`):
           provider-neutral condition builder used by the Views settings section.
@@ -694,6 +740,8 @@ added, moved, renamed, or removed.
         construction, state-transition guard, and endpoint call implementation.
       - `notifications.ts` (`src/providers/zammad/notifications.ts`): Zammad provider notifications
         module.
+      - `participant-values.ts` (`src/providers/zammad/participant-values.ts`): Zammad relation-id,
+        named-reference, user display-name, email, and organization normalization helpers.
       - `participants.ts` (`src/providers/zammad/participants.ts`): Zammad user/participant
         display-name, email fallback, recipient, and expanded asset mapping helpers.
       - `plugin.ts` (`src/providers/zammad/plugin.ts`): provider plugin object, capabilities, and
@@ -708,8 +756,10 @@ added, moved, renamed, or removed.
         provider-local ticket search for Add link targets, including provider-local same-customer
         query mapping, mapped to provider-neutral link target summaries.
       - `ticket-list.ts` (`src/providers/zammad/ticket-list.ts`): Zammad ticket list endpoint reads,
-        search-backed list totals, list asset lookup, read-phase timing, and canonical list response
-        assembly.
+        search query composition, pagination, grouped-list dispatch, and read-phase timing.
+      - `ticket-list-payload.ts` (`src/providers/zammad/ticket-list-payload.ts`): Zammad ticket list
+        payload parsing, missing user/state/priority lookup, organization backfill, and canonical
+        row mapping.
       - `ticket-lookups.ts` (`src/providers/zammad/ticket-lookups.ts`): Zammad assignable-user,
         group, and global tag suggestion lookup reads mapped to provider-neutral lookup options.
       - `ticket-search-query.ts` (`src/providers/zammad/ticket-search-query.ts`): Zammad ticket
@@ -851,6 +901,8 @@ added, moved, renamed, or removed.
     and can optionally stop/start a user service.
   - `check-docs.mjs` (`scripts/check-docs.mjs`): checks required public docs exist, allows the
     approved AI Assistant product term, and avoids disallowed process-origin wording.
+  - `check-file-sizes.mjs` (`scripts/check-file-sizes.mjs`): enforces production source file size
+    caps, flags handwritten 500-line smells, and reports 300-line test/doc split candidates.
   - `check-next-env.mjs` (`scripts/check-next-env.mjs`): verifies generated Next TypeScript
     references are restored to the committed stable form.
   - `restore-next-env.mjs` (`scripts/restore-next-env.mjs`): restores the committed stable
@@ -1082,6 +1134,9 @@ added, moved, renamed, or removed.
     - `ticket-workspace-ai-admin-user-key.test.tsx`
       (`tests/features/ticket-workspace-ai-admin-user-key.test.tsx`): verifies admins can save
       their own user-scoped per-workspace AI key when the workspace requires user-provided keys.
+    - `ticket-workspace-prompt-center.test.tsx`
+      (`tests/features/ticket-workspace-prompt-center.test.tsx`): verifies Prompt Center visibility,
+      workspace prompt editing, and prompt override policy controls.
     - `ticket-workspace-settings.test.tsx` (`tests/features/ticket-workspace-settings.test.tsx`):
       verifies ticket workspace settings behavior.
     - `ticket-workspace-test-utils.tsx` (`tests/features/ticket-workspace-test-utils.tsx`): shared

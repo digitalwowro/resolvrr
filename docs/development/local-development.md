@@ -11,8 +11,8 @@ The local app boundary is `/home/resolvrr/resolvrr`.
 - Create/apply a development migration: `npm run prisma:migrate -- --name init`
 - Start the app directly: `npm run dev`
 - Clear local caches: `npm run cache:clear`
-- Run checks: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`,
-  `npm audit`
+- Run checks: `npm run lint`, `npm run typecheck`, `npm run size:check`,
+  `npm test`, `npm run build`, `npm audit`
 
 ## Local Services
 
