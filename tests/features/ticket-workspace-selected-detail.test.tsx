@@ -104,7 +104,7 @@ describe("TicketWorkspace selected detail", () => {
       screen.getByLabelText("Customer organization: Acme Corp"),
     ).toBeInTheDocument();
     expect(screen.getAllByText("Maya Patel").length).toBeGreaterThan(0);
-    expect(screen.getByText("Following")).toBeInTheDocument();
+    expect(screen.getByText("Watching")).toBeInTheDocument();
     expect(screen.getByText("vip")).toBeInTheDocument();
     expect(screen.getByText("renewal")).toBeInTheDocument();
     expect(screen.getByText("#1002")).toBeInTheDocument();

@@ -100,7 +100,7 @@ describe("TicketWorkspace secondary metadata updates", () => {
     }));
     renderWorkspace(action);
 
-    expect(screen.getByText("Subscribe to ticket")).toBeInTheDocument();
+    expect(screen.getByText("Watch ticket")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Remove tag vip" }))
       .toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add link" })).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe("TicketWorkspace secondary metadata updates", () => {
     expect(screen.getByText("Linked ticket")).toBeInTheDocument();
 
     const subscriptionToggle = screen
-      .getByRole("checkbox", { name: "Subscribed" })
+      .getByRole("checkbox", { name: "Watch ticket" })
       .closest("label");
     expect(subscriptionToggle).not.toBeNull();
 

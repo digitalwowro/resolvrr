@@ -7,7 +7,7 @@ function subscriptionLabel(detail: WorkspaceTicketDetail) {
   if (!detail.subscription.supported) {
     return "Unavailable";
   }
-  return detail.subscription.following ? "Following" : "Not following";
+  return detail.subscription.following ? "Watching" : "Not watching";
 }
 
 function SubscriptionSwitch({
@@ -28,7 +28,7 @@ function SubscriptionSwitch({
       )}
     >
       <input
-        aria-label="Subscribed"
+        aria-label="Watch ticket"
         checked={checked}
         className="peer sr-only"
         disabled={disabled}
@@ -62,7 +62,7 @@ export function TicketSecondarySubscriptionField({
   return (
     <section aria-label="Subscription" className="space-y-1">
       <div className="flex min-h-9 items-center justify-between gap-3">
-        <span className="text-xs font-semibold">Subscribe to ticket</span>
+        <span className="text-xs font-semibold">Watch ticket</span>
         {canEditSubscription ? (
           <SubscriptionSwitch
             checked={draft.metadata.subscriptionFollowing === true}
