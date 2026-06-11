@@ -14,8 +14,9 @@ inline.
 - `SearchableDropdown`: single-select combobox with local filtering.
 - `MenuDropdown`: action menu with optional headings and separators.
 - `ProfileMenu`: generic profile-style menu trigger and menu composition.
-- `TicketTab`: single open-ticket tab control with active, unread, dirty,
-  loading, and close affordances.
+- `TicketTab`: single open-ticket tab control with horizontal and vertical
+  layouts, active, unread, dirty, loading, secondary metadata, accent, and close
+  affordances.
 - `ToolbarButton`, `ToolbarDropdownSelect`, `ToolbarSearchableDropdown`, and
   `ToolbarMenuDropdown`: compact toolbar wrappers over the base primitives.
 - `TableRoot`, `Table`, `TableHeader`, `TableBody`, `TableRow`,

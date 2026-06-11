@@ -198,6 +198,34 @@ describe("TicketTab", () => {
       "w-5",
     );
   });
+
+  it("supports vertical ticket tabs with secondary metadata", () => {
+    const { container } = render(
+      <TicketTab
+        accentClassName="text-emerald-600"
+        label="#1001"
+        layout="vertical"
+        onClose={vi.fn()}
+        onSelect={vi.fn()}
+        secondary={<span>Nicole Braun</span>}
+        title="Cannot log in"
+      />,
+    );
+
+    expect(screen.getByRole("tab", { name: "#1001 Cannot log in" })
+      .parentElement)
+      .toHaveClass("w-full", "items-start", "text-left");
+    expect(container.querySelector(".ticket-tab-title-text")).toHaveClass(
+      "truncate",
+      "font-semibold",
+      "text-slate-950",
+    );
+    expect(container.querySelector(".ticket-tab-secondary")).toHaveTextContent(
+      "Nicole Braun",
+    );
+    expect(screen.getByRole("button", { name: "Close #1001" }))
+      .toHaveClass("size-5", "hover:bg-slate-100");
+  });
 });
 
 describe("TableHeaderCell", () => {

@@ -1,11 +1,10 @@
-import { X } from "lucide-react";
 import type {
   CSSProperties,
   KeyboardEvent,
   MouseEvent,
   PointerEvent,
 } from "react";
-import { Tooltip } from "@/components/ui";
+import { TicketTab } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type { TicketPriority } from "@/core/tickets";
 import type {
@@ -87,41 +86,25 @@ function VerticalTicketTab({
   const key = tab.stateKey ?? "unknown";
 
   return (
-    <button
-      aria-selected={active}
-      className={cn(
-        "group relative flex w-full items-start gap-2 overflow-hidden rounded-md border border-slate-200 bg-white px-3 py-2 text-left",
-        active
-          ? "z-10 border-slate-300"
-          : "hover:border-slate-300 hover:bg-slate-50",
-        reorderClassName,
-      )}
-      onClickCapture={onClickCapture}
-      onKeyDown={onKeyDown}
-      onClick={onSelect}
-      onPointerCancel={onPointerCancel}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      ref={refCallback}
-      role="tab"
-      style={style}
-      type="button"
-    >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "absolute h-[3px] rounded-full",
-          active ? "inset-x-0 bottom-0" : "bottom-0.5 left-3 w-5",
-          stateColor[key],
-        )}
-        style={{ backgroundColor: "currentColor" }}
-      />
-      <span className="min-w-0 flex-1 pr-1">
-        <span className="block truncate font-semibold text-slate-950">
-          {tab.title}
-        </span>
-        <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+    <TicketTab
+      accentClassName={stateColor[key]}
+      active={active}
+      className="min-h-14 flex-none"
+      containerClassName={reorderClassName}
+      containerRef={refCallback}
+      containerStyle={style}
+      label={tab.number}
+      layout="vertical"
+      onClose={onClose}
+      onContainerClickCapture={onClickCapture}
+      onContainerPointerCancel={onPointerCancel}
+      onContainerPointerDown={onPointerDown}
+      onContainerPointerMove={onPointerMove}
+      onContainerPointerUp={onPointerUp}
+      onSelect={onSelect}
+      onTabKeyDown={onKeyDown}
+      secondary={(
+        <span className="flex min-w-0 items-center gap-1.5">
           <span className="min-w-0 truncate">
             {tab.number} · {tab.customer}
           </span>
@@ -133,30 +116,9 @@ function VerticalTicketTab({
             priorityLabel={tab.priority}
           />
         </span>
-      </span>
-      <Tooltip className="self-center" content={`Close ${tab.number}`}>
-        <span
-          aria-label={`Close ${tab.number}`}
-          className="grid size-5 shrink-0 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-          onClick={(event) => {
-            event.stopPropagation();
-            onClose();
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              event.stopPropagation();
-              onClose();
-            }
-          }}
-          onPointerDown={(event) => event.stopPropagation()}
-          role="button"
-          tabIndex={0}
-        >
-          <X aria-hidden="true" className="size-3" />
-        </span>
-      </Tooltip>
-    </button>
+      )}
+      title={tab.title}
+    />
   );
 }
 

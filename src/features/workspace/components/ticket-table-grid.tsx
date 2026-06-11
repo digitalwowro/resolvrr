@@ -89,19 +89,11 @@ export function ticketGridTemplateClass(columns: WorkspaceTicketColumnKey[]) {
   return ticketGridTemplateClasses[templateKey] ?? ticketGridTemplateClasses[""];
 }
 
-export function ticketGridTableClass({ roundedTop = true } = {}) {
-  return cn(
-    "min-h-0 flex-1 overflow-hidden rounded-b-none bg-white",
-    roundedTop && "rounded-t-md",
-  );
-}
+export const ticketGridTableClass =
+  "min-h-0 flex-1 overflow-hidden rounded-t-md rounded-b-none bg-white";
 
-export function ticketGridHeaderWrapperClass({ roundedTop = true } = {}) {
-  return cn(
-    "shrink-0 overflow-y-hidden border-x border-b border-slate-200 bg-slate-50 [scrollbar-gutter:stable]",
-    roundedTop && "rounded-t-md border-t",
-  );
-}
+export const ticketGridHeaderWrapperClass =
+  "shrink-0 overflow-y-hidden rounded-t-md border-x border-b border-t border-slate-200 bg-slate-50 [scrollbar-gutter:stable]";
 export const ticketGridBodyScrollerClass =
   "min-h-0 flex-1 overflow-auto border-x border-slate-200 [scrollbar-gutter:stable]";
 

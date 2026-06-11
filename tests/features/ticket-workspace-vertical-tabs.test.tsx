@@ -57,6 +57,15 @@ function mockElementRect(element: Element, rect: DOMRect) {
   vi.spyOn(element, "getBoundingClientRect").mockReturnValue(rect);
 }
 
+function tabWrapper(tab: HTMLElement) {
+  const wrapper = tab.parentElement;
+  if (!(wrapper instanceof HTMLElement)) {
+    throw new Error("Expected tab to be rendered inside a drag wrapper.");
+  }
+
+  return wrapper;
+}
+
 describe("TicketWorkspace vertical tabs", () => {
   beforeEach(() => {
     routerPush.mockClear();
@@ -183,27 +192,29 @@ describe("TicketWorkspace vertical tabs", () => {
 
     const firstTab = screen.getByRole("tab", { name: /Cannot log in/u });
     const secondTab = screen.getByRole("tab", { name: /Webhook failed/u });
+    const firstTabWrapper = tabWrapper(firstTab);
+    const secondTabWrapper = tabWrapper(secondTab);
     mockElementRect(
-      firstTab,
+      firstTabWrapper,
       domRect({ height: 52, left: 0, top: 60, width: 240 }),
     );
     mockElementRect(
-      secondTab,
+      secondTabWrapper,
       domRect({ height: 52, left: 0, top: 112, width: 240 }),
     );
 
-    fireEvent.pointerDown(secondTab, {
+    fireEvent.pointerDown(secondTabWrapper, {
       button: 0,
       clientX: 40,
       clientY: 132,
       pointerId: 2,
     });
-    fireEvent.pointerMove(secondTab, {
+    fireEvent.pointerMove(secondTabWrapper, {
       clientX: 40,
       clientY: 70,
       pointerId: 2,
     });
-    fireEvent.pointerUp(secondTab, {
+    fireEvent.pointerUp(secondTabWrapper, {
       clientX: 40,
       clientY: 70,
       pointerId: 2,

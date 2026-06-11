@@ -293,7 +293,6 @@ export function TicketWorkspaceDisplay({
         partiallySelected={partiallySelected}
         providerGroupingEnabled={providerGroupingEnabled}
         refreshing={listPager.silentRefreshing}
-        roundedTop
         rows={tableRows}
         savedViewOptions={savedViewOptions}
         selectedRowIds={selectedRowIds}

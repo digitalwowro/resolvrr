@@ -87,8 +87,9 @@ header. They use the same bottom status accent grammar as horizontal ticket
 tabs: active tickets show a full-width bottom underline, while inactive tickets
 show a short muted bottom dash. Vertical ticket tabs keep the ticket title on
 the first line and place ticket number/customer plus compact priority metadata
-on the second line. Priority is shown as a small icon-and-label token, not as a
-second status stripe. The vertical rail and ticket table scroll independently.
+on the second line. Priority is shown as a small icon with an accessible label,
+not as a second status stripe. The vertical rail and ticket table scroll
+independently.
 
 The tab layout control is a two-button segmented control, not a dropdown. It is
 placed in the merged header and remains enabled in both List and selected ticket

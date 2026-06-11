@@ -42,7 +42,6 @@ type TicketTableProps = {
   loadMoreError?: string;
   onLoadMoreGroup?(group: TicketTableGroup): void;
   onLoadMore?(): void;
-  roundedTop?: boolean;
   rows: WorkspaceTicketRow[];
   selectedRowIds: Set<string>;
   sortingEnabled?: boolean;
@@ -128,7 +127,6 @@ export function TicketTable({
   loadMoreError,
   onLoadMoreGroup,
   onLoadMore,
-  roundedTop = true,
   rows,
   selectedRowIds,
   sortingEnabled = true,
@@ -163,8 +161,8 @@ export function TicketTable({
       <section
         aria-label="Tickets"
         className={cn(
-          ticketGridTableClass({ roundedTop }),
-          "border-x border-slate-200 p-6 text-sm text-slate-600",
+          ticketGridTableClass,
+          "border-x border-t border-slate-200 p-6 text-sm text-slate-600",
         )}
       >
         {emptyMessage}
@@ -193,10 +191,10 @@ export function TicketTable({
     <section className="flex min-h-0 flex-1 flex-col">
       <div
         aria-label="Tickets"
-        className={cn(ticketGridTableClass({ roundedTop }), "flex flex-col")}
+        className={cn(ticketGridTableClass, "flex flex-col")}
         role="table"
       >
-        <div className={ticketGridHeaderWrapperClass({ roundedTop })}>
+        <div className={ticketGridHeaderWrapperClass}>
           <div
             className={cn("grid w-full min-w-0", templateClass)}
             role="rowgroup"

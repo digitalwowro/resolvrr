@@ -62,7 +62,6 @@ export type TicketWorkspaceListAreaProps = {
   partiallySelected: boolean;
   providerGroupingEnabled: boolean;
   refreshing: boolean;
-  roundedTop: boolean;
   rows: WorkspaceTicketRow[];
   savedViewOptions: DropdownOption[];
   selectedRowIds: Set<string>;
@@ -99,7 +98,6 @@ export function TicketWorkspaceListArea({
   partiallySelected,
   providerGroupingEnabled,
   refreshing,
-  roundedTop,
   rows,
   savedViewOptions,
   selectedRowIds,
@@ -120,7 +118,6 @@ export function TicketWorkspaceListArea({
         onRefresh={onRefresh}
         onSavedViewChange={onSavedViewChange}
         refreshing={refreshing}
-        roundedTop={roundedTop}
         savedViewOptions={savedViewOptions}
         selectedSavedViewId={selectedSavedViewId}
         visibleColumns={visibleColumns}
@@ -145,7 +142,6 @@ export function TicketWorkspaceListArea({
         loadingMore={loadingMore}
         onLoadMoreGroup={onLoadMoreGroup}
         onLoadMore={onLoadMore}
-        roundedTop={roundedTop}
         rows={rows}
         selectedRowIds={selectedRowIds}
         sortingEnabled={sortingEnabled}

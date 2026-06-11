@@ -33,7 +33,6 @@ type TicketListToolbarProps = {
   onRefresh(): void;
   onSavedViewChange(savedViewId: string): void;
   refreshing?: boolean;
-  roundedTop?: boolean;
   savedViewOptions: DropdownOption[];
   selectedSavedViewId: string;
   visibleColumns: Set<WorkspaceTicketColumnKey>;
@@ -48,7 +47,6 @@ export function TicketListToolbar({
   onRefresh,
   onSavedViewChange,
   refreshing = false,
-  roundedTop = false,
   savedViewOptions,
   selectedSavedViewId,
   visibleColumns,
@@ -66,11 +64,7 @@ export function TicketListToolbar({
   return (
     <div
       aria-label="Ticket list controls"
-      className={cn(
-        "flex shrink-0 items-center justify-between gap-3 py-2",
-        !roundedTop && "border-b border-slate-200",
-        roundedTop && "rounded-t-md",
-      )}
+      className="flex shrink-0 items-center justify-between gap-3 py-2"
       role="toolbar"
     >
       <div className="flex min-w-0 items-center gap-2">
