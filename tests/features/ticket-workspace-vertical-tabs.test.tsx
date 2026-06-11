@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
@@ -98,7 +98,11 @@ describe("TicketWorkspace vertical tabs", () => {
     await user.click(screen.getByRole("button", { name: "Vertical tabs" }));
 
     expect(screen.getByRole("table", { name: "Tickets" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Cannot log in/u })).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("tab", { name: /Cannot log in/u })).getByLabelText(
+        "Priority: Medium",
+      ),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("toolbar", { name: "Ticket list controls" }),
     ).toBeInTheDocument();

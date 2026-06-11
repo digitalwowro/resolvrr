@@ -83,7 +83,12 @@ available tab area and remain navigation-only. When title tabs no longer fit,
 horizontal tabs fall back to ID-only labels before using icon-only overflow
 behavior. ID-only tabs should remain wide enough to show normal ticket numbers
 and their close affordance. Vertical ticket tabs use a fixed left rail below the
-header. The vertical rail and ticket table scroll independently.
+header. They use the same bottom status accent grammar as horizontal ticket
+tabs: active tickets show a full-width bottom underline, while inactive tickets
+show a short muted bottom dash. Vertical ticket tabs keep the ticket title on
+the first line and place ticket number/customer plus compact priority metadata
+on the second line. Priority is shown as a small icon-and-label token, not as a
+second status stripe. The vertical rail and ticket table scroll independently.
 
 The tab layout control is a two-button segmented control, not a dropdown. It is
 placed in the merged header and remains enabled in both List and selected ticket

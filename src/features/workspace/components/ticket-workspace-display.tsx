@@ -293,7 +293,7 @@ export function TicketWorkspaceDisplay({
         partiallySelected={partiallySelected}
         providerGroupingEnabled={providerGroupingEnabled}
         refreshing={listPager.silentRefreshing}
-        roundedTop={tabOrientation === "vertical"}
+        roundedTop
         rows={tableRows}
         savedViewOptions={savedViewOptions}
         selectedRowIds={selectedRowIds}
@@ -360,7 +360,6 @@ export function TicketWorkspaceDisplay({
         className={cn(
           "flex min-h-0 flex-1 overflow-hidden",
           tabOrientation === "horizontal" && "flex-col",
-          tabOrientation === "vertical" && "pt-4",
         )}
       >
         {tabOrientation === "vertical" ? tabsPanel : null}

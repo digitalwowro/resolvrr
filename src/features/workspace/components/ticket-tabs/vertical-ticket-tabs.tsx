@@ -7,14 +7,12 @@ import type {
 } from "react";
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
+import type { TicketPriority } from "@/core/tickets";
 import type {
   WorkspaceTicketTab,
 } from "@/features/tickets/workspace-adapter";
-import {
-  stateColor,
-  stateIcon,
-  VerticalListTab,
-} from "./tab-item";
+import { PriorityIcon } from "../ticket-table-cells";
+import { stateColor, VerticalListTab } from "./tab-item";
 import { useDraggableTicketTabs } from "./use-draggable-ticket-tabs";
 
 type VerticalTicketTabsProps = {
@@ -27,6 +25,35 @@ type VerticalTicketTabsProps = {
   savedViewLabel: string;
   tabs: WorkspaceTicketTab[];
 };
+
+const priorityTextColor: Record<TicketPriority | "unknown", string> = {
+  low: "text-emerald-700",
+  medium: "text-indigo-700",
+  high: "text-rose-700",
+  unknown: "text-slate-500",
+};
+
+function VerticalTicketPriorityToken({
+  priority,
+  priorityLabel,
+}: {
+  priority?: TicketPriority;
+  priorityLabel: string;
+}) {
+  const key = priority ?? "unknown";
+
+  return (
+    <span
+      aria-label={`Priority: ${priorityLabel}`}
+      className={cn(
+        "inline-flex shrink-0 items-center text-xs font-medium",
+        priorityTextColor[key],
+      )}
+    >
+      <PriorityIcon priority={priority} />
+    </span>
+  );
+}
 
 function VerticalTicketTab({
   active,
@@ -58,16 +85,15 @@ function VerticalTicketTab({
   tab: WorkspaceTicketTab;
 }) {
   const key = tab.stateKey ?? "unknown";
-  const Icon = stateIcon[key];
 
   return (
     <button
       aria-selected={active}
       className={cn(
-        "flex w-full items-start gap-2 border-b border-l-2 border-b-slate-200 px-3 py-2 text-left",
+        "group relative flex w-full items-start gap-2 overflow-hidden rounded-md border border-slate-200 bg-white px-3 py-2 text-left",
         active
-          ? "border-l-indigo-600 bg-indigo-50"
-          : "border-l-transparent bg-white hover:bg-slate-50",
+          ? "z-10 border-slate-300"
+          : "hover:border-slate-300 hover:bg-slate-50",
         reorderClassName,
       )}
       onClickCapture={onClickCapture}
@@ -82,14 +108,30 @@ function VerticalTicketTab({
       style={style}
       type="button"
     >
-      <Icon
+      <span
         aria-hidden="true"
-        className={`self-center size-3.5 shrink-0 ${stateColor[key]}`}
+        className={cn(
+          "absolute h-[3px] rounded-full",
+          active ? "inset-x-0 bottom-0" : "bottom-0.5 left-3 w-5",
+          stateColor[key],
+        )}
+        style={{ backgroundColor: "currentColor" }}
       />
-      <span className="min-w-0 flex-1">
-        <span className="block truncate font-semibold">{tab.title}</span>
-        <span className="mt-0.5 block truncate text-xs">
-          {tab.number} · {tab.customer}
+      <span className="min-w-0 flex-1 pr-1">
+        <span className="block truncate font-semibold text-slate-950">
+          {tab.title}
+        </span>
+        <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+          <span className="min-w-0 truncate">
+            {tab.number} · {tab.customer}
+          </span>
+          <span aria-hidden="true" className="shrink-0 text-slate-300">
+            ·
+          </span>
+          <VerticalTicketPriorityToken
+            priority={tab.priorityKey}
+            priorityLabel={tab.priority}
+          />
         </span>
       </span>
       <Tooltip className="self-center" content={`Close ${tab.number}`}>
@@ -141,14 +183,14 @@ export function VerticalTicketTabs({
 
   return (
     <aside
-      className="flex min-w-64 max-w-xs basis-1/6 shrink-0 flex-col overflow-hidden rounded-tr-md border-r border-t border-slate-200 bg-white"
+      className="flex min-w-64 max-w-xs basis-1/6 shrink-0 flex-col overflow-hidden border-r border-t border-slate-200 bg-slate-50"
     >
       <div aria-live="polite" className="sr-only">
         {announcement}
       </div>
       <div
         aria-label="Open tickets"
-        className="relative flex min-h-0 flex-1 flex-col overflow-y-auto"
+        className="relative flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-slate-50 p-2"
         ref={containerRef}
         role="tablist"
       >

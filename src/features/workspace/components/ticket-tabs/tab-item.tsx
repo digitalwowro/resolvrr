@@ -1,5 +1,4 @@
 import {
-  BriefcaseBusiness,
   CheckCircle2,
   Circle,
   CirclePlus,
@@ -95,34 +94,40 @@ export function VerticalListTab({
 }) {
   return (
     <div className="shrink-0">
-      <div
-        className={cn(
-          "flex h-12 w-full items-center gap-2 border-b px-3 text-white",
-          active
-            ? "border-indigo-700 bg-indigo-700"
-            : "border-indigo-500 bg-indigo-500 hover:border-indigo-600 hover:bg-indigo-600",
-        )}
+      <Tooltip
+        className="w-full"
+        content={`Return to list: ${savedViewLabel}`}
+        side="bottom"
       >
         <button
           aria-label={`Return to list: ${savedViewLabel}`}
           aria-selected={active}
           className={cn(
-            "flex min-w-0 flex-1 items-center gap-2 rounded-md text-left",
+            "relative flex min-h-14 w-full items-center gap-2 overflow-hidden rounded-md border border-slate-200 bg-white px-3 py-2 text-left text-slate-900",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
-            "text-white hover:text-white",
+            active
+              ? "z-10 border-slate-300"
+              : "hover:border-slate-300 hover:bg-slate-50",
           )}
           onClick={onSelect}
           role="tab"
           type="button"
         >
-          <List aria-hidden="true" className="size-3.5 shrink-0" />
-          <span className="min-w-0 flex-1 truncate font-semibold">List</span>
-          <span className="inline-flex min-w-0 max-w-24 items-center gap-1 truncate rounded-md border border-white px-1.5 py-0.5 text-xs text-white">
-            <BriefcaseBusiness aria-hidden="true" className="size-3 shrink-0" />
-            {savedViewLabel}
+          {active ? (
+            <span
+              aria-hidden="true"
+              className="absolute inset-x-0 bottom-0 h-[3px] rounded-full bg-indigo-950"
+            />
+          ) : null}
+          <List aria-hidden="true" className="size-3.5 shrink-0 text-slate-500" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-semibold">List</span>
+            <span className="mt-0.5 block truncate text-xs text-slate-500">
+              {savedViewLabel}
+            </span>
           </span>
         </button>
-      </div>
+      </Tooltip>
     </div>
   );
 }

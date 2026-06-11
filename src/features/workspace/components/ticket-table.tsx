@@ -196,7 +196,7 @@ export function TicketTable({
         className={cn(ticketGridTableClass({ roundedTop }), "flex flex-col")}
         role="table"
       >
-        <div className={ticketGridHeaderWrapperClass}>
+        <div className={ticketGridHeaderWrapperClass({ roundedTop })}>
           <div
             className={cn("grid w-full min-w-0", templateClass)}
             role="rowgroup"

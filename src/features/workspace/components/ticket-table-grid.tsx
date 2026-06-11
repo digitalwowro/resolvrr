@@ -96,8 +96,12 @@ export function ticketGridTableClass({ roundedTop = true } = {}) {
   );
 }
 
-export const ticketGridHeaderWrapperClass =
-  "shrink-0 overflow-y-hidden border-x border-b border-slate-200 bg-slate-50 [scrollbar-gutter:stable]";
+export function ticketGridHeaderWrapperClass({ roundedTop = true } = {}) {
+  return cn(
+    "shrink-0 overflow-y-hidden border-x border-b border-slate-200 bg-slate-50 [scrollbar-gutter:stable]",
+    roundedTop && "rounded-t-md border-t",
+  );
+}
 export const ticketGridBodyScrollerClass =
   "min-h-0 flex-1 overflow-auto border-x border-slate-200 [scrollbar-gutter:stable]";
 

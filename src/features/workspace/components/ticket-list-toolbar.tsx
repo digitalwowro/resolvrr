@@ -67,8 +67,9 @@ export function TicketListToolbar({
     <div
       aria-label="Ticket list controls"
       className={cn(
-        "flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 py-2",
-        roundedTop && "rounded-t-md border-t",
+        "flex shrink-0 items-center justify-between gap-3 py-2",
+        !roundedTop && "border-b border-slate-200",
+        roundedTop && "rounded-t-md",
       )}
       role="toolbar"
     >

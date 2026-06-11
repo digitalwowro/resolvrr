@@ -145,7 +145,7 @@ export function TicketWorkspaceListArea({
         loadingMore={loadingMore}
         onLoadMoreGroup={onLoadMoreGroup}
         onLoadMore={onLoadMore}
-        roundedTop={false}
+        roundedTop={roundedTop}
         rows={rows}
         selectedRowIds={selectedRowIds}
         sortingEnabled={sortingEnabled}
