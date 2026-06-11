@@ -120,6 +120,6 @@ describe("TicketWorkspace inline communication composers", () => {
     ).not.toBeInTheDocument();
     expect(
       within(article).getByRole("button", { name: "Comment" }),
-    ).toBeInTheDocument();
+    ).toHaveClass("bg-slate-950", "text-white");
   });
 });

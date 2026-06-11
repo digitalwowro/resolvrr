@@ -1,25 +1,16 @@
-"use client";
-
-import { useState } from "react";
 import { Info, RefreshCw, Sparkles } from "lucide-react";
 import { Button, Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
-import type {
-  SummarizeWorkspaceTicketAction,
-  TicketAiSummaryResult,
-} from "@/features/ai";
+import type { TicketAiSummaryResult } from "@/features/ai";
 import { formatWorkspaceRelativeTime } from "@/features/tickets/date-time-format";
-import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 
 type TicketAiSummaryPanelProps = {
-  detail: WorkspaceTicketDetail;
-  summarizeTicketAction: SummarizeWorkspaceTicketAction;
+  loading: boolean;
+  onSummarize(): void;
+  result: TicketAiSummaryResult;
 };
 
-function summaryStatusText(result: TicketAiSummaryResult | undefined) {
-  if (!result) {
-    return "No summary generated";
-  }
+function summaryStatusText(result: TicketAiSummaryResult) {
   if (result.status === "available") {
     return "Summary generated";
   }
@@ -53,8 +44,8 @@ function summaryStatusText(result: TicketAiSummaryResult | undefined) {
   return "AI summary is temporarily unavailable";
 }
 
-function generatedStatusText(result: TicketAiSummaryResult | undefined) {
-  if (result?.status !== "available") {
+function generatedStatusText(result: TicketAiSummaryResult) {
+  if (result.status !== "available") {
     return undefined;
   }
 
@@ -70,26 +61,15 @@ function summaryParagraphs(summary: string) {
 }
 
 export function TicketAiSummaryPanel({
-  detail,
-  summarizeTicketAction,
+  loading,
+  onSummarize,
+  result,
 }: TicketAiSummaryPanelProps) {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<TicketAiSummaryResult>();
-
-  async function handleSummarize() {
-    setLoading(true);
-    try {
-      setResult(await summarizeTicketAction({ ticketExternalId: detail.id }));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const available = result?.status === "available";
+  const available = result.status === "available";
   const generatedLabel = generatedStatusText(result);
 
   return (
-    <div className="mt-4 border-t border-slate-200 pt-4">
+    <div className="-ml-4 mt-4 border-t border-slate-200 pl-4 pt-4">
       <div className="w-full rounded-md border border-indigo-100 bg-indigo-50/40 px-4 py-3">
         <div className="flex min-w-0 items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
@@ -125,7 +105,7 @@ export function TicketAiSummaryPanel({
                 ) : undefined
               }
               loading={loading}
-              onClick={handleSummarize}
+              onClick={onSummarize}
               size="sm"
               type="button"
               variant="secondary"
@@ -141,7 +121,7 @@ export function TicketAiSummaryPanel({
                 <p key={paragraph}>{paragraph}</p>
               ))}
             </div>
-          ) : result ? (
+          ) : (
             <p
               className={cn(
                 "text-sm",
@@ -152,8 +132,6 @@ export function TicketAiSummaryPanel({
             >
               {summaryStatusText(result)}
             </p>
-          ) : (
-            <p className="text-sm text-slate-600">No summary generated</p>
           )}
         </div>
       </div>

@@ -63,7 +63,8 @@ describe("TicketWorkspace inline communication composers", () => {
         }),
       );
       expect(within(article).getByRole("button", { name: "Reply" })).toHaveClass(
-        "bg-slate-100",
+        "bg-slate-950",
+        "text-white",
       );
       expect(
         within(article).getByRole("button", { name: "Reply all" }),

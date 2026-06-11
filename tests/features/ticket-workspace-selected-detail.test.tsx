@@ -185,14 +185,15 @@ describe("TicketWorkspace selected detail", () => {
       />,
     );
 
-    expect(screen.getByText("AI summary")).toBeInTheDocument();
+    expect(screen.queryByText("AI summary")).toBeNull();
     expect(summarizeTicketAction).not.toHaveBeenCalled();
 
-    await user.click(screen.getByRole("button", { name: "Generate" }));
+    await user.click(screen.getByRole("button", { name: "Generate AI summary" }));
 
     expect(summarizeTicketAction).toHaveBeenCalledWith({
       ticketExternalId: "ticket-1",
     });
+    expect(await screen.findByText("AI summary")).toBeInTheDocument();
     expect(await screen.findByText(/Situation: Login issue/u)).toBeInTheDocument();
     expect(screen.getByText("Generated 2m ago")).toBeInTheDocument();
     expect(
@@ -245,7 +246,7 @@ describe("TicketWorkspace selected detail", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Generate" }));
+    await user.click(screen.getByRole("button", { name: "Generate AI summary" }));
     expect(
       await screen.findByText(/Situation: Ticket A only summary/u),
     ).toBeInTheDocument();
@@ -258,7 +259,9 @@ describe("TicketWorkspace selected detail", () => {
     expect(
       screen.queryByText(/Situation: Ticket A only summary/u),
     ).not.toBeInTheDocument();
-    expect(screen.getByText("No summary generated")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Generate" })).toBeInTheDocument();
+    expect(screen.queryByText("No summary generated")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Generate AI summary" }),
+    ).toBeInTheDocument();
   });
 });

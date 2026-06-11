@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   Building2,
   Check,
@@ -8,6 +8,7 @@ import {
   ExternalLink,
   Mail,
   RefreshCw,
+  Sparkles,
   UserRound,
 } from "lucide-react";
 import { Tooltip } from "@/components/ui";
@@ -24,7 +25,10 @@ import type {
 import type {
   TicketCommunicationCapabilities,
 } from "@/features/tickets/communication-model";
-import type { SummarizeWorkspaceTicketAction } from "@/features/ai";
+import type {
+  SummarizeWorkspaceTicketAction,
+  TicketAiSummaryResult,
+} from "@/features/ai";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import type { TicketMetadataSavedPatch } from "./metadata-draft";
 import { TicketMetadataEditor } from "./ticket-metadata-editor";
@@ -33,6 +37,12 @@ import { TicketPriorityDot } from "./ticket-priority-dot";
 import { TicketStateBadge } from "./ticket-state-badge";
 import { ticketPath } from "./workspace-url";
 export { TicketDetailLoadingShell } from "./ticket-detail-loading-shell";
+
+type TicketSummaryState = {
+  loading: boolean;
+  result?: TicketAiSummaryResult;
+  ticketId: string;
+};
 
 type TicketDetailProps = {
   communicationCapabilities: TicketCommunicationCapabilities;
@@ -67,7 +77,20 @@ export function TicketDetail({
   updateTicketMetadataAction,
 }: TicketDetailProps) {
   const [ticketLinkCopied, setTicketLinkCopied] = useState(false);
+  const [summaryState, setSummaryState] = useState<TicketSummaryState>({
+    loading: false,
+    ticketId: detail.id,
+  });
+  const summaryRequestRef = useRef(0);
   const customerEmail = detailCustomerEmail(detail);
+
+  if (summaryState.ticketId !== detail.id) {
+    setSummaryState({ loading: false, ticketId: detail.id });
+  }
+
+  const summaryStateMatchesTicket = summaryState.ticketId === detail.id;
+  const summaryLoading = summaryStateMatchesTicket ? summaryState.loading : false;
+  const summaryResult = summaryStateMatchesTicket ? summaryState.result : undefined;
 
   function copyTicketLink() {
     if (!window.navigator.clipboard) {
@@ -79,6 +102,29 @@ export function TicketDetail({
       setTicketLinkCopied(true);
       window.setTimeout(() => setTicketLinkCopied(false), 1500);
     });
+  }
+
+  async function summarizeTicket() {
+    const requestId = summaryRequestRef.current + 1;
+    const ticketId = detail.id;
+    summaryRequestRef.current = requestId;
+    setSummaryState({ loading: true, result: summaryResult, ticketId });
+
+    let nextResult: TicketAiSummaryResult | undefined;
+
+    try {
+      nextResult = await summarizeTicketAction({ ticketExternalId: ticketId });
+    } finally {
+      if (summaryRequestRef.current === requestId) {
+        setSummaryState((current) => ({
+          loading: false,
+          result:
+            nextResult ??
+            (current.ticketId === ticketId ? current.result : undefined),
+          ticketId,
+        }));
+      }
+    }
   }
 
   const titleActions = (
@@ -125,11 +171,29 @@ export function TicketDetail({
           </a>
         </Tooltip>
       ) : null}
+      {summaryResult ? null : (
+        <button
+          className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-wait disabled:opacity-60"
+          disabled={summaryLoading}
+          onClick={summarizeTicket}
+          type="button"
+        >
+          {summaryLoading ? (
+            <span
+              aria-hidden="true"
+              className="size-3 animate-spin rounded-full border-2 border-current border-t-transparent"
+            />
+          ) : (
+            <Sparkles aria-hidden="true" className="size-3.5" />
+          )}
+          <span>Generate AI summary</span>
+        </button>
+      )}
     </div>
   );
 
   const detailHeader: ReactNode = (
-    <div className="py-4 pl-4 pr-0">
+    <div className="pt-4 pl-4 pr-0">
       <div className="space-y-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-slate-600">
           <Tooltip content={`Priority: ${detail.priority}`} side="bottom">
@@ -183,11 +247,15 @@ export function TicketDetail({
             </span>
           ) : null}
         </div>
-        <TicketAiSummaryPanel
-          detail={detail}
-          key={detail.id}
-          summarizeTicketAction={summarizeTicketAction}
-        />
+        {summaryResult ? (
+          <TicketAiSummaryPanel
+            loading={summaryLoading}
+            onSummarize={summarizeTicket}
+            result={summaryResult}
+          />
+        ) : (
+          <div className="-ml-4 mt-4 border-t border-slate-200" />
+        )}
       </div>
     </div>
   );

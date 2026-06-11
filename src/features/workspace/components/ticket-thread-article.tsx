@@ -2,6 +2,7 @@
 
 import { ChevronDown, MessageSquarePlus, Reply, ReplyAll } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type {
@@ -21,6 +22,7 @@ import {
   articleTypeTokenClass,
   avatarClass,
 } from "./ticket-thread-article-styles";
+import { TicketArticleBody } from "./ticket-article-body";
 
 type TicketThreadArticleProps = {
   activeMode: InlineCommunicationMode | null;
@@ -28,7 +30,6 @@ type TicketThreadArticleProps = {
   communicationDraft: TicketCommunicationDraft;
   communicationCapabilities: TicketCommunicationCapabilities;
   disabled: boolean;
-  isFirst: boolean;
   onCommunicationDraftChange(draft: TicketCommunicationDraft): void;
   onCloseComposer(): void;
   onOpenComposer(mode: InlineCommunicationMode): void;
@@ -82,6 +83,7 @@ function ThreadActionButton({
   icon,
   isSelected,
   onClick,
+  prominence = "secondary",
   title,
   type,
 }: {
@@ -90,27 +92,50 @@ function ThreadActionButton({
   icon: ReactNode;
   isSelected: boolean;
   onClick(): void;
+  prominence?: "primary" | "secondary";
   title?: string;
   type: WorkspaceArticle["direction"];
 }) {
-  return (
+  const isPrimary = prominence === "primary";
+
+  const button = (
     <button
       aria-label={children}
       className={cn(
-        "inline-grid size-7 place-items-center rounded-md text-slate-500",
+        isPrimary
+          ? "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold"
+          : "inline-grid size-7 place-items-center rounded-md border",
+        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        isSelected
-          ? actionSelectedClass[type]
-          : cn("bg-transparent", actionStateClass[type]),
+        isPrimary
+          ? "bg-slate-950 text-white hover:bg-slate-900 active:bg-slate-800"
+          : isSelected
+            ? actionSelectedClass[type]
+            : cn(
+                "border-slate-200 bg-white",
+                actionStateClass[type],
+                "hover:border-slate-300",
+              ),
       )}
       disabled={disabled}
       onClick={onClick}
-      title={title ?? children}
       type="button"
     >
       {icon}
-      <span className="sr-only">{children}</span>
+      {isPrimary ? (
+        <span>{children}</span>
+      ) : (
+        <span className="sr-only">{children}</span>
+      )}
     </button>
+  );
+
+  return isPrimary ? (
+    button
+  ) : (
+    <Tooltip content={title ?? children} delayMs={150}>
+      {button}
+    </Tooltip>
   );
 }
 
@@ -125,7 +150,6 @@ export function TicketThreadArticle({
   communicationDraft,
   communicationCapabilities,
   disabled,
-  isFirst,
   onCommunicationDraftChange,
   onCloseComposer,
   onOpenComposer,
@@ -167,17 +191,14 @@ export function TicketThreadArticle({
       className="group bg-white transition-colors hover:bg-slate-50/70 focus-within:bg-slate-50/70"
     >
       <div
-        className={cn(
-          "relative flex gap-3 pb-4 pr-4",
-          isFirst ? "pt-0" : "pt-4",
-        )}
+        className="relative flex gap-3 pb-4 pl-4 pr-4 pt-4"
       >
         <ArticleAvatar article={article} />
         <div className="min-w-0 flex-1">
           <div
             className={cn(
               "flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm",
-              hasActions && "pr-28",
+              hasActions && "pr-40",
             )}
           >
             {senderControl}
@@ -204,19 +225,7 @@ export function TicketThreadArticle({
               <ContactLine contacts={article.bcc} label="Bcc" />
             </div>
           ) : null}
-          <div
-            className={cn(
-              "mt-2 max-w-none text-sm leading-5 text-slate-900",
-              "whitespace-normal break-words",
-              "[&_a]:font-medium [&_a]:underline-offset-2 [&_a:hover]:underline",
-              "[&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-slate-300 [&_blockquote]:pl-3 [&_blockquote]:text-slate-700",
-              "[&_br]:block [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.85em]",
-              "[&_h1]:mb-2 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:font-semibold",
-              "[&_li]:my-0.5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_pre]:my-3 [&_pre]:overflow-auto [&_pre]:rounded [&_pre]:bg-slate-950 [&_pre]:p-3 [&_pre]:text-slate-50 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6",
-              "[&_strong]:font-semibold [&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-200 [&_td]:p-2 [&_th]:border [&_th]:border-slate-200 [&_th]:bg-slate-50 [&_th]:p-2 [&_th]:text-left [&_th]:font-semibold",
-            )}
-            dangerouslySetInnerHTML={{ __html: article.sanitizedHtml }}
-          />
+          <TicketArticleBody html={article.sanitizedHtml} />
           <TicketArticleAttachments attachments={article.attachments} />
           {hasActions ? (
             <div
@@ -226,9 +235,10 @@ export function TicketThreadArticle({
               {canReply ? (
                 <>
                   <ThreadActionButton
-                    icon={<Reply aria-hidden="true" className="size-4" />}
+                    icon={<Reply aria-hidden="true" className="size-3.5" />}
                     isSelected={activeMode === "reply"}
                     onClick={() => onOpenComposer("reply")}
+                    prominence="primary"
                     type={article.direction}
                   >
                     Reply
@@ -252,6 +262,7 @@ export function TicketThreadArticle({
                   }
                   isSelected={activeMode === "comment"}
                   onClick={() => onOpenComposer("comment")}
+                  prominence={canReply ? "secondary" : "primary"}
                   type={article.direction}
                 >
                   Comment
