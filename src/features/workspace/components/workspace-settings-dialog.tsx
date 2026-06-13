@@ -165,10 +165,10 @@ export function WorkspaceSettingsDialog({
           promptCenterAvailable={Boolean(aiSettingsData?.canViewPromptCenter)}
         />
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex h-12 shrink-0 items-center justify-end border-b border-slate-200 px-4">
+          <div className="flex h-10 shrink-0 items-center justify-end border-b border-slate-200">
             <button
               aria-label="Close settings"
-              className="grid size-8 place-items-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className="grid size-10 place-items-center text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-indigo-600"
               onClick={onClose}
               ref={closeButtonRef}
               type="button"
