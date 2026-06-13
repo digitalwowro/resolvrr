@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { TicketDetail } from "@/core/tickets";
-import type { AiSummaryCacheRepository } from "@/features/ai/summary-cache-repository";
 import { readCachedTicketSummary } from "@/features/ai/ticket-summary-cache";
 import { summarizeTicketDetail } from "@/features/ai/ticket-summary-service";
 import { safeProviderJson } from "@/security/provider-http";
+import {
+  aiCacheRepository,
+  cacheScope,
+  openAiConfig,
+  ticketDetail,
+} from "./ai-ticket-summary-cache-test-helpers";
 
 vi.mock("@/security/base-url-validation", () => ({
   validateProviderBaseUrl: vi.fn(async (input: string) => ({
@@ -24,71 +28,6 @@ afterEach(() => {
 beforeEach(() => {
   vi.clearAllMocks();
 });
-
-function ticketDetail(): TicketDetail {
-  return {
-    links: [],
-    measuredAt: new Date("2026-05-24T08:35:00Z"),
-    subscription: { supported: false, following: false },
-    thread: {
-      ticketExternalId: "ticket-1",
-      articles: [
-        {
-          attachments: [],
-          author: { name: "Maya Patel", email: "maya@example.com" },
-          createdAt: new Date("2026-05-24T08:31:00Z"),
-          direction: "inbound",
-          externalId: "article-secret-1",
-          kind: "message",
-          recipients: [],
-          sanitizedHtml:
-            "<p>Hello <strong>support</strong></p><script>ignored()</script>",
-          visibility: "public",
-        },
-      ],
-    },
-    ticket: {
-      customer: { name: "Maya Patel", email: "maya@example.com" },
-      externalId: "ticket-1",
-      group: { name: "Users" },
-      number: "1001",
-      owner: { name: "Agent Smith", email: "agent@example.com" },
-      priority: "medium",
-      state: "open",
-      tags: ["login"],
-      title: "Cannot log in",
-      updatedAt: new Date("2026-05-24T08:30:00Z"),
-    },
-  };
-}
-
-function aiCacheRepository(
-  overrides: Partial<AiSummaryCacheRepository> = {},
-): AiSummaryCacheRepository {
-  return {
-    enabled: true,
-    invalidateConnection: vi.fn(async () => undefined),
-    invalidateTicket: vi.fn(async () => undefined),
-    invalidateWorkspace: vi.fn(async () => undefined),
-    readSummary: vi.fn(async () => ({ status: "miss" as const })),
-    storeSummary: vi.fn(async () => undefined),
-    ...overrides,
-  };
-}
-
-const cacheScope = {
-  helpdeskConnectionId: "connection-1",
-  ticketExternalId: "ticket-1",
-  userId: "user-1",
-};
-
-const openAiConfig = {
-  status: "available" as const,
-  apiKey: "openai-key",
-  baseUrl: "https://api.openai.test/v1",
-  model: "support-model",
-  provider: "openai-compatible" as const,
-};
 
 describe("AI ticket summary output cache", () => {
   it("reuses a fresh generated summary cache hit without calling the AI provider", async () => {
@@ -311,48 +250,5 @@ describe("AI ticket summary output cache", () => {
     expect(logged).not.toContain("ticket-1");
     expect(logged).not.toContain("1001");
     expect(logged).not.toContain("support-model");
-  });
-
-  it("changes summary cache identity when the effective prompt changes", async () => {
-    vi.mocked(safeProviderJson)
-      .mockResolvedValueOnce({
-        data: {
-          choices: [{ message: { content: "Situation: First summary" } }],
-        },
-        headers: new Headers(),
-        status: 200,
-      })
-      .mockResolvedValueOnce({
-        data: {
-          choices: [{ message: { content: "Situation: Second summary" } }],
-        },
-        headers: new Headers(),
-        status: 200,
-      });
-    const cache = aiCacheRepository();
-    const cacheOptions = {
-      cacheRepository: cache,
-      encryptionKey: "test encryption key long enough",
-      scope: cacheScope,
-    };
-
-    await summarizeTicketDetail(
-      openAiConfig,
-      ticketDetail(),
-      cacheOptions,
-      { prompt: "First summary prompt.", version: "ticket-summary-prompt-v1" },
-    );
-    await summarizeTicketDetail(
-      openAiConfig,
-      ticketDetail(),
-      cacheOptions,
-      { prompt: "Second summary prompt.", version: "ticket-summary-prompt-v1" },
-    );
-
-    const firstKey = vi.mocked(cache.storeSummary).mock.calls[0]?.[0];
-    const secondKey = vi.mocked(cache.storeSummary).mock.calls[1]?.[0];
-    expect(firstKey?.promptVersion).toBe("ticket-summary-prompt-v1");
-    expect(secondKey?.promptVersion).toBe("ticket-summary-prompt-v1");
-    expect(firstKey?.sourceFingerprint).not.toBe(secondKey?.sourceFingerprint);
   });
 });

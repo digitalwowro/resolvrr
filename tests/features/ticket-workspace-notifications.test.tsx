@@ -263,44 +263,4 @@ describe("TicketWorkspace notifications", () => {
     expect(screen.getByRole("button", { name: "Notifications" }))
       .toBeInTheDocument();
   });
-
-  it("handles rejected notification requests without surfacing an unhandled rejection", async () => {
-    const user = userEvent.setup();
-    const loadWorkspaceNotificationsAction = vi
-      .fn()
-      .mockResolvedValueOnce(notificationResult([notification()]))
-      .mockRejectedValueOnce(new TypeError("Failed to fetch"));
-    const markWorkspaceNotificationsReadAction = vi.fn(async () => {
-      throw new TypeError("Failed to fetch");
-    });
-
-    render(
-      <TicketWorkspace
-        columns={defaultWorkspaceTicketColumns}
-        connections={[{ id: "connection-1", label: "Support", active: true }]}
-        listResult={availableList}
-        loadWorkspaceNotificationsAction={loadWorkspaceNotificationsAction}
-        logoutAction={noopAction}
-        markWorkspaceNotificationsReadAction={markWorkspaceNotificationsReadAction}
-        rows={[row, highRow]}
-        setActiveConnectionAction={noopAction}
-        tabs={[{ ...row }, { ...highRow }]}
-        updateTicketMetadataAction={noopMutationAction}
-        userEmail="agent@example.com"
-      />,
-    );
-
-    await user.click(
-      await screen.findByRole("button", { name: "Notifications, 1 unread" }),
-    );
-    await user.click(screen.getByRole("button", { name: "Mark all read" }));
-
-    await waitFor(() =>
-      expect(markWorkspaceNotificationsReadAction).toHaveBeenCalledWith({
-        notificationIds: ["notification-1"],
-      }),
-    );
-    expect(loadWorkspaceNotificationsAction).toHaveBeenCalledTimes(2);
-  });
-
 });

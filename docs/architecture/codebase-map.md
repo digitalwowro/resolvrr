@@ -955,6 +955,12 @@ added, moved, renamed, or removed.
     - `ai-ticket-summary-cache.test.ts` (`tests/features/ai-ticket-summary-cache.test.ts`):
       verifies generated selected-ticket AI summary output cache hit and write behavior without
       prompt persistence.
+    - `ai-ticket-summary-cache-identity.test.ts`
+      (`tests/features/ai-ticket-summary-cache-identity.test.ts`): verifies summary cache identity
+      changes when the effective prompt changes.
+    - `ai-ticket-summary-cache-test-helpers.ts`
+      (`tests/features/ai-ticket-summary-cache-test-helpers.ts`): shared AI summary cache fixtures
+      for ticket detail, runtime config, and cache repository tests.
     - `ai-ticket-summary.test.ts` (`tests/features/ai-ticket-summary.test.ts`): verifies read-only
       AI summary config defaults, sanitized prompt context, safe telemetry, and OpenAI-compatible
       and Anthropic-compatible request shapes.
@@ -968,8 +974,17 @@ added, moved, renamed, or removed.
       verifies workspace AI settings client-readable data hides admin-managed provider metadata
       from non-admin users while preserving configured status.
     - `ai-settings-service.test.ts` (`tests/features/ai-settings-service.test.ts`): verifies
-      workspace AI runtime resolution, admin/user settings mutations, encrypted key storage, live
-      validation failure behavior, permissions, and generated-summary cache invalidation.
+      workspace AI runtime resolution, admin settings mutations, encrypted key storage,
+      permissions, and generated-summary cache invalidation.
+    - `ai-settings-service-test-helpers.ts`
+      (`tests/features/ai-settings-service-test-helpers.ts`): shared AI settings service test
+      repositories, connection fixtures, and form helpers.
+    - `ai-settings-service-user.test.ts` (`tests/features/ai-settings-service-user.test.ts`):
+      verifies user-provided AI key saves and live validation failure behavior.
+    - `ai-prompts-overrides.test.ts` (`tests/features/ai-prompts-overrides.test.ts`): verifies
+      AI prompt override rejection, policy disabling, and non-admin Prompt Center visibility.
+    - `ai-prompts-test-helpers.ts` (`tests/features/ai-prompts-test-helpers.ts`): shared AI prompt
+      repository, settings, connection, cache, form, and user fixtures.
     - `saved-view-management-permissions.test.ts`
       (`tests/features/saved-view-management-permissions.test.ts`): verifies saved view management
       permissions behavior.
@@ -1112,6 +1127,9 @@ added, moved, renamed, or removed.
     - `ticket-workspace-horizontal-tab-reorder.test.tsx`
       (`tests/features/ticket-workspace-horizontal-tab-reorder.test.tsx`): verifies ticket workspace
       horizontal tab reorder behavior.
+    - `ticket-workspace-horizontal-tab-click.test.tsx`
+      (`tests/features/ticket-workspace-horizontal-tab-click.test.tsx`): verifies horizontal tab
+      activation still works after minor pointer jitter.
     - `ticket-workspace-horizontal-tabs-helpers.ts`
       (`tests/features/ticket-workspace-horizontal-tabs-helpers.ts`): shared test helpers for ticket
       workspace horizontal tabs.
@@ -1128,6 +1146,9 @@ added, moved, renamed, or removed.
     - `ticket-workspace-notifications.test.tsx`
       (`tests/features/ticket-workspace-notifications.test.tsx`): verifies ticket workspace
       notifications behavior.
+    - `ticket-workspace-notifications-errors.test.tsx`
+      (`tests/features/ticket-workspace-notifications-errors.test.tsx`): verifies rejected
+      notification read/mark-read requests are handled without unhandled rejections.
     - `ticket-workspace-paging-refreshed-rows.test.tsx`
       (`tests/features/ticket-workspace-paging-refreshed-rows.test.tsx`): verifies ticket workspace
       paging refreshed rows behavior.
@@ -1141,9 +1162,15 @@ added, moved, renamed, or removed.
     - `ticket-workspace-selected-detail.test.tsx`
       (`tests/features/ticket-workspace-selected-detail.test.tsx`): verifies selected ticket detail,
       thread rendering, secondary metadata chips/links, article recipients, and attachment display.
+    - `ticket-workspace-selected-detail-ai.test.tsx`
+      (`tests/features/ticket-workspace-selected-detail-ai.test.tsx`): verifies selected-ticket AI
+      summary generation, cache hydration display, forced regeneration, and ticket-switch resets.
     - `ticket-workspace-ai-settings.test.tsx`
       (`tests/features/ticket-workspace-ai-settings.test.tsx`): verifies Settings AI section
       visibility and save behavior for admins, admin-managed users, and user-provided-key users.
+    - `ticket-workspace-ai-settings-model.test.tsx`
+      (`tests/features/ticket-workspace-ai-settings-model.test.tsx`): verifies saved custom AI model
+      IDs submit unchanged from Settings.
     - `ticket-workspace-ai-active-switch.test.tsx`
       (`tests/features/ticket-workspace-ai-active-switch.test.tsx`): verifies the open Settings
       dialog reloads AI settings after the active workspace changes.
@@ -1154,7 +1181,10 @@ added, moved, renamed, or removed.
       (`tests/features/ticket-workspace-prompt-center.test.tsx`): verifies Prompt Center visibility,
       workspace prompt editing, and prompt override policy controls.
     - `ticket-workspace-settings.test.tsx` (`tests/features/ticket-workspace-settings.test.tsx`):
-      verifies ticket workspace settings behavior.
+      verifies Settings Views default updates and workspace creation behavior.
+    - `ticket-workspace-profile-settings.test.tsx`
+      (`tests/features/ticket-workspace-profile-settings.test.tsx`): verifies My Profile account,
+      avatar upload, and password settings behavior.
     - `ticket-workspace-test-utils.tsx` (`tests/features/ticket-workspace-test-utils.tsx`): shared
       provider-backed workspace fixtures and render helpers for feature tests.
     - `ticket-workspace-url-sync.test.tsx` (`tests/features/ticket-workspace-url-sync.test.tsx`):
@@ -1164,6 +1194,9 @@ added, moved, renamed, or removed.
     - `ticket-workspace-vertical-tabs.test.tsx`
       (`tests/features/ticket-workspace-vertical-tabs.test.tsx`): verifies local vertical ticket tab
       orientation, open/activation behavior, and route navigation without persistence.
+    - `ticket-workspace-vertical-tabs-cache.test.tsx`
+      (`tests/features/ticket-workspace-vertical-tabs-cache.test.tsx`): verifies older vertical
+      ticket tabs reactivate cached details without route pushes.
     - `ticket-workspace.test.tsx` (`tests/features/ticket-workspace.test.tsx`): verifies
       provider-backed workspace unavailable, table, profile menu, read-only metadata, and list
       controls behavior.
@@ -1198,12 +1231,14 @@ added, moved, renamed, or removed.
       - `notifications.test.ts` (`tests/providers/zammad/notifications.test.ts`): verifies
         notifications behavior.
       - `read-assets.test.ts` (`tests/providers/zammad/read-assets.test.ts`): verifies Zammad
-        attachment metadata mapping.
+        attachment metadata, expanded user, and organization asset mapping for ticket detail.
       - `read-detail.test.ts` (`tests/providers/zammad/read-detail.test.ts`): verifies Zammad ticket
         detail and article-thread endpoint calls, optional feature defaults, sanitization, and
         detail read timing.
       - `read-helpers.ts` (`tests/providers/zammad/read-helpers.ts`): shared Zammad read test
         fixtures.
+      - `read-list-users.test.ts` (`tests/providers/zammad/read-list-users.test.ts`): verifies
+        Zammad ticket list user and organization fallback lookups when expanded assets are absent.
       - `read-lookup-assets.test.ts` (`tests/providers/zammad/read-lookup-assets.test.ts`): verifies
         Zammad expanded user display-name asset lookup behavior.
       - `read.test.ts` (`tests/providers/zammad/read.test.ts`): verifies Zammad ticket list endpoint
@@ -1224,8 +1259,11 @@ added, moved, renamed, or removed.
         provider-specific Basic Auth validation request behavior.
   - `tests/unit`: focused unit tests for auth, security, registry, and core contracts.
     - `auth-service.test.ts` (`tests/unit/auth-service.test.ts`): verifies registration, login,
-      session, profile updates, password changes, avatar uploads, logout, and expired-session
-      cleanup use cases.
+      session, logout, and expired-session cleanup use cases.
+    - `auth-service-profile.test.ts` (`tests/unit/auth-service-profile.test.ts`): verifies profile
+      name, avatar upload, password change, and password-change validation use cases.
+    - `auth-service-test-helpers.ts` (`tests/unit/auth-service-test-helpers.ts`): shared in-memory
+      auth repository used by auth service unit tests.
     - `auth-validation.test.ts` (`tests/unit/auth-validation.test.ts`): verifies email normalization
       and password input validation.
     - `base-url-validation.test.ts` (`tests/unit/base-url-validation.test.ts`): verifies helpdesk
