@@ -30,7 +30,7 @@ export function WorkspaceSettingsNav({
 }: WorkspaceSettingsNavProps) {
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-slate-200 bg-slate-50">
-      <nav className="flex-1 space-y-5 p-3" aria-label="Settings sections">
+      <nav className="flex-1 space-y-5 p-3 pt-4" aria-label="Settings sections">
         <div className="space-y-1">
           <p className={sectionGroupLabelClass()}>General settings</p>
           <button
