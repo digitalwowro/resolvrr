@@ -17,7 +17,7 @@ import type {
 } from "./ticket-rich-text-editor-dom";
 import { ToolbarButton } from "./ticket-rich-text-editor-toolbar";
 
-const toolbarIconClassName = "size-3";
+const toolbarIconClassName = "size-4";
 
 type TicketRichTextEditorToolbarRowProps = {
   activeToolbarState: ActiveToolbarState;
@@ -35,7 +35,7 @@ export function TicketRichTextEditorToolbarRow({
   onInsertLink,
 }: TicketRichTextEditorToolbarRowProps) {
   return (
-    <div className="flex items-center gap-0 border-b border-slate-200 bg-slate-50 px-3 py-2">
+    <div className="flex items-center gap-1 border-b border-slate-200 bg-slate-50 px-3 py-1">
       <ToolbarButton
         disabled={disabled}
         label="Undo"
