@@ -6,6 +6,7 @@ import {
   TicketWorkspace,
   workspaceSavedViewOptionsFromSettingsData,
 } from "@/features/workspace/components/ticket-workspace";
+import { workspaceSavedViewOptions } from "@/features/workspace/components/ticket-workspace-saved-view-options";
 import {
   availableList,
   highRow,
@@ -155,5 +156,14 @@ describe("TicketWorkspace saved views", () => {
         disabledReason: "full-text-search-unsupported",
       },
     ]);
+  });
+
+  it("adds icons to every saved-view dropdown option", () => {
+    expect(
+      workspaceSavedViewOptions([
+        { id: "all-tickets", label: "All tickets" },
+        { id: "my-work", label: "My work", iconName: "inbox" },
+      ]).map((option) => Boolean(option.icon)),
+    ).toEqual([true, true]);
   });
 });

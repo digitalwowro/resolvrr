@@ -1,7 +1,12 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { Button, SearchableDropdown } from "@/components/ui";
+import {
+  Button,
+  DropdownSelect,
+  SearchableDropdown,
+  type DropdownOption,
+} from "@/components/ui";
 import {
   type SavedViewCondition,
   type SavedViewConditionField,
@@ -14,6 +19,22 @@ import {
   conditionValueLabel,
   parseConditionValue,
 } from "./workspace-settings-views-utils";
+
+const conditionFieldOptions: Array<
+  DropdownOption & { value: SavedViewConditionField }
+> = [
+  { value: "owner", label: "Owner" },
+  { value: "state", label: "State" },
+  { value: "priority", label: "Priority" },
+  { value: "group", label: "Group" },
+];
+
+const conditionOperatorOptions: Array<
+  DropdownOption & { value: SavedViewConditionOperator }
+> = [
+  { value: "is", label: "is" },
+  { value: "is_not", label: "is not" },
+];
 
 type ViewConditionsEditorProps = {
   conditions: SavedViewCondition[];
@@ -68,38 +89,35 @@ export function ViewConditionsEditor({
                 className="grid items-start gap-3 rounded-md border border-slate-200 bg-white p-3 md:grid-cols-[9rem_8rem_minmax(0,1fr)_auto]"
                 key={condition.id}
               >
-                <select
-                  className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm"
-                  onChange={(event) => {
-                    const field = event.currentTarget.value as SavedViewConditionField;
+                <DropdownSelect
+                  ariaLabel="Condition field"
+                  className="block w-full [&>div]:w-full"
+                  onValueChange={(value) => {
+                    const field = value as SavedViewConditionField;
                     replaceCondition(index, {
                       ...condition,
                       field,
                       values: [],
                     });
                   }}
+                  options={conditionFieldOptions}
+                  triggerClassName="h-9 w-full text-sm"
                   value={condition.field}
-                >
-                  <option value="owner">Owner</option>
-                  <option value="state">State</option>
-                  <option value="priority">Priority</option>
-                  <option value="group">Group</option>
-                </select>
-                <select
-                  className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm"
-                  onChange={(event) => {
-                    const operator = event.currentTarget
-                      .value as SavedViewConditionOperator;
+                />
+                <DropdownSelect
+                  ariaLabel="Condition operator"
+                  className="block w-full [&>div]:w-full"
+                  onValueChange={(value) => {
+                    const operator = value as SavedViewConditionOperator;
                     replaceCondition(index, {
                       ...condition,
                       operator,
                     });
                   }}
+                  options={conditionOperatorOptions}
+                  triggerClassName="h-9 w-full text-sm"
                   value={condition.operator}
-                >
-                  <option value="is">is</option>
-                  <option value="is_not">is not</option>
-                </select>
+                />
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
                   <SearchableDropdown
                     ariaLabel={`${condition.field} condition value`}

@@ -1,5 +1,5 @@
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { SearchableDropdown } from "@/components/ui";
+import { DropdownSelect, SearchableDropdown, type DropdownOption } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import {
   savedViewColorNames,
@@ -9,6 +9,11 @@ import {
 import type { AuthUserRole } from "@/auth/types";
 import type { SavedViewDraft } from "./workspace-settings-views-utils";
 import { viewColorClass } from "./workspace-settings-views-utils";
+
+const visibilityOptions: Array<DropdownOption & { value: SavedViewVisibility }> = [
+  { value: "personal", label: "Personal" },
+  { value: "shared", label: "Shared" },
+];
 
 type ViewDetailsFormProps = {
   draft: SavedViewDraft;
@@ -45,24 +50,40 @@ export function ViewDetailsForm({
           value={draft.name}
         />
       </label>
-      <label className="block">
+      <div className="block">
         <span className="text-sm font-medium text-slate-700">Visibility</span>
-        <select
-          className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+        <DropdownSelect
+          ariaLabel="Visibility"
+          className="mt-1 block w-full [&>div]:w-full"
           disabled={userRole !== "ADMIN"}
-          onChange={(event) => {
-            const visibility = event.currentTarget.value as SavedViewVisibility;
+          onValueChange={(value) => {
+            const visibility = value as SavedViewVisibility;
             setDraft((current) => ({
               ...current,
               visibility,
             }));
           }}
+          options={visibilityOptions}
+          triggerClassName="h-10 w-full text-sm"
           value={draft.visibility}
-        >
-          <option value="personal">Personal</option>
-          <option value="shared">Shared</option>
-        </select>
-      </label>
+        />
+      </div>
+      <div>
+        <span className="text-sm font-medium text-slate-700">Icon</span>
+        <div className="mt-1">
+          <SearchableDropdown
+            ariaLabel="View icon"
+            className="block w-full [&>div]:w-full"
+            onValueChange={(value) =>
+              setDraft((current) => ({ ...current, iconName: value }))
+            }
+            options={iconOptions}
+            searchPlaceholder="Find icon"
+            triggerClassName="w-full"
+            value={draft.iconName}
+          />
+        </div>
+      </div>
       <label className="block">
         <span className="text-sm font-medium text-slate-700">Custom icon</span>
         <input
@@ -78,20 +99,6 @@ export function ViewDetailsForm({
           value={draft.iconName}
         />
       </label>
-      <div>
-        <span className="text-sm font-medium text-slate-700">Icon</span>
-        <div className="mt-1">
-          <SearchableDropdown
-            ariaLabel="View icon"
-            onValueChange={(value) =>
-              setDraft((current) => ({ ...current, iconName: value }))
-            }
-            options={iconOptions}
-            searchPlaceholder="Find icon"
-            value={draft.iconName}
-          />
-        </div>
-      </div>
       <div>
         <span className="text-sm font-medium text-slate-700">Color</span>
         <div className="mt-2 flex flex-wrap gap-2">

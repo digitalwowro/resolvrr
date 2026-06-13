@@ -117,6 +117,21 @@ describe("workspace saved-view performance rules", () => {
     ]);
   });
 
+  it("keeps saved-view icon names for workspace dropdown options", () => {
+    expect(
+      workspaceSavedViews([
+        savedView({
+          iconName: "inbox",
+        }),
+      ]),
+    ).toMatchObject([
+      {
+        id: "view-1",
+        iconName: "inbox",
+      },
+    ]);
+  });
+
   it("blocks the unfiltered All tickets fallback when My work cannot resolve Myself", () => {
     expect(
       initialWorkspaceSavedViewSelection({

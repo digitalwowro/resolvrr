@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button } from "@/components/ui";
+import { Button, DropdownSelect, type DropdownOption } from "@/components/ui";
 import type {
   ConnectionProviderOption,
   HelpdeskConnectionActionResult,
@@ -35,6 +35,10 @@ export function WorkspaceConnectionForm({
     providers.find((provider) => provider.key === providerKey) ?? providers[0];
   const selectedScheme = firstScheme(selectedProvider);
   const canSubmit = Boolean(action && selectedProvider && selectedScheme && !pending);
+  const providerOptions: DropdownOption[] = providers.map((provider) => ({
+    value: provider.key,
+    label: provider.label,
+  }));
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,24 +62,19 @@ export function WorkspaceConnectionForm({
             required
           />
         </label>
-        <label className="block">
+        <div className="block">
           <span className="text-sm font-medium text-slate-700">Provider</span>
-          <select
-            className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50"
+          <input name="providerKey" type="hidden" value={providerKey} />
+          <DropdownSelect
+            ariaLabel="Provider"
+            className="mt-1 block w-full [&>div]:w-full"
             disabled={editing || pending}
-            name={editing ? undefined : "providerKey"}
-            onChange={(event) => setProviderKey(event.currentTarget.value)}
-            required
+            onValueChange={setProviderKey}
+            options={providerOptions}
+            triggerClassName="h-10 w-full text-sm disabled:bg-slate-50"
             value={providerKey}
-          >
-            {providers.map((provider) => (
-              <option key={provider.key} value={provider.key}>
-                {provider.label}
-              </option>
-            ))}
-          </select>
-          {editing ? <input name="providerKey" type="hidden" value={providerKey} /> : null}
-        </label>
+          />
+        </div>
         <label className="block md:col-span-2">
           <span className="text-sm font-medium text-slate-700">Base URL</span>
           <input

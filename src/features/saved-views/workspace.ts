@@ -10,6 +10,7 @@ export const allTicketsSavedViewId = "all-tickets";
 export type WorkspaceSavedView = {
   id: string;
   label: string;
+  iconName?: string;
   isDefault?: boolean;
   query?: SavedViewQuery;
   disabledReason?: TicketListQueryRejection["kind"];
@@ -87,6 +88,7 @@ export function workspaceSavedViews(
       return {
         id: savedView.id,
         label: savedView.name,
+        ...(savedView.iconName ? { iconName: savedView.iconName } : {}),
         isDefault: Boolean(savedView.preference?.isDefault),
         query: savedView.query,
         ...(disabledReason

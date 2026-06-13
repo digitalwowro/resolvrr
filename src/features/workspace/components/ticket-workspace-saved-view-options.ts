@@ -1,8 +1,10 @@
+import { createElement } from "react";
 import type { DropdownOption } from "@/components/ui";
 import {
   allTicketsSavedViewId,
   type WorkspaceSavedView,
 } from "@/features/saved-views/workspace";
+import { ViewIcon } from "./workspace-settings-views-utils";
 
 export function workspaceSavedViewOptions(
   savedViews: WorkspaceSavedView[],
@@ -12,6 +14,7 @@ export function workspaceSavedViewOptions(
     label: savedView.disabledReason
       ? `${savedView.label} (${savedView.disabledLabel ?? "unsupported"})`
       : savedView.label,
+    icon: createElement(ViewIcon, { iconName: savedView.iconName }),
     disabled: Boolean(savedView.disabledReason),
   }));
 }

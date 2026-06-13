@@ -51,16 +51,6 @@ export function TicketListToolbar({
   selectedSavedViewId,
   visibleColumns,
 }: TicketListToolbarProps) {
-  const savedViewOptionsWithIcon = savedViewOptions.map((option) => ({
-    ...option,
-    icon:
-      option.value === selectedSavedViewId ? (
-        <BriefcaseBusiness aria-hidden="true" className={dropdownIconClass} />
-      ) : (
-        option.icon
-      ),
-  }));
-
   return (
     <div
       aria-label="Ticket list controls"
@@ -96,7 +86,7 @@ export function TicketListToolbar({
         <SearchableDropdown
           ariaLabel="Saved view"
           onValueChange={onSavedViewChange}
-          options={savedViewOptionsWithIcon}
+          options={savedViewOptions}
           searchPlaceholder="Find view"
           triggerClassName="!h-6 !gap-1.5 !rounded-md !px-2 !text-xs !text-slate-700"
           value={selectedSavedViewId}
