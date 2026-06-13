@@ -17,7 +17,7 @@ import type {
 } from "./ticket-rich-text-editor-dom";
 import { ToolbarButton } from "./ticket-rich-text-editor-toolbar";
 
-const toolbarIconClassName = "size-4";
+const toolbarIconClassName = "size-3 stroke-[2.5]";
 
 type TicketRichTextEditorToolbarRowProps = {
   activeToolbarState: ActiveToolbarState;
