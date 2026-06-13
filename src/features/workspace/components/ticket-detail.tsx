@@ -22,9 +22,7 @@ import type {
   SearchWorkspaceTicketLinkTargetsAction,
   WorkspaceTicketLinkTarget,
 } from "@/features/tickets/link-target-search-action-result";
-import type {
-  TicketCommunicationCapabilities,
-} from "@/features/tickets/communication-model";
+import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type {
   SummarizeWorkspaceTicketAction,
   TicketAiSummaryResult,
@@ -54,9 +52,12 @@ type TicketDetailProps = {
   onReturnToListAfterUpdate(): void;
   recentlyViewedLinkTargets: WorkspaceTicketLinkTarget[];
   refreshing?: boolean;
-  roundedTop?: boolean;
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   summarizeTicketAction: SummarizeWorkspaceTicketAction;
+  initialTicketAiSummary?: {
+    result: Extract<TicketAiSummaryResult, { status: "available" }>;
+    ticketId: string;
+  };
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
@@ -74,11 +75,15 @@ export function TicketDetail({
   refreshing = false,
   searchTicketLinkTargetsAction,
   summarizeTicketAction,
+  initialTicketAiSummary,
   updateTicketMetadataAction,
 }: TicketDetailProps) {
   const [ticketLinkCopied, setTicketLinkCopied] = useState(false);
   const [summaryState, setSummaryState] = useState<TicketSummaryState>({
     loading: false,
+    result: initialTicketAiSummary?.ticketId === detail.id
+      ? initialTicketAiSummary.result
+      : undefined,
     ticketId: detail.id,
   });
   const summaryRequestRef = useRef(0);
@@ -103,8 +108,7 @@ export function TicketDetail({
       window.setTimeout(() => setTicketLinkCopied(false), 1500);
     });
   }
-
-  async function summarizeTicket() {
+  async function summarizeTicket(forceRefresh = false) {
     const requestId = summaryRequestRef.current + 1;
     const ticketId = detail.id;
     summaryRequestRef.current = requestId;
@@ -113,7 +117,10 @@ export function TicketDetail({
     let nextResult: TicketAiSummaryResult | undefined;
 
     try {
-      nextResult = await summarizeTicketAction({ ticketExternalId: ticketId });
+      nextResult = await summarizeTicketAction({
+        ...(forceRefresh ? { forceRefresh: true } : {}),
+        ticketExternalId: ticketId,
+      });
     } finally {
       if (summaryRequestRef.current === requestId) {
         setSummaryState((current) => ({
@@ -175,7 +182,7 @@ export function TicketDetail({
         <button
           className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-wait disabled:opacity-60"
           disabled={summaryLoading}
-          onClick={summarizeTicket}
+          onClick={() => summarizeTicket()}
           type="button"
         >
           {summaryLoading ? (

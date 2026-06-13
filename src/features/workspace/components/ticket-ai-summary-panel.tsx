@@ -6,7 +6,7 @@ import { formatWorkspaceRelativeTime } from "@/features/tickets/date-time-format
 
 type TicketAiSummaryPanelProps = {
   loading: boolean;
-  onSummarize(): void;
+  onSummarize(forceRefresh?: boolean): void;
   result: TicketAiSummaryResult;
 };
 
@@ -105,7 +105,7 @@ export function TicketAiSummaryPanel({
                 ) : undefined
               }
               loading={loading}
-              onClick={onSummarize}
+              onClick={() => onSummarize(available)}
               size="sm"
               type="button"
               variant="secondary"

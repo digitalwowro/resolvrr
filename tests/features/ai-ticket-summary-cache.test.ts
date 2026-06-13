@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TicketDetail } from "@/core/tickets";
 import type { AiSummaryCacheRepository } from "@/features/ai/summary-cache-repository";
+import { readCachedTicketSummary } from "@/features/ai/ticket-summary-cache";
 import { summarizeTicketDetail } from "@/features/ai/ticket-summary-service";
 import { safeProviderJson } from "@/security/provider-http";
 
@@ -147,6 +148,91 @@ describe("AI ticket summary output cache", () => {
       }),
     );
     expect(cache.storeSummary).not.toHaveBeenCalled();
+  });
+
+  it("hydrates an existing summary from cache without generating or writing", async () => {
+    const cachedSummary = {
+      status: "available" as const,
+      generatedAt: "2026-05-24T08:40:00.000Z",
+      source: {
+        articleCount: 1,
+        ticketNumber: "#1001",
+        ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
+      },
+      summary: "Situation: Cached summary",
+    };
+    const cache = aiCacheRepository({
+      readSummary: vi.fn(async () => ({
+        ageBucket: "lt-1h",
+        result: cachedSummary,
+        status: "hit" as const,
+      })),
+    });
+
+    await expect(
+      readCachedTicketSummary(openAiConfig, ticketDetail(), {
+        cacheRepository: cache,
+        encryptionKey: "test encryption key long enough",
+        scope: cacheScope,
+      }),
+    ).resolves.toEqual(cachedSummary);
+
+    expect(safeProviderJson).not.toHaveBeenCalled();
+    expect(cache.readSummary).toHaveBeenCalledOnce();
+    expect(cache.storeSummary).not.toHaveBeenCalled();
+  });
+
+  it("force refreshes by bypassing a valid cache hit and storing the new summary", async () => {
+    vi.mocked(safeProviderJson).mockResolvedValueOnce({
+      data: {
+        choices: [{ message: { content: "Situation: Regenerated summary" } }],
+      },
+      headers: new Headers(),
+      status: 200,
+    });
+    const cache = aiCacheRepository({
+      readSummary: vi.fn(async () => ({
+        ageBucket: "lt-1m",
+        result: {
+          status: "available" as const,
+          generatedAt: "2026-05-24T08:40:00.000Z",
+          source: {
+            articleCount: 1,
+            ticketNumber: "#1001",
+            ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
+          },
+          summary: "Situation: Cached summary",
+        },
+        status: "hit" as const,
+      })),
+    });
+
+    await expect(
+      summarizeTicketDetail(
+        openAiConfig,
+        ticketDetail(),
+        {
+          cacheRepository: cache,
+          encryptionKey: "test encryption key long enough",
+          scope: cacheScope,
+        },
+        undefined,
+        { forceRefresh: true },
+      ),
+    ).resolves.toMatchObject({
+      status: "available",
+      summary: "Situation: Regenerated summary",
+    });
+
+    expect(cache.readSummary).not.toHaveBeenCalled();
+    expect(safeProviderJson).toHaveBeenCalledOnce();
+    expect(cache.storeSummary).toHaveBeenCalledWith(
+      expect.objectContaining({
+        result: expect.objectContaining({
+          summary: "Situation: Regenerated summary",
+        }),
+      }),
+    );
   });
 
   it("stores successful generated summaries without storing prompts", async () => {

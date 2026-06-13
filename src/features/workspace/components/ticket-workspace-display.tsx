@@ -47,6 +47,7 @@ export function TicketWorkspaceDisplay({
   searchTicketLinkTargetsAction,
   savedViews,
   summarizeTicketAction,
+  initialTicketAiSummary,
   initialWorkspaceOpenTabsState,
   saveWorkspaceOpenTabsStateAction,
   selectedSavedViewId,
@@ -243,6 +244,7 @@ export function TicketWorkspaceDisplay({
         roundedTop={tabOrientation === "vertical"}
         searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
         summarizeTicketAction={summarizeTicketAction}
+        initialTicketAiSummary={initialTicketAiSummary}
         refreshing={ticketDetailRefreshing}
         updateTicketMetadataAction={updateTicketMetadataAction}
       />

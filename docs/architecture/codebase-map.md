@@ -190,6 +190,8 @@ added, moved, renamed, or removed.
         fingerprint key builder for generated-summary cache entries.
       - `summary-cache-repository.ts` (`src/features/ai/summary-cache-repository.ts`):
         provider-neutral generated-summary cache repository contract and disabled no-op repository.
+      - `ticket-summary-cache.ts` (`src/features/ai/ticket-summary-cache.ts`): generated-summary
+        cache read/write helpers plus cache-only selected-ticket summary hydration.
       - `text-generation.ts` (`src/features/ai/text-generation.ts`): OpenAI-compatible Chat
         Completions and Anthropic-compatible Messages HTTP adapters for single text generation
         requests, with pinned-address provider HTTP, safe error mapping, and no prompt/output
@@ -199,6 +201,8 @@ added, moved, renamed, or removed.
       - `ticket-summary-context.ts` (`src/features/ai/ticket-summary-context.ts`): prompt-context
         builder that converts provider-neutral ticket detail and sanitized article HTML into
         bounded plain text.
+      - `ticket-summary-hydration.ts` (`src/features/ai/ticket-summary-hydration.ts`): server-side
+        initial selected-ticket summary cache hydration for route loads without AI generation.
       - `ticket-summary-service.ts` (`src/features/ai/ticket-summary-service.ts`): read-only
         selected-ticket summary orchestration over AI runtime config and prompt context.
     - `src/features/auth`: auth server actions and form messages.

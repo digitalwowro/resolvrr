@@ -29,7 +29,7 @@ function unavailableTicketSummary(
 }
 
 export const summarizeWorkspaceTicketAction: SummarizeWorkspaceTicketAction =
-  async ({ ticketExternalId }) => {
+  async ({ forceRefresh, ticketExternalId }) => {
     const trimmedTicketId = ticketExternalId.trim();
     if (!trimmedTicketId) {
       return unavailableTicketSummary(false);
@@ -83,5 +83,6 @@ export const summarizeWorkspaceTicketAction: SummarizeWorkspaceTicketAction =
           }
         : undefined,
       summaryPrompt,
+      { forceRefresh },
     );
   };

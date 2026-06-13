@@ -1,4 +1,5 @@
 export type TicketAiSummaryRequest = {
+  forceRefresh?: boolean;
   ticketExternalId: string;
 };
 

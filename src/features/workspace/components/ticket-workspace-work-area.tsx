@@ -6,6 +6,7 @@ import type { WorkspaceTicketLinkTarget } from "@/features/tickets/link-target-s
 import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
 import type { SummarizeWorkspaceTicketAction } from "@/features/ai";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
+import type { TicketAiSummaryResult } from "@/features/ai";
 import type {
   SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
@@ -168,6 +169,10 @@ type TicketWorkspaceDetailAreaProps = {
   roundedTop: boolean;
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   summarizeTicketAction: SummarizeWorkspaceTicketAction;
+  initialTicketAiSummary?: {
+    result: Extract<TicketAiSummaryResult, { status: "available" }>;
+    ticketId: string;
+  };
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
@@ -188,6 +193,7 @@ export function TicketWorkspaceDetailArea({
   roundedTop,
   searchTicketLinkTargetsAction,
   summarizeTicketAction,
+  initialTicketAiSummary,
   updateTicketMetadataAction,
 }: TicketWorkspaceDetailAreaProps) {
   if (activeDetail?.status === "unavailable") {
@@ -206,9 +212,9 @@ export function TicketWorkspaceDetailArea({
         onRefresh={onRefresh}
         onReturnToListAfterUpdate={onReturnToListAfterUpdate}
         recentlyViewedLinkTargets={recentlyViewedLinkTargets}
-        roundedTop={roundedTop}
         searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
         summarizeTicketAction={summarizeTicketAction}
+        initialTicketAiSummary={initialTicketAiSummary}
         refreshing={refreshing}
         updateTicketMetadataAction={updateTicketMetadataAction}
       />

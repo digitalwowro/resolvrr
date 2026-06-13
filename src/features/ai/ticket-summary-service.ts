@@ -10,111 +10,16 @@ import {
 } from "./prompt-registry";
 import type { EffectiveAiPrompt } from "./prompt-service";
 import {
-  noAiSummaryCacheRepository,
-  type AiSummaryCacheKey,
-  type AiSummaryCacheRepository,
-} from "./summary-cache-repository";
+  readCachedSummary,
+  storeCachedSummary,
+  type TicketSummaryCacheOptions,
+} from "./ticket-summary-cache";
+import { noAiSummaryCacheRepository } from "./summary-cache-repository";
 import {
   aiGenerationTimingDuration,
   aiGenerationTimingStart,
   recordAiGenerationTiming,
 } from "@/telemetry/ai-generation-timing";
-
-type TicketSummaryCacheOptions = {
-  cacheRepository?: AiSummaryCacheRepository;
-  encryptionKey: string;
-  scope: {
-    helpdeskConnectionId: string;
-    ticketExternalId: string;
-    userId: string;
-  };
-};
-
-async function readCachedSummary(input: {
-  cacheKey: AiSummaryCacheKey;
-  cacheRepository: AiSummaryCacheRepository;
-  encryptionKey: string;
-  providerProtocol: "anthropic-compatible" | "openai-compatible";
-}): Promise<Extract<TicketAiSummaryResult, { status: "available" }> | null> {
-  if (!input.cacheRepository.enabled) {
-    return null;
-  }
-
-  const start = aiGenerationTimingStart();
-  try {
-    const cacheResult = await input.cacheRepository.readSummary({
-      ...input.cacheKey,
-      encryptionKey: input.encryptionKey,
-    });
-    recordAiGenerationTiming({
-      cacheDataKind: "ai-summary",
-      cacheEvent: cacheResult.status,
-      durationMs: aiGenerationTimingDuration(start),
-      freshnessAgeBucket: cacheResult.ageBucket,
-      operation: "ticket-summary",
-      phase: "summary-cache-read",
-      providerProtocol: input.providerProtocol,
-      status: cacheResult.status === "hit" ? "ok" : "unavailable",
-    });
-    return cacheResult.status === "hit" ? cacheResult.result : null;
-  } catch {
-    recordAiGenerationTiming({
-      cacheDataKind: "ai-summary",
-      cacheEvent: "read-failed",
-      durationMs: aiGenerationTimingDuration(start),
-      operation: "ticket-summary",
-      phase: "summary-cache-read",
-      providerProtocol: input.providerProtocol,
-      reason: "cache-error",
-      retryable: true,
-      status: "unavailable",
-    });
-    return null;
-  }
-}
-
-async function storeCachedSummary(input: {
-  cacheKey: AiSummaryCacheKey;
-  cacheRepository: AiSummaryCacheRepository;
-  encryptionKey: string;
-  providerProtocol: "anthropic-compatible" | "openai-compatible";
-  result: Extract<TicketAiSummaryResult, { status: "available" }>;
-}): Promise<void> {
-  if (!input.cacheRepository.enabled) {
-    return;
-  }
-
-  const start = aiGenerationTimingStart();
-  try {
-    await input.cacheRepository.storeSummary({
-      ...input.cacheKey,
-      encryptionKey: input.encryptionKey,
-      result: input.result,
-    });
-    recordAiGenerationTiming({
-      cacheDataKind: "ai-summary",
-      cacheEvent: "write-succeeded",
-      durationMs: aiGenerationTimingDuration(start),
-      operation: "ticket-summary",
-      phase: "summary-cache-write",
-      providerProtocol: input.providerProtocol,
-      status: "ok",
-    });
-  } catch {
-    recordAiGenerationTiming({
-      cacheDataKind: "ai-summary",
-      cacheEvent: "write-failed",
-      durationMs: aiGenerationTimingDuration(start),
-      operation: "ticket-summary",
-      phase: "summary-cache-write",
-      providerProtocol: input.providerProtocol,
-      reason: "cache-error",
-      retryable: true,
-      status: "unavailable",
-    });
-    return;
-  }
-}
 
 export async function summarizeTicketDetail(
   config: AiRuntimeConfig,
@@ -124,6 +29,7 @@ export async function summarizeTicketDetail(
     prompt: ticketSummaryDefaultPrompt,
     version: ticketSummaryPromptVersion,
   },
+  options: { forceRefresh?: boolean } = {},
 ): Promise<TicketAiSummaryResult> {
   const totalStart = aiGenerationTimingStart();
   if (config.status === "unconfigured") {
@@ -175,7 +81,7 @@ export async function summarizeTicketDetail(
         scope: cacheOptions.scope,
       })
     : undefined;
-  if (cacheKey && cacheOptions) {
+  if (cacheKey && cacheOptions && !options.forceRefresh) {
     const cached = await readCachedSummary({
       cacheKey,
       cacheRepository,

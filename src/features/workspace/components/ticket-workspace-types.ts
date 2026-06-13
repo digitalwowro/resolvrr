@@ -29,6 +29,7 @@ import type {
   SaveWorkspaceAiSettingsAction,
   SaveWorkspaceAiPromptAction,
   SummarizeWorkspaceTicketAction,
+  TicketAiSummaryResult,
   WorkspaceAiSettingsData,
 } from "@/features/ai";
 import type {
@@ -81,6 +82,10 @@ export type TicketWorkspaceProps = {
   loadAiPromptCenterAction?: LoadAiPromptCenterAction;
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
   summarizeTicketAction?: SummarizeWorkspaceTicketAction;
+  initialTicketAiSummary?: {
+    result: Extract<TicketAiSummaryResult, { status: "available" }>;
+    ticketId: string;
+  };
   initialAiSettingsData?: WorkspaceAiSettingsData;
   logoutAction(formData: FormData): void | Promise<void>;
   markWorkspaceNotificationsReadAction?: MarkWorkspaceNotificationsReadAction;

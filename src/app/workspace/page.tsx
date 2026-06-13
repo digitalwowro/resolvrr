@@ -23,6 +23,7 @@ import {
   saveWorkspaceAiPromptAction,
   summarizeWorkspaceTicketAction,
 } from "@/features/ai";
+import { loadInitialTicketAiSummary } from "@/features/ai/ticket-summary-hydration";
 import {
   createHelpdeskConnectionAction,
   deleteHelpdeskConnectionAction,
@@ -194,6 +195,15 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     workspaceDetailResult?.status === "available"
       ? workspaceDetailResult.detail
       : undefined;
+  const initialCachedSummary =
+    detailResult?.status === "available" && detailResult.helpdeskConnectionId
+      ? await loadInitialTicketAiSummary({
+          detail: detailResult.detail,
+          helpdeskConnectionId: detailResult.helpdeskConnectionId,
+          ticketExternalId: selectedTicketId ?? detailResult.detail.ticket.externalId,
+          userId: user.id,
+        })
+      : undefined;
 
   return (
     <TicketWorkspace
@@ -233,6 +243,11 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       rows={rows}
       deleteSavedViewAction={deleteWorkspaceSavedViewAction}
       initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
+      initialTicketAiSummary={
+        initialCachedSummary && selectedTicketId
+          ? { result: initialCachedSummary, ticketId: selectedTicketId }
+          : undefined
+      }
       initialSavedViewSettingsData={savedViewSettingsDataFromStored({
         views: savedViews,
         currentUser: currentHelpdeskUser,

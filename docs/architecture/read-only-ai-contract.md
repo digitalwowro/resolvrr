@@ -126,9 +126,17 @@ fingerprint/freshness, sanitization version, user, and active helpdesk
 connection. Prompt text, raw provider payloads, model names, and generated
 summaries must not be logged.
 
-The cache is read only from the explicit summary action. Rendering, route
-loading, tab switching, background refresh, and local state changes must not
-trigger cache reads that generate AI output or AI provider calls.
+Route loading may read an existing cached summary after selected-ticket detail,
+workspace AI config, and effective prompt identity are known. This hydration is
+cache-only: it must not call the AI provider, generate text, or write a new
+cache entry. The explicit summary action remains the only path that may generate
+AI output and store a new summary cache entry. Its default Generate behavior may
+reuse a valid cache hit, while Regenerate must force a provider call and
+overwrite the cached summary after successful generation.
+
+Tab switching, background refresh, and local state changes must not trigger AI
+provider calls. They may reuse already-loaded client state only unless a future
+contract explicitly adds cache-only hydration for those flows.
 
 Generated summary cache entries are invalidated when confirmed provider writes
 change the selected ticket/thread source, when the helpdesk connection is

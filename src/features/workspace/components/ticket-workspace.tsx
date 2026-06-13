@@ -55,6 +55,7 @@ export function TicketWorkspace({
   searchTicketLinkTargetsAction,
   summarizeTicketAction,
   savedViews,
+  initialTicketAiSummary,
   initialAiSettingsData,
   initialSavedViewSettingsData,
   reorderSavedViewsAction,
@@ -188,6 +189,7 @@ export function TicketWorkspace({
             searchTicketLinkTargetsAction ?? unavailableLinkTargetSearchAction
           }
           summarizeTicketAction={effectiveSummarizeTicketAction}
+          initialTicketAiSummary={initialTicketAiSummary}
           tabs={tabs}
           totalListCount={listResult.totalCount}
           updateTicketMetadataAction={updateTicketMetadataAction}

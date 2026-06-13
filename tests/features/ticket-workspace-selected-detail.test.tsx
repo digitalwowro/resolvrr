@@ -202,6 +202,66 @@ describe("TicketWorkspace selected detail", () => {
     ).toBeNull();
   });
 
+  it("displays an initial cached AI summary and force refreshes on Regenerate", async () => {
+    const user = userEvent.setup();
+    const detailProps = selectedDetailProps();
+    const summarizeTicketAction = vi.fn(async () => ({
+      status: "available" as const,
+      generatedAt: "2026-05-24T08:40:00.000Z",
+      source: {
+        articleCount: 1,
+        ticketNumber: "#1001",
+        ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
+      },
+      summary: "Situation: Cached summary",
+    }));
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        detail={detailProps.detail}
+        detailResult={detailProps.detailResult}
+        initialTicketAiSummary={{
+          result: {
+            status: "available",
+            generatedAt: "2026-05-24T08:40:00.000Z",
+            source: {
+              articleCount: 1,
+              ticketNumber: "#1001",
+              ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
+            },
+            summary: "Situation: Cached summary",
+          },
+          ticketId: "ticket-1",
+        }}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        selectedTicketId="ticket-1"
+        setActiveConnectionAction={noopAction}
+        summarizeTicketAction={summarizeTicketAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    expect(screen.getByText("AI summary")).toBeInTheDocument();
+    expect(screen.getByText(/Situation: Cached summary/u)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Regenerate" }),
+    ).toBeInTheDocument();
+    expect(summarizeTicketAction).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Regenerate" }));
+
+    expect(summarizeTicketAction).toHaveBeenCalledWith({
+      forceRefresh: true,
+      ticketExternalId: "ticket-1",
+    });
+  });
+
   it("resets AI summary state when switching selected tickets", async () => {
     const user = userEvent.setup();
     const firstDetail = selectedDetailProps();
