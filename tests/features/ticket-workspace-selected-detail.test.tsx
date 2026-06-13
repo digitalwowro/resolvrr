@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
@@ -92,8 +92,9 @@ describe("TicketWorkspace selected detail", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Ticket detail #1001")).toBeInTheDocument();
-    expect(screen.getByLabelText("Ticket state: Open")).toHaveClass(
+    const detail = screen.getByLabelText("Ticket detail #1001");
+    expect(detail).toBeInTheDocument();
+    expect(within(detail).getAllByLabelText("Ticket state: Open")[0]).toHaveClass(
       "bg-indigo-50",
       "text-indigo-700",
     );

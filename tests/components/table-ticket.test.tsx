@@ -189,7 +189,7 @@ describe("TicketTab", () => {
     );
 
     expect(screen.getByRole("tab", { name: "Ticket 106" }).parentElement).toContainHTML(
-      "bottom-0.5",
+      "bottom-1",
     );
     expect(screen.getByRole("tab", { name: "Ticket 106" }).parentElement).toContainHTML(
       "left-2.5",
