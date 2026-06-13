@@ -144,8 +144,8 @@ export function TicketTab({
             active
               ? "inset-x-0 bottom-0"
               : vertical
-                ? "bottom-0.5 left-3 w-5"
-                : "bottom-0.5 left-2.5 w-5",
+                ? "bottom-1 left-3 w-5"
+                : "bottom-1 left-2.5 w-5",
             accentClassName,
           )}
           style={{ backgroundColor: "currentColor" }}

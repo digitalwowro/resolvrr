@@ -54,7 +54,7 @@ export function TicketListToolbar({
   return (
     <div
       aria-label="Ticket list controls"
-      className="flex shrink-0 items-center justify-between gap-3 py-2"
+      className="flex shrink-0 items-center justify-between gap-3 py-4"
       role="toolbar"
     >
       <div className="flex min-w-0 items-center gap-2">

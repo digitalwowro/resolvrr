@@ -33,7 +33,10 @@ export function TicketWorkspaceContent({
       {listActive || tabOrientation === "vertical" ? (
         <div
           key="workspace-content"
-          className="flex min-w-0 flex-1 flex-col overflow-hidden px-4"
+          className={cn(
+            "flex min-w-0 flex-1 flex-col overflow-hidden",
+            tabOrientation === "horizontal" && "px-4",
+          )}
         >
           {workArea}
         </div>

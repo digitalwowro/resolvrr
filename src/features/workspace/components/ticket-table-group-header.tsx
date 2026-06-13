@@ -22,6 +22,7 @@ function groupLabel(group: TicketTableGroup, groupBy: WorkspaceTicketGroupKey) {
       <PriorityCell
         label={group.label}
         priority={group.value === "unknown" ? undefined : rowPriorityKey(group)}
+        variant="pill"
       />
     );
   }

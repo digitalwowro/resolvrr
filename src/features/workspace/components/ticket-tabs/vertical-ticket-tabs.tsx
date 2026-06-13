@@ -49,7 +49,7 @@ function VerticalTicketPriorityToken({
         priorityTextColor[key],
       )}
     >
-      <PriorityIcon priority={priority} />
+      <PriorityIcon filled={false} priority={priority} />
     </span>
   );
 }
@@ -152,7 +152,7 @@ export function VerticalTicketTabs({
       </div>
       <div
         aria-label="Open tickets"
-        className="relative flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-slate-50 p-2"
+        className="relative flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-slate-50 p-4"
         ref={containerRef}
         role="tablist"
       >

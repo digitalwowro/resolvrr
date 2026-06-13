@@ -33,7 +33,13 @@ function cellValue(row: WorkspaceTicketRow, column: WorkspaceTicketColumnKey) {
     return <StateCell label={row.state} state={row.stateKey} />;
   }
   if (column === "priority") {
-    return <PriorityCell label={row.priority} priority={row.priorityKey} />;
+    return (
+      <PriorityCell
+        label={row.priority}
+        priority={row.priorityKey}
+        variant="pill"
+      />
+    );
   }
   if (column === "pendingTill") {
     return row.pendingTill;

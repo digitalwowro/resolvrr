@@ -3,13 +3,13 @@ import {
   Circle,
   CirclePlus,
   Clock3,
+  Flag,
   PauseCircle,
-  SignalHigh,
-  SignalLow,
-  SignalMedium,
+  Triangle,
   type LucideIcon,
 } from "lucide-react";
 import type { TicketPriority, TicketState } from "@/core/tickets";
+import { TicketStateBadge } from "./ticket-state-badge";
 
 const stateClass: Record<TicketState | "unknown", string> = {
   new: "text-rose-600",
@@ -30,17 +30,24 @@ const stateIcon: Record<TicketState | "unknown", LucideIcon> = {
 };
 
 const priorityClass: Record<TicketPriority | "unknown", string> = {
-  low: "text-emerald-600",
-  medium: "text-indigo-600",
+  low: "text-slate-500",
+  medium: "text-amber-500",
   high: "text-rose-600",
   unknown: "text-slate-500",
 };
 
+const priorityPillClass: Record<TicketPriority | "unknown", string> = {
+  low: "bg-slate-100 text-slate-700",
+  medium: "bg-amber-50 text-amber-700",
+  high: "bg-rose-50 text-rose-700",
+  unknown: "bg-slate-100 text-slate-700",
+};
+
 const priorityIcon: Record<TicketPriority | "unknown", LucideIcon> = {
-  low: SignalLow,
-  medium: SignalMedium,
-  high: SignalHigh,
-  unknown: SignalMedium,
+  low: Circle,
+  medium: Triangle,
+  high: Flag,
+  unknown: Circle,
 };
 
 export function StateIcon({
@@ -59,33 +66,31 @@ export function StateIcon({
 
 export function StateCell({
   label,
-  monochrome = false,
   state,
 }: {
   label: string;
   monochrome?: boolean;
   state?: TicketState;
 }) {
-  return (
-    <span className="inline-flex min-w-0 items-center gap-1.5">
-      <StateIcon monochrome={monochrome} state={state} />
-      <span className="truncate">{label}</span>
-    </span>
-  );
+  return <TicketStateBadge label={label} state={state} />;
 }
 
 export function PriorityIcon({
+  filled = true,
   monochrome = false,
   priority,
+  sizeClassName = "size-3.5",
 }: {
+  filled?: boolean;
   monochrome?: boolean;
   priority?: TicketPriority;
+  sizeClassName?: string;
 }) {
   const key = priority ?? "unknown";
   const Icon = priorityIcon[key];
   const iconClass = monochrome
-    ? "size-3.5"
-    : `size-3.5 ${priorityClass[key]}`;
+    ? sizeClassName
+    : `${sizeClassName} ${filled ? "fill-current" : "fill-none"} ${priorityClass[key]}`;
 
   return <Icon aria-hidden="true" className={iconClass} />;
 }
@@ -94,11 +99,29 @@ export function PriorityCell({
   label,
   monochrome = false,
   priority,
+  variant = "inline",
 }: {
   label: string;
   monochrome?: boolean;
   priority?: TicketPriority;
+  variant?: "inline" | "pill";
 }) {
+  if (variant === "pill") {
+    return (
+      <span
+        aria-label={`Ticket priority: ${label}`}
+        className={`inline-flex h-5 min-w-0 shrink-0 items-center gap-1.5 rounded-md px-2 text-xs font-medium ${priorityPillClass[priority ?? "unknown"]}`}
+      >
+        <PriorityIcon
+          monochrome={monochrome}
+          priority={priority}
+          sizeClassName="size-3"
+        />
+        <span className="truncate">{label}</span>
+      </span>
+    );
+  }
+
   return (
     <span className="inline-flex min-w-0 items-center gap-1.5">
       <PriorityIcon monochrome={monochrome} priority={priority} />

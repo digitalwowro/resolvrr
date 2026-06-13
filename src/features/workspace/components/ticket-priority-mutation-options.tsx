@@ -9,6 +9,6 @@ export const priorityOptions: DropdownOption[] = ticketPriorities.map(
   (priority) => ({
     value: priority,
     label: ticketPriorityDefinitions[priority].label,
-    icon: <PriorityIcon priority={priority} />,
+    icon: <PriorityIcon filled={false} priority={priority} />,
   }),
 );
