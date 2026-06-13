@@ -7,19 +7,42 @@ const userSelect = {
   id: true,
   email: true,
   displayName: true,
+  firstName: true,
+  lastName: true,
+  avatarDataUrl: true,
   role: true,
 } satisfies Prisma.UserSelect;
+
+function derivedDisplayName(user: {
+  displayName: string | null;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+}) {
+  const fullName = [user.firstName, user.lastName]
+    .map((value) => value?.trim())
+    .filter(Boolean)
+    .join(" ");
+
+  return fullName || user.displayName || null;
+}
 
 function toAuthUser(user: {
   id: string;
   email: string;
   displayName: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  avatarDataUrl: string | null;
   role: "USER" | "ADMIN";
 }): AuthUser {
   return {
     id: user.id,
     email: user.email,
-    displayName: user.displayName,
+    displayName: derivedDisplayName(user),
+    firstName: user.firstName,
+    lastName: user.lastName,
+    avatarDataUrl: user.avatarDataUrl,
     role: user.role,
   };
 }
@@ -35,6 +58,27 @@ export const prismaAuthRepository: AuthRepository = {
   async findUserWithPasswordByEmail(email) {
     const user = await prisma.user.findUnique({
       where: { email },
+      select: {
+        ...userSelect,
+        passwordLogin: {
+          select: { passwordHash: true },
+        },
+      },
+    });
+
+    if (!user?.passwordLogin) {
+      return null;
+    }
+
+    return {
+      user: toAuthUser(user),
+      passwordHash: user.passwordLogin.passwordHash,
+    };
+  },
+
+  async findUserWithPasswordById(userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
       select: {
         ...userSelect,
         passwordLogin: {
@@ -76,6 +120,38 @@ export const prismaAuthRepository: AuthRepository = {
     }
   },
 
+  async updateUserProfileName(input) {
+    const user = await prisma.user.update({
+      where: { id: input.userId },
+      data: {
+        firstName: input.firstName,
+        lastName: input.lastName,
+      },
+      select: userSelect,
+    });
+
+    return toAuthUser(user);
+  },
+
+  async updateUserAvatarDataUrl(input) {
+    const user = await prisma.user.update({
+      where: { id: input.userId },
+      data: {
+        avatarDataUrl: input.avatarDataUrl,
+      },
+      select: userSelect,
+    });
+
+    return toAuthUser(user);
+  },
+
+  async updatePasswordHash(userId, passwordHash) {
+    await prisma.passwordLogin.update({
+      where: { userId },
+      data: { passwordHash },
+    });
+  },
+
   async createSession(input) {
     await prisma.session.create({
       data: {
@@ -110,6 +186,17 @@ export const prismaAuthRepository: AuthRepository = {
   async deleteSessionByTokenHash(sessionTokenHash) {
     await prisma.session.deleteMany({
       where: { sessionTokenHash },
+    });
+  },
+
+  async deleteOtherSessions(userId, currentSessionTokenHash) {
+    await prisma.session.deleteMany({
+      where: {
+        userId,
+        sessionTokenHash: {
+          not: currentSessionTokenHash,
+        },
+      },
     });
   },
 

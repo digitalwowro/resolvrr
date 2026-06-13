@@ -29,7 +29,7 @@ export function ToolbarButton({
         className={cn(
           "grid size-7 shrink-0 place-items-center rounded-md hover:bg-slate-200 hover:text-slate-900 active:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-40",
           active
-            ? "font-bold text-slate-950 [&_svg]:stroke-[3]"
+            ? "font-bold text-slate-950 [&_svg]:stroke-[3.5]"
             : "text-slate-600",
           className,
         )}

@@ -30,6 +30,7 @@ import { workspaceSettingsConnectionFromMenu } from "./workspace-settings-connec
 export { workspaceSavedViewOptionsFromSettingsData } from "./workspace-saved-view-options";
 
 export function TicketWorkspace({
+  changePasswordAction,
   columns,
   communicationCapabilities,
   connections,
@@ -74,7 +75,13 @@ export function TicketWorkspace({
   tabs,
   updateConnectionAction,
   updateTicketMetadataAction,
+  updateAvatarAction,
+  updateProfileAction,
+  userAvatarDataUrl = null,
+  userDisplayName = null,
   userEmail,
+  userFirstName = null,
+  userLastName = null,
   userRole = "USER",
   validateConnectionAction,
 }: TicketWorkspaceProps) {
@@ -88,6 +95,12 @@ export function TicketWorkspace({
     initialSavedViewSettingsData,
   );
   const [aiSettingsData, setAiSettingsData] = useState(initialAiSettingsData);
+  const [profileUser, setProfileUser] = useState({
+    avatarDataUrl: userAvatarDataUrl,
+    displayName: userDisplayName,
+    firstName: userFirstName,
+    lastName: userLastName,
+  });
   const providedLoadTicketDetailAction = Boolean(loadTicketDetailAction);
   const effectiveLoadTicketDetailAction =
     loadTicketDetailAction ?? unavailableTicketDetailAction;
@@ -127,7 +140,11 @@ export function TicketWorkspace({
             logoutAction={logoutAction}
             onOpenSettings={openSettings}
             setActiveConnectionAction={setActiveConnectionAction}
+            userAvatarDataUrl={profileUser.avatarDataUrl}
+            userDisplayName={profileUser.displayName}
             userEmail={userEmail}
+            userFirstName={profileUser.firstName}
+            userLastName={profileUser.lastName}
           />
           <UnavailableState
             onOpenWorkspaces={() => openSettings("workspaces")}
@@ -174,12 +191,17 @@ export function TicketWorkspace({
           tabs={tabs}
           totalListCount={listResult.totalCount}
           updateTicketMetadataAction={updateTicketMetadataAction}
+          userAvatarDataUrl={profileUser.avatarDataUrl}
+          userDisplayName={profileUser.displayName}
           userEmail={userEmail}
+          userFirstName={profileUser.firstName}
+          userLastName={profileUser.lastName}
           onOpenSettings={openSettings}
         />
       )}
       {settingsOpen ? (
         <WorkspaceSettingsDialog
+          changePasswordAction={changePasswordAction}
           connections={settingsConnections}
           createConnectionAction={createConnectionAction}
           deleteConnectionAction={deleteConnectionAction}
@@ -220,7 +242,21 @@ export function TicketWorkspace({
           }
           setDefaultSavedViewAction={setDefaultSavedViewAction}
           updateConnectionAction={updateConnectionAction}
+          updateAvatarAction={updateAvatarAction}
+          onProfileUserChange={(user) => {
+            setProfileUser({
+              avatarDataUrl: user.avatarDataUrl,
+              displayName: user.displayName,
+              firstName: user.firstName,
+              lastName: user.lastName,
+            });
+          }}
+          updateProfileAction={updateProfileAction}
+          userAvatarDataUrl={profileUser.avatarDataUrl}
+          userDisplayName={profileUser.displayName}
           userEmail={userEmail}
+          userFirstName={profileUser.firstName}
+          userLastName={profileUser.lastName}
           userRole={userRole}
           validateConnectionAction={validateConnectionAction}
         />

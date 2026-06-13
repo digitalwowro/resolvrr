@@ -1,5 +1,11 @@
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import { DropdownSelect, SearchableDropdown, type DropdownOption } from "@/components/ui";
+import { Info } from "lucide-react";
+import {
+  DropdownSelect,
+  SearchableDropdown,
+  Tooltip,
+  type DropdownOption,
+} from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import {
   savedViewColorNames,
@@ -50,11 +56,11 @@ export function ViewDetailsForm({
           value={draft.name}
         />
       </label>
-      <div className="block">
+      <div className="min-w-0">
         <span className="text-sm font-medium text-slate-700">Visibility</span>
         <DropdownSelect
           ariaLabel="Visibility"
-          className="mt-1 block w-full [&>div]:w-full"
+          className="mt-1 block w-full [&>div]:max-w-none [&>div]:w-full"
           disabled={userRole !== "ADMIN"}
           onValueChange={(value) => {
             const visibility = value as SavedViewVisibility;
@@ -68,12 +74,12 @@ export function ViewDetailsForm({
           value={draft.visibility}
         />
       </div>
-      <div>
+      <div className="min-w-0">
         <span className="text-sm font-medium text-slate-700">Icon</span>
         <div className="mt-1">
           <SearchableDropdown
             ariaLabel="View icon"
-            className="block w-full [&>div]:w-full"
+            className="block w-full [&>div]:max-w-none [&>div]:w-full"
             onValueChange={(value) =>
               setDraft((current) => ({ ...current, iconName: value }))
             }
@@ -85,7 +91,30 @@ export function ViewDetailsForm({
         </div>
       </div>
       <label className="block">
-        <span className="text-sm font-medium text-slate-700">Custom icon</span>
+        <span className="inline-flex items-center gap-1 text-sm font-medium text-slate-700">
+          Custom icon
+          <Tooltip
+            content="Use the Lucide icon slug, for example briefcase-business or signal-high."
+            delayMs={150}
+            side="top"
+          >
+            <span
+              aria-label="Custom icon instructions"
+              className="inline-grid size-4 place-items-center rounded-full text-slate-400 hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              tabIndex={0}
+            >
+              <Info aria-hidden="true" className="size-3.5" />
+            </span>
+          </Tooltip>
+          <a
+            className="ml-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
+            href="https://lucide.dev/icons/"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Lucide icons
+          </a>
+        </span>
         <input
           className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           onChange={(event) => {

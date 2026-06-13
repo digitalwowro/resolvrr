@@ -78,7 +78,7 @@ describe("TicketWorkspace", () => {
       screen.getByText(/Create your first workspace by clicking/u),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Open profile menu, workspace" }),
+      screen.getByRole("button", { name: "Open profile menu, No workspace" }),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "here" }));

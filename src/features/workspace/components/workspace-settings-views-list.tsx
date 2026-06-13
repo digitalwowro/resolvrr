@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { cn } from "@/components/ui/classnames";
 import type { SavedViewSettingsView } from "@/features/saved-views/settings-model";
-import { ViewIcon, viewColorClass } from "./workspace-settings-views-utils";
+import { ViewIcon } from "./workspace-settings-views-utils";
 
 type ViewsListProps = {
   onMove(view: SavedViewSettingsView, offset: number): void;
@@ -45,9 +45,6 @@ export function ViewsList({
             onClick={() => onSelect(view)}
             type="button"
           >
-            <span
-              className={cn("size-2 rounded-full", viewColorClass[view.colorName ?? "blue"])}
-            />
             <ViewIcon iconName={view.iconName} />
             <span className="min-w-0 flex-1">
               <span className="block truncate font-medium text-slate-900">

@@ -33,7 +33,11 @@ type WorkspaceHeaderChromeProps = {
     formData: FormData,
   ): void | Promise<void | HelpdeskConnectionActionResult>;
   tabOrientation: TicketTabOrientation;
+  userAvatarDataUrl?: string | null;
+  userDisplayName?: string | null;
   userEmail: string;
+  userFirstName?: string | null;
+  userLastName?: string | null;
 };
 
 export function WorkspaceHeaderChrome({
@@ -51,7 +55,11 @@ export function WorkspaceHeaderChrome({
   searchQuery,
   setActiveConnectionAction,
   tabOrientation,
+  userAvatarDataUrl,
+  userDisplayName,
   userEmail,
+  userFirstName,
+  userLastName,
 }: WorkspaceHeaderChromeProps) {
   const controls = (
     <WorkspaceControls
@@ -82,7 +90,11 @@ export function WorkspaceHeaderChrome({
       onSearchQueryChange={onSearchQueryChange}
       searchQuery={searchQuery}
       setActiveConnectionAction={setActiveConnectionAction}
+      userAvatarDataUrl={userAvatarDataUrl}
+      userDisplayName={userDisplayName}
       userEmail={userEmail}
+      userFirstName={userFirstName}
+      userLastName={userLastName}
     />
   );
 }

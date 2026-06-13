@@ -27,7 +27,10 @@ function admin(): AuthUser {
   return {
     displayName: null,
     email: "admin@example.com",
+    firstName: null,
     id: "admin-1",
+    lastName: null,
+    avatarDataUrl: null,
     role: "ADMIN",
   };
 }

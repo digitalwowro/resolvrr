@@ -28,6 +28,7 @@ import {
 import { ViewDetailsForm } from "./workspace-settings-view-details-form";
 
 export function ViewsSection({
+  activeWorkspaceLabel,
   data,
   deleteSavedViewAction,
   onDataChange,
@@ -36,6 +37,7 @@ export function ViewsSection({
   setDefaultSavedViewAction,
   userRole,
 }: {
+  activeWorkspaceLabel: string;
   data?: SavedViewSettingsData;
   deleteSavedViewAction?: DeleteWorkspaceSavedViewAction;
   onDataChange(data: SavedViewSettingsData): void;
@@ -156,7 +158,12 @@ export function ViewsSection({
     <section className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
         <div>
-          <h3 className="text-lg font-semibold text-slate-950">Views</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-lg font-semibold text-slate-950">Views</h3>
+            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600">
+              {activeWorkspaceLabel}
+            </span>
+          </div>
           <p className="text-sm text-slate-600">
             Create and manage ticket list views for this workspace.
           </p>

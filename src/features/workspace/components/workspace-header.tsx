@@ -2,6 +2,7 @@
 
 import {
   Building2,
+  ChevronDown,
   LogOut,
   Search,
   SlidersHorizontal,
@@ -36,11 +37,55 @@ type WorkspaceHeaderProps = {
   setActiveConnectionAction(
     formData: FormData,
   ): void | Promise<void | HelpdeskConnectionActionResult>;
+  userAvatarDataUrl?: string | null;
+  userDisplayName?: string | null;
   userEmail: string;
+  userFirstName?: string | null;
+  userLastName?: string | null;
 };
 
-function profileInitials(email: string): string {
-  return email.slice(0, 2).toUpperCase();
+function profileInitials({
+  displayName,
+  email,
+  firstName,
+  lastName,
+}: {
+  displayName?: string | null;
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+}): string {
+  const firstInitial = firstName?.trim().slice(0, 1) ?? "";
+  const lastInitial = lastName?.trim().slice(0, 1) ?? "";
+  const nameInitials = `${firstInitial}${lastInitial}`;
+
+  if (nameInitials) {
+    return nameInitials.toUpperCase();
+  }
+
+  const source = displayName?.trim() || email;
+  return source.slice(0, 2).toUpperCase();
+}
+
+function profileDisplayName({
+  displayName,
+  email,
+  firstName,
+  lastName,
+}: {
+  displayName?: string | null;
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+}): string {
+  const givenName = firstName?.trim();
+  const familyInitial = lastName?.trim().slice(0, 1);
+
+  if (givenName && familyInitial) {
+    return `${givenName} ${familyInitial.toUpperCase()}.`;
+  }
+
+  return givenName || displayName?.trim() || email;
 }
 
 export function WorkspaceHeader({
@@ -52,7 +97,11 @@ export function WorkspaceHeader({
   onSearchQueryChange,
   searchQuery,
   setActiveConnectionAction,
+  userAvatarDataUrl,
+  userDisplayName,
   userEmail,
+  userFirstName,
+  userLastName,
 }: WorkspaceHeaderProps) {
   const router = useRouter();
   const [logoAvailable, setLogoAvailable] = useState(true);
@@ -63,6 +112,13 @@ export function WorkspaceHeader({
     ? "Filter loaded tickets by number, title, customer, or owner"
     : "Ticket filter unavailable";
   const selectedWorkspace = connections.find((connection) => connection.active);
+  const displayName = profileDisplayName({
+    displayName: userDisplayName,
+    email: userEmail,
+    firstName: userFirstName,
+    lastName: userLastName,
+  });
+  const workspaceLabel = selectedWorkspace?.label ?? "No workspace";
   const items = useMemo<MenuDropdownItem[]>(
     () => {
       const workspaceItems = connections.map<MenuDropdownItem>((connection) => ({
@@ -87,7 +143,7 @@ export function WorkspaceHeader({
           id: "settings",
           label: "Settings",
           icon: <SlidersHorizontal aria-hidden="true" className="size-4" />,
-          onSelect: () => onOpenSettings("workspaces"),
+          onSelect: () => onOpenSettings("profile"),
         },
         {
           id: "logout",
@@ -181,13 +237,41 @@ export function WorkspaceHeader({
           align="end"
           items={items}
           showChevron={false}
-          triggerClassName="inline-grid size-8 place-items-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          triggerClassName="flex h-10 max-w-64 items-center gap-2 rounded-md px-1.5 text-left text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           triggerContent={
-            <span className="grid size-8 place-items-center rounded-full bg-white text-xs font-semibold text-indigo-900 ring-1 ring-indigo-200/70">
-              {profileInitials(userEmail)}
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white text-xs font-semibold text-indigo-900 ring-1 ring-indigo-200/70">
+                {userAvatarDataUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element -- User avatar is stored as a validated data URL. */
+                  <img
+                    alt=""
+                    className="size-8 rounded-full object-cover"
+                    src={userAvatarDataUrl}
+                  />
+                ) : (
+                  profileInitials({
+                    displayName: userDisplayName,
+                    email: userEmail,
+                    firstName: userFirstName,
+                    lastName: userLastName,
+                  })
+                )}
+              </span>
+              <span className="hidden min-w-0 leading-tight sm:block">
+                <span className="block truncate text-sm font-semibold text-white">
+                  {displayName}
+                </span>
+                <span className="block truncate text-xs font-medium text-indigo-200">
+                  {workspaceLabel}
+                </span>
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className="hidden size-4 shrink-0 text-indigo-200 sm:block"
+              />
             </span>
           }
-          triggerLabel={`Open profile menu, ${selectedWorkspace?.label ?? "workspace"}`}
+          triggerLabel={`Open profile menu, ${workspaceLabel}`}
           unstyledTrigger
         />
       </div>

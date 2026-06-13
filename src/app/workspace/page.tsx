@@ -5,7 +5,12 @@ import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-re
 import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
 import { prismaWorkspaceTabsRepository } from "@/data/workspace-tabs-repository";
 import type { TicketListQueryInput } from "@/core/providers";
-import { logoutAction } from "@/features/auth/actions";
+import {
+  changePasswordAction,
+  logoutAction,
+  updateAvatarAction,
+  updateProfileAction,
+} from "@/features/auth/actions";
 import {
   loadAiPromptCenterAction,
   loadWorkspaceAiSettingsAction,
@@ -192,6 +197,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
 
   return (
     <TicketWorkspace
+      changePasswordAction={changePasswordAction}
       columns={defaultWorkspaceTicketColumns}
       connections={connections.map((connection) => ({
         id: connection.id,
@@ -257,8 +263,14 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       setDefaultSavedViewAction={setDefaultWorkspaceSavedViewAction}
       tabs={workspaceTicketTabs(rows)}
       updateConnectionAction={updateHelpdeskConnectionAction}
+      updateAvatarAction={updateAvatarAction}
+      updateProfileAction={updateProfileAction}
       updateTicketMetadataAction={updateTicketMetadataAction}
+      userAvatarDataUrl={user.avatarDataUrl}
+      userDisplayName={user.displayName}
       userEmail={user.email}
+      userFirstName={user.firstName}
+      userLastName={user.lastName}
       userRole={user.role}
       validateConnectionAction={validateHelpdeskConnectionAction}
     />
