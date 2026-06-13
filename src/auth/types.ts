@@ -4,6 +4,9 @@ export type AuthUser = {
   id: string;
   email: string;
   displayName: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  avatarDataUrl: string | null;
   role: AuthUserRole;
 };
 

@@ -22,10 +22,7 @@ import {
   TicketWorkspaceListArea,
 } from "./ticket-workspace-work-area";
 import type { TicketWorkspaceDisplayProps } from "./ticket-workspace-display-types";
-import {
-  WorkspaceHeaderChrome,
-  WorkspaceTabsChrome,
-} from "./ticket-workspace-chrome";
+import { WorkspaceHeaderChrome, WorkspaceTabsChrome } from "./ticket-workspace-chrome";
 import { useTicketWorkspaceSavedViewSelection } from "./use-ticket-workspace-saved-view-selection";
 
 export function TicketWorkspaceDisplay({
@@ -58,7 +55,11 @@ export function TicketWorkspaceDisplay({
   tabs: ticketTabs,
   totalListCount,
   updateTicketMetadataAction,
+  userAvatarDataUrl,
+  userDisplayName,
   userEmail,
+  userFirstName,
+  userLastName,
 }: TicketWorkspaceDisplayProps) {
   const [workspaceSearchQuery, setWorkspaceSearchQuery] = useState("");
   const listPager = useTicketListPager({
@@ -141,9 +142,7 @@ export function TicketWorkspaceDisplay({
     listGroups: listPager.groups,
     providerGroupingEnabled,
   });
-  const tableGroupedRows = providerGroupedActive
-    ? searchFilteredGroups
-    : groupedRows;
+  const tableGroupedRows = providerGroupedActive ? searchFilteredGroups : groupedRows;
   const tableRows = providerGroupedActive ? searchFilteredRows : sortedRows;
   const recentlyViewedLinkTargets = recentTicketTabs.map(tabLinkTarget);
   const activeTicketSummary = activeTicketSummaryFromWorkspace({
@@ -151,11 +150,8 @@ export function TicketWorkspaceDisplay({
     openTicketTabs,
     tableRows,
   });
-  const {
-    activeSavedView,
-    handleSavedViewChange,
-    savedViewOptions,
-  } = useTicketWorkspaceSavedViewSelection({
+  const { activeSavedView, handleSavedViewChange, savedViewOptions } =
+    useTicketWorkspaceSavedViewSelection({
     clearRowSelection,
     handleGroupByChange,
     listPager,
@@ -283,7 +279,11 @@ export function TicketWorkspaceDisplay({
         searchQuery={workspaceSearchQuery}
         setActiveConnectionAction={setActiveConnectionAction}
         tabOrientation={tabOrientation}
+        userAvatarDataUrl={userAvatarDataUrl}
+        userDisplayName={userDisplayName}
         userEmail={userEmail}
+        userFirstName={userFirstName}
+        userLastName={userLastName}
       />
       <TicketWorkspaceContent
         listActive={listActive}

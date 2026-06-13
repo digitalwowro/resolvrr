@@ -54,8 +54,14 @@ import type {
   WorkspaceTicketTab,
 } from "@/features/tickets/workspace-adapter";
 import type { WorkspaceMenuConnection } from "./workspace-header";
+import type {
+  ChangePasswordAction,
+  UpdateAvatarAction,
+  UpdateProfileAction,
+} from "./workspace-settings-profile-section";
 
 export type TicketWorkspaceProps = {
+  changePasswordAction?: ChangePasswordAction;
   columns: WorkspaceTicketColumn[];
   communicationCapabilities?: TicketCommunicationCapabilities;
   connections: WorkspaceMenuConnection[];
@@ -101,10 +107,16 @@ export type TicketWorkspaceProps = {
   setDefaultSavedViewAction?: SetDefaultWorkspaceSavedViewAction;
   tabs: WorkspaceTicketTab[];
   updateConnectionAction?: HelpdeskConnectionFormAction;
+  updateAvatarAction?: UpdateAvatarAction;
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
+  updateProfileAction?: UpdateProfileAction;
+  userAvatarDataUrl?: string | null;
+  userDisplayName?: string | null;
   userEmail: string;
+  userFirstName?: string | null;
+  userLastName?: string | null;
   userRole?: AuthUserRole;
   validateConnectionAction?: HelpdeskConnectionFormAction;
 };

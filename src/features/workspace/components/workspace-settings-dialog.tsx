@@ -3,76 +3,24 @@
 import { X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { AuthUserRole } from "@/auth/types";
-import type {
-  ConnectionProviderOption,
-  HelpdeskConnectionFormAction,
-  WorkspaceSettingsConnection,
-} from "@/features/helpdesk-connections/service-types";
 import type {
   AiPromptCenterData,
-  LoadAiPromptCenterAction,
-  LoadWorkspaceAiSettingsAction,
-  ResetUserAiPromptOverrideAction,
-  ResetWorkspaceAiPromptAction,
-  SaveAiPromptOverridePolicyAction,
-  SaveUserAiPromptOverrideAction,
-  SaveWorkspaceAiPromptAction,
-  SaveUserWorkspaceAiSettingsAction,
-  SaveWorkspaceAiSettingsAction,
   WorkspaceAiSettingsData,
 } from "@/features/ai";
-import type {
-  DeleteWorkspaceSavedViewAction,
-  LoadWorkspaceSavedViewsSettingsAction,
-  ReorderWorkspaceSavedViewsAction,
-  SaveWorkspaceSavedViewAction,
-  SavedViewSettingsData,
-  SetDefaultWorkspaceSavedViewAction,
-} from "@/features/saved-views/settings-model";
+import type { SavedViewSettingsData } from "@/features/saved-views/settings-model";
 import { WorkspacesSection } from "./workspace-settings-workspaces-section";
 import { AiSettingsSection } from "./workspace-ai-settings-section";
 import { AiPromptsSection } from "./workspace-ai-prompts-section";
 import { WorkspaceSettingsNav } from "./workspace-settings-nav";
+import { WorkspaceSettingsProfileSection } from "./workspace-settings-profile-section";
+import type { WorkspaceSettingsDialogProps } from "./workspace-settings-dialog-types";
 import type { WorkspaceSettingsSection } from "./workspace-settings-types";
 import { ViewsSection } from "./workspace-settings-views-section";
 
 export type { WorkspaceSettingsSection } from "./workspace-settings-types";
 
-type WorkspaceSettingsDialogProps = {
-  connections: WorkspaceSettingsConnection[];
-  createConnectionAction?: HelpdeskConnectionFormAction;
-  deleteConnectionAction?: HelpdeskConnectionFormAction;
-  deleteSavedViewAction?: DeleteWorkspaceSavedViewAction;
-  disableConnectionAction?: HelpdeskConnectionFormAction;
-  initialAiSettingsData?: WorkspaceAiSettingsData;
-  initialSection: WorkspaceSettingsSection;
-  initialSavedViewData?: SavedViewSettingsData;
-  loadAiPromptCenterAction?: LoadAiPromptCenterAction;
-  loadWorkspaceAiSettingsAction?: LoadWorkspaceAiSettingsAction;
-  onAiSettingsDataChange?(data: WorkspaceAiSettingsData): void;
-  loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
-  onClose(): void;
-  onSavedViewDataChange?(data: SavedViewSettingsData): void;
-  providerOptions: ConnectionProviderOption[];
-  resetUserAiPromptOverrideAction?: ResetUserAiPromptOverrideAction;
-  resetWorkspaceAiPromptAction?: ResetWorkspaceAiPromptAction;
-  reorderSavedViewsAction?: ReorderWorkspaceSavedViewsAction;
-  saveAiPromptOverridePolicyAction?: SaveAiPromptOverridePolicyAction;
-  saveUserAiPromptOverrideAction?: SaveUserAiPromptOverrideAction;
-  saveWorkspaceAiPromptAction?: SaveWorkspaceAiPromptAction;
-  saveUserWorkspaceAiSettingsAction?: SaveUserWorkspaceAiSettingsAction;
-  saveWorkspaceAiSettingsAction?: SaveWorkspaceAiSettingsAction;
-  saveSavedViewAction?: SaveWorkspaceSavedViewAction;
-  setActiveConnectionAction?: HelpdeskConnectionFormAction;
-  setDefaultSavedViewAction?: SetDefaultWorkspaceSavedViewAction;
-  updateConnectionAction?: HelpdeskConnectionFormAction;
-  userEmail: string;
-  userRole: AuthUserRole;
-  validateConnectionAction?: HelpdeskConnectionFormAction;
-};
-
 export function WorkspaceSettingsDialog({
+  changePasswordAction,
   connections: initialConnections,
   createConnectionAction,
   deleteConnectionAction,
@@ -86,6 +34,7 @@ export function WorkspaceSettingsDialog({
   loadSavedViewsSettingsAction,
   onClose,
   onAiSettingsDataChange,
+  onProfileUserChange,
   onSavedViewDataChange,
   providerOptions,
   resetUserAiPromptOverrideAction,
@@ -99,8 +48,14 @@ export function WorkspaceSettingsDialog({
   saveSavedViewAction,
   setActiveConnectionAction,
   setDefaultSavedViewAction,
+  updateAvatarAction,
+  updateProfileAction,
   updateConnectionAction,
+  userAvatarDataUrl,
+  userDisplayName,
   userEmail,
+  userFirstName,
+  userLastName,
   userRole,
   validateConnectionAction,
 }: WorkspaceSettingsDialogProps) {
@@ -112,7 +67,6 @@ export function WorkspaceSettingsDialog({
   const [aiSettingsData, setAiSettingsData] = useState(initialAiSettingsData);
   const [promptCenterData, setPromptCenterData] = useState<AiPromptCenterData>();
   const [savedViewData, setSavedViewData] = useState(initialSavedViewData);
-
   useEffect(() => {
     restoreFocusRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -175,10 +129,12 @@ export function WorkspaceSettingsDialog({
     );
   }
 
+  const activeWorkspaceLabel =
+    connections.find((connection) => connection.active)?.label ?? "No active workspace";
+
   if (typeof document === "undefined") {
     return null;
   }
-
   const dialog = (
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4"
@@ -200,12 +156,13 @@ export function WorkspaceSettingsDialog({
         className="flex h-[90vh] w-[90vw] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl"
         role="dialog"
       >
+        <h2 className="sr-only" id={titleId}>
+          Settings
+        </h2>
         <WorkspaceSettingsNav
           activeSection={section}
           onSectionChange={setSection}
           promptCenterAvailable={Boolean(aiSettingsData?.canViewPromptCenter)}
-          titleId={titleId}
-          userEmail={userEmail}
         />
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex h-12 shrink-0 items-center justify-end border-b border-slate-200 px-4">
@@ -220,9 +177,18 @@ export function WorkspaceSettingsDialog({
             </button>
           </div>
           {section === "profile" ? (
-            <section className="min-h-0 flex-1 px-5 py-4">
-              <h3 className="text-lg font-semibold text-slate-950">My Profile</h3>
-            </section>
+            <WorkspaceSettingsProfileSection
+              changePasswordAction={changePasswordAction}
+              onProfileUserChange={onProfileUserChange}
+              updateAvatarAction={updateAvatarAction}
+              updateProfileAction={updateProfileAction}
+              userAvatarDataUrl={userAvatarDataUrl}
+              userDisplayName={userDisplayName}
+              userEmail={userEmail}
+              userFirstName={userFirstName}
+              userLastName={userLastName}
+              userRole={userRole}
+            />
           ) : section === "workspaces" ? (
             <WorkspacesSection
               connections={connections}
@@ -242,6 +208,7 @@ export function WorkspaceSettingsDialog({
               data={savedViewData}
               deleteSavedViewAction={deleteSavedViewAction}
               onDataChange={applySavedViewData}
+              activeWorkspaceLabel={activeWorkspaceLabel}
               reorderSavedViewsAction={reorderSavedViewsAction}
               saveSavedViewAction={saveSavedViewAction}
               setDefaultSavedViewAction={setDefaultSavedViewAction}
@@ -254,9 +221,7 @@ export function WorkspaceSettingsDialog({
               onDataChange={applyPromptCenterData}
               resetUserAiPromptOverrideAction={resetUserAiPromptOverrideAction}
               resetWorkspaceAiPromptAction={resetWorkspaceAiPromptAction}
-              saveAiPromptOverridePolicyAction={
-                saveAiPromptOverridePolicyAction
-              }
+              saveAiPromptOverridePolicyAction={saveAiPromptOverridePolicyAction}
               saveUserAiPromptOverrideAction={saveUserAiPromptOverrideAction}
               saveWorkspaceAiPromptAction={saveWorkspaceAiPromptAction}
             />
@@ -264,9 +229,7 @@ export function WorkspaceSettingsDialog({
             <AiSettingsSection
               data={aiSettingsData}
               onDataChange={applyAiSettingsData}
-              saveUserWorkspaceAiSettingsAction={
-                saveUserWorkspaceAiSettingsAction
-              }
+              saveUserWorkspaceAiSettingsAction={saveUserWorkspaceAiSettingsAction}
               saveWorkspaceAiSettingsAction={saveWorkspaceAiSettingsAction}
               userRole={userRole}
             />
@@ -275,6 +238,5 @@ export function WorkspaceSettingsDialog({
       </div>
     </div>
   );
-
   return createPortal(dialog, document.body);
 }

@@ -78,9 +78,14 @@ export function AiPromptsSection({
   return (
     <section className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-slate-200 px-5 py-4">
-        <h3 className="text-lg font-semibold text-slate-950">Prompt Center</h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-lg font-semibold text-slate-950">Prompt Center</h3>
+          <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600">
+            {data.activeWorkspace?.label ?? "No active workspace"}
+          </span>
+        </div>
         <p className="text-sm text-slate-600">
-          {data.activeWorkspace?.label ?? "No active workspace"}
+          Review and tune the prompts used by this workspace.
         </p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">

@@ -69,5 +69,9 @@ export type TicketWorkspaceDisplayProps = {
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
+  userAvatarDataUrl?: string | null;
+  userDisplayName?: string | null;
   userEmail: string;
+  userFirstName?: string | null;
+  userLastName?: string | null;
 };

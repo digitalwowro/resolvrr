@@ -7,10 +7,31 @@ import {
 } from "./session";
 import type { AuthResult, AuthUser } from "./types";
 import {
+  parseChangePasswordInput,
+  parseAvatarInput,
   parseLoginInput,
+  parseProfileInput,
   parseRegistrationInput,
   type LoginInput,
 } from "./validation";
+
+export type UpdateProfileResult =
+  | { ok: true; code: "profile-updated"; user: AuthUser }
+  | { ok: false; code: "invalid-profile" | "not-authenticated" };
+
+export type UpdateAvatarResult =
+  | { ok: true; code: "avatar-updated"; user: AuthUser }
+  | { ok: false; code: "invalid-avatar" | "not-authenticated" };
+
+export type ChangePasswordResult =
+  | { ok: true; code: "password-changed" }
+  | {
+      ok: false;
+      code:
+        | "invalid-password-input"
+        | "invalid-current-password"
+        | "not-authenticated";
+    };
 
 async function createSessionForUser(
   repository: AuthRepository,
@@ -81,6 +102,97 @@ export async function loginWithPassword(
   }
 
   return createSessionForUser(repository, userWithPassword.user);
+}
+
+export async function updateUserProfile(
+  repository: AuthRepository,
+  userId: string | undefined,
+  rawInput: FormData | unknown,
+): Promise<UpdateProfileResult> {
+  if (!userId) {
+    return { ok: false, code: "not-authenticated" };
+  }
+
+  const input = parseProfileInput(rawInput);
+  if (!input) {
+    return { ok: false, code: "invalid-profile" };
+  }
+
+  const user = await repository.updateUserProfileName({
+    firstName: input.firstName,
+    lastName: input.lastName,
+    userId,
+  });
+
+  return user
+    ? { ok: true, code: "profile-updated", user }
+    : { ok: false, code: "not-authenticated" };
+}
+
+export async function updateUserAvatar(
+  repository: AuthRepository,
+  userId: string | undefined,
+  rawInput: FormData | unknown,
+): Promise<UpdateAvatarResult> {
+  if (!userId) {
+    return { ok: false, code: "not-authenticated" };
+  }
+
+  const input = await parseAvatarInput(rawInput);
+  if (!input) {
+    return { ok: false, code: "invalid-avatar" };
+  }
+
+  const user = await repository.updateUserAvatarDataUrl({
+    avatarDataUrl: input.avatarDataUrl,
+    userId,
+  });
+
+  return user
+    ? { ok: true, code: "avatar-updated", user }
+    : { ok: false, code: "not-authenticated" };
+}
+
+export async function changeUserPassword(
+  repository: AuthRepository,
+  input: {
+    currentSessionTokenHash: string | undefined;
+    rawInput: FormData | unknown;
+    userId: string | undefined;
+  },
+): Promise<ChangePasswordResult> {
+  if (!input.userId || !input.currentSessionTokenHash) {
+    return { ok: false, code: "not-authenticated" };
+  }
+
+  const parsed = parseChangePasswordInput(input.rawInput);
+  if (!parsed) {
+    return { ok: false, code: "invalid-password-input" };
+  }
+
+  const userWithPassword = await repository.findUserWithPasswordById(
+    input.userId,
+  );
+  if (!userWithPassword) {
+    return { ok: false, code: "not-authenticated" };
+  }
+
+  const verified = await verifyPassword(
+    userWithPassword.passwordHash,
+    parsed.currentPassword,
+  );
+  if (!verified) {
+    return { ok: false, code: "invalid-current-password" };
+  }
+
+  const passwordHash = await hashPassword(parsed.newPassword);
+  await repository.updatePasswordHash(input.userId, passwordHash);
+  await repository.deleteOtherSessions(
+    input.userId,
+    input.currentSessionTokenHash,
+  );
+
+  return { ok: true, code: "password-changed" };
 }
 
 export async function getUserForSessionToken(

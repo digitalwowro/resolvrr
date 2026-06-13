@@ -4,6 +4,8 @@ import type { AiProviderProtocol, AiSettingsConfigView } from "@/features/ai";
 
 const inputClass =
   "mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50";
+const labelRowClass = "flex h-5 items-center justify-between gap-3";
+const labelClass = "text-sm font-medium text-slate-700";
 
 const providerBaseUrls: Record<AiProviderProtocol, string> = {
   "anthropic-compatible": "https://api.anthropic.com/v1",
@@ -40,25 +42,24 @@ export function WorkspaceAiSettingsFields({
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <div className="block">
+      <div className="min-w-0">
         <input name="providerProtocol" type="hidden" value={providerProtocol} />
+        <div className={labelRowClass}>
+          <span className={labelClass}>Provider</span>
+        </div>
         <DropdownSelect
           ariaLabel="Provider"
-          className="block w-full [&>div]:w-full"
+          className="block w-full [&>div]:max-w-none [&>div]:w-full"
           disabled={disabled}
-          label="Provider"
           onValueChange={(value) => setProviderProtocol(value as AiProviderProtocol)}
           options={providerOptions}
           triggerClassName={inputClass}
           value={providerProtocol}
         />
       </div>
-      <div className="block">
-        <div className="flex items-center justify-between gap-3">
-          <label
-            className="text-sm font-medium text-slate-700"
-            htmlFor={modelInputId}
-          >
+      <div className="min-w-0">
+        <div className={labelRowClass}>
+          <label className={labelClass} htmlFor={modelInputId}>
             Model
           </label>
           <div className="flex gap-2 text-xs">
@@ -86,12 +87,9 @@ export function WorkspaceAiSettingsFields({
           type="text"
         />
       </div>
-      <div className="block">
-        <div className="flex items-center justify-between gap-3">
-          <label
-            className="text-sm font-medium text-slate-700"
-            htmlFor={baseUrlInputId}
-          >
+      <div className="min-w-0">
+        <div className={labelRowClass}>
+          <label className={labelClass} htmlFor={baseUrlInputId}>
             Base URL
           </label>
           <div className="flex gap-2 text-xs">

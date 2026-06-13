@@ -684,9 +684,21 @@ added, moved, renamed, or removed.
         - `workspace-settings-dialog.tsx`
           (`src/features/workspace/components/workspace-settings-dialog.tsx`): 90vw/90vh Settings
           shell with Profile, Workspaces, Views, and AI Settings sections.
+        - `workspace-settings-dialog-types.ts`
+          (`src/features/workspace/components/workspace-settings-dialog-types.ts`): Settings
+          dialog prop contract kept separate from the shell component.
         - `workspace-settings-nav.tsx`
           (`src/features/workspace/components/workspace-settings-nav.tsx`): Settings dialog sidebar
           navigation and section button presentation.
+        - `workspace-settings-profile-section.tsx`
+          (`src/features/workspace/components/workspace-settings-profile-section.tsx`): in-modal
+          global My Profile account summary, first/last name form, and avatar upload form.
+        - `workspace-settings-profile-name-field.tsx`
+          (`src/features/workspace/components/workspace-settings-profile-name-field.tsx`): reusable
+          first/last name input row with international-name tooltip.
+        - `workspace-settings-profile-password-form.tsx`
+          (`src/features/workspace/components/workspace-settings-profile-password-form.tsx`):
+          in-modal My Profile password-change form.
         - `workspace-settings-types.ts`
           (`src/features/workspace/components/workspace-settings-types.ts`): shared Settings section
           identifier type.
@@ -1208,7 +1220,8 @@ added, moved, renamed, or removed.
         provider-specific Basic Auth validation request behavior.
   - `tests/unit`: focused unit tests for auth, security, registry, and core contracts.
     - `auth-service.test.ts` (`tests/unit/auth-service.test.ts`): verifies registration, login,
-      session, logout, and expired-session cleanup use cases.
+      session, profile updates, password changes, avatar uploads, logout, and expired-session
+      cleanup use cases.
     - `auth-validation.test.ts` (`tests/unit/auth-validation.test.ts`): verifies email normalization
       and password input validation.
     - `base-url-validation.test.ts` (`tests/unit/base-url-validation.test.ts`): verifies helpdesk

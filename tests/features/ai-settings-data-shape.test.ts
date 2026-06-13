@@ -10,7 +10,10 @@ function user(role: AuthUser["role"]): AuthUser {
   return {
     displayName: null,
     email: `${role.toLowerCase()}@example.com`,
+    firstName: null,
     id: `${role.toLowerCase()}-1`,
+    lastName: null,
+    avatarDataUrl: null,
     role,
   };
 }
