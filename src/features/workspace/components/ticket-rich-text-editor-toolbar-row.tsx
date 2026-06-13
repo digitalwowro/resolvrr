@@ -101,7 +101,7 @@ export function TicketRichTextEditorToolbarRow({
       {onClose ? (
         <div className="ml-auto">
           <ToolbarButton
-            className="border border-slate-300 bg-white"
+            className="size-6 border border-slate-300 bg-white"
             disabled={disabled}
             label="Close editor"
             onClick={onClose}
