@@ -828,6 +828,12 @@ added, moved, renamed, or removed.
 
 - `docs`: public project documentation.
   - `docs/architecture`: architecture maps, provider boundaries, and ticket read contracts.
+    - `ai-prompt-registry-contract.md`
+      (`docs/architecture/ai-prompt-registry-contract.md`): AI prompt registry, Prompt Center,
+      prompt versioning, editability, override policy, privacy, and cache invalidation contract.
+    - `ai-source-review-contract.md` (`docs/architecture/ai-source-review-contract.md`): AI source
+      freshness, review/approval, failure-state, and logging contract for future drafting, reply,
+      and reviewed-action operations.
     - `ai-v1-product-surface.md` (`docs/architecture/ai-v1-product-surface.md`): AI Assistant v1
       product surface, terminology, selected-ticket context boundary, review requirements, and
       automation exclusions.
@@ -840,6 +846,8 @@ added, moved, renamed, or removed.
     - `read-only-ai-contract.md` (`docs/architecture/read-only-ai-contract.md`): implemented
       selected-ticket AI Assistant summary boundary, prompt data, runtime configuration, failure,
       and cache rules.
+    - `my-style-contract.md` (`docs/architecture/my-style-contract.md`): user-owned My Style data,
+      privacy, prompt composition, reset, and drafting-scope contract.
     - `ticket-read-contract.md` (`docs/architecture/ticket-read-contract.md`): canonical
       provider-neutral ticket read model, controlled metadata mutation contract, thread article
       shape, capabilities, and non-goals.
@@ -855,6 +863,8 @@ added, moved, renamed, or removed.
     - `local-development.md` (`docs/development/local-development.md`): development commands,
       service names, and local boundaries.
   - `docs/features`: user-facing feature behavior documentation.
+    - `ai-capabilities.md` (`docs/features/ai-capabilities.md`): current and planned AI Assistant
+      capabilities, workspace AI settings, Prompt Center, My Style, review rules, and privacy.
     - `auth.md` (`docs/features/auth.md`): authentication behavior and security notes.
     - `foundation.md` (`docs/features/foundation.md`): first foundation feature set and exclusions.
   - `docs/operations`: operational runbooks and service maintenance notes.

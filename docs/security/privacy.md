@@ -77,7 +77,14 @@ conversation content.
   workspace option is off. Prompt bodies must not be logged or exposed outside
   the settings UI that is authorized to edit them.
 - My Style is user-specific writing guidance for future drafting operations.
-  It must follow the same no-logging posture as prompts and generated output.
+  It is private to the owning user, encrypted at rest, and structured around
+  role, audience, tone, writing preferences, and constraints. Admins can manage
+  workspace AI policy and prompt defaults, but they cannot view another user's
+  My Style content. My Style must follow the same no-logging posture as prompts
+  and generated output.
+- Future proofread, rephrase, and suggested-reply operations must use a fresh
+  server-side provider read of the selected ticket before prompt construction.
+  They must not generate from stale client state or stale persistent cache.
 - Reviewed agentic actions may prepare suggestions for existing
   provider-neutral update paths, but provider writes still require explicit user
   review and the normal submit/update path.
