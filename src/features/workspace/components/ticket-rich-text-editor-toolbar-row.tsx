@@ -17,6 +17,8 @@ import type {
 } from "./ticket-rich-text-editor-dom";
 import { ToolbarButton } from "./ticket-rich-text-editor-toolbar";
 
+const toolbarIconClassName = "size-3";
+
 type TicketRichTextEditorToolbarRowProps = {
   activeToolbarState: ActiveToolbarState;
   disabled: boolean;
@@ -39,14 +41,14 @@ export function TicketRichTextEditorToolbarRow({
         label="Undo"
         onClick={() => onCommand("undo")}
       >
-        <Undo2 aria-hidden="true" className="size-4" />
+        <Undo2 aria-hidden="true" className={toolbarIconClassName} />
       </ToolbarButton>
       <ToolbarButton
         disabled={disabled}
         label="Redo"
         onClick={() => onCommand("redo")}
       >
-        <Redo2 aria-hidden="true" className="size-4" />
+        <Redo2 aria-hidden="true" className={toolbarIconClassName} />
       </ToolbarButton>
       <ToolbarButton
         active={activeToolbarState.bold}
@@ -54,7 +56,7 @@ export function TicketRichTextEditorToolbarRow({
         label="Bold"
         onClick={() => onCommand("bold")}
       >
-        <Bold aria-hidden="true" className="size-4" />
+        <Bold aria-hidden="true" className={toolbarIconClassName} />
       </ToolbarButton>
       <ToolbarButton
         active={activeToolbarState.italic}
@@ -62,7 +64,7 @@ export function TicketRichTextEditorToolbarRow({
         label="Italic"
         onClick={() => onCommand("italic")}
       >
-        <Italic aria-hidden="true" className="size-4" />
+        <Italic aria-hidden="true" className={toolbarIconClassName} />
       </ToolbarButton>
       <ToolbarButton
         active={activeToolbarState.underline}
@@ -70,7 +72,7 @@ export function TicketRichTextEditorToolbarRow({
         label="Underline"
         onClick={() => onCommand("underline")}
       >
-        <Underline aria-hidden="true" className="size-4" />
+        <Underline aria-hidden="true" className={toolbarIconClassName} />
       </ToolbarButton>
       <ToolbarButton
         active={activeToolbarState.unorderedList}
@@ -78,7 +80,7 @@ export function TicketRichTextEditorToolbarRow({
         label="Bulleted list"
         onClick={() => onCommand("insertUnorderedList")}
       >
-        <List aria-hidden="true" className="size-4" />
+        <List aria-hidden="true" className={toolbarIconClassName} />
       </ToolbarButton>
       <ToolbarButton
         active={activeToolbarState.orderedList}
@@ -86,7 +88,7 @@ export function TicketRichTextEditorToolbarRow({
         label="Numbered list"
         onClick={() => onCommand("insertOrderedList")}
       >
-        <ListOrdered aria-hidden="true" className="size-4" />
+        <ListOrdered aria-hidden="true" className={toolbarIconClassName} />
       </ToolbarButton>
       <ToolbarButton
         active={activeToolbarState.link}
@@ -94,7 +96,7 @@ export function TicketRichTextEditorToolbarRow({
         label="Insert link"
         onClick={onInsertLink}
       >
-        <Link aria-hidden="true" className="size-4" />
+        <Link aria-hidden="true" className={toolbarIconClassName} />
       </ToolbarButton>
       {onClose ? (
         <div className="ml-auto">
@@ -104,7 +106,7 @@ export function TicketRichTextEditorToolbarRow({
             label="Close editor"
             onClick={onClose}
           >
-            <X aria-hidden="true" className="size-4" />
+            <X aria-hidden="true" className={toolbarIconClassName} />
           </ToolbarButton>
         </div>
       ) : null}
