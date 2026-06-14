@@ -10,12 +10,6 @@ import {
   WorkspaceSettingsProfilePasswordForm,
   type ChangePasswordAction,
 } from "./workspace-settings-profile-password-form";
-import {
-  WorkspaceSettingsMyStyleForm,
-  type LoadMyStyleAction,
-  type ResetMyStyleAction,
-  type SaveMyStyleAction,
-} from "./workspace-settings-my-style-form";
 
 export type { ChangePasswordAction } from "./workspace-settings-profile-password-form";
 export type {
@@ -25,10 +19,7 @@ export type {
 
 type WorkspaceSettingsProfileSectionProps = {
   changePasswordAction?: ChangePasswordAction;
-  loadMyStyleAction?: LoadMyStyleAction;
   onProfileUserChange?(user: AuthUser): void;
-  resetMyStyleAction?: ResetMyStyleAction;
-  saveMyStyleAction?: SaveMyStyleAction;
   updateAvatarAction?: UpdateAvatarAction;
   updateProfileAction?: UpdateProfileAction;
   userAvatarDataUrl: string | null;
@@ -41,10 +32,7 @@ type WorkspaceSettingsProfileSectionProps = {
 
 export function WorkspaceSettingsProfileSection({
   changePasswordAction,
-  loadMyStyleAction,
   onProfileUserChange,
-  resetMyStyleAction,
-  saveMyStyleAction,
   updateAvatarAction,
   updateProfileAction,
   userAvatarDataUrl,
@@ -77,11 +65,6 @@ export function WorkspaceSettingsProfileSection({
           />
           <WorkspaceSettingsProfilePasswordForm
             changePasswordAction={changePasswordAction}
-          />
-          <WorkspaceSettingsMyStyleForm
-            loadMyStyleAction={loadMyStyleAction}
-            resetMyStyleAction={resetMyStyleAction}
-            saveMyStyleAction={saveMyStyleAction}
           />
         </div>
       </div>

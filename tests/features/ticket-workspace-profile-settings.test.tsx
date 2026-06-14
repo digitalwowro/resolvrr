@@ -159,7 +159,7 @@ describe("TicketWorkspace profile settings", () => {
     ).toBeInTheDocument();
   });
 
-  it("loads, saves, and resets My Style from My Profile", async () => {
+  it("loads, saves, and resets My Style from Workspace Settings", async () => {
     const user = userEvent.setup();
     const loadMyStyleAction = vi.fn(async () => ({
       activeWorkspace: { id: "connection-1", label: "Support" },
@@ -223,7 +223,13 @@ describe("TicketWorkspace profile settings", () => {
       />,
     );
 
-    const dialog = await openProfileSettings(user);
+    await user.click(screen.getByRole("button", { name: "Open profile menu, Support" }));
+    await user.click(screen.getByRole("menuitem", { name: "Settings" }));
+    const dialog = screen.getByRole("dialog", { name: "Settings" });
+
+    expect(within(dialog).queryByLabelText("Role")).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "My Style" }));
+
     const roleInput = await within(dialog).findByLabelText("Role");
     expect(roleInput).toHaveValue("Support engineer");
 

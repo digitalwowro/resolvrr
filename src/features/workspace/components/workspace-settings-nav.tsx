@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Eye, MessageSquareText, Settings, User } from "lucide-react";
+import { Bot, Eye, MessageSquareText, PencilLine, Settings, User } from "lucide-react";
 import { cn } from "@/components/ui/classnames";
 import type { WorkspaceSettingsSection } from "./workspace-settings-types";
 
@@ -67,6 +67,14 @@ export function WorkspaceSettingsNav({
           >
             <Bot aria-hidden="true" className="size-4" />
             AI Settings
+          </button>
+          <button
+            className={sectionButtonClass(activeSection === "my-style")}
+            onClick={() => onSectionChange("my-style")}
+            type="button"
+          >
+            <PencilLine aria-hidden="true" className="size-4" />
+            My Style
           </button>
           {promptCenterAvailable ? (
             <button

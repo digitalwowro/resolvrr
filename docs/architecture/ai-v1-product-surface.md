@@ -44,8 +44,8 @@ AI controls live where the work happens:
 - Prompt Center lives in workspace settings because prompt defaults,
   safety/guardrail instructions, and rephrase style catalog are workspace
   governance.
-- My Style lives in profile settings because it is personal writing guidance,
-  but its data is scoped to the active workspace.
+- My Style lives in workspace settings because it is personal writing guidance
+  scoped to the active workspace.
 - Reviewed action preparation belongs near the ticket update surface that
   already owns the affected provider-neutral update.
 

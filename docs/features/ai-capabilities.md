@@ -21,7 +21,7 @@ workspace prompt defaults for registered prompt operations and workspace
 rephrase styles such as Professional, Friendly, Empathetic, and Concise. These
 styles are the options shown in the inline editor.
 
-My Style is available from `Settings -> My Profile`. It lets each user store
+My Style is available from `Settings -> My Style` under Workspace Settings. It lets each user store
 private, workspace-specific writing guidance for draft-focused AI operations.
 It is personal to the user within the active workspace, encrypted, and not
 visible to admins. It is structured around role, audience, tone, writing

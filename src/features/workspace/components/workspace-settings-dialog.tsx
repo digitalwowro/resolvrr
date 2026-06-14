@@ -12,6 +12,7 @@ import { WorkspacesSection } from "./workspace-settings-workspaces-section";
 import { AiSettingsSection } from "./workspace-ai-settings-section";
 import { AiPromptsSection } from "./workspace-ai-prompts-section";
 import { WorkspaceSettingsNav } from "./workspace-settings-nav";
+import { WorkspaceSettingsMyStyleSection } from "./workspace-settings-my-style-section";
 import { WorkspaceSettingsProfileSection } from "./workspace-settings-profile-section";
 import type { WorkspaceSettingsDialogProps } from "./workspace-settings-dialog-types";
 import type { WorkspaceSettingsSection } from "./workspace-settings-types";
@@ -182,10 +183,7 @@ export function WorkspaceSettingsDialog({
           {section === "profile" ? (
             <WorkspaceSettingsProfileSection
               changePasswordAction={changePasswordAction}
-              loadMyStyleAction={loadMyStyleAction}
               onProfileUserChange={onProfileUserChange}
-              resetMyStyleAction={resetMyStyleAction}
-              saveMyStyleAction={saveMyStyleAction}
               updateAvatarAction={updateAvatarAction}
               updateProfileAction={updateProfileAction}
               userAvatarDataUrl={userAvatarDataUrl}
@@ -194,6 +192,12 @@ export function WorkspaceSettingsDialog({
               userFirstName={userFirstName}
               userLastName={userLastName}
               userRole={userRole}
+            />
+          ) : section === "my-style" ? (
+            <WorkspaceSettingsMyStyleSection
+              loadMyStyleAction={loadMyStyleAction}
+              resetMyStyleAction={resetMyStyleAction}
+              saveMyStyleAction={saveMyStyleAction}
             />
           ) : section === "workspaces" ? (
             <WorkspacesSection

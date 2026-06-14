@@ -735,7 +735,7 @@ added, moved, renamed, or removed.
           settings connections workspace helper module.
         - `workspace-settings-dialog.tsx`
           (`src/features/workspace/components/workspace-settings-dialog.tsx`): 90vw/90vh Settings
-          shell with Profile, Workspaces, Views, and AI Settings sections.
+          shell with Profile, Workspaces, Views, AI Settings, My Style, and Prompt Center sections.
         - `workspace-settings-dialog-types.ts`
           (`src/features/workspace/components/workspace-settings-dialog-types.ts`): Settings
           dialog prop contract kept separate from the shell component.
@@ -744,14 +744,17 @@ added, moved, renamed, or removed.
           navigation and section button presentation.
         - `workspace-settings-profile-section.tsx`
           (`src/features/workspace/components/workspace-settings-profile-section.tsx`): in-modal
-          My Profile account/password and active-workspace My Style form composition.
+          My Profile account/password form composition.
         - `workspace-settings-profile-account-card.tsx`
           (`src/features/workspace/components/workspace-settings-profile-account-card.tsx`): My
           Profile account summary, first/last name form, and avatar upload control.
         - `workspace-settings-my-style-form.tsx`
-          (`src/features/workspace/components/workspace-settings-my-style-form.tsx`): My Profile
-          My Style settings form for private active-workspace role, audience, tone, preference, and
-          constraint guidance.
+          (`src/features/workspace/components/workspace-settings-my-style-form.tsx`): My Style
+          form fields for private active-workspace role, audience, tone, preference, and constraint
+          guidance.
+        - `workspace-settings-my-style-section.tsx`
+          (`src/features/workspace/components/workspace-settings-my-style-section.tsx`): Workspace
+          Settings My Style section wrapper and header.
         - `workspace-settings-profile-name-field.tsx`
           (`src/features/workspace/components/workspace-settings-profile-name-field.tsx`): reusable
           first/last name input row with international-name tooltip.
@@ -1270,7 +1273,7 @@ added, moved, renamed, or removed.
       verifies Settings Views default updates and workspace creation behavior.
     - `ticket-workspace-profile-settings.test.tsx`
       (`tests/features/ticket-workspace-profile-settings.test.tsx`): verifies My Profile account,
-      avatar upload, password, and My Style settings behavior.
+      avatar upload, password, and Workspace Settings My Style behavior.
     - `ticket-workspace-test-utils.tsx` (`tests/features/ticket-workspace-test-utils.tsx`): shared
       provider-backed workspace fixtures and render helpers for feature tests.
     - `ticket-workspace-url-sync.test.tsx` (`tests/features/ticket-workspace-url-sync.test.tsx`):
