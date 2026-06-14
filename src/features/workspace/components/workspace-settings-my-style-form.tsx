@@ -119,17 +119,16 @@ function TextAreaField({
 
 export function WorkspaceSettingsMyStyleForm({
   loadMyStyleAction,
+  onActiveWorkspaceLabelChange,
   resetMyStyleAction,
   saveMyStyleAction,
 }: {
   loadMyStyleAction?: LoadMyStyleAction;
+  onActiveWorkspaceLabelChange?(label: string | null): void;
   resetMyStyleAction?: ResetMyStyleAction;
   saveMyStyleAction?: SaveMyStyleAction;
 }) {
   const [style, setStyle] = useState<MyStyleData>(emptyStyle);
-  const [activeWorkspaceLabel, setActiveWorkspaceLabel] = useState<string | null>(
-    null,
-  );
   const [canEdit, setCanEdit] = useState(false);
   const [message, setMessage] =
     useState<{ ok: boolean; text: string } | null>(null);
@@ -140,11 +139,11 @@ export function WorkspaceSettingsMyStyleForm({
       return;
     }
     void loadMyStyleAction().then((result) => {
-      setActiveWorkspaceLabel(result.activeWorkspace?.label ?? null);
+      onActiveWorkspaceLabelChange?.(result.activeWorkspace?.label ?? null);
       setCanEdit(result.canEdit);
       setStyle(result.style);
     });
-  }, [loadMyStyleAction]);
+  }, [loadMyStyleAction, onActiveWorkspaceLabelChange]);
 
   function setField(name: keyof MyStyleData, value: string) {
     setStyle((current) => ({ ...current, [name]: value }));
@@ -160,7 +159,9 @@ export function WorkspaceSettingsMyStyleForm({
     setPending(true);
     void saveMyStyleAction(new FormData(event.currentTarget))
       .then((result) => {
-        setActiveWorkspaceLabel(result.data.activeWorkspace?.label ?? null);
+        onActiveWorkspaceLabelChange?.(
+          result.data.activeWorkspace?.label ?? null,
+        );
         setCanEdit(result.data.canEdit);
         setStyle(result.data.style);
         setMessage({ ok: result.ok, text: myStyleMessageText[result.code] });
@@ -176,7 +177,9 @@ export function WorkspaceSettingsMyStyleForm({
     setPending(true);
     void resetMyStyleAction()
       .then((result) => {
-        setActiveWorkspaceLabel(result.data.activeWorkspace?.label ?? null);
+        onActiveWorkspaceLabelChange?.(
+          result.data.activeWorkspace?.label ?? null,
+        );
         setCanEdit(result.data.canEdit);
         setStyle(result.data.style);
         setMessage({ ok: result.ok, text: myStyleMessageText[result.code] });
@@ -186,19 +189,6 @@ export function WorkspaceSettingsMyStyleForm({
 
   return (
     <section className="rounded-md border border-slate-200 bg-white p-4">
-      <div className="mb-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <h4 className="text-base font-semibold text-slate-950">My Style</h4>
-          {activeWorkspaceLabel ? (
-            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600">
-              {activeWorkspaceLabel}
-            </span>
-          ) : null}
-        </div>
-        <p className="text-sm text-slate-600">
-          Workspace-specific writing guidance for proofread, rephrase, and future draft AI.
-        </p>
-      </div>
       <form className="space-y-3" onSubmit={submit}>
         <div className="grid gap-3 md:grid-cols-3">
           <Field

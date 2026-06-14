@@ -1273,7 +1273,10 @@ added, moved, renamed, or removed.
       verifies Settings Views default updates and workspace creation behavior.
     - `ticket-workspace-profile-settings.test.tsx`
       (`tests/features/ticket-workspace-profile-settings.test.tsx`): verifies My Profile account,
-      avatar upload, password, and Workspace Settings My Style behavior.
+      avatar upload, and password behavior.
+    - `ticket-workspace-my-style-settings.test.tsx`
+      (`tests/features/ticket-workspace-my-style-settings.test.tsx`): verifies Workspace Settings
+      My Style visibility, save/reset behavior, and hidden state when workspace AI is disabled.
     - `ticket-workspace-test-utils.tsx` (`tests/features/ticket-workspace-test-utils.tsx`): shared
       provider-backed workspace fixtures and render helpers for feature tests.
     - `ticket-workspace-url-sync.test.tsx` (`tests/features/ticket-workspace-url-sync.test.tsx`):

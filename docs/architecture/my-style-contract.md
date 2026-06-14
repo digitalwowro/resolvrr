@@ -37,10 +37,11 @@ workflow, it must clear the stored style without revealing the content.
 
 The current implementation stores My Style server-side as one encrypted
 structured payload per user per workspace. Loading My Style requires the
-current authenticated user and active workspace. Saving and resetting also
-require the workspace membership permission that allows My Style editing. Empty
-fields are allowed; invalid oversized fields are rejected without changing the
-stored style.
+current authenticated user and active workspace. The settings UI surfaces My
+Style only when AI is enabled for the active workspace. Saving and resetting
+also require the workspace membership permission that allows My Style editing.
+Empty fields are allowed; invalid oversized fields are rejected without changing
+the stored style.
 
 ## Where My Style Applies
 

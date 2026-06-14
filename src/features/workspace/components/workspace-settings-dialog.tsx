@@ -20,6 +20,19 @@ import { ViewsSection } from "./workspace-settings-views-section";
 
 export type { WorkspaceSettingsSection } from "./workspace-settings-types";
 
+function initialVisibleSection(
+  section: WorkspaceSettingsSection,
+  aiSettingsData: WorkspaceAiSettingsData | undefined,
+) {
+  if (
+    section === "my-style" &&
+    (!aiSettingsData || aiSettingsData.policy === "disabled")
+  ) {
+    return "ai";
+  }
+  return section;
+}
+
 export function WorkspaceSettingsDialog({
   changePasswordAction,
   connections: initialConnections,
@@ -69,11 +82,16 @@ export function WorkspaceSettingsDialog({
   const titleId = useId();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
-  const [section, setSection] = useState<WorkspaceSettingsSection>(initialSection);
+  const [section, setSection] = useState<WorkspaceSettingsSection>(() =>
+    initialVisibleSection(initialSection, initialAiSettingsData),
+  );
   const [connections, setConnections] = useState(initialConnections);
   const [aiSettingsData, setAiSettingsData] = useState(initialAiSettingsData);
   const [promptCenterData, setPromptCenterData] = useState<AiPromptCenterData>();
   const [savedViewData, setSavedViewData] = useState(initialSavedViewData);
+  const myStyleAvailable = Boolean(
+    aiSettingsData && aiSettingsData.policy !== "disabled",
+  );
   useEffect(() => {
     restoreFocusRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -110,6 +128,9 @@ export function WorkspaceSettingsDialog({
     setAiSettingsData(data);
     setPromptCenterData(undefined);
     if (!data.canViewPromptCenter && section === "prompts") {
+      setSection("ai");
+    }
+    if (data.policy === "disabled" && section === "my-style") {
       setSection("ai");
     }
     onAiSettingsDataChange?.(data);
@@ -165,6 +186,7 @@ export function WorkspaceSettingsDialog({
         </h2>
         <WorkspaceSettingsNav
           activeSection={section}
+          myStyleAvailable={myStyleAvailable}
           onSectionChange={setSection}
           promptCenterAvailable={Boolean(aiSettingsData?.canViewPromptCenter)}
         />
@@ -193,7 +215,7 @@ export function WorkspaceSettingsDialog({
               userLastName={userLastName}
               userRole={userRole}
             />
-          ) : section === "my-style" ? (
+          ) : section === "my-style" && myStyleAvailable ? (
             <WorkspaceSettingsMyStyleSection
               loadMyStyleAction={loadMyStyleAction}
               resetMyStyleAction={resetMyStyleAction}

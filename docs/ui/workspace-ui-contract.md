@@ -233,8 +233,9 @@ override controls replace the selected style prompt only for that user in the
 active workspace.
 
 `My Style` lives in `Settings -> My Style` under Workspace Settings because it
-is scoped to the active workspace. It must show the active workspace label and
-disable editing when the membership does not allow `canEditMyStyle`.
+is scoped to the active workspace. It is shown only when workspace AI is enabled.
+It must show the active workspace label and disable editing when the membership
+does not allow `canEditMyStyle`.
 
 ## Production Data Boundary
 

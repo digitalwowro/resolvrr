@@ -6,6 +6,7 @@ import type { WorkspaceSettingsSection } from "./workspace-settings-types";
 
 type WorkspaceSettingsNavProps = {
   activeSection: WorkspaceSettingsSection;
+  myStyleAvailable: boolean;
   promptCenterAvailable: boolean;
   onSectionChange(section: WorkspaceSettingsSection): void;
 };
@@ -25,6 +26,7 @@ function sectionGroupLabelClass() {
 
 export function WorkspaceSettingsNav({
   activeSection,
+  myStyleAvailable,
   promptCenterAvailable,
   onSectionChange,
 }: WorkspaceSettingsNavProps) {
@@ -68,14 +70,16 @@ export function WorkspaceSettingsNav({
             <Bot aria-hidden="true" className="size-4" />
             AI Settings
           </button>
-          <button
-            className={sectionButtonClass(activeSection === "my-style")}
-            onClick={() => onSectionChange("my-style")}
-            type="button"
-          >
-            <PencilLine aria-hidden="true" className="size-4" />
-            My Style
-          </button>
+          {myStyleAvailable ? (
+            <button
+              className={sectionButtonClass(activeSection === "my-style")}
+              onClick={() => onSectionChange("my-style")}
+              type="button"
+            >
+              <PencilLine aria-hidden="true" className="size-4" />
+              My Style
+            </button>
+          ) : null}
           {promptCenterAvailable ? (
             <button
               className={sectionButtonClass(activeSection === "prompts")}

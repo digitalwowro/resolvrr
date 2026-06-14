@@ -45,7 +45,8 @@ AI controls live where the work happens:
   safety/guardrail instructions, and rephrase style catalog are workspace
   governance.
 - My Style lives in workspace settings because it is personal writing guidance
-  scoped to the active workspace.
+  scoped to the active workspace. It is surfaced only when AI is enabled for
+  that workspace.
 - Reviewed action preparation belongs near the ticket update surface that
   already owns the affected provider-neutral update.
 
