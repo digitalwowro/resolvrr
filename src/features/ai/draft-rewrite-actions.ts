@@ -101,6 +101,7 @@ export const rewriteDraftAction: RewriteDraftAction = async (request) => {
           styleId: normalized.rephraseStyleId,
           styleRepository: prismaAiRephraseStyleRepository,
           userId: user.id,
+          workspaceAccess: workspace.access,
         })
       : Promise.resolve(null),
   ]);

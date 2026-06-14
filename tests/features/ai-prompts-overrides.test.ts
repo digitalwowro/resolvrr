@@ -101,10 +101,46 @@ describe("AI rephrase style overrides", () => {
         styleId: style.id,
         styleRepository: styles,
         userId: "user-1",
+        workspaceAccess: editableAccess,
       }),
     ).resolves.toMatchObject({
       prompt: "Make this concise for technical readers.",
       source: "user",
+    });
+  });
+
+  it("ignores a stored user override when workspace permission is revoked", async () => {
+    const styles = rephraseStyleRepository([style]);
+    const result = await saveUserAiRephraseStyleOverride({
+      aiSummaryCacheRepository: aiSummaryCache(),
+      connectionRepository: connectionRepository(editableAccess),
+      encryptionKey,
+      formData: form({
+        prompt: "Use the revoked personal override.",
+        styleId: style.id,
+      }),
+      promptRepository: promptRepository(),
+      rephraseStyleRepository: styles,
+      settingsRepository: settingsRepository(baseWorkspaceSetting()),
+      user: user("USER"),
+    });
+
+    expect(result.ok).toBe(true);
+    await expect(
+      resolveEffectiveAiRephraseStyle({
+        encryptionKey,
+        helpdeskConnectionId: "connection-1",
+        styleId: style.id,
+        styleRepository: styles,
+        userId: "user-1",
+        workspaceAccess: {
+          ...editableAccess,
+          canEditAiRephraseStyleOverrides: false,
+        },
+      }),
+    ).resolves.toMatchObject({
+      prompt: "Use a professional tone.",
+      source: "workspace",
     });
   });
 

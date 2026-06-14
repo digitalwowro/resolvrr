@@ -131,6 +131,7 @@ export async function resolveEffectiveAiRephraseStyle(input: {
   styleId: string | undefined;
   styleRepository: AiRephraseStyleRepository;
   userId: string;
+  workspaceAccess: ActiveWorkspace["access"];
 }): Promise<EffectiveAiRephraseStyle | null> {
   if (!input.styleId) {
     return null;
@@ -143,15 +144,18 @@ export async function resolveEffectiveAiRephraseStyle(input: {
     return null;
   }
 
-  const override = await input.styleRepository.getUserStyleOverride({
-    helpdeskConnectionId: input.helpdeskConnectionId,
-    styleId: style.id,
-    userId: input.userId,
-  });
-  const overridePrompt = decryptPrompt(
-    override?.encryptedPrompt ?? null,
-    input.encryptionKey,
-  );
+  const overridePrompt = input.workspaceAccess.canEditAiRephraseStyleOverrides
+    ? decryptPrompt(
+        (
+          await input.styleRepository.getUserStyleOverride({
+            helpdeskConnectionId: input.helpdeskConnectionId,
+            styleId: style.id,
+            userId: input.userId,
+          })
+        )?.encryptedPrompt ?? null,
+        input.encryptionKey,
+      )
+    : null;
   return {
     id: style.id,
     label: style.label,
