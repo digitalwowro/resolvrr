@@ -2,11 +2,13 @@ import { HelpdeskConnectionStatus as DbConnectionStatus } from "@/generated/pris
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/data/prisma";
 import type { HelpdeskConnectionStatus } from "@/core/helpdesk-connections";
+import { builtInRephraseStyles } from "@/features/ai/rephrase-style-defaults";
 import {
   activeConnectionPreferenceKey,
   type HelpdeskConnectionWithCredential,
   type HelpdeskConnectionsRepository,
   type StoredHelpdeskConnection,
+  type WorkspaceAccess,
   type UpdateHelpdeskConnectionInput,
 } from "@/features/helpdesk-connections/repository";
 
@@ -57,10 +59,47 @@ function toStoredConnection(connection: {
   };
 }
 
+function toWorkspaceAccess(access: {
+  canEditAiRephraseStyleOverrides: boolean;
+  canEditMyStyle: boolean;
+  role: "ADMIN" | "AGENT";
+}): WorkspaceAccess {
+  return {
+    canEditAiRephraseStyleOverrides: access.canEditAiRephraseStyleOverrides,
+    canEditMyStyle: access.canEditMyStyle,
+    role: access.role,
+  };
+}
+
+async function findWorkspaceAccess(userId: string, connectionId: string) {
+  const membership = await prisma.workspaceMembership.findUnique({
+    where: {
+      userId_helpdeskConnectionId: {
+        helpdeskConnectionId: connectionId,
+        userId,
+      },
+    },
+    select: {
+      canEditAiRephraseStyleOverrides: true,
+      canEditMyStyle: true,
+      role: true,
+    },
+  });
+  return membership ? toWorkspaceAccess(membership) : null;
+}
+
 export const prismaHelpdeskConnectionsRepository: HelpdeskConnectionsRepository = {
+  async getAccess(userId, connectionId) {
+    return findWorkspaceAccess(userId, connectionId);
+  },
+
   async listForUser(userId) {
     const connections = await prisma.helpdeskConnection.findMany({
-      where: { userId },
+      where: {
+        memberships: {
+          some: { userId },
+        },
+      },
       orderBy: [{ createdAt: "desc" }, { displayName: "asc" }],
       select: connectionSelect,
     });
@@ -70,7 +109,12 @@ export const prismaHelpdeskConnectionsRepository: HelpdeskConnectionsRepository 
 
   async findForUser(userId, connectionId) {
     const connection = await prisma.helpdeskConnection.findFirst({
-      where: { id: connectionId, userId },
+      where: {
+        id: connectionId,
+        memberships: {
+          some: { userId },
+        },
+      },
       select: {
         ...connectionSelect,
         credentials: {
@@ -87,40 +131,62 @@ export const prismaHelpdeskConnectionsRepository: HelpdeskConnectionsRepository 
     if (!connection) {
       return null;
     }
+    const access = await findWorkspaceAccess(userId, connectionId);
+    if (!access) {
+      return null;
+    }
 
     return {
       ...toStoredConnection(connection),
+      access,
       credential: connection.credentials[0] ?? null,
     } satisfies HelpdeskConnectionWithCredential;
   },
 
   async create(input) {
-    const connection = await prisma.helpdeskConnection.create({
-      data: {
-        userId: input.userId,
-        providerKey: input.providerKey,
-        displayName: input.displayName,
-        baseUrl: input.baseUrl,
-        status: toDbStatus(input.status),
-        credentials: {
-          create: {
-            scheme: input.credentialScheme,
-            encryptedPayload: input.encryptedCredentialPayload,
+    const connection = await prisma.$transaction(async (transaction) => {
+      const created = await transaction.helpdeskConnection.create({
+        data: {
+          userId: input.userId,
+          providerKey: input.providerKey,
+          displayName: input.displayName,
+          baseUrl: input.baseUrl,
+          status: toDbStatus(input.status),
+          credentials: {
+            create: {
+              scheme: input.credentialScheme,
+              encryptedPayload: input.encryptedCredentialPayload,
+            },
           },
         },
-      },
-      select: connectionSelect,
+        select: connectionSelect,
+      });
+      await transaction.workspaceMembership.create({
+        data: {
+          canEditAiRephraseStyleOverrides: true,
+          canEditMyStyle: true,
+          helpdeskConnectionId: created.id,
+          role: "ADMIN",
+          userId: input.userId,
+        },
+      });
+      await transaction.workspaceAiRephraseStyle.createMany({
+        data: builtInRephraseStyles.map((style) => ({
+          helpdeskConnectionId: created.id,
+          label: style.label,
+          seedKey: style.seedKey,
+          sortOrder: style.sortOrder,
+        })),
+      });
+      return created;
     });
 
     return toStoredConnection(connection);
   },
 
   async update(input: UpdateHelpdeskConnectionInput) {
-    const existing = await prisma.helpdeskConnection.findFirst({
-      where: { id: input.id, userId: input.userId },
-      select: { id: true },
-    });
-    if (!existing) {
+    const access = await findWorkspaceAccess(input.userId, input.id);
+    if (access?.role !== "ADMIN") {
       return null;
     }
 
@@ -158,8 +224,12 @@ export const prismaHelpdeskConnectionsRepository: HelpdeskConnectionsRepository 
   },
 
   async updateStatus(userId, connectionId, status) {
+    const access = await findWorkspaceAccess(userId, connectionId);
+    if (access?.role !== "ADMIN") {
+      return false;
+    }
     const result = await prisma.helpdeskConnection.updateMany({
-      where: { id: connectionId, userId },
+      where: { id: connectionId },
       data: { status: toDbStatus(status) },
     });
 
@@ -167,8 +237,12 @@ export const prismaHelpdeskConnectionsRepository: HelpdeskConnectionsRepository 
   },
 
   async deleteForUser(userId, connectionId) {
+    const access = await findWorkspaceAccess(userId, connectionId);
+    if (access?.role !== "ADMIN") {
+      return false;
+    }
     const result = await prisma.helpdeskConnection.deleteMany({
-      where: { id: connectionId, userId },
+      where: { id: connectionId },
     });
 
     return result.count === 1;

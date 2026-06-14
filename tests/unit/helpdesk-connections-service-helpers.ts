@@ -5,11 +5,18 @@ import { encryptSecret } from "@/security/encryption";
 import type {
   HelpdeskConnectionWithCredential,
   HelpdeskConnectionsRepository,
+  WorkspaceAccess,
 } from "@/features/helpdesk-connections/repository";
 
 export const key = Buffer.from("0123456789abcdef0123456789abcdef").toString(
   "base64",
 );
+
+const defaultWorkspaceAccess: WorkspaceAccess = {
+  canEditAiRephraseStyleOverrides: false,
+  canEditMyStyle: true,
+  role: "AGENT",
+};
 
 export function form(values: Record<string, string>): FormData {
   const formData = new FormData();
@@ -31,6 +38,7 @@ export function connection(
     status: "active",
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+    access: defaultWorkspaceAccess,
     credential: {
       scheme: "basic-auth",
       encryptedPayload: encryptSecret(
@@ -55,6 +63,10 @@ export function repository(seed: HelpdeskConnectionWithCredential[] = []) {
     findForUser: async (userId, connectionId) => {
       const row = rows.get(connectionId);
       return row?.userId === userId ? row : null;
+    },
+    getAccess: async (userId, connectionId) => {
+      const row = rows.get(connectionId);
+      return row?.userId === userId ? row.access : null;
     },
     create: async (input) => {
       const created = connection({

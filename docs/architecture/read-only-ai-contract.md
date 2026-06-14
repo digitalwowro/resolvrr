@@ -84,16 +84,16 @@ state, public logs, or generated output.
 
 AI prompt operations are registered in code before they can be edited or used.
 Each registered prompt defines its stable key, built-in default, maximum length,
-and whether user-specific overrides are allowed. The selected-ticket summary
-prompt is admin-managed only so summary output stays consistent across users.
+and whether admins may edit the workspace default. The selected-ticket summary
+prompt is workspace admin-managed so summary output stays governed by the
+workspace.
 
 Prompt defaults are scoped to the active workspace and managed from `Avatar ->
 Settings -> Prompt Center` when AI is enabled. Prompt bodies are encrypted at
-rest with `APP_ENCRYPTION_KEY`. Admins may allow personal prompt overrides for
-future prompt operations that the code registry marks as user-overridable.
-Turning that workspace option off preserves saved user prompt rows but makes
-admin defaults the only effective prompts. Stored user prompts must not be read
-as effective prompts while the option is off.
+rest with `APP_ENCRYPTION_KEY`. Prompt Center also owns workspace rephrase
+styles and safety/guardrail instructions for draft-focused operations. Personal
+rephrase style overrides are separate user/workspace/style records and do not
+apply to selected-ticket summary generation.
 
 Selected-ticket summary generation resolves only the workspace/admin summary
 prompt, then combines it with the server-built provider-neutral ticket context.

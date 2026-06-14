@@ -4,8 +4,10 @@ import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/components/ui/classnames";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
+import type { AiRephraseStyleOption, RewriteDraftAction } from "@/features/ai";
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
 import type { TicketCommunicationDraft } from "./metadata-draft";
+import type { PersistedDraftAiSuggestion } from "./ticket-communication-draft-persistence";
 import { TicketArticleAttachments } from "./ticket-article-attachments";
 import {
   TicketInlineCommunicationComposer,
@@ -29,9 +31,17 @@ type TicketThreadArticleProps = {
   communicationDraft: TicketCommunicationDraft;
   communicationCapabilities: TicketCommunicationCapabilities;
   disabled: boolean;
-  onCommunicationDraftChange(draft: TicketCommunicationDraft): void;
-  onCloseComposer(): void;
+  draftRestored?: boolean;
+  onCloseComposer(mode: InlineCommunicationMode): void;
+  onComposerBodyChange(mode: InlineCommunicationMode, body: string): void;
   onOpenComposer(mode: InlineCommunicationMode): void;
+  onSuggestionsChange(
+    mode: InlineCommunicationMode,
+    suggestions: PersistedDraftAiSuggestion[],
+  ): void;
+  rephraseStyleOptions?: AiRephraseStyleOption[];
+  rewriteDraftAction?: RewriteDraftAction;
+  suggestions: PersistedDraftAiSuggestion[];
 };
 
 export function TicketThreadArticle({
@@ -40,9 +50,14 @@ export function TicketThreadArticle({
   communicationDraft,
   communicationCapabilities,
   disabled,
-  onCommunicationDraftChange,
+  draftRestored,
+  onComposerBodyChange,
   onCloseComposer,
   onOpenComposer,
+  onSuggestionsChange,
+  rephraseStyleOptions,
+  rewriteDraftAction,
+  suggestions,
 }: TicketThreadArticleProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const hasRecipientDetails =
@@ -130,17 +145,17 @@ export function TicketThreadArticle({
                   : communicationDraft.replyBody
               }
               disabled={disabled}
+              draftRestored={draftRestored}
               key={`${article.id}-${activeMode}`}
               mode={activeMode}
-              onBodyChange={(body) =>
-                onCommunicationDraftChange({
-                  ...communicationDraft,
-                  ...(activeMode === "comment"
-                    ? { commentBody: body }
-                    : { replyBody: body }),
-                })
+              onBodyChange={(body) => onComposerBodyChange(activeMode, body)}
+              onClose={() => onCloseComposer(activeMode)}
+              onSuggestionsChange={(nextSuggestions) =>
+                onSuggestionsChange(activeMode, nextSuggestions)
               }
-              onClose={onCloseComposer}
+              rephraseStyleOptions={rephraseStyleOptions}
+              rewriteDraftAction={rewriteDraftAction}
+              suggestions={suggestions}
             />
           ) : null}
         </div>

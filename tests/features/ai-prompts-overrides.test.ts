@@ -1,14 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { encryptSecret } from "@/security/encryption";
-import { ticketSummaryPromptKey } from "@/features/ai/prompt-registry";
 import {
-  loadAiPromptCenter,
-  resolveEffectiveAiPrompt,
-} from "@/features/ai/prompt-service";
-import {
-  saveAiPromptOverridePolicy,
-  saveUserAiPromptOverride,
+  saveUserAiRephraseStyleOverride,
+  saveWorkspaceAiRephraseStyle,
 } from "@/features/ai/prompt-mutation-service";
+import { loadAiPromptCenter } from "@/features/ai/prompt-service";
+import { resolveEffectiveAiRephraseStyle } from "@/features/ai/rephrase-style-service";
 import {
   aiSummaryCache,
   baseWorkspaceSetting,
@@ -16,88 +13,161 @@ import {
   encryptionKey,
   form,
   promptRepository,
+  rephraseStyleRepository,
   settingsRepository,
   user,
 } from "./ai-prompts-test-helpers";
 
-describe("AI prompt overrides", () => {
-  it("rejects user overrides for the admin-only summary prompt", async () => {
-    const result = await saveUserAiPromptOverride({
+const editableAccess = {
+  canEditAiRephraseStyleOverrides: true,
+  canEditMyStyle: true,
+  role: "AGENT" as const,
+};
+
+const style = {
+  encryptedPrompt: encryptSecret("Use a professional tone.", encryptionKey),
+  id: "style-professional",
+  isEnabled: true,
+  keyVersion: "v1",
+  label: "Professional",
+  seedKey: null,
+  sortOrder: 10,
+  updatedAt: new Date("2026-06-14T10:00:00Z"),
+};
+
+describe("AI rephrase style overrides", () => {
+  it("rejects user style overrides without workspace permission", async () => {
+    const result = await saveUserAiRephraseStyleOverride({
       aiSummaryCacheRepository: aiSummaryCache(),
       connectionRepository: connectionRepository(),
       encryptionKey,
       formData: form({
-        prompt: "My custom summary prompt.",
-        promptKey: ticketSummaryPromptKey,
+        prompt: "Make this direct and brief.",
+        styleId: style.id,
       }),
       promptRepository: promptRepository(),
-      settingsRepository: settingsRepository(baseWorkspaceSetting(true)),
+      rephraseStyleRepository: rephraseStyleRepository([style]),
+      settingsRepository: settingsRepository(baseWorkspaceSetting()),
       user: user("USER"),
     });
 
     expect(result).toMatchObject({
-      code: "prompt-not-user-editable",
+      code: "style-not-user-editable",
       ok: false,
     });
   });
 
-  it("preserves but ignores stored user prompts after overrides are disabled", async () => {
-    const prompts = promptRepository();
-    const settings = settingsRepository(baseWorkspaceSetting(true));
-    await prompts.upsertWorkspacePrompt({
-      encryptedPrompt: encryptSecret("Admin prompt.", encryptionKey),
-      helpdeskConnectionId: "connection-1",
-      keyVersion: "v1",
-      promptKey: ticketSummaryPromptKey,
-    });
-    await prompts.upsertUserPromptOverride({
-      encryptedPrompt: encryptSecret("Stored user prompt.", encryptionKey),
-      helpdeskConnectionId: "connection-1",
-      keyVersion: "v1",
-      promptKey: ticketSummaryPromptKey,
-      userId: "user-1",
+  it("shows user style overrides to non-admins when membership permits it", async () => {
+    const result = await loadAiPromptCenter({
+      connectionRepository: connectionRepository(editableAccess),
+      encryptionKey,
+      promptRepository: promptRepository(),
+      rephraseStyleRepository: rephraseStyleRepository([style]),
+      settingsRepository: settingsRepository(baseWorkspaceSetting()),
+      user: user("USER"),
     });
 
-    const result = await saveAiPromptOverridePolicy({
+    expect(result).toMatchObject({
+      adminPrompts: [],
+      canManageWorkspace: false,
+      canView: true,
+      userRephraseStyleOverrides: [
+        { id: style.id, label: "Professional" },
+      ],
+    });
+  });
+
+  it("uses a permitted user override as the effective rephrase style prompt", async () => {
+    const styles = rephraseStyleRepository([style]);
+    const result = await saveUserAiRephraseStyleOverride({
       aiSummaryCacheRepository: aiSummaryCache(),
-      connectionRepository: connectionRepository(),
+      connectionRepository: connectionRepository(editableAccess),
       encryptionKey,
-      formData: form({ allowUserPromptOverrides: false }),
-      promptRepository: prompts,
-      settingsRepository: settings,
-      user: user("ADMIN"),
+      formData: form({
+        prompt: "Make this concise for technical readers.",
+        styleId: style.id,
+      }),
+      promptRepository: promptRepository(),
+      rephraseStyleRepository: styles,
+      settingsRepository: settingsRepository(baseWorkspaceSetting()),
+      user: user("USER"),
     });
 
     expect(result.ok).toBe(true);
-    expect(settings.workspaceSetting.allowUserPromptOverrides).toBe(false);
-    expect(prompts.userPrompts.size).toBe(1);
     await expect(
-      resolveEffectiveAiPrompt({
+      resolveEffectiveAiRephraseStyle({
         encryptionKey,
         helpdeskConnectionId: "connection-1",
-        promptKey: ticketSummaryPromptKey,
-        promptRepository: prompts,
-        settingsRepository: settings,
+        styleId: style.id,
+        styleRepository: styles,
         userId: "user-1",
+        workspaceAccess: editableAccess,
       }),
     ).resolves.toMatchObject({
-      prompt: "Admin prompt.",
+      prompt: "Make this concise for technical readers.",
+      source: "user",
+    });
+  });
+
+  it("ignores a stored user override when workspace permission is revoked", async () => {
+    const styles = rephraseStyleRepository([style]);
+    const result = await saveUserAiRephraseStyleOverride({
+      aiSummaryCacheRepository: aiSummaryCache(),
+      connectionRepository: connectionRepository(editableAccess),
+      encryptionKey,
+      formData: form({
+        prompt: "Use the revoked personal override.",
+        styleId: style.id,
+      }),
+      promptRepository: promptRepository(),
+      rephraseStyleRepository: styles,
+      settingsRepository: settingsRepository(baseWorkspaceSetting()),
+      user: user("USER"),
+    });
+
+    expect(result.ok).toBe(true);
+    await expect(
+      resolveEffectiveAiRephraseStyle({
+        encryptionKey,
+        helpdeskConnectionId: "connection-1",
+        styleId: style.id,
+        styleRepository: styles,
+        userId: "user-1",
+        workspaceAccess: {
+          ...editableAccess,
+          canEditAiRephraseStyleOverrides: false,
+        },
+      }),
+    ).resolves.toMatchObject({
+      prompt: "Use a professional tone.",
       source: "workspace",
     });
   });
 
-  it("hides prompt center from non-admins when no user-editable prompts exist", async () => {
-    await expect(
-      loadAiPromptCenter({
-        connectionRepository: connectionRepository(),
-        encryptionKey,
-        promptRepository: promptRepository(),
-        settingsRepository: settingsRepository(baseWorkspaceSetting(true)),
-        user: user("USER"),
+  it("lets admins create workspace rephrase styles", async () => {
+    const styles = rephraseStyleRepository([style]);
+    const result = await saveWorkspaceAiRephraseStyle({
+      aiSummaryCacheRepository: aiSummaryCache(),
+      connectionRepository: connectionRepository(),
+      encryptionKey,
+      formData: form({
+        label: "Friendly",
+        prompt: "Make the reply friendly and clear.",
       }),
-    ).resolves.toMatchObject({
-      canView: false,
-      userPrompts: [],
+      promptRepository: promptRepository(),
+      rephraseStyleRepository: styles,
+      settingsRepository: settingsRepository(baseWorkspaceSetting()),
+      user: user("ADMIN"),
     });
+
+    expect(result).toMatchObject({
+      code: "ai-rephrase-style-created",
+      ok: true,
+    });
+    expect([...styles.styles.values()]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "Friendly" }),
+      ]),
+    );
   });
 });

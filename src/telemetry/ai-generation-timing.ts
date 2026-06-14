@@ -1,6 +1,9 @@
 import { safeLogMetadata } from "@/security/safe-log";
 
-export type AiGenerationOperation = "ticket-summary";
+export type AiGenerationOperation =
+  | "draft-proofread"
+  | "draft-rephrase"
+  | "ticket-summary";
 
 export type AiGenerationPhase =
   | "configuration"

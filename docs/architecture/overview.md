@@ -22,8 +22,9 @@ tickets and conversations.
   selected-ticket summaries.
 - The AI Assistant v1 product surface is defined in
   `docs/architecture/ai-v1-product-surface.md`. Current implemented AI slices
-  are selected-ticket summaries, workspace AI settings, Prompt Center, and
-  generated-summary cache. Summary-specific behavior is defined in
+  are selected-ticket summaries, workspace AI settings, Prompt Center,
+  workspace-scoped My Style, proofread/rephrase, and generated-summary cache.
+  Summary-specific behavior is defined in
   `docs/architecture/read-only-ai-contract.md`.
 
 ## First Release Shape

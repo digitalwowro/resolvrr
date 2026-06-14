@@ -12,6 +12,7 @@ import { WorkspacesSection } from "./workspace-settings-workspaces-section";
 import { AiSettingsSection } from "./workspace-ai-settings-section";
 import { AiPromptsSection } from "./workspace-ai-prompts-section";
 import { WorkspaceSettingsNav } from "./workspace-settings-nav";
+import { WorkspaceSettingsMyStyleSection } from "./workspace-settings-my-style-section";
 import { WorkspaceSettingsProfileSection } from "./workspace-settings-profile-section";
 import type { WorkspaceSettingsDialogProps } from "./workspace-settings-dialog-types";
 import type { WorkspaceSettingsSection } from "./workspace-settings-types";
@@ -25,23 +26,29 @@ export function WorkspaceSettingsDialog({
   createConnectionAction,
   deleteConnectionAction,
   deleteSavedViewAction,
+  deleteWorkspaceAiRephraseStyleAction,
   disableConnectionAction,
   initialAiSettingsData,
   initialSection,
   initialSavedViewData,
   loadAiPromptCenterAction,
+  loadMyStyleAction,
   loadWorkspaceAiSettingsAction,
+  moveWorkspaceAiRephraseStyleAction,
   loadSavedViewsSettingsAction,
   onClose,
   onAiSettingsDataChange,
   onProfileUserChange,
+  onRephraseStylesChange,
   onSavedViewDataChange,
   providerOptions,
-  resetUserAiPromptOverrideAction,
+  resetUserAiRephraseStyleOverrideAction,
+  resetMyStyleAction,
   resetWorkspaceAiPromptAction,
   reorderSavedViewsAction,
-  saveAiPromptOverridePolicyAction,
-  saveUserAiPromptOverrideAction,
+  saveMyStyleAction,
+  saveUserAiRephraseStyleOverrideAction,
+  saveWorkspaceAiRephraseStyleAction,
   saveWorkspaceAiPromptAction,
   saveUserWorkspaceAiSettingsAction,
   saveWorkspaceAiSettingsAction,
@@ -119,13 +126,10 @@ export function WorkspaceSettingsDialog({
 
   function applyPromptCenterData(data: AiPromptCenterData) {
     setPromptCenterData(data);
-    setAiSettingsData((current) =>
-      current && current.activeWorkspace?.id === data.activeWorkspace?.id
-        ? {
-            ...current,
-            allowUserPromptOverrides: data.allowUserPromptOverrides,
-          }
-        : current,
+    onRephraseStylesChange?.(
+      data.workspaceRephraseStyles
+        .filter((style) => style.isEnabled)
+        .map((style) => ({ id: style.id, label: style.label })),
     );
   }
 
@@ -189,6 +193,12 @@ export function WorkspaceSettingsDialog({
               userLastName={userLastName}
               userRole={userRole}
             />
+          ) : section === "my-style" ? (
+            <WorkspaceSettingsMyStyleSection
+              loadMyStyleAction={loadMyStyleAction}
+              resetMyStyleAction={resetMyStyleAction}
+              saveMyStyleAction={saveMyStyleAction}
+            />
           ) : section === "workspaces" ? (
             <WorkspacesSection
               connections={connections}
@@ -217,12 +227,24 @@ export function WorkspaceSettingsDialog({
           ) : section === "prompts" ? (
             <AiPromptsSection
               data={promptCenterData}
+              deleteWorkspaceAiRephraseStyleAction={
+                deleteWorkspaceAiRephraseStyleAction
+              }
               loadAction={loadAiPromptCenterAction}
+              moveWorkspaceAiRephraseStyleAction={
+                moveWorkspaceAiRephraseStyleAction
+              }
               onDataChange={applyPromptCenterData}
-              resetUserAiPromptOverrideAction={resetUserAiPromptOverrideAction}
+              resetUserAiRephraseStyleOverrideAction={
+                resetUserAiRephraseStyleOverrideAction
+              }
               resetWorkspaceAiPromptAction={resetWorkspaceAiPromptAction}
-              saveAiPromptOverridePolicyAction={saveAiPromptOverridePolicyAction}
-              saveUserAiPromptOverrideAction={saveUserAiPromptOverrideAction}
+              saveUserAiRephraseStyleOverrideAction={
+                saveUserAiRephraseStyleOverrideAction
+              }
+              saveWorkspaceAiRephraseStyleAction={
+                saveWorkspaceAiRephraseStyleAction
+              }
               saveWorkspaceAiPromptAction={saveWorkspaceAiPromptAction}
             />
           ) : (

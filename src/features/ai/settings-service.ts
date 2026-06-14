@@ -13,11 +13,15 @@ import type {
   WorkspaceAiSettingsActionResult,
   WorkspaceAiSettingsData,
 } from "./settings-model";
-import { hasUserOverridablePrompts } from "./prompt-registry";
 
 export const secretKeyVersion = "v1";
 
 export type ActiveWorkspace = {
+  access: {
+    canEditAiRephraseStyleOverrides: boolean;
+    canEditMyStyle: boolean;
+    role: "ADMIN" | "AGENT";
+  };
   id: string;
   label: string;
 };
@@ -33,7 +37,7 @@ export async function activeWorkspace(
 
   const connection = await repository.findForUser(userId, activeConnectionId);
   return connection
-    ? { id: connection.id, label: connection.displayName }
+    ? { access: connection.access, id: connection.id, label: connection.displayName }
     : null;
 }
 
@@ -56,7 +60,6 @@ export async function settingsDataForWorkspace(
   if (!workspace) {
     return {
       activeWorkspace: null,
-      allowUserPromptOverrides: false,
       canManageWorkspace: user.role === "ADMIN",
       canViewPromptCenter: false,
       policy: "disabled",
@@ -73,14 +76,12 @@ export async function settingsDataForWorkspace(
 
   return {
     activeWorkspace: workspace,
-    allowUserPromptOverrides:
-      workspaceSetting?.allowUserPromptOverrides ?? false,
-    canManageWorkspace: user.role === "ADMIN",
+    canManageWorkspace: user.role === "ADMIN" || workspace.access.role === "ADMIN",
     canViewPromptCenter:
       (workspaceSetting?.policy ?? "disabled") !== "disabled" &&
       (user.role === "ADMIN" ||
-        ((workspaceSetting?.allowUserPromptOverrides ?? false) &&
-          hasUserOverridablePrompts())),
+        workspace.access.role === "ADMIN" ||
+        workspace.access.canEditAiRephraseStyleOverrides),
     policy: workspaceSetting?.policy ?? "disabled",
     userConfig: configView(userConfig),
     workspaceConfig:

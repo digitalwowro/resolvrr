@@ -1,6 +1,9 @@
 import { vi } from "vitest";
 import type { AuthUser } from "@/auth/types";
-import type { HelpdeskConnectionsRepository } from "@/features/helpdesk-connections/repository";
+import type {
+  HelpdeskConnectionsRepository,
+  WorkspaceAccess,
+} from "@/features/helpdesk-connections/repository";
 import type { AiSummaryCacheRepository } from "@/features/ai/summary-cache-repository";
 import type {
   AiSettingsRepository,
@@ -29,7 +32,15 @@ export function form(values: Record<string, string>) {
   return formData;
 }
 
-export function connectionRepository(): HelpdeskConnectionsRepository {
+export const defaultWorkspaceAccess: WorkspaceAccess = {
+  canEditAiRephraseStyleOverrides: false,
+  canEditMyStyle: true,
+  role: "AGENT",
+};
+
+export function connectionRepository(
+  access: WorkspaceAccess = defaultWorkspaceAccess,
+): HelpdeskConnectionsRepository {
   return {
     async clearActiveConnectionId() {},
     async create() {
@@ -41,6 +52,7 @@ export function connectionRepository(): HelpdeskConnectionsRepository {
     async findForUser(userId, connectionId) {
       return {
         baseUrl: "https://helpdesk.example.com",
+        access,
         createdAt: new Date("2026-06-01T00:00:00Z"),
         credential: null,
         displayName: "Support",
@@ -50,6 +62,9 @@ export function connectionRepository(): HelpdeskConnectionsRepository {
         updatedAt: new Date("2026-06-01T00:00:00Z"),
         userId,
       };
+    },
+    async getAccess() {
+      return access;
     },
     async getActiveConnectionId() {
       return "connection-1";
@@ -94,10 +109,6 @@ export function aiSettingsRepository(): AiSettingsRepository & {
     },
     async upsertWorkspaceSetting(input) {
       this.workspaceSetting = {
-        allowUserPromptOverrides:
-          input.allowUserPromptOverrides ??
-          this.workspaceSetting?.allowUserPromptOverrides ??
-          false,
         config: input.config ?? null,
         helpdeskConnectionId: input.helpdeskConnectionId,
         policy: input.policy,

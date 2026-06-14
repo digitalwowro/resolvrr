@@ -11,13 +11,15 @@ model User {
   passwordLogin        PasswordLogin?
   sessions             Session[]
   helpdeskConnections  HelpdeskConnection[]
+  workspaceMemberships WorkspaceMembership[]
   savedViews           SavedView[]
   savedViewPreferences UserSavedViewPreference[]
   ticketSnapshotCaches TicketSnapshotCache[]
   threadSnapshotCaches ThreadSnapshotCache[]
   aiSummaryCaches      AiSummaryCache[]
   userAiSettings       UserWorkspaceAiSetting[]
-  aiPromptOverrides    UserAiPromptOverride[]
+  myStyles             WorkspaceMyStyle[]
+  aiRephraseStyleOverrides UserAiRephraseStyleOverride[]
   uiPreferences        UiPreference[]
   providerMutationLogs ProviderMutationLog[]
 }

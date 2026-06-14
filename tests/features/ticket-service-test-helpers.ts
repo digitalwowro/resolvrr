@@ -3,12 +3,19 @@ import type { HelpdeskProviderPlugin } from "@/core/providers";
 import type {
   HelpdeskConnectionWithCredential,
   HelpdeskConnectionsRepository,
+  WorkspaceAccess,
 } from "@/features/helpdesk-connections/repository";
 import { encryptSecret } from "@/security/encryption";
 import { validateProviderBaseUrl } from "@/security/base-url-validation";
 
 export const encryptionKey = "0".repeat(32);
 export const mockedValidateProviderBaseUrl = vi.mocked(validateProviderBaseUrl);
+
+const defaultWorkspaceAccess: WorkspaceAccess = {
+  canEditAiRephraseStyleOverrides: false,
+  canEditMyStyle: true,
+  role: "AGENT",
+};
 
 function credential(payload = { username: "agent", password: "secret" }) {
   return {
@@ -30,6 +37,7 @@ export function connection(
     status: "active",
     createdAt: new Date("2026-05-24T00:00:00Z"),
     updatedAt: new Date("2026-05-24T00:00:00Z"),
+    access: defaultWorkspaceAccess,
     credential: credential(),
     ...overrides,
   };
@@ -42,6 +50,7 @@ export function repository(input: {
   return {
     listForUser: async () => [],
     findForUser: async () => input.connection ?? null,
+    getAccess: async () => input.connection?.access ?? null,
     create: async () => {
       throw new Error("not implemented");
     },

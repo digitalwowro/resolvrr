@@ -24,8 +24,9 @@ the actor who submits communication or provider updates.
 The v1 AI Assistant surface includes:
 
 - selected-ticket summaries;
-- Prompt Center for workspace prompt defaults and allowed personal overrides;
-- My Style for user-specific writing guidance;
+- Prompt Center for workspace prompt defaults, safety/guardrail instructions,
+  and workspace rephrase styles;
+- My Style for user-specific, workspace-scoped writing guidance;
 - proofread and rephrase actions for user-written internal-note and customer
   reply drafts;
 - suggested customer reply drafts;
@@ -40,15 +41,22 @@ AI controls live where the work happens:
 - Suggested reply drafts belong in the selected-ticket reply workflow and remain
   editable draft text until the user submits the reply through the normal
   provider communication path.
-- Prompt Center lives in workspace settings because prompt defaults and override
-  policy are workspace governance.
-- My Style lives in profile settings because it is personal writing guidance.
+- Prompt Center lives in workspace settings because prompt defaults,
+  safety/guardrail instructions, and rephrase style catalog are workspace
+  governance.
+- My Style lives in workspace settings because it is personal writing guidance
+  scoped to the active workspace.
 - Reviewed action preparation belongs near the ticket update surface that
   already owns the affected provider-neutral update.
 
 Implemented and future AI operations must keep their contracts separate. The
 selected-ticket summary contract must not quietly become the reply-draft,
 proofread, rephrase, My Style, or reviewed-action contract.
+
+The currently implemented AI Assistant surface covers selected-ticket
+summaries, Prompt Center, My Style, and proofread/rephrase actions for existing
+inline composer drafts. Suggested reply generation and reviewed action
+preparation remain future v1 capabilities.
 
 ## Capability Contracts
 
@@ -57,21 +65,35 @@ ticket metadata and sanitized thread text. Summary output is advisory, may be
 cached as encrypted generated output, and never changes the selected-ticket
 draft or writes to the helpdesk provider.
 
-Prompt Center lets admins manage workspace prompt defaults for registered AI
-operations. The registry decides which prompts exist, which are admin-editable,
-which may be user-overridable, their built-in defaults, and their version
-identity. The current `ticket-summary` prompt is admin-editable and never
-user-overridable.
+Prompt Center lets admins manage workspace prompt defaults, safety/guardrail
+instructions, and workspace rephrase styles for registered AI operations. The
+registry decides which prompt operations exist, which are admin-editable, their
+built-in defaults, and their version identity. Rephrase styles are
+workspace-scoped admin records shown in the inline editor. Workspace membership
+may allow a non-admin user to override a style prompt for their own drafts only.
 
-My Style is user-specific writing guidance for drafting operations. It is not a
-workspace prompt default, not an admin-managed policy text, and not summary
-context. My Style applies only to operations whose contract explicitly includes
-personal writing guidance.
+My Style is user-specific, workspace-scoped writing guidance for drafting
+operations. It is not a workspace prompt default, not an admin-managed policy
+text, and not summary context. My Style applies only to operations whose
+contract explicitly includes personal writing guidance. The implemented My
+Style fields are stored server-side per `user + workspace`, encrypted at rest,
+and visible only to the owning user. Workspace membership controls whether the
+user may edit My Style in that workspace.
 
 Proofread and rephrase actions improve text the user has already written in an
 internal-note or customer-reply draft. They do not create provider writes, do
 not send communication, and must leave the original text recoverable until the
-user explicitly accepts or applies generated text.
+user explicitly accepts or applies generated text. The implemented
+proofread/rephrase flow sends only the current draft text, composer type, the
+effective registered prompt, the selected workspace rephrase style prompt when
+rephrasing, and the user's workspace-specific My Style fields to the AI
+provider. It does not read selected-ticket thread content.
+
+Inline composer drafts are persisted locally in the browser so refreshes or
+browser recovery do not silently discard typed text. Local recovery may retain
+the latest draft body and a small suggestion history for the user/workspace/
+ticket until the user closes the composer, discards changes, submits through
+Update, closes the ticket tab, or the local retention window expires.
 
 Suggested reply drafts create editable customer-reply draft text from selected
 ticket context. They do not submit a reply. The user must review, edit if
@@ -84,17 +106,23 @@ user approval through the existing update or communication flow.
 
 ## Context Boundary
 
-V1 AI Assistant operations may use only the selected ticket's provider-neutral
-metadata and sanitized article/thread text. Linked tickets, saved views,
-customer-wide history, knowledge base content, workspace-wide search results,
-and arbitrary provider records are not v1 AI context.
+V1 AI Assistant operations may use only the source their specific contract
+allows. Selected-ticket and suggested-reply operations may use provider-neutral
+metadata and sanitized article/thread text for the selected ticket. Linked
+tickets, saved views, customer-wide history, knowledge base content,
+workspace-wide search results, and arbitrary provider records are not v1 AI
+context.
 
-Drafting and reply-generation operations must reload selected-ticket detail
-server-side from the provider before prompt construction. They must not generate
-from stale route state, stale client state, or stale persistent cache. Cache may
-still support already-implemented summary display where that contract allows
-cache-only hydration, but future drafting and reply generation require a fresh
-provider read.
+Proofread and rephrase are draft-only operations: they use the user's current
+composer draft, workspace-specific My Style, and for rephrase the effective
+workspace style prompt or permitted user style override. They do not use
+provider ticket source. Future drafting and reply-generation operations that
+use selected-ticket context must reload selected-ticket detail server-side from
+the provider before prompt construction.
+They must not generate from stale route state, stale client state, or stale
+persistent cache. Cache may still support already-implemented summary display
+where that contract allows cache-only hydration, but future selected-ticket
+drafting and reply generation require a fresh provider read.
 
 AI runtime code must stay outside helpdesk provider plugins. Helpdesk providers
 continue to own only provider reads and writes. Core, workspace UI, and ticket
@@ -142,9 +170,10 @@ enough for the user to review the generated output.
 
 - `docs/architecture/read-only-ai-contract.md` covers the implemented
   selected-ticket summary slice.
-- `docs/architecture/ai-prompt-registry-contract.md` covers prompt registry and
-  Prompt Center rules.
-- `docs/architecture/my-style-contract.md` covers personal style data.
+- `docs/architecture/ai-prompt-registry-contract.md` covers prompt registry,
+  Prompt Center, workspace rephrase styles, and permitted user style overrides.
+- `docs/architecture/my-style-contract.md` covers workspace-scoped personal
+  style data.
 - `docs/architecture/ai-source-review-contract.md` covers source freshness,
   review, failure, and logging requirements for future drafting/reply/action
   operations.

@@ -17,13 +17,11 @@ import {
   filterLoadedTickets,
   normalizedWorkspaceSearch,
 } from "./ticket-workspace-display-filters";
-import {
-  TicketWorkspaceDetailArea,
-  TicketWorkspaceListArea,
-} from "./ticket-workspace-work-area";
 import type { TicketWorkspaceDisplayProps } from "./ticket-workspace-display-types";
 import { WorkspaceHeaderChrome, WorkspaceTabsChrome } from "./ticket-workspace-chrome";
 import { useTicketWorkspaceSavedViewSelection } from "./use-ticket-workspace-saved-view-selection";
+import { clearPersistedCommunicationDrafts } from "./ticket-communication-draft-persistence";
+import { TicketWorkspaceDisplayWorkArea } from "./ticket-workspace-display-work-area";
 
 export function TicketWorkspaceDisplay({
   connections,
@@ -43,8 +41,10 @@ export function TicketWorkspaceDisplay({
   providerGroupingEnabled,
   providerSortEnabled,
   refreshTicketDetailAfterMetadataSave,
+  rephraseStyleOptions,
   rows,
   searchTicketLinkTargetsAction,
+  rewriteDraftAction,
   savedViews,
   summarizeTicketAction,
   initialTicketAiSummary,
@@ -60,6 +60,8 @@ export function TicketWorkspaceDisplay({
   userDisplayName,
   userEmail,
   userFirstName,
+  userId,
+  workspaceId,
   userLastName,
 }: TicketWorkspaceDisplayProps) {
   const [workspaceSearchQuery, setWorkspaceSearchQuery] = useState("");
@@ -85,44 +87,7 @@ export function TicketWorkspaceDisplay({
     [listPager.groups, normalizedSearchQuery],
   );
   const searchActive = normalizedSearchQuery.length > 0;
-  const {
-    activeDetail,
-    activeTicketId,
-    allSelected,
-    closeTicket,
-    clearRowSelection,
-    groupBy,
-    groupedRows,
-    handleGroupByChange,
-    isActiveTicketDetailStale,
-    listActive,
-    openTicketTabs,
-    partiallySelected,
-    recentTicketTabs,
-    refreshActiveTicketDetail,
-    refreshTicketDetailById,
-    refreshList,
-    refreshSavedTicketDetail,
-    reorderOpenTicketTabs,
-    returnActiveTicketToList,
-    selectedRowIds,
-    setTabOrientation,
-    showList,
-    showNotificationTicket,
-    showOpenTicket,
-    showTicketFromRow,
-    sortDirectionFor,
-    sortingEnabled,
-    sortedRows,
-    tabOrientation,
-    ticketDetailRefreshing,
-    toggleColumn,
-    toggleRow,
-    toggleSelectAll,
-    toggleSort,
-    updateOpenTicketTabMetadata,
-    visibleColumnSet,
-  } = useTicketWorkspaceDisplayState({
+  const displayState = useTicketWorkspaceDisplayState({
     columns,
     detail,
     detailResult,
@@ -137,6 +102,28 @@ export function TicketWorkspaceDisplay({
     selectedTicketId,
     ticketTabs: pagedTicketTabs,
   });
+  const {
+    activeTicketId,
+    closeTicket,
+    clearRowSelection,
+    groupBy,
+    groupedRows,
+    handleGroupByChange,
+    isActiveTicketDetailStale,
+    listActive,
+    openTicketTabs,
+    recentTicketTabs,
+    refreshActiveTicketDetail,
+    refreshTicketDetailById,
+    refreshList,
+    reorderOpenTicketTabs,
+    setTabOrientation,
+    showList,
+    showNotificationTicket,
+    showOpenTicket,
+    sortedRows,
+    tabOrientation,
+  } = displayState;
   const providerGroupedActive = isProviderGroupedListActive({
     groupBy,
     listGroupBy: listPager.groupBy,
@@ -188,73 +175,51 @@ export function TicketWorkspaceDisplay({
     void listPager.silentRefreshCurrentPage();
   }
 
-  const workArea =
-    listActive ? (
-      <TicketWorkspaceListArea
-        activeTicketId={activeTicketId}
-        allSelected={allSelected}
-        canLoadMore={
-          !searchActive && !providerGroupedActive && listPager.canLoadMore
-        }
-        columns={columns}
-        emptyMessage={
-          searchActive ? "No loaded tickets match this filter." : undefined
-        }
-        groupedRows={tableGroupedRows}
-        groupBy={groupBy}
-        groupLoadMoreError={listPager.groupError}
-        loadingGroupId={listPager.loadingGroupId}
-        loadingMore={listPager.loading}
-        loadMoreError={listPager.errorReason}
-        loadedCount={searchActive ? tableRows.length : listPager.loadedCount}
-        onColumnToggle={toggleColumn}
-        onGroupByChange={handleWorkspaceGroupByChange}
-        onLoadMore={listPager.loadMore}
-        onLoadMoreGroup={listPager.loadMoreGroup}
-        onRefresh={handleRefreshList}
-        onRowSelect={showTicketFromRow}
-        onSavedViewChange={handleSavedViewChange}
-        onSelectAll={toggleSelectAll}
-        onSort={toggleSort}
-        onToggleRow={toggleRow}
-        partiallySelected={partiallySelected}
-        providerGroupingEnabled={providerGroupingEnabled}
-        refreshing={listPager.silentRefreshing}
-        rows={tableRows}
-        savedViewOptions={savedViewOptions}
-        selectedRowIds={selectedRowIds}
-        selectedSavedViewId={listPager.savedViewId}
-        sortingEnabled={sortingEnabled && !providerGroupedActive}
-        sortDirectionFor={sortDirectionFor}
-        totalCount={searchActive ? undefined : listPager.totalCount}
-        visibleColumns={visibleColumnSet}
-      />
-    ) : (
-      <TicketWorkspaceDetailArea
-        activeDetail={activeDetail}
-        activeTicketId={activeTicketId}
-        activeTicketSummary={activeTicketSummary}
-        communicationCapabilities={communicationCapabilities}
-        metadataMutationCapabilities={metadataMutationCapabilities}
-        onMetadataSaved={updateOpenTicketTabMetadata}
-        onMetadataSavedDetailRefresh={refreshSavedTicketDetail}
-        onRefresh={refreshActiveTicketDetail}
-        onReturnToListAfterUpdate={returnActiveTicketToList}
-        recentlyViewedLinkTargets={recentlyViewedLinkTargets}
-        roundedTop={tabOrientation === "vertical"}
-        searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
-        summarizeTicketAction={summarizeTicketAction}
-        initialTicketAiSummary={initialTicketAiSummary}
-        refreshing={ticketDetailRefreshing}
-        updateTicketMetadataAction={updateTicketMetadataAction}
-      />
-    );
+  function handleCloseTicket(ticketId: string) {
+    if (userId && workspaceId) {
+      void clearPersistedCommunicationDrafts({
+        ticketExternalId: ticketId,
+        userId,
+        workspaceId,
+      });
+    }
+    closeTicket(ticketId);
+  }
+
+  const workArea = (
+    <TicketWorkspaceDisplayWorkArea
+      activeTicketSummary={activeTicketSummary}
+      columns={columns}
+      communicationCapabilities={communicationCapabilities}
+      displayState={displayState}
+      handleRefreshList={handleRefreshList}
+      handleSavedViewChange={handleSavedViewChange}
+      handleWorkspaceGroupByChange={handleWorkspaceGroupByChange}
+      initialTicketAiSummary={initialTicketAiSummary}
+      listPager={listPager}
+      metadataMutationCapabilities={metadataMutationCapabilities}
+      providerGroupedActive={providerGroupedActive}
+      providerGroupingEnabled={providerGroupingEnabled}
+      recentlyViewedLinkTargets={recentlyViewedLinkTargets}
+      rephraseStyleOptions={rephraseStyleOptions}
+      rewriteDraftAction={rewriteDraftAction}
+      savedViewOptions={savedViewOptions}
+      searchActive={searchActive}
+      searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
+      summarizeTicketAction={summarizeTicketAction}
+      tableGroupedRows={tableGroupedRows}
+      tableRows={tableRows}
+      updateTicketMetadataAction={updateTicketMetadataAction}
+      userId={userId}
+      workspaceId={workspaceId}
+    />
+  );
 
   const tabsPanel = (
     <WorkspaceTabsChrome
       activeTicketId={activeTicketId}
       listActive={listActive}
-      onCloseTicket={closeTicket}
+      onCloseTicket={handleCloseTicket}
       onReorderTicket={reorderOpenTicketTabs}
       onSelectList={showList}
       onSelectTicket={showOpenTicket}

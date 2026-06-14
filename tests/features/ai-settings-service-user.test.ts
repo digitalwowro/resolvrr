@@ -33,7 +33,6 @@ describe("workspace AI user settings service", () => {
   it("lets users save their own key only when workspace policy requires it", async () => {
     const repository = aiSettingsRepository();
     repository.workspaceSetting = {
-      allowUserPromptOverrides: false,
       config: null,
       helpdeskConnectionId: "connection-1",
       policy: "user-provided",

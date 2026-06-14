@@ -8,6 +8,7 @@ model HelpdeskConnection {
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
   user                 User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memberships          WorkspaceMembership[]
   credentials          ProviderCredential[]
   savedViews           SavedView[]
   ticketSnapshotCaches TicketSnapshotCache[]
@@ -16,12 +17,30 @@ model HelpdeskConnection {
   workspaceAiSetting   WorkspaceAiSetting?
   userAiSettings       UserWorkspaceAiSetting[]
   workspaceAiPrompts   WorkspaceAiPrompt[]
-  userAiPromptOverrides UserAiPromptOverride[]
+  aiRephraseStyles     WorkspaceAiRephraseStyle[]
+  aiRephraseStyleOverrides UserAiRephraseStyleOverride[]
+  myStyles             WorkspaceMyStyle[]
   uiPreferences        UiPreference[]
   providerMutationLogs ProviderMutationLog[]
 
   @@index([userId])
   @@index([providerKey])
+}
+
+model WorkspaceMembership {
+  id                                String                  @id @default(cuid())
+  userId                            String
+  helpdeskConnectionId              String
+  role                              WorkspaceMembershipRole @default(AGENT)
+  canEditMyStyle                    Boolean                 @default(false)
+  canEditAiRephraseStyleOverrides   Boolean                 @default(false)
+  createdAt                         DateTime                @default(now())
+  updatedAt                         DateTime                @updatedAt
+  user                              User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpdeskConnection                HelpdeskConnection      @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, helpdeskConnectionId])
+  @@index([helpdeskConnectionId])
 }
 
 model ProviderCredential {

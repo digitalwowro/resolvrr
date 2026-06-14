@@ -13,6 +13,7 @@ import {
   encryptionKey,
   form,
   promptRepository,
+  rephraseStyleRepository,
   settingsRepository,
   user,
 } from "./ai-prompts-test-helpers";
@@ -21,13 +22,13 @@ describe("AI prompts", () => {
   it("registers the summary prompt as admin-only", () => {
     expect(findAiPromptDefinition(ticketSummaryPromptKey)).toMatchObject({
       adminEditable: true,
-      userOverridable: false,
     });
   });
 
   it("stores workspace prompt defaults encrypted and resolves them for summaries", async () => {
     const prompts = promptRepository();
-    const settings = settingsRepository(baseWorkspaceSetting(false));
+    const settings = settingsRepository(baseWorkspaceSetting());
+    const rephraseStyles = rephraseStyleRepository();
     const cache = aiSummaryCache();
 
     const result = await saveWorkspaceAiPrompt({
@@ -39,6 +40,7 @@ describe("AI prompts", () => {
         promptKey: ticketSummaryPromptKey,
       }),
       promptRepository: prompts,
+      rephraseStyleRepository: rephraseStyles,
       settingsRepository: settings,
       user: user("ADMIN"),
     });

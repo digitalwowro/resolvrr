@@ -7,11 +7,7 @@ import type {
   AiPromptActionCode,
   AiPromptActionResult,
   AiPromptAdminView,
-  AiPromptKey,
-  AiPromptUserView,
-  ResetUserAiPromptOverrideAction,
   ResetWorkspaceAiPromptAction,
-  SaveUserAiPromptOverrideAction,
   SaveWorkspaceAiPromptAction,
 } from "@/features/ai";
 
@@ -20,16 +16,20 @@ const textareaClass =
 
 export const promptMessageText: Record<AiPromptActionCode, string> = {
   "ai-disabled": "AI is disabled for this workspace.",
-  "ai-prompt-policy-saved": "Prompt policy saved.",
   "ai-prompt-reset": "Prompt reset.",
   "ai-prompt-saved": "Prompt saved.",
-  "ai-user-prompt-reset": "Personal prompt reset.",
-  "ai-user-prompt-saved": "Personal prompt saved.",
+  "ai-rephrase-style-created": "Rephrase style created.",
+  "ai-rephrase-style-deleted": "Rephrase style removed.",
+  "ai-rephrase-style-moved": "Rephrase style order updated.",
+  "ai-rephrase-style-override-reset": "Personal style override reset.",
+  "ai-rephrase-style-override-saved": "Personal style override saved.",
+  "ai-rephrase-style-saved": "Rephrase style saved.",
   "invalid-ai-prompt": "Check the prompt text.",
   "invalid-ai-prompt-input": "Check the selected prompt.",
+  "invalid-ai-rephrase-style": "Check the style name and prompt.",
   "no-active-workspace": "Select an active workspace first.",
   "not-admin": "Only admins can manage workspace prompts.",
-  "prompt-not-user-editable": "This prompt is not editable for your account.",
+  "style-not-user-editable": "This style is not editable for your account.",
 };
 
 export function PromptMessage({
@@ -135,73 +135,4 @@ export function WorkspacePromptForm({
   );
 }
 
-export function UserPromptForm({
-  action,
-  onResult,
-  prompt,
-  resetAction,
-}: {
-  action?: SaveUserAiPromptOverrideAction;
-  onResult(result: AiPromptActionResult): void;
-  prompt: AiPromptUserView;
-  resetAction?: ResetUserAiPromptOverrideAction;
-}) {
-  const [pending, startTransition] = useTransition();
-  const disabled = pending || !action;
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!action) {
-      return;
-    }
-    const formData = new FormData(event.currentTarget);
-    startTransition(() => {
-      void action(formData).then(onResult);
-    });
-  }
-
-  function resetPrompt(promptKey: AiPromptKey) {
-    if (!resetAction) {
-      return;
-    }
-    startTransition(() => {
-      void resetAction(promptKey).then(onResult);
-    });
-  }
-
-  return (
-    <form
-      className="rounded-md border border-slate-200 bg-white p-4"
-      key={`${prompt.key}-${prompt.prompt}`}
-      onSubmit={submit}
-    >
-      <input name="promptKey" type="hidden" value={prompt.key} />
-      <h4 className="text-sm font-semibold text-slate-950">{prompt.label}</h4>
-      <p className="text-sm text-slate-600">{prompt.description}</p>
-      <label className="mt-4 block text-sm font-medium text-slate-700">
-        Personal prompt
-        <textarea
-          className={textareaClass}
-          defaultValue={prompt.prompt}
-          disabled={disabled}
-          maxLength={prompt.maxLength}
-          name="prompt"
-          required
-        />
-      </label>
-      <div className="mt-4 flex justify-end gap-2">
-        <Button
-          disabled={pending || !resetAction || !prompt.isCustomized}
-          onClick={() => resetPrompt(prompt.key)}
-          type="button"
-          variant="secondary"
-        >
-          Reset
-        </Button>
-        <Button disabled={disabled} loading={pending} type="submit" variant="primary">
-          Save personal prompt
-        </Button>
-      </div>
-    </form>
-  );
-}
+export { textareaClass };

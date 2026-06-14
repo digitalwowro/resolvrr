@@ -56,6 +56,11 @@ const connectionRepository: HelpdeskConnectionsRepository = {
       baseUrl: "https://helpdesk.example.com",
       createdAt: new Date("2026-06-01T00:00:00Z"),
       credential: null,
+      access: {
+        canEditAiRephraseStyleOverrides: false,
+        canEditMyStyle: true,
+        role: "AGENT",
+      },
       displayName: "Support",
       id: "connection-1",
       providerKey: "example",
@@ -66,6 +71,13 @@ const connectionRepository: HelpdeskConnectionsRepository = {
   },
   async getActiveConnectionId() {
     return "connection-1";
+  },
+  async getAccess() {
+    return {
+      canEditAiRephraseStyleOverrides: false,
+      canEditMyStyle: true,
+      role: "AGENT",
+    };
   },
   async listForUser() {
     return [];
@@ -94,9 +106,6 @@ function repository(workspaceSetting: StoredWorkspaceAiSetting) {
     async upsertUserSetting() {},
     async upsertWorkspaceSetting(input) {
       repo.workspaceSetting = {
-        allowUserPromptOverrides:
-          input.allowUserPromptOverrides ??
-          repo.workspaceSetting.allowUserPromptOverrides,
         config: input.config ?? null,
         helpdeskConnectionId: input.helpdeskConnectionId,
         policy: input.policy,
@@ -125,7 +134,6 @@ describe("workspace AI settings secret preservation", () => {
   it("preserves the stored API key when admin-managed edits leave it blank", async () => {
     const encryptedApiKey = encryptSecret("existing-key", encryptionKey);
     const repo = repository({
-      allowUserPromptOverrides: false,
       config: {
         baseUrl: "https://api.openai.test/v1",
         encryptedApiKey,
@@ -172,7 +180,6 @@ describe("workspace AI settings secret preservation", () => {
 
   it("rejects blank-secret edits when the stored secret cannot be decrypted", async () => {
     const repo = repository({
-      allowUserPromptOverrides: false,
       config: {
         baseUrl: "https://api.openai.test/v1",
         encryptedApiKey: "not-an-envelope",

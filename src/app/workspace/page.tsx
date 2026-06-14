@@ -1,10 +1,10 @@
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
+import { prismaAiRephraseStyleRepository } from "@/data/ai-rephrase-styles-repository";
 import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
 import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
 import { prismaWorkspaceTabsRepository } from "@/data/workspace-tabs-repository";
-import type { TicketListQueryInput } from "@/core/providers";
 import {
   changePasswordAction,
   logoutAction,
@@ -13,16 +13,24 @@ import {
 } from "@/features/auth/actions";
 import {
   loadAiPromptCenterAction,
+  loadAiRephraseStylesAction,
+  loadMyStyleAction,
   loadWorkspaceAiSettingsAction,
-  resetUserAiPromptOverrideAction,
+  resetMyStyleAction,
+  resetUserAiRephraseStyleOverrideAction,
   resetWorkspaceAiPromptAction,
-  saveAiPromptOverridePolicyAction,
+  rewriteDraftAction,
+  saveMyStyleAction,
   saveUserWorkspaceAiSettingsAction,
-  saveUserAiPromptOverrideAction,
+  saveUserAiRephraseStyleOverrideAction,
+  saveWorkspaceAiRephraseStyleAction,
   saveWorkspaceAiSettingsAction,
   saveWorkspaceAiPromptAction,
+  deleteWorkspaceAiRephraseStyleAction,
+  moveWorkspaceAiRephraseStyleAction,
   summarizeWorkspaceTicketAction,
 } from "@/features/ai";
+import { loadAiRephraseStyles } from "@/features/ai/rephrase-style-service";
 import { loadInitialTicketAiSummary } from "@/features/ai/ticket-summary-hydration";
 import {
   createHelpdeskConnectionAction,
@@ -60,7 +68,6 @@ import {
   initialWorkspaceSavedViewSelection,
   workspaceSavedViews,
   type EnsureMyWorkSavedViewResult,
-  type StoredSavedView,
 } from "@/features/saved-views";
 import { unavailableTicketRead } from "@/features/tickets/read-model";
 import {
@@ -73,32 +80,11 @@ import {
 import { savedViewSettingsDataFromStored } from "@/features/saved-views/settings-model";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import { providerRegistry } from "@/providers";
+import { savedViewTicketListQuery } from "./workspace-page-helpers";
 
 type WorkspacePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
-
-function savedViewTicketListQuery(
-  savedView: StoredSavedView | undefined,
-): TicketListQueryInput | undefined {
-  if (!savedView) {
-    return undefined;
-  }
-
-  const providerBackedGroup =
-    savedView.query.group?.key === "state" ||
-    savedView.query.group?.key === "priority"
-      ? savedView.query.group
-      : undefined;
-
-  return {
-    filter: savedView.query.filter,
-    ...(savedView.query.sort ? { sort: savedView.query.sort } : {}),
-    ...(providerBackedGroup
-      ? { count: { includeTotal: true }, group: providerBackedGroup }
-      : {}),
-  };
-}
 
 export default async function WorkspacePage({ searchParams }: WorkspacePageProps) {
   const user = await requireCurrentUser();
@@ -204,6 +190,11 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           userId: user.id,
         })
       : undefined;
+  const initialRephraseStyles = await loadAiRephraseStyles({
+    connectionRepository: prismaHelpdeskConnectionsRepository,
+    styleRepository: prismaAiRephraseStyleRepository,
+    userId: user.id,
+  });
 
   return (
     <TicketWorkspace
@@ -221,11 +212,14 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       connectionProviderOptions={listConnectionProviderOptions(providerRegistry)}
       createConnectionAction={createHelpdeskConnectionAction}
       deleteConnectionAction={deleteHelpdeskConnectionAction}
+      deleteWorkspaceAiRephraseStyleAction={deleteWorkspaceAiRephraseStyleAction}
       detail={detail}
       detailResult={workspaceDetailResult}
       disableConnectionAction={disableHelpdeskConnectionAction}
       listResult={listResult}
       loadAiPromptCenterAction={loadAiPromptCenterAction}
+      loadAiRephraseStylesAction={loadAiRephraseStylesAction}
+      loadMyStyleAction={loadMyStyleAction}
       loadWorkspaceAiSettingsAction={loadWorkspaceAiSettingsAction}
       loadTicketDetailAction={loadWorkspaceTicketDetailAction}
       loadTicketListPageAction={loadWorkspaceTicketListPageAction}
@@ -255,13 +249,20 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       })}
       initialAiSettingsData={await loadWorkspaceAiSettingsAction()}
       reorderSavedViewsAction={reorderWorkspaceSavedViewsAction}
-      resetUserAiPromptOverrideAction={resetUserAiPromptOverrideAction}
+      rephraseStyleOptions={initialRephraseStyles.styles}
+      resetUserAiRephraseStyleOverrideAction={
+        resetUserAiRephraseStyleOverrideAction
+      }
+      resetMyStyleAction={resetMyStyleAction}
       resetWorkspaceAiPromptAction={resetWorkspaceAiPromptAction}
-      saveAiPromptOverridePolicyAction={saveAiPromptOverridePolicyAction}
+      rewriteDraftAction={rewriteDraftAction}
+      saveMyStyleAction={saveMyStyleAction}
+      moveWorkspaceAiRephraseStyleAction={moveWorkspaceAiRephraseStyleAction}
       saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
       saveSavedViewAction={saveWorkspaceSavedViewAction}
       saveUserWorkspaceAiSettingsAction={saveUserWorkspaceAiSettingsAction}
-      saveUserAiPromptOverrideAction={saveUserAiPromptOverrideAction}
+      saveUserAiRephraseStyleOverrideAction={saveUserAiRephraseStyleOverrideAction}
+      saveWorkspaceAiRephraseStyleAction={saveWorkspaceAiRephraseStyleAction}
       saveWorkspaceAiSettingsAction={saveWorkspaceAiSettingsAction}
       saveWorkspaceAiPromptAction={saveWorkspaceAiPromptAction}
       searchTicketLinkTargetsAction={searchWorkspaceTicketLinkTargetsAction}
@@ -285,6 +286,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       userDisplayName={user.displayName}
       userEmail={user.email}
       userFirstName={user.firstName}
+      userId={user.id}
       userLastName={user.lastName}
       userRole={user.role}
       validateConnectionAction={validateHelpdeskConnectionAction}

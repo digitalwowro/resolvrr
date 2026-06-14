@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { AiRephraseStyleOption, RewriteDraftAction } from "@/features/ai";
 import type {
   SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
@@ -25,8 +26,12 @@ export type TicketMetadataEditorStateProps = {
   onMetadataSavedDetailRefresh?: (ticketId: string) => void;
   onReturnToListAfterUpdate(): void;
   recentlyViewedLinkTargets: WorkspaceTicketLinkTarget[];
+  rephraseStyleOptions?: AiRephraseStyleOption[];
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
+  rewriteDraftAction?: RewriteDraftAction;
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
+  userId?: string;
+  workspaceId?: string;
 };

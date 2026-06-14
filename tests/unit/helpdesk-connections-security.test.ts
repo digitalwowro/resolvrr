@@ -5,6 +5,7 @@ import { encryptSecret } from "@/security/encryption";
 import type {
   HelpdeskConnectionWithCredential,
   HelpdeskConnectionsRepository,
+  WorkspaceAccess,
 } from "@/features/helpdesk-connections/repository";
 import {
   setActiveConnection,
@@ -12,6 +13,11 @@ import {
 } from "@/features/helpdesk-connections/service";
 
 const key = Buffer.from("0123456789abcdef0123456789abcdef").toString("base64");
+const access: WorkspaceAccess = {
+  canEditAiRephraseStyleOverrides: false,
+  canEditMyStyle: true,
+  role: "AGENT",
+};
 
 function form(values: Record<string, string>): FormData {
   const formData = new FormData();
@@ -29,6 +35,7 @@ function connection(
     displayName: "Support",
     baseUrl: "https://93.184.216.34",
     status: "active",
+    access,
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
     credential: {
@@ -54,6 +61,10 @@ function repository(seed: HelpdeskConnectionWithCredential[]) {
     findForUser: async (userId, connectionId) => {
       const row = rows.get(connectionId);
       return row?.userId === userId ? row : null;
+    },
+    getAccess: async (userId, connectionId) => {
+      const row = rows.get(connectionId);
+      return row?.userId === userId ? row.access : null;
     },
     create: async () => {
       throw new Error("Not needed in this test");
