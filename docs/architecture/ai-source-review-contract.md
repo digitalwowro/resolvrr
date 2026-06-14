@@ -1,8 +1,8 @@
 # AI Source, Privacy, And Review Contract
 
-This contract applies to future AI drafting, reply, and reviewed-action
-features. It complements the implemented read-only selected-ticket summary
-contract and keeps AI behavior bounded before those features are built.
+This contract applies to AI drafting, reply, and reviewed-action features. It
+complements the implemented read-only selected-ticket summary contract and
+keeps AI behavior bounded as assisted AI grows.
 
 ## Source Data
 
@@ -24,9 +24,15 @@ IDs, or unsanitized HTML.
 
 ## Freshness
 
-AI drafting and reply generation must reload selected-ticket detail server-side
-from the provider before prompt construction. They must not use stale client
-state, stale route-loaded state, or stale persistent cache as source context.
+AI operations that use selected-ticket source, such as suggested reply
+generation or reviewed action preparation, must reload selected-ticket detail
+server-side from the provider before prompt construction. They must not use
+stale client state, stale route-loaded state, or stale persistent cache as
+source context.
+
+Proofread and rephrase are draft-only operations. They use the user's current
+composer draft plus My Style and do not require a provider read because they do
+not include selected-ticket source context.
 
 If a provider read fails, the AI operation is unavailable. The UI may preserve
 the user's local draft text and show a retry path, but it must not generate from
@@ -53,6 +59,12 @@ The UI must make failure and uncertainty recoverable. If an AI operation fails,
 the original draft or current ticket state remains intact. If the provider write
 later fails after user approval, the normal provider mutation failure handling
 applies.
+
+Unsubmitted inline composer text must be recoverable across page refreshes and
+short browser interruptions. Local browser draft recovery may keep the draft
+body and a small per-composer suggestion history until the user closes the
+composer, discards changes, submits through Update, closes the ticket tab, or
+the local retention window expires.
 
 ## Failure States
 

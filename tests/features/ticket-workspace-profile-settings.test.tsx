@@ -158,4 +158,81 @@ describe("TicketWorkspace profile settings", () => {
       ),
     ).toBeInTheDocument();
   });
+
+  it("loads, saves, and resets My Style from My Profile", async () => {
+    const user = userEvent.setup();
+    const loadMyStyleAction = vi.fn(async () => ({
+      style: {
+        audience: "Technical customers",
+        constraints: "Avoid unsupported promises.",
+        preferences: "Use short paragraphs.",
+        role: "Support engineer",
+        tone: "Warm",
+      },
+    }));
+    const saveMyStyleAction = vi.fn(async (formData: FormData) => {
+      expect(formData.get("role")).toBe("Escalation engineer");
+      return {
+        code: "my-style-saved" as const,
+        data: {
+          style: {
+            audience: "Technical customers",
+            constraints: "Avoid unsupported promises.",
+            preferences: "Use short paragraphs.",
+            role: "Escalation engineer",
+            tone: "Warm",
+          },
+        },
+        ok: true,
+      };
+    });
+    const resetMyStyleAction = vi.fn(async () => ({
+      code: "my-style-reset" as const,
+      data: {
+        style: {
+          audience: "",
+          constraints: "",
+          preferences: "",
+          role: "",
+          tone: "",
+        },
+      },
+      ok: true,
+    }));
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        listResult={availableList}
+        loadMyStyleAction={loadMyStyleAction}
+        logoutAction={noopAction}
+        resetMyStyleAction={resetMyStyleAction}
+        rows={[row]}
+        saveMyStyleAction={saveMyStyleAction}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    const dialog = await openProfileSettings(user);
+    const roleInput = await within(dialog).findByLabelText("Role");
+    expect(roleInput).toHaveValue("Support engineer");
+
+    await user.clear(roleInput);
+    await user.type(roleInput, "Escalation engineer");
+    await user.click(within(dialog).getByRole("button", { name: "Save My Style" }));
+
+    expect(saveMyStyleAction).toHaveBeenCalledTimes(1);
+    expect(await within(dialog).findByText("My Style saved.")).toBeInTheDocument();
+    expect(roleInput).toHaveValue("Escalation engineer");
+
+    await user.click(within(dialog).getByRole("button", { name: "Reset" }));
+
+    expect(resetMyStyleAction).toHaveBeenCalledTimes(1);
+    expect(await within(dialog).findByText("My Style reset.")).toBeInTheDocument();
+    expect(roleInput).toHaveValue("");
+  });
 });

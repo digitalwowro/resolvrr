@@ -1,3 +1,4 @@
+export { rewriteDraftAction } from "./draft-rewrite-actions";
 export { summarizeWorkspaceTicketAction } from "./ticket-summary-actions";
 export {
   loadWorkspaceAiSettingsAction,
@@ -12,12 +13,34 @@ export {
   saveUserAiPromptOverrideAction,
   saveWorkspaceAiPromptAction,
 } from "./prompt-actions";
+export {
+  loadMyStyleAction,
+  resetMyStyleAction,
+  saveMyStyleAction,
+} from "./my-style-actions";
 export type { AiPromptKey } from "./prompt-registry";
 export type {
   SummarizeWorkspaceTicketAction,
   TicketAiSummaryRequest,
   TicketAiSummaryResult,
 } from "./model";
+export type {
+  DraftComposerMode,
+  DraftRephraseMode,
+  DraftRewriteOperation,
+  DraftRewriteRequest,
+  DraftRewriteResult,
+  RewriteDraftAction,
+} from "./draft-rewrite-model";
+export type {
+  LoadMyStyleAction,
+  MyStyleActionCode,
+  MyStyleActionResult,
+  MyStyleData,
+  MyStyleDataResult,
+  ResetMyStyleAction,
+  SaveMyStyleAction,
+} from "./my-style-model";
 export type {
   LoadWorkspaceAiSettingsAction,
   SaveUserWorkspaceAiSettingsAction,

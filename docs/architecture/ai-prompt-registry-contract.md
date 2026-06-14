@@ -33,9 +33,16 @@ registry permits them. Non-admin users may see personal prompt controls only
 when at least one registered prompt is user-overridable and workspace personal
 overrides are enabled.
 
-The selected-ticket summary prompt is the current admin-managed example. It is
-admin-editable and never user-overridable so summaries remain consistent across
-users in the same workspace.
+The current registered prompts are:
+
+- `ticket-summary`: admin-editable and never user-overridable so summaries
+  remain consistent across users in the same workspace.
+- `draft-proofread`: admin-editable and user-overridable when workspace policy
+  allows personal prompt overrides. It applies to draft-only proofread
+  operations and may use My Style.
+- `draft-rephrase`: admin-editable and user-overridable when workspace policy
+  allows personal prompt overrides. It applies to draft-only rephrase
+  operations and may use My Style.
 
 Disabling personal overrides preserves saved user prompt rows but makes them
 inactive. Effective prompt resolution must ignore user rows while the workspace
@@ -55,7 +62,7 @@ telemetry.
 
 ## Future Prompt Operations
 
-Proofread, rephrase, suggested reply, and reviewed-action prompts must be
-registered before implementation. Each operation must state whether My Style
-applies, whether user prompt overrides are allowed, which selected-ticket source
-data is used, and whether generated output is cached.
+Suggested reply and reviewed-action prompts must be registered before
+implementation. Each operation must state whether My Style applies, whether user
+prompt overrides are allowed, which selected-ticket source data is used, and
+whether generated output is cached.

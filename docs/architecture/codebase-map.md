@@ -46,6 +46,8 @@ added, moved, renamed, or removed.
       - `page.tsx` (`src/app/workspace/page.tsx`): protected authenticated workspace route that
         composes the active helpdesk connection ticket read path, controlled metadata mutation
         action, internal-note action, and customer-reply action into the real workspace.
+      - `workspace-page-helpers.ts` (`src/app/workspace/workspace-page-helpers.ts`): route-local
+        saved-view list query helper for the workspace page.
     - `globals.css` (`src/app/globals.css`): global Tailwind import, base document styles, and
       default plain-anchor color.
     - `layout.tsx` (`src/app/layout.tsx`): root document shell and metadata.
@@ -133,6 +135,8 @@ added, moved, renamed, or removed.
     - `auth-repository.ts` (`src/data/auth-repository.ts`): Prisma-backed auth repository.
     - `helpdesk-connections-repository.ts` (`src/data/helpdesk-connections-repository.ts`):
       Prisma-backed helpdesk connection repository and active connection preference persistence.
+    - `my-style-repository.ts` (`src/data/my-style-repository.ts`): Prisma-backed encrypted
+      per-user My Style repository.
     - `prisma.ts` (`src/data/prisma.ts`): Prisma Client singleton with PostgreSQL driver adapter.
     - `saved-views-repository-mappers.ts` (`src/data/saved-views-repository-mappers.ts`): saved
       views repository mappers runtime module.
@@ -146,11 +150,26 @@ added, moved, renamed, or removed.
       tabs.
   - `src/features`: product feature boundaries that compose core contracts into workflows.
     - `src/features/ai`: provider-neutral AI Assistant runtime feature boundary, currently
-      including selected-ticket summaries, AI settings, Prompt Center, provider validation, and
-      generated-summary cache integration.
+      including selected-ticket summaries, AI settings, Prompt Center, My Style, proofread/rephrase
+      draft assistance, provider validation, and generated-summary cache integration.
+      - `draft-rewrite-actions.ts` (`src/features/ai/draft-rewrite-actions.ts`):
+        authenticated server action for proofread/rephrase draft assistance over active-workspace AI
+        settings, registered prompts, and My Style.
+      - `draft-rewrite-model.ts` (`src/features/ai/draft-rewrite-model.ts`): provider-neutral
+        proofread/rephrase request, mode, unavailable-state, and action result types.
+      - `draft-rewrite-service.ts` (`src/features/ai/draft-rewrite-service.ts`): draft-only
+        proofread/rephrase prompt construction and AI text generation orchestration.
       - `index.ts` (`src/features/ai/index.ts`): AI feature exports.
       - `model.ts` (`src/features/ai/model.ts`): read-only selected-ticket AI summary request,
         result, unavailable-state, and action types.
+      - `my-style-actions.ts` (`src/features/ai/my-style-actions.ts`): authenticated server actions
+        for loading, saving, and resetting the current user's My Style.
+      - `my-style-model.ts` (`src/features/ai/my-style-model.ts`): structured My Style fields,
+        action result codes, and action types.
+      - `my-style-repository.ts` (`src/features/ai/my-style-repository.ts`): provider-neutral
+        per-user encrypted My Style persistence contract.
+      - `my-style-service.ts` (`src/features/ai/my-style-service.ts`): My Style normalization,
+        length validation, encryption, loading, saving, and reset orchestration.
       - `prompt-actions.ts` (`src/features/ai/prompt-actions.ts`): authenticated server actions for
         loading Prompt Center data, saving/resetting prompt defaults and overrides, and saving the
         workspace override policy.
@@ -429,16 +448,24 @@ added, moved, renamed, or removed.
         - `ticket-detail-loading-shell.tsx`
           (`src/features/workspace/components/ticket-detail-loading-shell.tsx`): ticket detail
           loading shell workspace UI component.
+        - `ticket-detail-header.tsx`
+          (`src/features/workspace/components/ticket-detail-header.tsx`): selected-ticket header
+          with priority, state, customer identity, ticket link, refresh, and summary controls.
         - `ticket-detail-sidebar.tsx`
           (`src/features/workspace/components/ticket-detail-sidebar.tsx`): production metadata
           sidebar shell for selected-ticket subscription, tags, links, and editor-provided metadata
           controls.
         - `ticket-detail.tsx` (`src/features/workspace/components/ticket-detail.tsx`): production
-          selected-ticket detail header and layout.
+          selected-ticket detail composition around the metadata editor and detail header.
         - `ticket-inline-communication-composer.tsx`
           (`src/features/workspace/components/ticket-inline-communication-composer.tsx`):
-          capability-gated inline Reply/Comment textarea shared by article cards. It stages text in
-          the selected-ticket draft and has no local Send/Cancel footer.
+          capability-gated inline Reply/Comment rich-text composer shared by article cards. It
+          stages text in the selected-ticket draft, exposes draft-only proofread/rephrase controls,
+          and has no local Send/Cancel footer.
+        - `ticket-communication-draft-persistence.ts`
+          (`src/features/workspace/components/ticket-communication-draft-persistence.ts`):
+          browser-local IndexedDB persistence for unsent inline composer bodies and small AI
+          suggestion history, scoped by user, workspace, ticket, and composer mode.
         - `ticket-list-pager-rows.ts`
           (`src/features/workspace/components/ticket-list-pager-rows.ts`): list pager request,
           identity, row append, and refreshed-baseline merge helpers.
@@ -564,8 +591,8 @@ added, moved, renamed, or removed.
           all, and Comment actions.
         - `ticket-thread.tsx` (`src/features/workspace/components/ticket-thread.tsx`): production
           ticket article thread state owner. It tracks one active inline composer by article and
-          mode, writes composer text into the selected-ticket draft, and does not render standalone
-          bottom communication composers.
+          mode, restores local unsent draft/suggestion state, writes composer text into the
+          selected-ticket draft, and does not render standalone bottom communication composers.
         - `ticket-workspace-chrome.tsx`
           (`src/features/workspace/components/ticket-workspace-chrome.tsx`): ticket workspace chrome
           workspace UI component.
@@ -581,6 +608,9 @@ added, moved, renamed, or removed.
         - `ticket-workspace-display-types.ts`
           (`src/features/workspace/components/ticket-workspace-display-types.ts`): type contracts
           for ticket workspace display.
+        - `ticket-workspace-display-work-area.tsx`
+          (`src/features/workspace/components/ticket-workspace-display-work-area.tsx`):
+          list/detail work-area switch for the workspace display coordinator.
         - `ticket-workspace-display.tsx`
           (`src/features/workspace/components/ticket-workspace-display.tsx`): client-side production
           workspace display composition for controls, tabs, table, and selected-ticket detail
@@ -696,7 +726,14 @@ added, moved, renamed, or removed.
           navigation and section button presentation.
         - `workspace-settings-profile-section.tsx`
           (`src/features/workspace/components/workspace-settings-profile-section.tsx`): in-modal
-          global My Profile account summary, first/last name form, and avatar upload form.
+          global My Profile account, password, and My Style form composition.
+        - `workspace-settings-profile-account-card.tsx`
+          (`src/features/workspace/components/workspace-settings-profile-account-card.tsx`): My
+          Profile account summary, first/last name form, and avatar upload control.
+        - `workspace-settings-my-style-form.tsx`
+          (`src/features/workspace/components/workspace-settings-my-style-form.tsx`): My Profile
+          My Style settings form for private role, audience, tone, preference, and constraint
+          guidance.
         - `workspace-settings-profile-name-field.tsx`
           (`src/features/workspace/components/workspace-settings-profile-name-field.tsx`): reusable
           first/last name input row with international-name tooltip.
@@ -888,6 +925,7 @@ added, moved, renamed, or removed.
     summary cache schema.
   - `helpdesk-connections.prisma` (`prisma/helpdesk-connections.prisma`): helpdesk connection,
     provider credential, and provider mutation log schema.
+  - `my-style.prisma` (`prisma/my-style.prisma`): encrypted per-user My Style schema.
   - `prisma/migrations`: database migration history.
     - `prisma/migrations/20260519062146_init`: contains related 20260519062146_init files.
       - `migration.sql` (`prisma/migrations/20260519062146_init/migration.sql`): initial SQL schema
@@ -916,6 +954,10 @@ added, moved, renamed, or removed.
       - `migration.sql` (`prisma/migrations/20260607120000_add_ai_prompt_center/migration.sql`):
         migration adding encrypted workspace prompt defaults, user prompt overrides, and the
         workspace user-override policy flag.
+    - `prisma/migrations/20260614100000_add_user_my_style`: contains related
+      20260614100000_add_user_my_style files.
+      - `migration.sql` (`prisma/migrations/20260614100000_add_user_my_style/migration.sql`):
+        migration adding encrypted per-user My Style storage.
     - `migration_lock.toml` (`prisma/migrations/migration_lock.toml`): Prisma migration provider
       lockfile.
   - `saved-views.prisma` (`prisma/saved-views.prisma`): saved view and user saved-view preference
@@ -995,6 +1037,11 @@ added, moved, renamed, or removed.
       AI prompt override rejection, policy disabling, and non-admin Prompt Center visibility.
     - `ai-prompts-test-helpers.ts` (`tests/features/ai-prompts-test-helpers.ts`): shared AI prompt
       repository, settings, connection, cache, form, and user fixtures.
+    - `ai-draft-rewrite-service.test.ts` (`tests/features/ai-draft-rewrite-service.test.ts`):
+      verifies draft-only proofread/rephrase prompt composition, My Style inclusion, unavailable
+      states, and injected provider behavior.
+    - `ai-my-style-service.test.ts` (`tests/features/ai-my-style-service.test.ts`): verifies
+      encrypted My Style load/save/reset behavior, validation, and unauthenticated guards.
     - `saved-view-management-permissions.test.ts`
       (`tests/features/saved-view-management-permissions.test.ts`): verifies saved view management
       permissions behavior.
@@ -1017,6 +1064,9 @@ added, moved, renamed, or removed.
     - `ticket-communication-comments-workspace.test.tsx`
       (`tests/features/ticket-communication-comments-workspace.test.tsx`): verifies ticket
       communication comments workspace behavior.
+    - `ticket-communication-ai-drafts-workspace.test.tsx`
+      (`tests/features/ticket-communication-ai-drafts-workspace.test.tsx`): verifies local inline
+      composer draft recovery, proofread suggestion persistence, and suggestion apply behavior.
     - `ticket-communication-workspace-test-utils.tsx`
       (`tests/features/ticket-communication-workspace-test-utils.tsx`): shared test utilities for
       ticket communication workspace.
@@ -1194,7 +1244,7 @@ added, moved, renamed, or removed.
       verifies Settings Views default updates and workspace creation behavior.
     - `ticket-workspace-profile-settings.test.tsx`
       (`tests/features/ticket-workspace-profile-settings.test.tsx`): verifies My Profile account,
-      avatar upload, and password settings behavior.
+      avatar upload, password, and My Style settings behavior.
     - `ticket-workspace-test-utils.tsx` (`tests/features/ticket-workspace-test-utils.tsx`): shared
       provider-backed workspace fixtures and render helpers for feature tests.
     - `ticket-workspace-url-sync.test.tsx` (`tests/features/ticket-workspace-url-sync.test.tsx`):

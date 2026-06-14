@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { encryptSecret } from "@/security/encryption";
-import { ticketSummaryPromptKey } from "@/features/ai/prompt-registry";
+import {
+  draftProofreadPromptKey,
+  draftRephrasePromptKey,
+  ticketSummaryPromptKey,
+} from "@/features/ai/prompt-registry";
 import {
   loadAiPromptCenter,
   resolveEffectiveAiPrompt,
@@ -86,18 +90,23 @@ describe("AI prompt overrides", () => {
     });
   });
 
-  it("hides prompt center from non-admins when no user-editable prompts exist", async () => {
-    await expect(
-      loadAiPromptCenter({
-        connectionRepository: connectionRepository(),
-        encryptionKey,
-        promptRepository: promptRepository(),
-        settingsRepository: settingsRepository(baseWorkspaceSetting(true)),
-        user: user("USER"),
-      }),
-    ).resolves.toMatchObject({
-      canView: false,
-      userPrompts: [],
+  it("shows user-editable draft prompts to non-admins when overrides are enabled", async () => {
+    const result = await loadAiPromptCenter({
+      connectionRepository: connectionRepository(),
+      encryptionKey,
+      promptRepository: promptRepository(),
+      settingsRepository: settingsRepository(baseWorkspaceSetting(true)),
+      user: user("USER"),
+    });
+
+    expect(result).toMatchObject({
+      adminPrompts: [],
+      canManageWorkspace: false,
+      canView: true,
+      userPrompts: [
+        { key: draftProofreadPromptKey },
+        { key: draftRephrasePromptKey },
+      ],
     });
   });
 });

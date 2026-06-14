@@ -32,6 +32,11 @@ My Style text must not be logged, included in telemetry, exposed to other users,
 or written to the helpdesk provider. If the app later adds an admin reset
 workflow, it must clear the stored style without revealing the content.
 
+The current implementation stores My Style server-side as one encrypted
+structured payload per user. Loading, saving, and resetting My Style require the
+current authenticated user. Empty fields are allowed; invalid oversized fields
+are rejected without changing the stored style.
+
 ## Where My Style Applies
 
 My Style applies only to user-writing operations whose contracts explicitly
@@ -55,6 +60,11 @@ When an operation uses My Style, prompt construction must combine:
 - the effective workspace or personal prompt override, if allowed;
 - the user's My Style fields;
 - fresh selected-ticket source context where required by the operation.
+
+Proofread and rephrase currently use My Style with the user's current composer
+draft only. They do not include selected-ticket thread content. Suggested reply
+generation and any later source-aware drafting operation must include fresh
+selected-ticket source context under the source/review contract.
 
 My Style identity must be included in any durable generated-output cache
 fingerprint for operations that cache generated drafts. The cache key may use a

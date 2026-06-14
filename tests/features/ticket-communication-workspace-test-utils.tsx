@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { vi } from "vitest";
+import type { RewriteDraftAction } from "@/features/ai";
 import {
   defaultWorkspaceTicketColumns,
   type LoadWorkspaceTicketDetailAction,
@@ -43,12 +44,18 @@ export function renderWorkspace({
   internalNotes = false,
   updateTicketMetadataAction = noopMutationAction,
   loadTicketDetailAction,
+  rewriteDraftAction,
+  userId,
+  workspaceId = "connection-1",
 }: {
   articles?: WorkspaceArticle[];
   customerReplies?: boolean;
   internalNotes?: boolean;
   loadTicketDetailAction?: LoadWorkspaceTicketDetailAction;
+  rewriteDraftAction?: RewriteDraftAction;
   updateTicketMetadataAction?: MutationAction;
+  userId?: string;
+  workspaceId?: string;
 } = {}) {
   const detailProps = selectedDetailProps();
   const detail = articles ? { ...detailProps.detail, articles } : detailProps.detail;
@@ -56,7 +63,7 @@ export function renderWorkspace({
   render(
     <TicketWorkspace
       columns={defaultWorkspaceTicketColumns}
-      connections={[{ id: "connection-1", label: "Support", active: true }]}
+      connections={[{ id: workspaceId, label: "Support", active: true }]}
       detail={detail}
       detailResult={{ status: "available", detail }}
       listResult={{
@@ -70,7 +77,9 @@ export function renderWorkspace({
       setActiveConnectionAction={noopAction}
       tabs={[{ ...row }]}
       updateTicketMetadataAction={updateTicketMetadataAction}
+      rewriteDraftAction={rewriteDraftAction}
       userEmail="agent@example.com"
+      userId={userId}
     />,
   );
 }

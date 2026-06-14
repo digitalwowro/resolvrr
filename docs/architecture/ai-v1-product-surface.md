@@ -50,6 +50,11 @@ Implemented and future AI operations must keep their contracts separate. The
 selected-ticket summary contract must not quietly become the reply-draft,
 proofread, rephrase, My Style, or reviewed-action contract.
 
+The currently implemented AI Assistant surface covers selected-ticket
+summaries, Prompt Center, My Style, and proofread/rephrase actions for existing
+inline composer drafts. Suggested reply generation and reviewed action
+preparation remain future v1 capabilities.
+
 ## Capability Contracts
 
 Selected-ticket summaries explain the current ticket. They use provider-neutral
@@ -66,12 +71,22 @@ user-overridable.
 My Style is user-specific writing guidance for drafting operations. It is not a
 workspace prompt default, not an admin-managed policy text, and not summary
 context. My Style applies only to operations whose contract explicitly includes
-personal writing guidance.
+personal writing guidance. The implemented My Style fields are stored
+server-side, encrypted at rest, and visible only to the owning user.
 
 Proofread and rephrase actions improve text the user has already written in an
 internal-note or customer-reply draft. They do not create provider writes, do
 not send communication, and must leave the original text recoverable until the
-user explicitly accepts or applies generated text.
+user explicitly accepts or applies generated text. The implemented
+proofread/rephrase flow sends only the current draft text, composer type, the
+effective registered prompt, and the user's My Style fields to the AI provider.
+It does not read selected-ticket thread content.
+
+Inline composer drafts are persisted locally in the browser so refreshes or
+browser recovery do not silently discard typed text. Local recovery may retain
+the latest draft body and a small suggestion history for the user/workspace/
+ticket until the user closes the composer, discards changes, submits through
+Update, closes the ticket tab, or the local retention window expires.
 
 Suggested reply drafts create editable customer-reply draft text from selected
 ticket context. They do not submit a reply. The user must review, edit if
@@ -84,17 +99,21 @@ user approval through the existing update or communication flow.
 
 ## Context Boundary
 
-V1 AI Assistant operations may use only the selected ticket's provider-neutral
-metadata and sanitized article/thread text. Linked tickets, saved views,
-customer-wide history, knowledge base content, workspace-wide search results,
-and arbitrary provider records are not v1 AI context.
+V1 AI Assistant operations may use only the source their specific contract
+allows. Selected-ticket and suggested-reply operations may use provider-neutral
+metadata and sanitized article/thread text for the selected ticket. Linked
+tickets, saved views, customer-wide history, knowledge base content,
+workspace-wide search results, and arbitrary provider records are not v1 AI
+context.
 
-Drafting and reply-generation operations must reload selected-ticket detail
-server-side from the provider before prompt construction. They must not generate
-from stale route state, stale client state, or stale persistent cache. Cache may
-still support already-implemented summary display where that contract allows
-cache-only hydration, but future drafting and reply generation require a fresh
-provider read.
+Proofread and rephrase are draft-only operations: they use the user's current
+composer draft and My Style, not provider ticket source. Future drafting and
+reply-generation operations that use selected-ticket context must reload
+selected-ticket detail server-side from the provider before prompt construction.
+They must not generate from stale route state, stale client state, or stale
+persistent cache. Cache may still support already-implemented summary display
+where that contract allows cache-only hydration, but future selected-ticket
+drafting and reply generation require a fresh provider read.
 
 AI runtime code must stay outside helpdesk provider plugins. Helpdesk providers
 continue to own only provider reads and writes. Core, workspace UI, and ticket

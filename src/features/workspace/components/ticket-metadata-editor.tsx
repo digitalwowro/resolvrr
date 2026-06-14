@@ -2,6 +2,9 @@
 
 import { useMemo, type ReactNode } from "react";
 import type {
+  RewriteDraftAction,
+} from "@/features/ai";
+import type {
   SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
   TicketMetadataMutationCapabilities,
@@ -31,7 +34,10 @@ export function TicketMetadataEditor({
   onReturnToListAfterUpdate,
   recentlyViewedLinkTargets = [],
   searchTicketLinkTargetsAction = unavailableLinkTargetSearchAction,
+  rewriteDraftAction,
   updateTicketMetadataAction,
+  userId,
+  workspaceId,
 }: {
   communicationCapabilities?: TicketCommunicationCapabilities;
   detail: WorkspaceTicketDetail;
@@ -42,9 +48,12 @@ export function TicketMetadataEditor({
   onReturnToListAfterUpdate(): void;
   recentlyViewedLinkTargets?: WorkspaceTicketLinkTarget[];
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
+  rewriteDraftAction?: RewriteDraftAction;
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
+  userId?: string;
+  workspaceId?: string;
 }) {
   const loadedBaseline = useMemo(() => metadataDraftFromDetail(detail), [detail]);
 
@@ -61,7 +70,10 @@ export function TicketMetadataEditor({
       onReturnToListAfterUpdate={onReturnToListAfterUpdate}
       recentlyViewedLinkTargets={recentlyViewedLinkTargets}
       searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
+      rewriteDraftAction={rewriteDraftAction}
       updateTicketMetadataAction={updateTicketMetadataAction}
+      userId={userId}
+      workspaceId={workspaceId}
     />
   );
 }

@@ -11,6 +11,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import type {
   ActiveToolbarState,
   EditorCommand,
@@ -22,6 +23,7 @@ const toolbarIconClassName = "size-3 stroke-[2.5]";
 type TicketRichTextEditorToolbarRowProps = {
   activeToolbarState: ActiveToolbarState;
   disabled: boolean;
+  extraControls?: ReactNode;
   onClose?(): void;
   onCommand(command: EditorCommand): void;
   onInsertLink(): void;
@@ -30,6 +32,7 @@ type TicketRichTextEditorToolbarRowProps = {
 export function TicketRichTextEditorToolbarRow({
   activeToolbarState,
   disabled,
+  extraControls,
   onClose,
   onCommand,
   onInsertLink,
@@ -98,6 +101,11 @@ export function TicketRichTextEditorToolbarRow({
       >
         <Link aria-hidden="true" className={toolbarIconClassName} />
       </ToolbarButton>
+      {extraControls ? (
+        <div className="ml-2 flex items-center gap-1 border-l border-slate-200 pl-2">
+          {extraControls}
+        </div>
+      ) : null}
       {onClose ? (
         <div className="ml-auto">
           <ToolbarButton

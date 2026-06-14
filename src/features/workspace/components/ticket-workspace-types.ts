@@ -20,16 +20,20 @@ import type {
 } from "@/features/notifications";
 import type {
   LoadWorkspaceAiSettingsAction,
+  LoadMyStyleAction,
   LoadAiPromptCenterAction,
+  ResetMyStyleAction,
   ResetUserAiPromptOverrideAction,
   ResetWorkspaceAiPromptAction,
   SaveAiPromptOverridePolicyAction,
+  SaveMyStyleAction,
   SaveUserWorkspaceAiSettingsAction,
   SaveUserAiPromptOverrideAction,
   SaveWorkspaceAiSettingsAction,
   SaveWorkspaceAiPromptAction,
   SummarizeWorkspaceTicketAction,
   TicketAiSummaryResult,
+  RewriteDraftAction,
   WorkspaceAiSettingsData,
 } from "@/features/ai";
 import type {
@@ -80,7 +84,9 @@ export type TicketWorkspaceProps = {
   loadWorkspaceNotificationsAction?: LoadWorkspaceNotificationsAction;
   loadWorkspaceAiSettingsAction?: LoadWorkspaceAiSettingsAction;
   loadAiPromptCenterAction?: LoadAiPromptCenterAction;
+  loadMyStyleAction?: LoadMyStyleAction;
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
+  rewriteDraftAction?: RewriteDraftAction;
   summarizeTicketAction?: SummarizeWorkspaceTicketAction;
   initialTicketAiSummary?: {
     result: Extract<TicketAiSummaryResult, { status: "available" }>;
@@ -96,9 +102,11 @@ export type TicketWorkspaceProps = {
   reorderSavedViewsAction?: ReorderWorkspaceSavedViewsAction;
   initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
   saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
+  resetMyStyleAction?: ResetMyStyleAction;
   resetUserAiPromptOverrideAction?: ResetUserAiPromptOverrideAction;
   resetWorkspaceAiPromptAction?: ResetWorkspaceAiPromptAction;
   saveAiPromptOverridePolicyAction?: SaveAiPromptOverridePolicyAction;
+  saveMyStyleAction?: SaveMyStyleAction;
   saveUserWorkspaceAiSettingsAction?: SaveUserWorkspaceAiSettingsAction;
   saveUserAiPromptOverrideAction?: SaveUserAiPromptOverrideAction;
   saveWorkspaceAiSettingsAction?: SaveWorkspaceAiSettingsAction;
@@ -121,6 +129,7 @@ export type TicketWorkspaceProps = {
   userDisplayName?: string | null;
   userEmail: string;
   userFirstName?: string | null;
+  userId?: string;
   userLastName?: string | null;
   userRole?: AuthUserRole;
   validateConnectionAction?: HelpdeskConnectionFormAction;

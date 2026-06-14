@@ -1,10 +1,13 @@
 import type { AuthUser, AuthUserRole } from "@/auth/types";
 import type {
   LoadAiPromptCenterAction,
+  LoadMyStyleAction,
   LoadWorkspaceAiSettingsAction,
+  ResetMyStyleAction,
   ResetUserAiPromptOverrideAction,
   ResetWorkspaceAiPromptAction,
   SaveAiPromptOverridePolicyAction,
+  SaveMyStyleAction,
   SaveUserAiPromptOverrideAction,
   SaveUserWorkspaceAiSettingsAction,
   SaveWorkspaceAiPromptAction,
@@ -42,6 +45,7 @@ export type WorkspaceSettingsDialogProps = {
   initialSection: WorkspaceSettingsSection;
   initialSavedViewData?: SavedViewSettingsData;
   loadAiPromptCenterAction?: LoadAiPromptCenterAction;
+  loadMyStyleAction?: LoadMyStyleAction;
   loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
   loadWorkspaceAiSettingsAction?: LoadWorkspaceAiSettingsAction;
   onAiSettingsDataChange?(data: WorkspaceAiSettingsData): void;
@@ -50,9 +54,11 @@ export type WorkspaceSettingsDialogProps = {
   onSavedViewDataChange?(data: SavedViewSettingsData): void;
   providerOptions: ConnectionProviderOption[];
   resetUserAiPromptOverrideAction?: ResetUserAiPromptOverrideAction;
+  resetMyStyleAction?: ResetMyStyleAction;
   resetWorkspaceAiPromptAction?: ResetWorkspaceAiPromptAction;
   reorderSavedViewsAction?: ReorderWorkspaceSavedViewsAction;
   saveAiPromptOverridePolicyAction?: SaveAiPromptOverridePolicyAction;
+  saveMyStyleAction?: SaveMyStyleAction;
   saveSavedViewAction?: SaveWorkspaceSavedViewAction;
   saveUserAiPromptOverrideAction?: SaveUserAiPromptOverrideAction;
   saveUserWorkspaceAiSettingsAction?: SaveUserWorkspaceAiSettingsAction;

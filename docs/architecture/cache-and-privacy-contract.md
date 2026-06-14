@@ -42,6 +42,10 @@ job queues remain out of scope. Read-only AI behavior is defined separately in
   cache keys include user, active helpdesk connection, selected ticket, prompt
   version, sanitization version, provider protocol, model fingerprint, and
   source fingerprint/freshness metadata.
+- Inline composer drafts are recovered locally in the browser. The local record
+  is scoped by user, active workspace, selected ticket, and composer mode. It
+  may contain the unsent draft body and up to three draft AI suggestions, and it
+  expires after a short retention window.
 - Workspace and per-user AI settings are encrypted server-side configuration,
   not cache data. Changing active-workspace AI policy/default config invalidates
   generated summaries for that workspace; changing a user's per-workspace AI
@@ -51,8 +55,9 @@ job queues remain out of scope. Read-only AI behavior is defined separately in
 
 ## Non-Goals
 
-- No draft suggestions, customer replies, or assisted-action output cache in
-  this phase.
+- No server-side draft suggestions, customer replies, or assisted-action output
+  cache in this phase. Browser-local inline draft recovery is allowed only for
+  unsent composer text and short-lived suggestion history.
 - No background sync, webhooks, scheduled refresh jobs, or hidden provider
   writes in this phase.
 - No provider-specific cache keys, query syntax, raw API paths, or raw payload
@@ -149,6 +154,9 @@ Cached data must be classified before persistence:
 - Customer content: ticket titles, previews, sanitized thread content,
   recipients, note bodies, reply bodies, and generated text based on customer
   content. This must not be logged and must be encrypted at rest if persisted.
+- Browser-local draft content: unsent inline comment/reply bodies and local AI
+  suggestion alternatives. This must not be logged or sent to the server except
+  through explicit AI generation or Update actions chosen by the user.
 - Secrets: provider credentials, session tokens, cookies, password material, and
   AI credentials. These are never cache data.
 
@@ -163,6 +171,9 @@ Future cache implementations may tune exact TTLs, but the default classes are:
   not return an explicit freshness hint.
 - Generated AI output: selected-ticket summaries use a medium-lived encrypted
   cache, currently around 24 hours, keyed by source/model/prompt identity.
+- Browser-local inline composer drafts: short lived, currently around 7 days,
+  and cleared earlier when the user closes the composer, discards changes,
+  submits through Update, or closes the ticket tab.
 
 Any TTL can be shortened for sensitive data, provider errors, permission
 changes, or high-churn views. Expired snapshots may be shown only as stale data
@@ -184,6 +195,9 @@ confirms the write:
   invalidate all snapshots scoped to that connection for that user.
 - AI settings changes invalidate generated selected-ticket summaries scoped to
   the affected workspace or user/connection.
+- Inline composer drafts are cleared locally when the user closes that composer,
+  discards workspace changes, submits communication through Update, or closes
+  the ticket tab.
 
 Invalidation must not be treated as provider write success. Provider write
 success still comes only from the provider write result. Refresh failure after a
@@ -256,6 +270,10 @@ selected-ticket detail from provider source on the server before prompt
 preparation, then may reuse a generated-summary cache entry only when the
 source fingerprint, prompt version, sanitization version, user scope, connection
 scope, selected-ticket identity, provider protocol, and model fingerprint match.
+
+Proofread and rephrase use only the current composer draft plus My Style. Their
+browser-local draft recovery record is not selected-ticket source context and
+does not authorize a provider write.
 
 ## Observability
 

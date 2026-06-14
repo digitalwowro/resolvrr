@@ -11,6 +11,7 @@ import type {
   SearchWorkspaceTicketLinkTargetsAction,
 } from "@/features/tickets/link-target-search-action-result";
 import type {
+  RewriteDraftAction,
   SummarizeWorkspaceTicketAction,
   TicketAiSummaryResult,
 } from "@/features/ai";
@@ -58,6 +59,7 @@ export type TicketWorkspaceDisplayProps = {
   refreshTicketDetailAfterMetadataSave: boolean;
   rows: WorkspaceTicketRow[];
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
+  rewriteDraftAction?: RewriteDraftAction;
   summarizeTicketAction: SummarizeWorkspaceTicketAction;
   initialTicketAiSummary?: {
     result: Extract<TicketAiSummaryResult, { status: "available" }>;
@@ -80,5 +82,7 @@ export type TicketWorkspaceDisplayProps = {
   userDisplayName?: string | null;
   userEmail: string;
   userFirstName?: string | null;
+  userId?: string;
+  workspaceId?: string;
   userLastName?: string | null;
 };

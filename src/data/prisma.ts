@@ -9,7 +9,11 @@ const globalForPrisma = globalThis as typeof globalThis & {
 function hasPromptModelDelegates(
   client: PrismaClient | undefined,
 ): client is PrismaClient {
-  return Boolean(client?.workspaceAiPrompt && client.userAiPromptOverride);
+  return Boolean(
+    client?.workspaceAiPrompt &&
+      client.userAiPromptOverride &&
+      client.userMyStyle,
+  );
 }
 
 function prismaClient() {

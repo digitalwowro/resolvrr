@@ -45,6 +45,7 @@ export function TicketWorkspace({
   loadTicketDetailAction,
   loadTicketListPageAction,
   loadAiPromptCenterAction,
+  loadMyStyleAction,
   loadSavedViewsSettingsAction,
   loadWorkspaceNotificationsAction,
   loadWorkspaceAiSettingsAction,
@@ -61,10 +62,13 @@ export function TicketWorkspace({
   reorderSavedViewsAction,
   initialWorkspaceOpenTabsState,
   resetUserAiPromptOverrideAction,
+  resetMyStyleAction,
   resetWorkspaceAiPromptAction,
   saveAiPromptOverridePolicyAction,
   saveWorkspaceOpenTabsStateAction,
+  rewriteDraftAction,
   saveUserWorkspaceAiSettingsAction,
+  saveMyStyleAction,
   saveUserAiPromptOverrideAction,
   saveWorkspaceAiSettingsAction,
   saveWorkspaceAiPromptAction,
@@ -82,6 +86,7 @@ export function TicketWorkspace({
   userDisplayName = null,
   userEmail,
   userFirstName = null,
+  userId,
   userLastName = null,
   userRole = "USER",
   validateConnectionAction,
@@ -126,6 +131,7 @@ export function TicketWorkspace({
     () => connections.map(workspaceSettingsConnectionFromMenu),
     [connections],
   );
+  const activeWorkspaceId = connections.find((connection) => connection.active)?.id;
 
   function openSettings(section: WorkspaceSettingsSection) {
     setSettingsSection(section);
@@ -190,6 +196,7 @@ export function TicketWorkspace({
           }
           summarizeTicketAction={effectiveSummarizeTicketAction}
           initialTicketAiSummary={initialTicketAiSummary}
+          rewriteDraftAction={rewriteDraftAction}
           tabs={tabs}
           totalListCount={listResult.totalCount}
           updateTicketMetadataAction={updateTicketMetadataAction}
@@ -197,6 +204,8 @@ export function TicketWorkspace({
           userDisplayName={profileUser.displayName}
           userEmail={userEmail}
           userFirstName={profileUser.firstName}
+          userId={userId}
+          workspaceId={activeWorkspaceId}
           userLastName={profileUser.lastName}
           onOpenSettings={openSettings}
         />
@@ -214,6 +223,7 @@ export function TicketWorkspace({
           initialAiSettingsData={aiSettingsData}
           loadWorkspaceAiSettingsAction={loadWorkspaceAiSettingsAction}
           loadAiPromptCenterAction={loadAiPromptCenterAction}
+          loadMyStyleAction={loadMyStyleAction}
           loadSavedViewsSettingsAction={loadSavedViewsSettingsAction}
           onClose={() => setSettingsOpen(false)}
           onSavedViewDataChange={(data) => {
@@ -229,11 +239,13 @@ export function TicketWorkspace({
             );
           }}
           providerOptions={connectionProviderOptions}
+          resetMyStyleAction={resetMyStyleAction}
           resetUserAiPromptOverrideAction={resetUserAiPromptOverrideAction}
           resetWorkspaceAiPromptAction={resetWorkspaceAiPromptAction}
           reorderSavedViewsAction={reorderSavedViewsAction}
           onAiSettingsDataChange={setAiSettingsData}
           saveAiPromptOverridePolicyAction={saveAiPromptOverridePolicyAction}
+          saveMyStyleAction={saveMyStyleAction}
           saveSavedViewAction={saveSavedViewAction}
           saveUserWorkspaceAiSettingsAction={saveUserWorkspaceAiSettingsAction}
           saveUserAiPromptOverrideAction={saveUserAiPromptOverrideAction}

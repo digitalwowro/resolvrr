@@ -7,6 +7,7 @@ import {
   useState,
   type ClipboardEvent,
   type KeyboardEvent,
+  type ReactNode,
 } from "react";
 import { cn } from "@/components/ui/classnames";
 import { communicationBodyHasText } from "@/features/tickets/communication-body";
@@ -36,6 +37,7 @@ type TicketRichTextEditorProps = {
   autoFocus?: boolean;
   className?: string;
   disabled: boolean;
+  extraToolbarControls?: ReactNode;
   id: string;
   label: string;
   onChange(value: string): void;
@@ -48,6 +50,7 @@ export function TicketRichTextEditor({
   autoFocus = false,
   className,
   disabled,
+  extraToolbarControls,
   id,
   label,
   onChange,
@@ -239,6 +242,7 @@ export function TicketRichTextEditor({
       <TicketRichTextEditorToolbarRow
         activeToolbarState={activeToolbarState}
         disabled={disabled}
+        extraControls={extraToolbarControls}
         onClose={onClose}
         onCommand={execute}
         onInsertLink={insertLink}

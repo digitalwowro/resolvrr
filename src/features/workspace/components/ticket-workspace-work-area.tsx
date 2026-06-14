@@ -4,7 +4,7 @@ import type { DropdownOption, SortDirection } from "@/components/ui";
 import type { WorkspaceTicketDetailLoadResult } from "@/features/tickets/detail-action-result";
 import type { WorkspaceTicketLinkTarget } from "@/features/tickets/link-target-search-action-result";
 import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
-import type { SummarizeWorkspaceTicketAction } from "@/features/ai";
+import type { RewriteDraftAction, SummarizeWorkspaceTicketAction } from "@/features/ai";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type { TicketAiSummaryResult } from "@/features/ai";
 import type {
@@ -154,7 +154,7 @@ export function TicketWorkspaceListArea({
   );
 }
 
-type TicketWorkspaceDetailAreaProps = {
+export type TicketWorkspaceDetailAreaProps = {
   activeDetail?: TicketDetailLoadState;
   activeTicketId?: string;
   activeTicketSummary?: TicketDetailLoadingSummary;
@@ -168,6 +168,7 @@ type TicketWorkspaceDetailAreaProps = {
   refreshing: boolean;
   roundedTop: boolean;
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
+  rewriteDraftAction?: RewriteDraftAction;
   summarizeTicketAction: SummarizeWorkspaceTicketAction;
   initialTicketAiSummary?: {
     result: Extract<TicketAiSummaryResult, { status: "available" }>;
@@ -176,6 +177,8 @@ type TicketWorkspaceDetailAreaProps = {
   updateTicketMetadataAction(
     request: SelectedTicketUpdatePayload,
   ): Promise<TicketMetadataMutationActionState>;
+  userId?: string;
+  workspaceId?: string;
 };
 
 export function TicketWorkspaceDetailArea({
@@ -192,9 +195,12 @@ export function TicketWorkspaceDetailArea({
   refreshing,
   roundedTop,
   searchTicketLinkTargetsAction,
+  rewriteDraftAction,
   summarizeTicketAction,
   initialTicketAiSummary,
   updateTicketMetadataAction,
+  userId,
+  workspaceId,
 }: TicketWorkspaceDetailAreaProps) {
   if (activeDetail?.status === "unavailable") {
     return <DetailUnavailableState key="work-area" reason={activeDetail.reason} />;
@@ -213,10 +219,13 @@ export function TicketWorkspaceDetailArea({
         onReturnToListAfterUpdate={onReturnToListAfterUpdate}
         recentlyViewedLinkTargets={recentlyViewedLinkTargets}
         searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
+        rewriteDraftAction={rewriteDraftAction}
         summarizeTicketAction={summarizeTicketAction}
         initialTicketAiSummary={initialTicketAiSummary}
         refreshing={refreshing}
         updateTicketMetadataAction={updateTicketMetadataAction}
+        userId={userId}
+        workspaceId={workspaceId}
       />
     );
   }

@@ -30,6 +30,7 @@ export function WorkspaceSettingsDialog({
   initialSection,
   initialSavedViewData,
   loadAiPromptCenterAction,
+  loadMyStyleAction,
   loadWorkspaceAiSettingsAction,
   loadSavedViewsSettingsAction,
   onClose,
@@ -38,9 +39,11 @@ export function WorkspaceSettingsDialog({
   onSavedViewDataChange,
   providerOptions,
   resetUserAiPromptOverrideAction,
+  resetMyStyleAction,
   resetWorkspaceAiPromptAction,
   reorderSavedViewsAction,
   saveAiPromptOverridePolicyAction,
+  saveMyStyleAction,
   saveUserAiPromptOverrideAction,
   saveWorkspaceAiPromptAction,
   saveUserWorkspaceAiSettingsAction,
@@ -179,7 +182,10 @@ export function WorkspaceSettingsDialog({
           {section === "profile" ? (
             <WorkspaceSettingsProfileSection
               changePasswordAction={changePasswordAction}
+              loadMyStyleAction={loadMyStyleAction}
               onProfileUserChange={onProfileUserChange}
+              resetMyStyleAction={resetMyStyleAction}
+              saveMyStyleAction={saveMyStyleAction}
               updateAvatarAction={updateAvatarAction}
               updateProfileAction={updateProfileAction}
               userAvatarDataUrl={userAvatarDataUrl}

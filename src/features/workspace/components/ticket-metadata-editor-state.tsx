@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TicketMetadataMutationActionState } from "@/features/tickets/mutation-model";
 import {
@@ -32,6 +32,10 @@ import { TicketDetailSidebar } from "./ticket-detail-sidebar";
 import { TicketPrimaryMetadataFields } from "./ticket-primary-metadata-fields";
 import { TicketSecondaryMetadataFields } from "./ticket-secondary-metadata-fields";
 import { TicketThread } from "./ticket-thread";
+import {
+  clearPersistedCommunicationDrafts,
+  type CommunicationDraftPersistenceScope,
+} from "./ticket-communication-draft-persistence";
 import type { TicketMetadataEditorStateProps } from "./ticket-metadata-editor-state-types";
 
 export function TicketMetadataEditorState({
@@ -44,8 +48,11 @@ export function TicketMetadataEditorState({
   onMetadataSavedDetailRefresh,
   onReturnToListAfterUpdate,
   recentlyViewedLinkTargets,
+  rewriteDraftAction,
   searchTicketLinkTargetsAction,
   updateTicketMetadataAction,
+  userId,
+  workspaceId,
 }: TicketMetadataEditorStateProps) {
   const router = useRouter();
   const refreshSavedDetail =
@@ -83,6 +90,19 @@ export function TicketMetadataEditorState({
   const validation = validateMetadataDraft(detail, dirtyFields, currentDraft);
   const statusText = mutationStatusText(saving, mutationResult);
   const canUpdate = hasChanges && validation.valid && !saving;
+  const draftPersistenceScope = useMemo<
+    CommunicationDraftPersistenceScope | undefined
+  >(
+    () =>
+      userId && workspaceId
+        ? {
+            ticketExternalId: detail.id,
+            userId,
+            workspaceId,
+          }
+        : undefined,
+    [detail.id, userId, workspaceId],
+  );
 
   function changeDraft(nextDraft: SelectedTicketDraft) {
     setDraft(nextDraft);
@@ -93,6 +113,7 @@ export function TicketMetadataEditorState({
     const nextDraft = metadataDraftFromBaseline(currentBaseline);
     setDraft(nextDraft);
     setMutationResult({ status: "idle" });
+    void clearPersistedCommunicationDrafts(draftPersistenceScope);
   }
 
   function submitChanges(navigation: PostUpdateNavigation) {
@@ -153,6 +174,7 @@ export function TicketMetadataEditorState({
             }
           }
           if (submittedCommunication) {
+            void clearPersistedCommunicationDrafts(draftPersistenceScope);
             setThreadComposerResetKey((current) => current + 1);
           }
           const nextDraft = metadataDraftFromBaseline(submittedBaseline);
@@ -240,11 +262,13 @@ export function TicketMetadataEditorState({
             communicationDraft={currentDraft.communication}
             communicationCapabilities={communicationCapabilities}
             disabled={saving}
+            draftPersistenceScope={draftPersistenceScope}
             key={threadComposerResetKey}
             onCommunicationDraftChange={(communication) =>
               changeDraft({ ...currentDraft, communication })
             }
             onScrolledToLatest={() => setScrollAfterArticleCount(undefined)}
+            rewriteDraftAction={rewriteDraftAction}
             scrollAfterArticleCount={scrollAfterArticleCount}
           />
         </section>

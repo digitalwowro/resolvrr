@@ -18,6 +18,7 @@ model User {
   aiSummaryCaches      AiSummaryCache[]
   userAiSettings       UserWorkspaceAiSetting[]
   aiPromptOverrides    UserAiPromptOverride[]
+  myStyle              UserMyStyle?
   uiPreferences        UiPreference[]
   providerMutationLogs ProviderMutationLog[]
 }
