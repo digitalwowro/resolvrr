@@ -74,20 +74,21 @@ conversation content.
   source fingerprint/freshness, prompt version, sanitization version, provider
   protocol, and model fingerprint. Prompt text, raw provider payloads, model
   names, and generated summaries must not be logged.
-- Workspace AI prompt defaults and user prompt overrides are encrypted at rest.
-  User prompt override rows may remain stored when admins disable personal
-  prompt overrides, but effective prompt resolution must ignore them while the
-  workspace option is off. Prompt bodies must not be logged or exposed outside
-  the settings UI that is authorized to edit them.
-- My Style is user-specific writing guidance for future drafting operations.
-  It is private to the owning user, encrypted at rest, and structured around
-  role, audience, tone, writing preferences, and constraints. Admins can manage
-  workspace AI policy and prompt defaults, but they cannot view another user's
-  My Style content. My Style must follow the same no-logging posture as prompts
-  and generated output.
-- Proofread and rephrase operations use the current composer draft and My Style
-  only. They do not include selected-ticket thread context and do not write to
-  the helpdesk provider.
+- Workspace AI prompt defaults, workspace rephrase style prompts, and personal
+  rephrase style overrides are encrypted at rest when they contain authored
+  prompt text. Prompt bodies must not be logged or exposed outside the settings
+  UI that is authorized to edit them.
+- My Style is user-specific writing guidance scoped to a workspace. It is
+  private to the owning user, encrypted at rest, and structured around role,
+  audience, tone, writing preferences, and constraints. Admins can manage
+  workspace AI policy, base prompts, safety/guardrail instructions, and
+  workspace rephrase styles, but they cannot view another user's My Style
+  content. My Style must follow the same no-logging posture as prompts and
+  generated output.
+- Proofread operations use the current composer draft and workspace-scoped My
+  Style only. Rephrase operations also use the selected workspace rephrase style
+  prompt or a permitted personal override for that style. They do not include
+  selected-ticket thread context and do not write to the helpdesk provider.
 - Future suggested-reply and source-aware drafting operations must use a fresh
   server-side provider read of the selected ticket before prompt construction.
   They must not generate from stale client state or stale persistent cache.

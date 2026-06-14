@@ -11,6 +11,7 @@ import type {
   SearchWorkspaceTicketLinkTargetsAction,
 } from "@/features/tickets/link-target-search-action-result";
 import type {
+  AiRephraseStyleOption,
   RewriteDraftAction,
   SummarizeWorkspaceTicketAction,
   TicketAiSummaryResult,
@@ -60,6 +61,7 @@ export type TicketWorkspaceDisplayProps = {
   rows: WorkspaceTicketRow[];
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   rewriteDraftAction?: RewriteDraftAction;
+  rephraseStyleOptions?: AiRephraseStyleOption[];
   summarizeTicketAction: SummarizeWorkspaceTicketAction;
   initialTicketAiSummary?: {
     result: Extract<TicketAiSummaryResult, { status: "available" }>;

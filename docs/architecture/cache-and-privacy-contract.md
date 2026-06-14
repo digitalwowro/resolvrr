@@ -271,9 +271,11 @@ preparation, then may reuse a generated-summary cache entry only when the
 source fingerprint, prompt version, sanitization version, user scope, connection
 scope, selected-ticket identity, provider protocol, and model fingerprint match.
 
-Proofread and rephrase use only the current composer draft plus My Style. Their
-browser-local draft recovery record is not selected-ticket source context and
-does not authorize a provider write.
+Proofread and rephrase use only the current composer draft plus
+workspace-scoped My Style. Rephrase also uses the selected workspace rephrase
+style prompt or a permitted personal override for that style. Browser-local
+draft recovery is not selected-ticket source context and does not authorize a
+provider write.
 
 ## Observability
 

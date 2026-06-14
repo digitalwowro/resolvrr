@@ -13,7 +13,8 @@ root `.env`, `docs/deploy/.env.example`, and `src/config/env.ts` in sync.
 - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`: Docker Postgres settings.
 - `APP_ENCRYPTION_KEY`: base64-encoded 32-byte key for server-side encrypted
   provider credentials, workspace/user AI credentials, and sensitive cache
-  payloads, including AI prompt defaults and user prompt overrides.
+  payloads, including AI prompt defaults, workspace rephrase style prompts, and
+  personal rephrase style overrides.
 - `SESSION_SECRET`: server-side session secret material.
 
 Read-only AI provider credentials are not configured through environment
@@ -23,11 +24,11 @@ require each user to save an encrypted per-workspace key. OpenAI-compatible and
 Anthropic-compatible provider settings require an HTTPS base URL, model, and API
 key; saves run a live provider validation request before persistence.
 
-Prompt Center and future My Style data use the same application encryption
+Prompt Center and My Style data use the same application encryption
 posture as other AI settings. `APP_ENCRYPTION_KEY` must remain stable across
 deployments because it protects helpdesk credentials, AI keys, prompt defaults,
-personal prompt overrides, generated-summary cache payloads, and future
-personal style guidance.
+workspace rephrase style prompts, personal rephrase style overrides,
+generated-summary cache payloads, and workspace-scoped personal style guidance.
 
 Do not expose provider credentials, passwords, tokens, cookies, customer ticket
 content, AI credentials, prompts, generated summaries, or raw provider payloads

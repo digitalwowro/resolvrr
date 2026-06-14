@@ -50,38 +50,63 @@ function parseStoredStyle(value: string): MyStyleData {
 
 export async function loadMyStyle(input: {
   encryptionKey: string;
+  helpdeskConnectionId: string | undefined;
+  canEdit?: boolean;
+  activeWorkspaceLabel?: string | null;
   repository: MyStyleRepository;
   userId: string | undefined;
 }): Promise<MyStyleDataResult> {
-  if (!input.userId) {
-    return { style: emptyMyStyle };
+  const dataContext = {
+    activeWorkspace: input.helpdeskConnectionId
+      ? {
+          id: input.helpdeskConnectionId,
+          label: input.activeWorkspaceLabel ?? "Active workspace",
+        }
+      : null,
+    canEdit: input.canEdit ?? false,
+  };
+  if (!input.userId || !input.helpdeskConnectionId) {
+    return { ...dataContext, style: emptyMyStyle };
   }
 
-  const record = await input.repository.getMyStyle(input.userId);
+  const record = await input.repository.getMyStyle(
+    input.userId,
+    input.helpdeskConnectionId,
+  );
   if (!record) {
-    return { style: emptyMyStyle };
+    return { ...dataContext, style: emptyMyStyle };
   }
 
   try {
     return {
+      ...dataContext,
       style: parseStoredStyle(
         decryptSecret(record.encryptedStyle, input.encryptionKey),
       ),
     };
   } catch {
-    return { style: emptyMyStyle };
+    return { ...dataContext, style: emptyMyStyle };
   }
 }
 
 export async function saveMyStyle(input: {
+  activeWorkspaceLabel?: string | null;
+  canEdit?: boolean;
   encryptionKey: string;
   formData: FormData;
+  helpdeskConnectionId: string | undefined;
   repository: MyStyleRepository;
   userId: string | undefined;
 }): Promise<MyStyleActionResult> {
   const data = await loadMyStyle(input);
   if (!input.userId) {
     return { code: "not-authenticated", data, ok: false };
+  }
+  if (!input.helpdeskConnectionId) {
+    return { code: "no-active-workspace", data, ok: false };
+  }
+  if (!input.canEdit) {
+    return { code: "my-style-not-editable", data, ok: false };
   }
 
   const style = normalizedStyle(input.formData);
@@ -91,19 +116,23 @@ export async function saveMyStyle(input: {
 
   await input.repository.upsertMyStyle({
     encryptedStyle: encryptSecret(JSON.stringify(style), input.encryptionKey),
+    helpdeskConnectionId: input.helpdeskConnectionId,
     keyVersion: myStyleKeyVersion,
     userId: input.userId,
   });
 
   return {
     code: "my-style-saved",
-    data: { style },
+    data: { ...data, style },
     ok: true,
   };
 }
 
 export async function resetMyStyle(input: {
+  activeWorkspaceLabel?: string | null;
+  canEdit?: boolean;
   encryptionKey: string;
+  helpdeskConnectionId: string | undefined;
   repository: MyStyleRepository;
   userId: string | undefined;
 }): Promise<MyStyleActionResult> {
@@ -111,11 +140,17 @@ export async function resetMyStyle(input: {
   if (!input.userId) {
     return { code: "not-authenticated", data, ok: false };
   }
+  if (!input.helpdeskConnectionId) {
+    return { code: "no-active-workspace", data, ok: false };
+  }
+  if (!input.canEdit) {
+    return { code: "my-style-not-editable", data, ok: false };
+  }
 
-  await input.repository.deleteMyStyle(input.userId);
+  await input.repository.deleteMyStyle(input.userId, input.helpdeskConnectionId);
   return {
     code: "my-style-reset",
-    data: { style: emptyMyStyle },
+    data: { ...data, style: emptyMyStyle },
     ok: true,
   };
 }

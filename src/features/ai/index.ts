@@ -6,11 +6,14 @@ export {
   saveWorkspaceAiSettingsAction,
 } from "./settings-actions";
 export {
+  deleteWorkspaceAiRephraseStyleAction,
   loadAiPromptCenterAction,
-  resetUserAiPromptOverrideAction,
+  loadAiRephraseStylesAction,
+  moveWorkspaceAiRephraseStyleAction,
+  resetUserAiRephraseStyleOverrideAction,
   resetWorkspaceAiPromptAction,
-  saveAiPromptOverridePolicyAction,
-  saveUserAiPromptOverrideAction,
+  saveUserAiRephraseStyleOverrideAction,
+  saveWorkspaceAiRephraseStyleAction,
   saveWorkspaceAiPromptAction,
 } from "./prompt-actions";
 export {
@@ -26,7 +29,6 @@ export type {
 } from "./model";
 export type {
   DraftComposerMode,
-  DraftRephraseMode,
   DraftRewriteOperation,
   DraftRewriteRequest,
   DraftRewriteResult,
@@ -57,11 +59,19 @@ export type {
   AiPromptActionResult,
   AiPromptAdminView,
   AiPromptCenterData,
-  AiPromptUserView,
+  DeleteWorkspaceAiRephraseStyleAction,
   LoadAiPromptCenterAction,
-  ResetUserAiPromptOverrideAction,
+  MoveWorkspaceAiRephraseStyleAction,
+  ResetUserAiRephraseStyleOverrideAction,
   ResetWorkspaceAiPromptAction,
-  SaveAiPromptOverridePolicyAction,
-  SaveUserAiPromptOverrideAction,
+  SaveUserAiRephraseStyleOverrideAction,
+  SaveWorkspaceAiRephraseStyleAction,
   SaveWorkspaceAiPromptAction,
 } from "./prompt-model";
+export type {
+  AiRephraseStyleOption,
+  AiRephraseStylesData,
+  LoadAiRephraseStylesAction,
+  UserAiRephraseStyleOverrideView,
+  WorkspaceAiRephraseStyleView,
+} from "./rephrase-style-model";

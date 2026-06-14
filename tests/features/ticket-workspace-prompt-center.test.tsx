@@ -26,69 +26,73 @@ describe("TicketWorkspace Prompt Center", () => {
     routerRefresh.mockClear();
   });
 
-  it("lets admins manage workspace prompts and prompt override policy", async () => {
+  it("lets admins manage workspace prompts and rephrase styles", async () => {
     const user = userEvent.setup();
-    const loadAiPromptCenterAction = vi.fn(async () => ({
-      activeWorkspace: { id: "connection-1", label: "Support" },
+    const activeWorkspace = {
+      access: {
+        canEditAiRephraseStyleOverrides: true,
+        canEditMyStyle: true,
+        role: "ADMIN" as const,
+      },
+      id: "connection-1",
+      label: "Support",
+    };
+    const promptCenterData = (
+      prompt: string,
+      isCustomized: boolean,
+      stylePrompt = "Make the reply concise.",
+    ) => ({
+      activeWorkspace,
       adminPrompts: [
         {
           builtInPrompt: "Built-in summary prompt.",
           description: "Internal selected-ticket summary instructions.",
-          isCustomized: false,
+          isCustomized,
           key: "ticket-summary" as const,
           label: "Ticket summary",
           maxLength: 2_000,
-          prompt: "Built-in summary prompt.",
-          userOverridable: false,
+          prompt,
         },
       ],
-      allowUserPromptOverrides: true,
       canManageWorkspace: true,
       canView: true,
       policy: "admin-managed" as const,
-      userPrompts: [],
+      userRephraseStyleOverrides: [],
+      workspaceRephraseStyles: [
+        {
+          id: "style-concise",
+          isBuiltIn: true,
+          isCustomized: false,
+          isEnabled: true,
+          label: "Concise",
+          maxLength: 2_000,
+          prompt: stylePrompt,
+          sortOrder: 10,
+        },
+      ],
+    });
+    const loadAiPromptCenterAction = vi.fn(async () => ({
+      ...promptCenterData("Built-in summary prompt.", false),
     }));
     const saveWorkspaceAiPromptAction = vi.fn(async (formData: FormData) => {
       expect(formData.get("promptKey")).toBe("ticket-summary");
       expect(formData.get("prompt")).toBe("Updated summary prompt.");
       return {
         code: "ai-prompt-saved" as const,
-        data: {
-          activeWorkspace: { id: "connection-1", label: "Support" },
-          adminPrompts: [
-            {
-              builtInPrompt: "Built-in summary prompt.",
-              description: "Internal selected-ticket summary instructions.",
-              isCustomized: true,
-              key: "ticket-summary" as const,
-              label: "Ticket summary",
-              maxLength: 2_000,
-              prompt: "Updated summary prompt.",
-              userOverridable: false,
-            },
-          ],
-          allowUserPromptOverrides: true,
-          canManageWorkspace: true,
-          canView: true,
-          policy: "admin-managed" as const,
-          userPrompts: [],
-        },
+        data: promptCenterData("Updated summary prompt.", true),
         ok: true,
       };
     });
-    const saveAiPromptOverridePolicyAction = vi.fn(async (formData: FormData) => {
-      expect(formData.get("allowUserPromptOverrides")).toBeNull();
+    const saveWorkspaceAiRephraseStyleAction = vi.fn(async (formData: FormData) => {
+      expect(formData.get("styleId")).toBe("style-concise");
+      expect(formData.get("prompt")).toBe("Use fewer words.");
       return {
-        code: "ai-prompt-policy-saved" as const,
-        data: {
-          activeWorkspace: { id: "connection-1", label: "Support" },
-          adminPrompts: [],
-          allowUserPromptOverrides: false,
-          canManageWorkspace: true,
-          canView: true,
-          policy: "admin-managed" as const,
-          userPrompts: [],
-        },
+        code: "ai-rephrase-style-saved" as const,
+        data: promptCenterData(
+          "Updated summary prompt.",
+          true,
+          "Use fewer words.",
+        ),
         ok: true,
       };
     });
@@ -99,7 +103,6 @@ describe("TicketWorkspace Prompt Center", () => {
         connections={[{ id: "connection-1", label: "Support", active: true }]}
         initialAiSettingsData={{
           activeWorkspace: { id: "connection-1", label: "Support" },
-          allowUserPromptOverrides: true,
           canManageWorkspace: true,
           canViewPromptCenter: true,
           policy: "admin-managed",
@@ -116,7 +119,7 @@ describe("TicketWorkspace Prompt Center", () => {
         loadAiPromptCenterAction={loadAiPromptCenterAction}
         logoutAction={noopAction}
         rows={[row]}
-        saveAiPromptOverridePolicyAction={saveAiPromptOverridePolicyAction}
+        saveWorkspaceAiRephraseStyleAction={saveWorkspaceAiRephraseStyleAction}
         saveWorkspaceAiPromptAction={saveWorkspaceAiPromptAction}
         setActiveConnectionAction={noopAction}
         tabs={[{ ...row }]}
@@ -138,16 +141,14 @@ describe("TicketWorkspace Prompt Center", () => {
     await user.click(within(dialog).getByRole("button", { name: "Save prompt" }));
     expect(saveWorkspaceAiPromptAction).toHaveBeenCalledOnce();
 
-    await user.click(
-      within(dialog).getByRole("checkbox", {
-        name: /Allow personal prompt overrides/u,
-      }),
-    );
-    await user.click(within(dialog).getByRole("button", { name: "Save policy" }));
-    expect(saveAiPromptOverridePolicyAction).toHaveBeenCalledOnce();
+    const stylePrompt = await within(dialog).findByLabelText("Style prompt");
+    await user.clear(stylePrompt);
+    await user.type(stylePrompt, "Use fewer words.");
+    await user.click(within(dialog).getByRole("button", { name: "Save style" }));
+    expect(saveWorkspaceAiRephraseStyleAction).toHaveBeenCalledOnce();
   });
 
-  it("hides Prompt Center from non-admins when no user prompts are editable", async () => {
+  it("hides Prompt Center from non-admins without personal style override access", async () => {
     const user = userEvent.setup();
 
     render(
@@ -156,7 +157,6 @@ describe("TicketWorkspace Prompt Center", () => {
         connections={[{ id: "connection-1", label: "Support", active: true }]}
         initialAiSettingsData={{
           activeWorkspace: { id: "connection-1", label: "Support" },
-          allowUserPromptOverrides: true,
           canManageWorkspace: false,
           canViewPromptCenter: false,
           policy: "admin-managed",

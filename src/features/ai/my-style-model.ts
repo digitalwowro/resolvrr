@@ -10,9 +10,13 @@ export type MyStyleActionCode =
   | "invalid-my-style"
   | "my-style-reset"
   | "my-style-saved"
+  | "no-active-workspace"
+  | "my-style-not-editable"
   | "not-authenticated";
 
 export type MyStyleDataResult = {
+  activeWorkspace: { id: string; label: string } | null;
+  canEdit: boolean;
   style: MyStyleData;
 };
 

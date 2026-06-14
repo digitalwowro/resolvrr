@@ -1,16 +1,16 @@
 export type DraftRewriteOperation = "proofread" | "rephrase";
-export type DraftRephraseMode = "concise" | "formal" | "simple" | "warmer";
 export type DraftComposerMode = "comment" | "reply";
 
 export type DraftRewriteRequest = {
   bodyHtml: string;
   composerMode: DraftComposerMode;
   operation: DraftRewriteOperation;
-  rephraseMode?: DraftRephraseMode;
+  rephraseStyleId?: string;
 };
 
 export type DraftRewriteUnavailableReason =
   | "empty-draft"
+  | "invalid-rephrase-style"
   | "provider-auth-failed"
   | "provider-rate-limited"
   | "provider-temporary-failure";
@@ -19,7 +19,10 @@ export type DraftRewriteResult =
   | {
       generatedAt: string;
       operation: DraftRewriteOperation;
-      rephraseMode?: DraftRephraseMode;
+      rephraseStyle?: {
+        id: string;
+        label: string;
+      };
       status: "available";
       text: string;
     }

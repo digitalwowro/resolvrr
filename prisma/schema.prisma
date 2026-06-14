@@ -48,3 +48,8 @@ enum AiProviderProtocol {
   OPENAI_COMPATIBLE
   ANTHROPIC_COMPATIBLE
 }
+
+enum WorkspaceMembershipRole {
+  ADMIN
+  AGENT
+}

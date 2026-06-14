@@ -162,6 +162,8 @@ describe("TicketWorkspace profile settings", () => {
   it("loads, saves, and resets My Style from My Profile", async () => {
     const user = userEvent.setup();
     const loadMyStyleAction = vi.fn(async () => ({
+      activeWorkspace: { id: "connection-1", label: "Support" },
+      canEdit: true,
       style: {
         audience: "Technical customers",
         constraints: "Avoid unsupported promises.",
@@ -175,6 +177,8 @@ describe("TicketWorkspace profile settings", () => {
       return {
         code: "my-style-saved" as const,
         data: {
+          activeWorkspace: { id: "connection-1", label: "Support" },
+          canEdit: true,
           style: {
             audience: "Technical customers",
             constraints: "Avoid unsupported promises.",
@@ -189,6 +193,8 @@ describe("TicketWorkspace profile settings", () => {
     const resetMyStyleAction = vi.fn(async () => ({
       code: "my-style-reset" as const,
       data: {
+        activeWorkspace: { id: "connection-1", label: "Support" },
+        canEdit: true,
         style: {
           audience: "",
           constraints: "",

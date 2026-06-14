@@ -1,6 +1,7 @@
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
+import { prismaAiRephraseStyleRepository } from "@/data/ai-rephrase-styles-repository";
 import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
 import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
 import { prismaWorkspaceTabsRepository } from "@/data/workspace-tabs-repository";
@@ -12,20 +13,24 @@ import {
 } from "@/features/auth/actions";
 import {
   loadAiPromptCenterAction,
+  loadAiRephraseStylesAction,
   loadMyStyleAction,
   loadWorkspaceAiSettingsAction,
   resetMyStyleAction,
-  resetUserAiPromptOverrideAction,
+  resetUserAiRephraseStyleOverrideAction,
   resetWorkspaceAiPromptAction,
   rewriteDraftAction,
-  saveAiPromptOverridePolicyAction,
   saveMyStyleAction,
   saveUserWorkspaceAiSettingsAction,
-  saveUserAiPromptOverrideAction,
+  saveUserAiRephraseStyleOverrideAction,
+  saveWorkspaceAiRephraseStyleAction,
   saveWorkspaceAiSettingsAction,
   saveWorkspaceAiPromptAction,
+  deleteWorkspaceAiRephraseStyleAction,
+  moveWorkspaceAiRephraseStyleAction,
   summarizeWorkspaceTicketAction,
 } from "@/features/ai";
+import { loadAiRephraseStyles } from "@/features/ai/rephrase-style-service";
 import { loadInitialTicketAiSummary } from "@/features/ai/ticket-summary-hydration";
 import {
   createHelpdeskConnectionAction,
@@ -185,6 +190,11 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           userId: user.id,
         })
       : undefined;
+  const initialRephraseStyles = await loadAiRephraseStyles({
+    connectionRepository: prismaHelpdeskConnectionsRepository,
+    styleRepository: prismaAiRephraseStyleRepository,
+    userId: user.id,
+  });
 
   return (
     <TicketWorkspace
@@ -202,11 +212,13 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       connectionProviderOptions={listConnectionProviderOptions(providerRegistry)}
       createConnectionAction={createHelpdeskConnectionAction}
       deleteConnectionAction={deleteHelpdeskConnectionAction}
+      deleteWorkspaceAiRephraseStyleAction={deleteWorkspaceAiRephraseStyleAction}
       detail={detail}
       detailResult={workspaceDetailResult}
       disableConnectionAction={disableHelpdeskConnectionAction}
       listResult={listResult}
       loadAiPromptCenterAction={loadAiPromptCenterAction}
+      loadAiRephraseStylesAction={loadAiRephraseStylesAction}
       loadMyStyleAction={loadMyStyleAction}
       loadWorkspaceAiSettingsAction={loadWorkspaceAiSettingsAction}
       loadTicketDetailAction={loadWorkspaceTicketDetailAction}
@@ -237,16 +249,20 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       })}
       initialAiSettingsData={await loadWorkspaceAiSettingsAction()}
       reorderSavedViewsAction={reorderWorkspaceSavedViewsAction}
-      resetUserAiPromptOverrideAction={resetUserAiPromptOverrideAction}
+      rephraseStyleOptions={initialRephraseStyles.styles}
+      resetUserAiRephraseStyleOverrideAction={
+        resetUserAiRephraseStyleOverrideAction
+      }
       resetMyStyleAction={resetMyStyleAction}
       resetWorkspaceAiPromptAction={resetWorkspaceAiPromptAction}
       rewriteDraftAction={rewriteDraftAction}
-      saveAiPromptOverridePolicyAction={saveAiPromptOverridePolicyAction}
       saveMyStyleAction={saveMyStyleAction}
+      moveWorkspaceAiRephraseStyleAction={moveWorkspaceAiRephraseStyleAction}
       saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
       saveSavedViewAction={saveWorkspaceSavedViewAction}
       saveUserWorkspaceAiSettingsAction={saveUserWorkspaceAiSettingsAction}
-      saveUserAiPromptOverrideAction={saveUserAiPromptOverrideAction}
+      saveUserAiRephraseStyleOverrideAction={saveUserAiRephraseStyleOverrideAction}
+      saveWorkspaceAiRephraseStyleAction={saveWorkspaceAiRephraseStyleAction}
       saveWorkspaceAiSettingsAction={saveWorkspaceAiSettingsAction}
       saveWorkspaceAiPromptAction={saveWorkspaceAiPromptAction}
       searchTicketLinkTargetsAction={searchWorkspaceTicketLinkTargetsAction}

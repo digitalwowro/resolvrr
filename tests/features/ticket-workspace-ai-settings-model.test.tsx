@@ -28,7 +28,6 @@ describe("TicketWorkspace AI settings custom model", () => {
         code: "ai-settings-saved" as const,
         data: {
           activeWorkspace: { id: "connection-1", label: "Support" },
-          allowUserPromptOverrides: false,
           canManageWorkspace: true,
           canViewPromptCenter: false,
           policy: "admin-managed" as const,
@@ -51,7 +50,6 @@ describe("TicketWorkspace AI settings custom model", () => {
         connections={[{ id: "connection-1", label: "Support", active: true }]}
         initialAiSettingsData={{
           activeWorkspace: { id: "connection-1", label: "Support" },
-          allowUserPromptOverrides: false,
           canManageWorkspace: true,
           canViewPromptCenter: false,
           policy: "admin-managed",

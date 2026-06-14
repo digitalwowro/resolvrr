@@ -16,7 +16,6 @@ import { WorkspaceAiSettingsUserForm } from "./workspace-ai-settings-user-form";
 
 const defaultData: WorkspaceAiSettingsData = {
   activeWorkspace: null,
-  allowUserPromptOverrides: false,
   canManageWorkspace: false,
   canViewPromptCenter: false,
   policy: "disabled",

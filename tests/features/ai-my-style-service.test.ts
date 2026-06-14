@@ -39,6 +39,12 @@ function repository(initialRecord: StoredMyStyle | null = null):
   };
 }
 
+const workspaceInput = {
+  activeWorkspaceLabel: "Support",
+  canEdit: true,
+  helpdeskConnectionId: "connection-1",
+};
+
 describe("My Style service", () => {
   it("saves structured style encrypted and loads it for the user", async () => {
     const repo = repository();
@@ -52,6 +58,7 @@ describe("My Style service", () => {
         role: "Support engineer",
         tone: "Warm",
       }),
+      ...workspaceInput,
       repository: repo,
       userId: "user-1",
     });
@@ -77,6 +84,7 @@ describe("My Style service", () => {
     await expect(
       loadMyStyle({
         encryptionKey,
+        ...workspaceInput,
         repository: repo,
         userId: "user-1",
       }),
@@ -94,13 +102,18 @@ describe("My Style service", () => {
         role: "x".repeat(161),
         tone: "",
       }),
+      ...workspaceInput,
       repository: repo,
       userId: "user-1",
     });
 
     expect(result).toEqual({
       code: "invalid-my-style",
-      data: { style: emptyMyStyle },
+      data: {
+        activeWorkspace: { id: "connection-1", label: "Support" },
+        canEdit: true,
+        style: emptyMyStyle,
+      },
       ok: false,
     });
     expect(repo.record).toBeNull();
@@ -118,19 +131,25 @@ describe("My Style service", () => {
         role: "Agent",
         tone: "",
       }),
+      ...workspaceInput,
       repository: repo,
       userId: "user-1",
     });
 
     const result = await resetMyStyle({
       encryptionKey,
+      ...workspaceInput,
       repository: repo,
       userId: "user-1",
     });
 
     expect(result).toEqual({
       code: "my-style-reset",
-      data: { style: emptyMyStyle },
+      data: {
+        activeWorkspace: { id: "connection-1", label: "Support" },
+        canEdit: true,
+        style: emptyMyStyle,
+      },
       ok: true,
     });
     expect(repo.record).toBeNull();
@@ -148,13 +167,49 @@ describe("My Style service", () => {
         role: "Agent",
         tone: "",
       }),
+      ...workspaceInput,
       repository: repo,
       userId: undefined,
     });
 
     expect(result).toEqual({
       code: "not-authenticated",
-      data: { style: emptyMyStyle },
+      data: {
+        activeWorkspace: { id: "connection-1", label: "Support" },
+        canEdit: true,
+        style: emptyMyStyle,
+      },
+      ok: false,
+    });
+    expect(repo.record).toBeNull();
+  });
+
+  it("does not write style when workspace membership disallows editing", async () => {
+    const repo = repository();
+
+    const result = await saveMyStyle({
+      activeWorkspaceLabel: "Support",
+      canEdit: false,
+      encryptionKey,
+      formData: form({
+        audience: "",
+        constraints: "",
+        preferences: "",
+        role: "Agent",
+        tone: "",
+      }),
+      helpdeskConnectionId: "connection-1",
+      repository: repo,
+      userId: "user-1",
+    });
+
+    expect(result).toEqual({
+      code: "my-style-not-editable",
+      data: {
+        activeWorkspace: { id: "connection-1", label: "Support" },
+        canEdit: false,
+        style: emptyMyStyle,
+      },
       ok: false,
     });
     expect(repo.record).toBeNull();

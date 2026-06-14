@@ -11,6 +11,7 @@ import type {
 } from "@/features/tickets/link-target-search-action-result";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type {
+  AiRephraseStyleOption,
   RewriteDraftAction,
   SummarizeWorkspaceTicketAction,
   TicketAiSummaryResult,
@@ -30,6 +31,7 @@ type TicketDetailProps = {
   onRefresh(): void;
   onReturnToListAfterUpdate(): void;
   recentlyViewedLinkTargets: WorkspaceTicketLinkTarget[];
+  rephraseStyleOptions?: AiRephraseStyleOption[];
   refreshing?: boolean;
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
   rewriteDraftAction?: RewriteDraftAction;
@@ -54,6 +56,7 @@ export function TicketDetail({
   onRefresh,
   onReturnToListAfterUpdate,
   recentlyViewedLinkTargets,
+  rephraseStyleOptions,
   refreshing = false,
   searchTicketLinkTargetsAction,
   rewriteDraftAction,
@@ -83,6 +86,7 @@ export function TicketDetail({
       onMetadataSavedDetailRefresh={onMetadataSavedDetailRefresh}
       onReturnToListAfterUpdate={onReturnToListAfterUpdate}
       recentlyViewedLinkTargets={recentlyViewedLinkTargets}
+      rephraseStyleOptions={rephraseStyleOptions}
       searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
       rewriteDraftAction={rewriteDraftAction}
       updateTicketMetadataAction={updateTicketMetadataAction}

@@ -14,8 +14,10 @@ data:
 - provider-neutral article visibility, direction, author label, timestamp, and
   sanitized plain text derived from article HTML;
 - the user's current draft text for proofread and rephrase operations;
-- My Style fields only for operations whose contract explicitly allows personal
-  style.
+- workspace-scoped My Style fields only for operations whose contract
+  explicitly allows personal style;
+- the selected workspace rephrase style prompt or permitted personal override
+  for rephrase operations.
 
 V1 AI operations must not use linked-ticket bodies, saved views, knowledge base
 content, customer-wide history, arbitrary workspace search results, attachment
@@ -31,8 +33,10 @@ stale client state, stale route-loaded state, or stale persistent cache as
 source context.
 
 Proofread and rephrase are draft-only operations. They use the user's current
-composer draft plus My Style and do not require a provider read because they do
-not include selected-ticket source context.
+composer draft plus workspace-scoped My Style. Rephrase also uses the selected
+workspace rephrase style prompt or a permitted personal override. They do not
+require a provider read because they do not include selected-ticket source
+context.
 
 If a provider read fails, the AI operation is unavailable. The UI may preserve
 the user's local draft text and show a retry path, but it must not generate from

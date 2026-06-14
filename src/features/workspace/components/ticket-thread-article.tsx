@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/components/ui/classnames";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
-import type { RewriteDraftAction } from "@/features/ai";
+import type { AiRephraseStyleOption, RewriteDraftAction } from "@/features/ai";
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
 import type { TicketCommunicationDraft } from "./metadata-draft";
 import type { PersistedDraftAiSuggestion } from "./ticket-communication-draft-persistence";
@@ -39,6 +39,7 @@ type TicketThreadArticleProps = {
     mode: InlineCommunicationMode,
     suggestions: PersistedDraftAiSuggestion[],
   ): void;
+  rephraseStyleOptions?: AiRephraseStyleOption[];
   rewriteDraftAction?: RewriteDraftAction;
   suggestions: PersistedDraftAiSuggestion[];
 };
@@ -54,6 +55,7 @@ export function TicketThreadArticle({
   onCloseComposer,
   onOpenComposer,
   onSuggestionsChange,
+  rephraseStyleOptions,
   rewriteDraftAction,
   suggestions,
 }: TicketThreadArticleProps) {
@@ -151,6 +153,7 @@ export function TicketThreadArticle({
               onSuggestionsChange={(nextSuggestions) =>
                 onSuggestionsChange(activeMode, nextSuggestions)
               }
+              rephraseStyleOptions={rephraseStyleOptions}
               rewriteDraftAction={rewriteDraftAction}
               suggestions={suggestions}
             />

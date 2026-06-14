@@ -1,45 +1,53 @@
 "use client";
 
-import { useEffect, useState, useTransition, type FormEvent } from "react";
-import { Button, Checkbox } from "@/components/ui";
+import { useEffect, useState } from "react";
 import type {
   AiPromptActionResult,
   AiPromptCenterData,
+  DeleteWorkspaceAiRephraseStyleAction,
   LoadAiPromptCenterAction,
-  ResetUserAiPromptOverrideAction,
+  MoveWorkspaceAiRephraseStyleAction,
+  ResetUserAiRephraseStyleOverrideAction,
   ResetWorkspaceAiPromptAction,
-  SaveAiPromptOverridePolicyAction,
-  SaveUserAiPromptOverrideAction,
+  SaveUserAiRephraseStyleOverrideAction,
+  SaveWorkspaceAiRephraseStyleAction,
   SaveWorkspaceAiPromptAction,
 } from "@/features/ai";
 import {
   PromptMessage,
-  UserPromptForm,
   WorkspacePromptForm,
   promptMessageText,
 } from "./workspace-ai-prompt-forms";
+import {
+  NewWorkspaceRephraseStyleForm,
+  UserRephraseStyleOverrideForm,
+  WorkspaceRephraseStyleForm,
+} from "./workspace-ai-rephrase-style-forms";
 
 export function AiPromptsSection({
   data,
+  deleteWorkspaceAiRephraseStyleAction,
   loadAction,
+  moveWorkspaceAiRephraseStyleAction,
   onDataChange,
-  resetUserAiPromptOverrideAction,
+  resetUserAiRephraseStyleOverrideAction,
   resetWorkspaceAiPromptAction,
-  saveAiPromptOverridePolicyAction,
-  saveUserAiPromptOverrideAction,
+  saveUserAiRephraseStyleOverrideAction,
+  saveWorkspaceAiRephraseStyleAction,
   saveWorkspaceAiPromptAction,
 }: {
   data?: AiPromptCenterData;
+  deleteWorkspaceAiRephraseStyleAction?: DeleteWorkspaceAiRephraseStyleAction;
   loadAction?: LoadAiPromptCenterAction;
+  moveWorkspaceAiRephraseStyleAction?: MoveWorkspaceAiRephraseStyleAction;
   onDataChange(data: AiPromptCenterData): void;
-  resetUserAiPromptOverrideAction?: ResetUserAiPromptOverrideAction;
+  resetUserAiRephraseStyleOverrideAction?: ResetUserAiRephraseStyleOverrideAction;
   resetWorkspaceAiPromptAction?: ResetWorkspaceAiPromptAction;
-  saveAiPromptOverridePolicyAction?: SaveAiPromptOverridePolicyAction;
-  saveUserAiPromptOverrideAction?: SaveUserAiPromptOverrideAction;
+  saveUserAiRephraseStyleOverrideAction?: SaveUserAiRephraseStyleOverrideAction;
+  saveWorkspaceAiRephraseStyleAction?: SaveWorkspaceAiRephraseStyleAction;
   saveWorkspaceAiPromptAction?: SaveWorkspaceAiPromptAction;
 }) {
   const [message, setMessage] = useState<{ ok: boolean; text: string }>();
-  const [policyPending, startPolicyTransition] = useTransition();
 
   useEffect(() => {
     if (data || !loadAction) {
@@ -53,17 +61,6 @@ export function AiPromptsSection({
     setMessage({
       ok: result.ok,
       text: promptMessageText[result.code],
-    });
-  }
-
-  function savePolicy(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!saveAiPromptOverridePolicyAction) {
-      return;
-    }
-    const formData = new FormData(event.currentTarget);
-    startPolicyTransition(() => {
-      void saveAiPromptOverridePolicyAction(formData).then(applyResult);
     });
   }
 
@@ -96,29 +93,10 @@ export function AiPromptsSection({
           </div>
         ) : data.canManageWorkspace ? (
           <div className="space-y-4">
-            <form
-              className="rounded-md border border-slate-200 bg-white p-4"
-              key={`${data.activeWorkspace?.id ?? "none"}-${data.allowUserPromptOverrides}`}
-              onSubmit={savePolicy}
-            >
-              <Checkbox
-                defaultChecked={data.allowUserPromptOverrides}
-                disabled={policyPending || !saveAiPromptOverridePolicyAction}
-                helpText="Saved personal prompts stay stored when this is turned off."
-                label="Allow personal prompt overrides"
-                name="allowUserPromptOverrides"
-              />
-              <div className="mt-4 flex justify-end">
-                <Button
-                  disabled={policyPending || !saveAiPromptOverridePolicyAction}
-                  loading={policyPending}
-                  type="submit"
-                  variant="primary"
-                >
-                  Save policy
-                </Button>
-              </div>
-            </form>
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              These base prompts and guardrail instructions control workspace AI
+              safety behavior. Changes apply to all users in this workspace.
+            </div>
             {data.adminPrompts.map((prompt) => (
               <WorkspacePromptForm
                 action={saveWorkspaceAiPromptAction}
@@ -128,22 +106,46 @@ export function AiPromptsSection({
                 resetAction={resetWorkspaceAiPromptAction}
               />
             ))}
-          </div>
-        ) : data.userPrompts.length > 0 ? (
-          <div className="space-y-4">
-            {data.userPrompts.map((prompt) => (
-              <UserPromptForm
-                action={saveUserAiPromptOverrideAction}
-                key={prompt.key}
+            <section className="space-y-3">
+              <div>
+                <h4 className="text-sm font-semibold text-slate-950">
+                  Rephrase styles
+                </h4>
+                <p className="text-sm text-slate-600">
+                  Create the style options shown in the reply editor.
+                </p>
+              </div>
+              {data.workspaceRephraseStyles.map((style) => (
+                <WorkspaceRephraseStyleForm
+                  action={saveWorkspaceAiRephraseStyleAction}
+                  deleteAction={deleteWorkspaceAiRephraseStyleAction}
+                  key={style.id}
+                  moveAction={moveWorkspaceAiRephraseStyleAction}
+                  onResult={applyResult}
+                  style={style}
+                />
+              ))}
+              <NewWorkspaceRephraseStyleForm
+                action={saveWorkspaceAiRephraseStyleAction}
                 onResult={applyResult}
-                prompt={prompt}
-                resetAction={resetUserAiPromptOverrideAction}
+              />
+            </section>
+          </div>
+        ) : data.userRephraseStyleOverrides.length > 0 ? (
+          <div className="space-y-4">
+            {data.userRephraseStyleOverrides.map((style) => (
+              <UserRephraseStyleOverrideForm
+                action={saveUserAiRephraseStyleOverrideAction}
+                key={style.id}
+                onResult={applyResult}
+                resetAction={resetUserAiRephraseStyleOverrideAction}
+                style={style}
               />
             ))}
           </div>
         ) : (
           <div className="rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-            No personal prompts are available.
+            No personal rephrase style overrides are available.
           </div>
         )}
       </div>

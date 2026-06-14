@@ -3,7 +3,7 @@
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import type {
-  DraftRephraseMode,
+  AiRephraseStyleOption,
   DraftRewriteResult,
   RewriteDraftAction,
 } from "@/features/ai";
@@ -26,15 +26,9 @@ type InlineCommunicationComposerProps = {
   onBodyChange(body: string): void;
   onClose(): void;
   onSuggestionsChange(suggestions: PersistedDraftAiSuggestion[]): void;
+  rephraseStyleOptions?: AiRephraseStyleOption[];
   rewriteDraftAction?: RewriteDraftAction;
 };
-
-const rephraseModeOptions: { label: string; value: DraftRephraseMode }[] = [
-  { label: "Concise", value: "concise" },
-  { label: "Warmer", value: "warmer" },
-  { label: "Formal", value: "formal" },
-  { label: "Simpler", value: "simple" },
-];
 
 function resultMessage(result: Exclude<DraftRewriteResult, { status: "available" }>) {
   if (result.status === "unconfigured") {
@@ -42,6 +36,9 @@ function resultMessage(result: Exclude<DraftRewriteResult, { status: "available"
   }
   if (result.reason === "empty-draft") {
     return "Write a draft before using AI.";
+  }
+  if (result.reason === "invalid-rephrase-style") {
+    return "Select an available rephrase style.";
   }
   if (result.reason === "provider-rate-limited") {
     return "The AI provider is rate limited. Try again shortly.";
@@ -67,10 +64,9 @@ function suggestionLabel(
   if (result.operation === "proofread") {
     return "Proofread";
   }
-  const mode = rephraseModeOptions.find(
-    (option) => option.value === result.rephraseMode,
-  );
-  return mode ? `Rephrase: ${mode.label}` : "Rephrase";
+  return result.rephraseStyle
+    ? `Rephrase: ${result.rephraseStyle.label}`
+    : "Rephrase";
 }
 
 function suggestionId(): string {
@@ -89,6 +85,7 @@ export function TicketInlineCommunicationComposer({
   onBodyChange,
   onClose,
   onSuggestionsChange,
+  rephraseStyleOptions = [],
   rewriteDraftAction,
   suggestions,
 }: InlineCommunicationComposerProps) {
@@ -96,8 +93,13 @@ export function TicketInlineCommunicationComposer({
   const [pendingOperation, setPendingOperation] = useState<
     "proofread" | "rephrase" | null
   >(null);
-  const [rephraseMode, setRephraseMode] =
-    useState<DraftRephraseMode>("concise");
+  const [rephraseStyleId, setRephraseStyleId] = useState(
+    rephraseStyleOptions[0]?.id ?? "",
+  );
+  const selectedStyleId =
+    rephraseStyleOptions.some((style) => style.id === rephraseStyleId)
+      ? rephraseStyleId
+      : rephraseStyleOptions[0]?.id ?? "";
   const [selectedSuggestionId, setSelectedSuggestionId] = useState(
     suggestions[0]?.id ?? "",
   );
@@ -121,7 +123,9 @@ export function TicketInlineCommunicationComposer({
         bodyHtml: body,
         composerMode: mode,
         operation,
-        ...(operation === "rephrase" ? { rephraseMode } : {}),
+        ...(operation === "rephrase"
+          ? { rephraseStyleId: selectedStyleId }
+          : {}),
       });
       if (result.status !== "available") {
         setMessage(resultMessage(result));
@@ -133,7 +137,9 @@ export function TicketInlineCommunicationComposer({
         id: suggestionId(),
         label: suggestionLabel(result),
         operation: result.operation,
-        ...(result.rephraseMode ? { rephraseMode: result.rephraseMode } : {}),
+        ...(result.rephraseStyle
+          ? { rephraseStyleId: result.rephraseStyle.id }
+          : {}),
         text: result.text,
       };
       const nextSuggestions = [
@@ -178,23 +184,29 @@ export function TicketInlineCommunicationComposer({
         Proofread
       </button>
       <select
-        aria-label="Rephrase mode"
+        aria-label="Rephrase style"
         className="h-6 rounded-md border border-slate-200 bg-white px-1 text-xs text-slate-700 outline-none focus:border-indigo-500"
-        disabled={disabled || Boolean(pendingOperation)}
-        onChange={(event) =>
-          setRephraseMode(event.currentTarget.value as DraftRephraseMode)
+        disabled={
+          disabled || Boolean(pendingOperation) || rephraseStyleOptions.length === 0
         }
-        value={rephraseMode}
+        onChange={(event) =>
+          setRephraseStyleId(event.currentTarget.value)
+        }
+        value={selectedStyleId}
       >
-        {rephraseModeOptions.map((option) => (
-          <option key={option.value} value={option.value}>
+        {rephraseStyleOptions.map((option) => (
+          <option key={option.id} value={option.id}>
             {option.label}
           </option>
         ))}
       </select>
       <button
         className="inline-flex h-6 items-center gap-1 rounded-md px-2 text-xs font-medium text-slate-700 hover:bg-slate-200 hover:text-slate-950 disabled:cursor-wait disabled:opacity-50"
-        disabled={disabled || Boolean(pendingOperation)}
+        disabled={
+          disabled ||
+          Boolean(pendingOperation) ||
+          rephraseStyleOptions.length === 0
+        }
         onClick={() => void rewriteDraft("rephrase")}
         type="button"
       >

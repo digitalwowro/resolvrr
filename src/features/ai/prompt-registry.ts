@@ -24,9 +24,9 @@ export const draftProofreadDefaultPrompt = [
 
 export const draftRephraseDefaultPrompt = [
   "You rephrase support-agent draft text.",
-  "Follow the requested rephrase mode while preserving the original meaning.",
+  "Follow the selected workspace rephrase style while preserving the original meaning.",
   "Do not add facts, commitments, promises, identifiers, or customer-visible claims.",
-  "Apply the user's My Style when it fits the requested mode and does not conflict with accuracy.",
+  "Apply the user's workspace-specific My Style when it fits the selected style and does not conflict with accuracy.",
   "Return only the rewritten draft text as plain text.",
 ].join(" ");
 
@@ -38,7 +38,6 @@ const aiPromptDefinitions = [
     key: ticketSummaryPromptKey,
     label: "Ticket summary",
     maxLength: 2_000,
-    userOverridable: false,
     version: ticketSummaryPromptVersion,
   },
   {
@@ -48,7 +47,6 @@ const aiPromptDefinitions = [
     key: draftProofreadPromptKey,
     label: "Draft proofread",
     maxLength: 2_000,
-    userOverridable: true,
     version: draftProofreadPromptVersion,
   },
   {
@@ -58,7 +56,6 @@ const aiPromptDefinitions = [
     key: draftRephrasePromptKey,
     label: "Draft rephrase",
     maxLength: 2_000,
-    userOverridable: true,
     version: draftRephrasePromptVersion,
   },
 ] as const;
@@ -74,8 +71,4 @@ export function findAiPromptDefinition(
   key: string,
 ): AiPromptDefinition | null {
   return aiPromptDefinitions.find((definition) => definition.key === key) ?? null;
-}
-
-export function hasUserOverridablePrompts(): boolean {
-  return aiPromptDefinitions.some((definition) => definition.userOverridable);
 }

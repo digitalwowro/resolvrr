@@ -27,8 +27,10 @@ const emptyStyle: MyStyleData = {
 
 const myStyleMessageText: Record<MyStyleActionResult["code"], string> = {
   "invalid-my-style": "Keep short fields under 160 characters and guidance under 1,000 characters.",
+  "my-style-not-editable": "You do not have permission to edit My Style in this workspace.",
   "my-style-reset": "My Style reset.",
   "my-style-saved": "My Style saved.",
+  "no-active-workspace": "Select a workspace before editing My Style.",
   "not-authenticated": "Sign in again before updating My Style.",
 };
 
@@ -56,10 +58,12 @@ function Message({
 function Field({
   label,
   name,
+  disabled,
   onChange,
   placeholder,
   value,
 }: {
+  disabled?: boolean;
   label: string;
   name: keyof MyStyleData;
   onChange(name: keyof MyStyleData, value: string): void;
@@ -71,6 +75,7 @@ function Field({
       <span className="text-sm font-medium text-slate-700">{label}</span>
       <input
         className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+        disabled={disabled}
         maxLength={160}
         name={name}
         onChange={(event) => onChange(name, event.currentTarget.value)}
@@ -84,10 +89,12 @@ function Field({
 function TextAreaField({
   label,
   name,
+  disabled,
   onChange,
   placeholder,
   value,
 }: {
+  disabled?: boolean;
   label: string;
   name: keyof MyStyleData;
   onChange(name: keyof MyStyleData, value: string): void;
@@ -99,6 +106,7 @@ function TextAreaField({
       <span className="text-sm font-medium text-slate-700">{label}</span>
       <textarea
         className="min-h-24 w-full resize-y rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+        disabled={disabled}
         maxLength={1_000}
         name={name}
         onChange={(event) => onChange(name, event.currentTarget.value)}
@@ -119,6 +127,10 @@ export function WorkspaceSettingsMyStyleForm({
   saveMyStyleAction?: SaveMyStyleAction;
 }) {
   const [style, setStyle] = useState<MyStyleData>(emptyStyle);
+  const [activeWorkspaceLabel, setActiveWorkspaceLabel] = useState<string | null>(
+    null,
+  );
+  const [canEdit, setCanEdit] = useState(false);
   const [message, setMessage] =
     useState<{ ok: boolean; text: string } | null>(null);
   const [pending, setPending] = useState(false);
@@ -127,7 +139,11 @@ export function WorkspaceSettingsMyStyleForm({
     if (!loadMyStyleAction) {
       return;
     }
-    void loadMyStyleAction().then((result) => setStyle(result.style));
+    void loadMyStyleAction().then((result) => {
+      setActiveWorkspaceLabel(result.activeWorkspace?.label ?? null);
+      setCanEdit(result.canEdit);
+      setStyle(result.style);
+    });
   }, [loadMyStyleAction]);
 
   function setField(name: keyof MyStyleData, value: string) {
@@ -144,6 +160,8 @@ export function WorkspaceSettingsMyStyleForm({
     setPending(true);
     void saveMyStyleAction(new FormData(event.currentTarget))
       .then((result) => {
+        setActiveWorkspaceLabel(result.data.activeWorkspace?.label ?? null);
+        setCanEdit(result.data.canEdit);
         setStyle(result.data.style);
         setMessage({ ok: result.ok, text: myStyleMessageText[result.code] });
       })
@@ -158,6 +176,8 @@ export function WorkspaceSettingsMyStyleForm({
     setPending(true);
     void resetMyStyleAction()
       .then((result) => {
+        setActiveWorkspaceLabel(result.data.activeWorkspace?.label ?? null);
+        setCanEdit(result.data.canEdit);
         setStyle(result.data.style);
         setMessage({ ok: result.ok, text: myStyleMessageText[result.code] });
       })
@@ -167,14 +187,22 @@ export function WorkspaceSettingsMyStyleForm({
   return (
     <section className="rounded-md border border-slate-200 bg-white p-4">
       <div className="mb-4">
-        <h4 className="text-base font-semibold text-slate-950">My Style</h4>
+        <div className="flex flex-wrap items-center gap-2">
+          <h4 className="text-base font-semibold text-slate-950">My Style</h4>
+          {activeWorkspaceLabel ? (
+            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600">
+              {activeWorkspaceLabel}
+            </span>
+          ) : null}
+        </div>
         <p className="text-sm text-slate-600">
-          Personal writing guidance for proofread, rephrase, and future draft AI.
+          Workspace-specific writing guidance for proofread, rephrase, and future draft AI.
         </p>
       </div>
       <form className="space-y-3" onSubmit={submit}>
         <div className="grid gap-3 md:grid-cols-3">
           <Field
+            disabled={!canEdit}
             label="Role"
             name="role"
             onChange={setField}
@@ -182,6 +210,7 @@ export function WorkspaceSettingsMyStyleForm({
             value={style.role}
           />
           <Field
+            disabled={!canEdit}
             label="Audience"
             name="audience"
             onChange={setField}
@@ -189,6 +218,7 @@ export function WorkspaceSettingsMyStyleForm({
             value={style.audience}
           />
           <Field
+            disabled={!canEdit}
             label="Tone"
             name="tone"
             onChange={setField}
@@ -198,6 +228,7 @@ export function WorkspaceSettingsMyStyleForm({
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           <TextAreaField
+            disabled={!canEdit}
             label="Writing preferences"
             name="preferences"
             onChange={setField}
@@ -205,6 +236,7 @@ export function WorkspaceSettingsMyStyleForm({
             value={style.preferences}
           />
           <TextAreaField
+            disabled={!canEdit}
             label="Constraints"
             name="constraints"
             onChange={setField}
@@ -215,7 +247,7 @@ export function WorkspaceSettingsMyStyleForm({
         <Message message={message} />
         <div className="flex gap-2">
           <Button
-            disabled={!saveMyStyleAction}
+            disabled={pending || !saveMyStyleAction || !canEdit}
             loading={pending}
             type="submit"
             variant="primary"
@@ -223,7 +255,7 @@ export function WorkspaceSettingsMyStyleForm({
             Save My Style
           </Button>
           <Button
-            disabled={pending || !resetMyStyleAction}
+            disabled={pending || !resetMyStyleAction || !canEdit}
             onClick={resetStyle}
             type="button"
             variant="secondary"

@@ -2,13 +2,20 @@ import { prisma } from "@/data/prisma";
 import type { MyStyleRepository } from "@/features/ai/my-style-repository";
 
 export const prismaMyStyleRepository: MyStyleRepository = {
-  async deleteMyStyle(userId) {
-    await prisma.userMyStyle.deleteMany({ where: { userId } });
+  async deleteMyStyle(userId, helpdeskConnectionId) {
+    await prisma.workspaceMyStyle.deleteMany({
+      where: { helpdeskConnectionId, userId },
+    });
   },
 
-  async getMyStyle(userId) {
-    const record = await prisma.userMyStyle.findUnique({
-      where: { userId },
+  async getMyStyle(userId, helpdeskConnectionId) {
+    const record = await prisma.workspaceMyStyle.findUnique({
+      where: {
+        userId_helpdeskConnectionId: {
+          helpdeskConnectionId,
+          userId,
+        },
+      },
       select: {
         encryptedStyle: true,
         keyVersion: true,
@@ -19,10 +26,16 @@ export const prismaMyStyleRepository: MyStyleRepository = {
   },
 
   async upsertMyStyle(input) {
-    await prisma.userMyStyle.upsert({
-      where: { userId: input.userId },
+    await prisma.workspaceMyStyle.upsert({
+      where: {
+        userId_helpdeskConnectionId: {
+          helpdeskConnectionId: input.helpdeskConnectionId,
+          userId: input.userId,
+        },
+      },
       create: {
         encryptedStyle: input.encryptedStyle,
+        helpdeskConnectionId: input.helpdeskConnectionId,
         keyVersion: input.keyVersion,
         userId: input.userId,
       },

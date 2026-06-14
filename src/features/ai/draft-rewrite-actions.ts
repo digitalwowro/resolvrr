@@ -3,6 +3,7 @@
 import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import { prismaAiPromptRepository } from "@/data/ai-prompts-repository";
+import { prismaAiRephraseStyleRepository } from "@/data/ai-rephrase-styles-repository";
 import { prismaAiSettingsRepository } from "@/data/ai-settings-repository";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { prismaMyStyleRepository } from "@/data/my-style-repository";
@@ -17,6 +18,7 @@ import type {
 } from "./draft-rewrite-model";
 import { loadMyStyle } from "./my-style-service";
 import { resolveEffectiveAiPrompt } from "./prompt-service";
+import { resolveEffectiveAiRephraseStyle } from "./rephrase-style-service";
 import { activeWorkspace, resolveWorkspaceAiRuntimeConfig } from "./settings-service";
 import { rewriteDraftText } from "./draft-rewrite-service";
 
@@ -41,12 +43,9 @@ function normalizedRequest(
 
   if (
     request.operation === "rephrase" &&
-    request.rephraseMode !== "concise" &&
-    request.rephraseMode !== "formal" &&
-    request.rephraseMode !== "simple" &&
-    request.rephraseMode !== "warmer"
+    typeof request.rephraseStyleId !== "string"
   ) {
-    return { ...request, rephraseMode: "concise" };
+    return null;
   }
 
   return request;
@@ -71,7 +70,7 @@ export const rewriteDraftAction: RewriteDraftAction = async (request) => {
     };
   }
 
-  const [aiConfig, prompt, myStyle] = await Promise.all([
+  const [aiConfig, prompt, myStyle, rephraseStyle] = await Promise.all([
     resolveWorkspaceAiRuntimeConfig(
       prismaAiSettingsRepository,
       env.APP_ENCRYPTION_KEY,
@@ -91,14 +90,25 @@ export const rewriteDraftAction: RewriteDraftAction = async (request) => {
     }),
     loadMyStyle({
       encryptionKey: env.APP_ENCRYPTION_KEY,
+      helpdeskConnectionId: workspace.id,
       repository: prismaMyStyleRepository,
       userId: user.id,
     }),
+    normalized.operation === "rephrase"
+      ? resolveEffectiveAiRephraseStyle({
+          encryptionKey: env.APP_ENCRYPTION_KEY,
+          helpdeskConnectionId: workspace.id,
+          styleId: normalized.rephraseStyleId,
+          styleRepository: prismaAiRephraseStyleRepository,
+          userId: user.id,
+        })
+      : Promise.resolve(null),
   ]);
 
   return rewriteDraftText({
     aiConfig,
     prompt,
+    rephraseStyle,
     request: normalized,
     style: myStyle.style,
   });

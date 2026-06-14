@@ -41,6 +41,7 @@ export function TicketWorkspaceDisplay({
   providerGroupingEnabled,
   providerSortEnabled,
   refreshTicketDetailAfterMetadataSave,
+  rephraseStyleOptions,
   rows,
   searchTicketLinkTargetsAction,
   rewriteDraftAction,
@@ -200,6 +201,7 @@ export function TicketWorkspaceDisplay({
       providerGroupedActive={providerGroupedActive}
       providerGroupingEnabled={providerGroupingEnabled}
       recentlyViewedLinkTargets={recentlyViewedLinkTargets}
+      rephraseStyleOptions={rephraseStyleOptions}
       rewriteDraftAction={rewriteDraftAction}
       savedViewOptions={savedViewOptions}
       searchActive={searchActive}

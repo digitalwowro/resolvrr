@@ -24,6 +24,7 @@ type TicketWorkspaceDisplayWorkAreaProps = {
   providerGroupedActive: boolean;
   providerGroupingEnabled: boolean;
   recentlyViewedLinkTargets: TicketWorkspaceDetailAreaProps["recentlyViewedLinkTargets"];
+  rephraseStyleOptions: TicketWorkspaceDisplayProps["rephraseStyleOptions"];
   rewriteDraftAction: TicketWorkspaceDisplayProps["rewriteDraftAction"];
   savedViewOptions: TicketWorkspaceListAreaProps["savedViewOptions"];
   searchActive: boolean;
@@ -50,6 +51,7 @@ export function TicketWorkspaceDisplayWorkArea({
   providerGroupedActive,
   providerGroupingEnabled,
   recentlyViewedLinkTargets,
+  rephraseStyleOptions,
   rewriteDraftAction,
   savedViewOptions,
   searchActive,
@@ -117,6 +119,7 @@ export function TicketWorkspaceDisplayWorkArea({
       onRefresh={displayState.refreshActiveTicketDetail}
       onReturnToListAfterUpdate={displayState.returnActiveTicketToList}
       recentlyViewedLinkTargets={recentlyViewedLinkTargets}
+      rephraseStyleOptions={rephraseStyleOptions}
       roundedTop={displayState.tabOrientation === "vertical"}
       searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
       rewriteDraftAction={rewriteDraftAction}

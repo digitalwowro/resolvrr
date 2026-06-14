@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { RewriteDraftAction } from "@/features/ai";
+import type { AiRephraseStyleOption, RewriteDraftAction } from "@/features/ai";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
 import type { TicketCommunicationDraft } from "./metadata-draft";
@@ -25,6 +25,7 @@ type TicketThreadProps = {
   draftPersistenceScope?: CommunicationDraftPersistenceScope;
   onCommunicationDraftChange(draft: TicketCommunicationDraft): void;
   onScrolledToLatest(): void;
+  rephraseStyleOptions?: AiRephraseStyleOption[];
   rewriteDraftAction?: RewriteDraftAction;
   scrollAfterArticleCount?: number;
 };
@@ -52,6 +53,7 @@ export function TicketThread({
   draftPersistenceScope,
   onCommunicationDraftChange,
   onScrolledToLatest,
+  rephraseStyleOptions,
   rewriteDraftAction,
   scrollAfterArticleCount,
 }: TicketThreadProps) {
@@ -250,6 +252,7 @@ export function TicketThread({
                 onSuggestionsChange={(mode, nextSuggestions) =>
                   updateSuggestions(article.id, mode, nextSuggestions)
                 }
+                rephraseStyleOptions={rephraseStyleOptions}
                 rewriteDraftAction={rewriteDraftAction}
                 suggestions={
                   activeComposer?.articleId === article.id && activeComposer.mode

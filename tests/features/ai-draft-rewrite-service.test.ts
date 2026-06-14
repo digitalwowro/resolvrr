@@ -74,7 +74,7 @@ describe("draft rewrite service", () => {
     expect(request?.userPrompt).not.toContain("<script>");
   });
 
-  it("rephrases with the selected mode and draft-only input", async () => {
+  it("rephrases with the selected workspace style and draft-only input", async () => {
     const generateText = generator({
       status: "available",
       text: "A warmer rewrite.",
@@ -88,7 +88,13 @@ describe("draft rewrite service", () => {
         bodyHtml: "<p>Please send logs.</p>",
         composerMode: "comment",
         operation: "rephrase",
-        rephraseMode: "warmer",
+        rephraseStyleId: "style-friendly",
+      },
+      rephraseStyle: {
+        id: "style-friendly",
+        label: "Friendly",
+        prompt: "Make the draft warmer and more approachable.",
+        source: "workspace",
       },
       style,
     });
@@ -101,6 +107,7 @@ describe("draft rewrite service", () => {
       }),
     );
     expect(request?.userPrompt).toContain("Operation: rephrase the draft.");
+    expect(request?.userPrompt).toContain("Selected style: Friendly.");
     expect(request?.userPrompt).toContain("Make the draft warmer");
     expect(request?.userPrompt).toContain("Composer type: comment.");
   });

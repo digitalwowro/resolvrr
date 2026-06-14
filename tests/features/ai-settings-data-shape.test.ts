@@ -4,7 +4,10 @@ import type {
   AiSettingsRepository,
   StoredWorkspaceAiSetting,
 } from "@/features/ai/settings-repository";
-import { settingsDataForWorkspace } from "@/features/ai/settings-service";
+import {
+  settingsDataForWorkspace,
+  type ActiveWorkspace,
+} from "@/features/ai/settings-service";
 
 function user(role: AuthUser["role"]): AuthUser {
   return {
@@ -34,8 +37,21 @@ function repository(
   };
 }
 
+function workspace(
+  role: ActiveWorkspace["access"]["role"] = "AGENT",
+): ActiveWorkspace {
+  return {
+    access: {
+      canEditAiRephraseStyleOverrides: false,
+      canEditMyStyle: true,
+      role,
+    },
+    id: "connection-1",
+    label: "Support",
+  };
+}
+
 const configuredWorkspace: StoredWorkspaceAiSetting = {
-  allowUserPromptOverrides: false,
   config: {
     baseUrl: "https://api.openai.test/v1",
     encryptedApiKey: "encrypted-key",
@@ -53,7 +69,7 @@ describe("workspace AI settings data shape", () => {
       settingsDataForWorkspace(
         repository(configuredWorkspace),
         user("ADMIN"),
-        { id: "connection-1", label: "Support" },
+        workspace(),
       ),
     ).resolves.toMatchObject({
       canManageWorkspace: true,
@@ -72,7 +88,7 @@ describe("workspace AI settings data shape", () => {
       settingsDataForWorkspace(
         repository(configuredWorkspace),
         user("USER"),
-        { id: "connection-1", label: "Support" },
+        workspace(),
       ),
     ).resolves.toMatchObject({
       canManageWorkspace: false,
@@ -86,13 +102,12 @@ describe("workspace AI settings data shape", () => {
     await expect(
       settingsDataForWorkspace(
         repository({
-          allowUserPromptOverrides: false,
           config: null,
           helpdeskConnectionId: "connection-1",
           policy: "admin-managed",
         }),
         user("USER"),
-        { id: "connection-1", label: "Support" },
+        workspace(),
       ),
     ).resolves.toMatchObject({
       workspaceConfig: null,

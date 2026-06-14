@@ -1,7 +1,6 @@
 "use client";
 
 import type {
-  DraftRephraseMode,
   DraftRewriteOperation,
 } from "@/features/ai";
 
@@ -22,7 +21,7 @@ export type PersistedDraftAiSuggestion = {
   id: string;
   label: string;
   operation: DraftRewriteOperation;
-  rephraseMode?: DraftRephraseMode;
+  rephraseStyleId?: string;
   text: string;
 };
 

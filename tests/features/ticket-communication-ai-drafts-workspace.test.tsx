@@ -50,7 +50,7 @@ describe("TicketWorkspace communication AI drafts", () => {
           id: "suggestion-1",
           label: "Rephrase: Concise",
           operation: "rephrase",
-          rephraseMode: "concise",
+          rephraseStyleId: "style-concise",
           text: "Saved concise suggestion.",
         },
       ],

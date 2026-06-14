@@ -127,16 +127,19 @@ added, moved, renamed, or removed.
       ticket/thread/link/subscription/mutation/communication types.
   - `src/data`: server-only database access boundaries.
     - `ai-prompts-repository.ts` (`src/data/ai-prompts-repository.ts`):
-      Prisma-backed encrypted workspace AI prompt default and user prompt override repository.
+      Prisma-backed encrypted workspace AI prompt default repository.
+    - `ai-rephrase-styles-repository.ts` (`src/data/ai-rephrase-styles-repository.ts`):
+      Prisma-backed encrypted workspace rephrase style and personal style override repository.
     - `ai-settings-repository.ts` (`src/data/ai-settings-repository.ts`):
       Prisma-backed encrypted workspace and per-user AI settings repository.
     - `ai-summary-cache-repository.ts` (`src/data/ai-summary-cache-repository.ts`):
       Prisma-backed encrypted selected-ticket AI summary output cache repository.
     - `auth-repository.ts` (`src/data/auth-repository.ts`): Prisma-backed auth repository.
     - `helpdesk-connections-repository.ts` (`src/data/helpdesk-connections-repository.ts`):
-      Prisma-backed helpdesk connection repository and active connection preference persistence.
+      Prisma-backed helpdesk connection, workspace membership, seeded rephrase style, and active
+      connection preference persistence repository.
     - `my-style-repository.ts` (`src/data/my-style-repository.ts`): Prisma-backed encrypted
-      per-user My Style repository.
+      per-user/per-workspace My Style repository.
     - `prisma.ts` (`src/data/prisma.ts`): Prisma Client singleton with PostgreSQL driver adapter.
     - `saved-views-repository-mappers.ts` (`src/data/saved-views-repository-mappers.ts`): saved
       views repository mappers runtime module.
@@ -154,9 +157,9 @@ added, moved, renamed, or removed.
       draft assistance, provider validation, and generated-summary cache integration.
       - `draft-rewrite-actions.ts` (`src/features/ai/draft-rewrite-actions.ts`):
         authenticated server action for proofread/rephrase draft assistance over active-workspace AI
-        settings, registered prompts, and My Style.
+        settings, registered prompts, selected rephrase styles, and workspace-scoped My Style.
       - `draft-rewrite-model.ts` (`src/features/ai/draft-rewrite-model.ts`): provider-neutral
-        proofread/rephrase request, mode, unavailable-state, and action result types.
+        proofread/rephrase request, selected-style, unavailable-state, and action result types.
       - `draft-rewrite-service.ts` (`src/features/ai/draft-rewrite-service.ts`): draft-only
         proofread/rephrase prompt construction and AI text generation orchestration.
       - `index.ts` (`src/features/ai/index.ts`): AI feature exports.
@@ -167,24 +170,36 @@ added, moved, renamed, or removed.
       - `my-style-model.ts` (`src/features/ai/my-style-model.ts`): structured My Style fields,
         action result codes, and action types.
       - `my-style-repository.ts` (`src/features/ai/my-style-repository.ts`): provider-neutral
-        per-user encrypted My Style persistence contract.
+        per-user/per-workspace encrypted My Style persistence contract.
       - `my-style-service.ts` (`src/features/ai/my-style-service.ts`): My Style normalization,
         length validation, encryption, loading, saving, and reset orchestration.
       - `prompt-actions.ts` (`src/features/ai/prompt-actions.ts`): authenticated server actions for
-        loading Prompt Center data, saving/resetting prompt defaults and overrides, and saving the
-        workspace override policy.
+        loading Prompt Center data, saving/resetting prompt defaults, and managing workspace
+        rephrase styles and personal style overrides.
+      - `prompt-mutation-context.ts` (`src/features/ai/prompt-mutation-context.ts`): shared active
+        workspace and Prompt Center reload context for prompt and style mutation services.
       - `prompt-model.ts` (`src/features/ai/prompt-model.ts`): serializable Prompt Center data,
         prompt view models, action codes, and action types.
       - `prompt-mutation-service.ts` (`src/features/ai/prompt-mutation-service.ts`): prompt save,
-        reset, override-policy orchestration, admin/user gating, encryption, and summary-cache
-        invalidation.
+        reset, rephrase style CRUD, personal style override orchestration, admin/user gating,
+        encryption, and summary-cache invalidation.
       - `prompt-registry.ts` (`src/features/ai/prompt-registry.ts`): registered AI prompt keys,
         defaults, editability, and maximum-length metadata.
       - `prompt-repository.ts` (`src/features/ai/prompt-repository.ts`): provider-neutral prompt
-        persistence contract for encrypted workspace defaults and user overrides.
+        persistence contract for encrypted workspace defaults.
       - `prompt-service.ts` (`src/features/ai/prompt-service.ts`): Prompt Center loading and
-        effective prompt resolution that ignores user overrides unless workspace policy and registry
-        editability both allow them.
+        effective prompt resolution for workspace defaults and built-in fallbacks.
+      - `rephrase-style-defaults.ts` (`src/features/ai/rephrase-style-defaults.ts`): built-in
+        workspace rephrase style seed definitions.
+      - `rephrase-style-mutation-service.ts`
+        (`src/features/ai/rephrase-style-mutation-service.ts`): workspace rephrase style CRUD and
+        personal style override mutation orchestration.
+      - `rephrase-style-model.ts` (`src/features/ai/rephrase-style-model.ts`): serializable
+        rephrase style option, admin view, personal override view, and effective style types.
+      - `rephrase-style-repository.ts` (`src/features/ai/rephrase-style-repository.ts`):
+        provider-neutral workspace rephrase style and personal override persistence contract.
+      - `rephrase-style-service.ts` (`src/features/ai/rephrase-style-service.ts`): rephrase style
+        listing, prompt decryption, effective style resolution, validation, and permission helpers.
       - `provider-config.ts` (`src/features/ai/provider-config.ts`): provider-neutral runtime AI
         provider configuration result types.
       - `settings-actions.ts` (`src/features/ai/settings-actions.ts`): authenticated server actions
@@ -695,11 +710,14 @@ added, moved, renamed, or removed.
           per-workspace AI provider settings form for user-provided-key workspaces.
         - `workspace-ai-prompt-forms.tsx`
           (`src/features/workspace/components/workspace-ai-prompt-forms.tsx`): Prompt Center
-          workspace prompt, personal prompt, and action-message form components.
+          workspace prompt and action-message form components.
+        - `workspace-ai-rephrase-style-forms.tsx`
+          (`src/features/workspace/components/workspace-ai-rephrase-style-forms.tsx`): Prompt
+          Center forms for workspace rephrase style CRUD and personal style overrides.
         - `workspace-ai-prompts-section.tsx`
           (`src/features/workspace/components/workspace-ai-prompts-section.tsx`): Settings dialog
-          Prompt Center section for admin-managed workspace prompts and future personal prompt
-          overrides.
+          Prompt Center section for admin-managed workspace prompts, workspace rephrase styles, and
+          membership-gated personal style overrides.
         - `workspace-notifications-panel.tsx`
           (`src/features/workspace/components/workspace-notifications-panel.tsx`): workspace
           notifications panel workspace UI component.
@@ -726,14 +744,14 @@ added, moved, renamed, or removed.
           navigation and section button presentation.
         - `workspace-settings-profile-section.tsx`
           (`src/features/workspace/components/workspace-settings-profile-section.tsx`): in-modal
-          global My Profile account, password, and My Style form composition.
+          My Profile account/password and active-workspace My Style form composition.
         - `workspace-settings-profile-account-card.tsx`
           (`src/features/workspace/components/workspace-settings-profile-account-card.tsx`): My
           Profile account summary, first/last name form, and avatar upload control.
         - `workspace-settings-my-style-form.tsx`
           (`src/features/workspace/components/workspace-settings-my-style-form.tsx`): My Profile
-          My Style settings form for private role, audience, tone, preference, and constraint
-          guidance.
+          My Style settings form for private active-workspace role, audience, tone, preference, and
+          constraint guidance.
         - `workspace-settings-profile-name-field.tsx`
           (`src/features/workspace/components/workspace-settings-profile-name-field.tsx`): reusable
           first/last name input row with international-name tooltip.
@@ -867,7 +885,7 @@ added, moved, renamed, or removed.
   - `docs/architecture`: architecture maps, provider boundaries, and ticket read contracts.
     - `ai-prompt-registry-contract.md`
       (`docs/architecture/ai-prompt-registry-contract.md`): AI prompt registry, Prompt Center,
-      prompt versioning, editability, override policy, privacy, and cache invalidation contract.
+      prompt versioning, workspace rephrase style, privacy, and cache invalidation contract.
     - `ai-source-review-contract.md` (`docs/architecture/ai-source-review-contract.md`): AI source
       freshness, review/approval, failure-state, and logging contract for future drafting, reply,
       and reviewed-action operations.
@@ -916,16 +934,16 @@ added, moved, renamed, or removed.
       interaction contract.
 - `prisma`: Prisma schema and migrations.
   - `ai-prompts.prisma` (`prisma/ai-prompts.prisma`): encrypted workspace AI prompt defaults and
-    user prompt override schema.
+    workspace rephrase style/personal style override schema.
   - `ai-settings.prisma` (`prisma/ai-settings.prisma`): workspace-default and per-user workspace AI
-    settings schema, including workspace prompt override policy.
+    settings schema.
   - `app-policy.prisma` (`prisma/app-policy.prisma`): app policy key/value schema.
   - `auth.prisma` (`prisma/auth.prisma`): user, password login, and session schema.
   - `caches.prisma` (`prisma/caches.prisma`): selected-ticket detail/thread cache and generated AI
     summary cache schema.
   - `helpdesk-connections.prisma` (`prisma/helpdesk-connections.prisma`): helpdesk connection,
-    provider credential, and provider mutation log schema.
-  - `my-style.prisma` (`prisma/my-style.prisma`): encrypted per-user My Style schema.
+    workspace membership, provider credential, and provider mutation log schema.
+  - `my-style.prisma` (`prisma/my-style.prisma`): encrypted per-user/per-workspace My Style schema.
   - `prisma/migrations`: database migration history.
     - `prisma/migrations/20260519062146_init`: contains related 20260519062146_init files.
       - `migration.sql` (`prisma/migrations/20260519062146_init/migration.sql`): initial SQL schema
@@ -952,12 +970,18 @@ added, moved, renamed, or removed.
     - `prisma/migrations/20260607120000_add_ai_prompt_center`: contains related
       20260607120000_add_ai_prompt_center files.
       - `migration.sql` (`prisma/migrations/20260607120000_add_ai_prompt_center/migration.sql`):
-        migration adding encrypted workspace prompt defaults, user prompt overrides, and the
-        workspace user-override policy flag.
+        historical migration adding encrypted workspace prompt defaults and legacy personal AI
+        customization structures later replaced by the workspace AI style system migration.
     - `prisma/migrations/20260614100000_add_user_my_style`: contains related
       20260614100000_add_user_my_style files.
       - `migration.sql` (`prisma/migrations/20260614100000_add_user_my_style/migration.sql`):
-        migration adding encrypted per-user My Style storage.
+        historical migration adding old encrypted user-only My Style storage.
+    - `prisma/migrations/20260614170000_workspace_ai_style_system`: contains related
+      20260614170000_workspace_ai_style_system files.
+      - `migration.sql`
+        (`prisma/migrations/20260614170000_workspace_ai_style_system/migration.sql`): migration
+        replacing old My Style and legacy prompt customization structures with workspace memberships,
+        workspace-scoped My Style, workspace rephrase styles, and personal rephrase style overrides.
     - `migration_lock.toml` (`prisma/migrations/migration_lock.toml`): Prisma migration provider
       lockfile.
   - `saved-views.prisma` (`prisma/saved-views.prisma`): saved view and user saved-view preference
@@ -1034,14 +1058,16 @@ added, moved, renamed, or removed.
     - `ai-settings-service-user.test.ts` (`tests/features/ai-settings-service-user.test.ts`):
       verifies user-provided AI key saves and live validation failure behavior.
     - `ai-prompts-overrides.test.ts` (`tests/features/ai-prompts-overrides.test.ts`): verifies
-      AI prompt override rejection, policy disabling, and non-admin Prompt Center visibility.
+      workspace rephrase style override permissions, effective override resolution, and admin style
+      creation.
     - `ai-prompts-test-helpers.ts` (`tests/features/ai-prompts-test-helpers.ts`): shared AI prompt
-      repository, settings, connection, cache, form, and user fixtures.
+      and rephrase style repositories, settings, connection, cache, form, and user fixtures.
     - `ai-draft-rewrite-service.test.ts` (`tests/features/ai-draft-rewrite-service.test.ts`):
       verifies draft-only proofread/rephrase prompt composition, My Style inclusion, unavailable
       states, and injected provider behavior.
     - `ai-my-style-service.test.ts` (`tests/features/ai-my-style-service.test.ts`): verifies
-      encrypted My Style load/save/reset behavior, validation, and unauthenticated guards.
+      encrypted workspace-scoped My Style load/save/reset behavior, validation, membership
+      permission, and unauthenticated guards.
     - `saved-view-management-permissions.test.ts`
       (`tests/features/saved-view-management-permissions.test.ts`): verifies saved view management
       permissions behavior.
@@ -1239,7 +1265,7 @@ added, moved, renamed, or removed.
       their own user-scoped per-workspace AI key when the workspace requires user-provided keys.
     - `ticket-workspace-prompt-center.test.tsx`
       (`tests/features/ticket-workspace-prompt-center.test.tsx`): verifies Prompt Center visibility,
-      workspace prompt editing, and prompt override policy controls.
+      workspace prompt editing, and workspace rephrase style controls.
     - `ticket-workspace-settings.test.tsx` (`tests/features/ticket-workspace-settings.test.tsx`):
       verifies Settings Views default updates and workspace creation behavior.
     - `ticket-workspace-profile-settings.test.tsx`

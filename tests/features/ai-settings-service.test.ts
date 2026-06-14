@@ -43,7 +43,6 @@ describe("workspace AI settings service", () => {
     ).resolves.toEqual({ status: "unconfigured", reason: "ai-disabled" });
 
     repository.workspaceSetting = {
-      allowUserPromptOverrides: false,
       config: {
         baseUrl: "https://api.openai.test/v1",
         encryptedApiKey: encryptSecret("openai-key", encryptionKey),
@@ -67,7 +66,6 @@ describe("workspace AI settings service", () => {
     });
 
     repository.workspaceSetting = {
-      allowUserPromptOverrides: false,
       config: null,
       helpdeskConnectionId: "connection-1",
       policy: "user-provided",

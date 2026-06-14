@@ -224,13 +224,17 @@ provider writes.
 
 When workspace AI is enabled, admins also see `Prompt Center` in Settings.
 Prompt Center lists registered admin-managed prompts and allows editing or
-resetting workspace defaults. The current summary prompt is admin-only. Prompt
-Center also includes the workspace option that allows personal prompt overrides
-for future registry-approved user-editable prompts; disabling the option keeps
-saved personal prompt rows stored but inactive. Regular users see Prompt Center
-only when AI is enabled, personal overrides are allowed, and at least one
-registered prompt is user-editable. In the current slice no regular-user
-prompt editor appears because the summary prompt is admin-only.
+resetting workspace defaults. The current summary prompt is admin-only.
+Prompt Center also lists workspace rephrase styles. Admins can create, edit,
+reorder, disable, or remove styles, and the inline editor shows the active
+workspace styles dynamically. Regular users see Prompt Center only when their
+workspace membership allows personal rephrase style overrides. Those personal
+override controls replace the selected style prompt only for that user in the
+active workspace.
+
+`My Style` lives in `Settings -> My Profile` but is scoped to the active
+workspace. It must show the active workspace label and disable editing when the
+membership does not allow `canEditMyStyle`.
 
 ## Production Data Boundary
 

@@ -48,6 +48,7 @@ export function TicketMetadataEditorState({
   onMetadataSavedDetailRefresh,
   onReturnToListAfterUpdate,
   recentlyViewedLinkTargets,
+  rephraseStyleOptions,
   rewriteDraftAction,
   searchTicketLinkTargetsAction,
   updateTicketMetadataAction,
@@ -268,6 +269,7 @@ export function TicketMetadataEditorState({
               changeDraft({ ...currentDraft, communication })
             }
             onScrolledToLatest={() => setScrollAfterArticleCount(undefined)}
+            rephraseStyleOptions={rephraseStyleOptions}
             rewriteDraftAction={rewriteDraftAction}
             scrollAfterArticleCount={scrollAfterArticleCount}
           />

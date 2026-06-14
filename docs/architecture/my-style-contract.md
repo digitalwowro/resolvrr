@@ -1,9 +1,10 @@
 # My Style Contract
 
-My Style is personal writing guidance for AI drafting operations. It helps the
-AI Assistant adapt generated text to the user's role and writing preferences.
-It is not a workspace prompt default, not ticket summary context, and not an
-admin policy surface.
+My Style is personal, workspace-scoped writing guidance for AI drafting
+operations. It helps the AI Assistant adapt generated text to the user's role
+and writing preferences for the active helpdesk/workspace. It is not a
+workspace prompt default, not ticket summary context, and not an admin policy
+surface.
 
 ## Data Shape
 
@@ -24,18 +25,22 @@ follows the same privacy rules.
 
 ## Ownership And Privacy
 
-My Style belongs only to the user who created it. It must be encrypted at rest.
-Admins can configure workspace AI policy and workspace prompt defaults, but
-they cannot view or manage another user's My Style content.
+My Style belongs only to the user who created it in a specific workspace. It
+must be encrypted at rest and keyed by `user + workspace`. Admins can configure
+workspace AI policy, workspace prompt defaults, safety/guardrail instructions,
+and workspace rephrase styles, but they cannot view or manage another user's My
+Style content.
 
 My Style text must not be logged, included in telemetry, exposed to other users,
 or written to the helpdesk provider. If the app later adds an admin reset
 workflow, it must clear the stored style without revealing the content.
 
 The current implementation stores My Style server-side as one encrypted
-structured payload per user. Loading, saving, and resetting My Style require the
-current authenticated user. Empty fields are allowed; invalid oversized fields
-are rejected without changing the stored style.
+structured payload per user per workspace. Loading My Style requires the
+current authenticated user and active workspace. Saving and resetting also
+require the workspace membership permission that allows My Style editing. Empty
+fields are allowed; invalid oversized fields are rejected without changing the
+stored style.
 
 ## Where My Style Applies
 
@@ -57,8 +62,9 @@ require a separate product decision and cache-identity update.
 When an operation uses My Style, prompt construction must combine:
 
 - the registered operation prompt;
-- the effective workspace or personal prompt override, if allowed;
-- the user's My Style fields;
+- the selected workspace rephrase style prompt or permitted personal style
+  override for rephrase operations;
+- the user's workspace-scoped My Style fields;
 - fresh selected-ticket source context where required by the operation.
 
 Proofread and rephrase currently use My Style with the user's current composer
@@ -72,6 +78,8 @@ fingerprint; raw style text must not appear in logs or telemetry.
 
 ## Reset Behavior
 
-Users must be able to reset their own My Style. Resetting removes the personal
-style guidance from future generation, but it must not alter workspace prompt
-defaults, saved AI provider settings, ticket drafts, or existing provider data.
+Users with the workspace edit permission must be able to reset their own My
+Style for that workspace. Resetting removes the personal style guidance from
+future generation in that workspace, but it must not alter workspace prompt
+defaults, workspace rephrase styles, saved AI provider settings, ticket drafts,
+other workspaces, or existing provider data.

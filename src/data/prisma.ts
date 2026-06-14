@@ -11,8 +11,10 @@ function hasPromptModelDelegates(
 ): client is PrismaClient {
   return Boolean(
     client?.workspaceAiPrompt &&
-      client.userAiPromptOverride &&
-      client.userMyStyle,
+      client.workspaceAiRephraseStyle &&
+      client.userAiRephraseStyleOverride &&
+      client.workspaceMyStyle &&
+      client.workspaceMembership,
   );
 }
 

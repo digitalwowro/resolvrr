@@ -25,6 +25,7 @@ export function WorkspaceSettingsDialog({
   createConnectionAction,
   deleteConnectionAction,
   deleteSavedViewAction,
+  deleteWorkspaceAiRephraseStyleAction,
   disableConnectionAction,
   initialAiSettingsData,
   initialSection,
@@ -32,19 +33,21 @@ export function WorkspaceSettingsDialog({
   loadAiPromptCenterAction,
   loadMyStyleAction,
   loadWorkspaceAiSettingsAction,
+  moveWorkspaceAiRephraseStyleAction,
   loadSavedViewsSettingsAction,
   onClose,
   onAiSettingsDataChange,
   onProfileUserChange,
+  onRephraseStylesChange,
   onSavedViewDataChange,
   providerOptions,
-  resetUserAiPromptOverrideAction,
+  resetUserAiRephraseStyleOverrideAction,
   resetMyStyleAction,
   resetWorkspaceAiPromptAction,
   reorderSavedViewsAction,
-  saveAiPromptOverridePolicyAction,
   saveMyStyleAction,
-  saveUserAiPromptOverrideAction,
+  saveUserAiRephraseStyleOverrideAction,
+  saveWorkspaceAiRephraseStyleAction,
   saveWorkspaceAiPromptAction,
   saveUserWorkspaceAiSettingsAction,
   saveWorkspaceAiSettingsAction,
@@ -122,13 +125,10 @@ export function WorkspaceSettingsDialog({
 
   function applyPromptCenterData(data: AiPromptCenterData) {
     setPromptCenterData(data);
-    setAiSettingsData((current) =>
-      current && current.activeWorkspace?.id === data.activeWorkspace?.id
-        ? {
-            ...current,
-            allowUserPromptOverrides: data.allowUserPromptOverrides,
-          }
-        : current,
+    onRephraseStylesChange?.(
+      data.workspaceRephraseStyles
+        .filter((style) => style.isEnabled)
+        .map((style) => ({ id: style.id, label: style.label })),
     );
   }
 
@@ -223,12 +223,24 @@ export function WorkspaceSettingsDialog({
           ) : section === "prompts" ? (
             <AiPromptsSection
               data={promptCenterData}
+              deleteWorkspaceAiRephraseStyleAction={
+                deleteWorkspaceAiRephraseStyleAction
+              }
               loadAction={loadAiPromptCenterAction}
+              moveWorkspaceAiRephraseStyleAction={
+                moveWorkspaceAiRephraseStyleAction
+              }
               onDataChange={applyPromptCenterData}
-              resetUserAiPromptOverrideAction={resetUserAiPromptOverrideAction}
+              resetUserAiRephraseStyleOverrideAction={
+                resetUserAiRephraseStyleOverrideAction
+              }
               resetWorkspaceAiPromptAction={resetWorkspaceAiPromptAction}
-              saveAiPromptOverridePolicyAction={saveAiPromptOverridePolicyAction}
-              saveUserAiPromptOverrideAction={saveUserAiPromptOverrideAction}
+              saveUserAiRephraseStyleOverrideAction={
+                saveUserAiRephraseStyleOverrideAction
+              }
+              saveWorkspaceAiRephraseStyleAction={
+                saveWorkspaceAiRephraseStyleAction
+              }
               saveWorkspaceAiPromptAction={saveWorkspaceAiPromptAction}
             />
           ) : (

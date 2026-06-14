@@ -36,7 +36,6 @@ describe("TicketWorkspace AI settings admin personal key", () => {
         code: "ai-user-settings-saved" as const,
         data: {
           activeWorkspace: { id: "connection-1", label: "Support" },
-          allowUserPromptOverrides: false,
           canManageWorkspace: true,
           canViewPromptCenter: false,
           policy: "user-provided" as const,
@@ -59,7 +58,6 @@ describe("TicketWorkspace AI settings admin personal key", () => {
         connections={[{ id: "connection-1", label: "Support", active: true }]}
         initialAiSettingsData={{
           activeWorkspace: { id: "connection-1", label: "Support" },
-          allowUserPromptOverrides: false,
           canManageWorkspace: true,
           canViewPromptCenter: false,
           policy: "user-provided",
@@ -125,7 +123,6 @@ describe("TicketWorkspace AI settings admin personal key", () => {
         connections={[{ id: "connection-1", label: "Support", active: true }]}
         initialAiSettingsData={{
           activeWorkspace: { id: "connection-1", label: "Support" },
-          allowUserPromptOverrides: false,
           canManageWorkspace: true,
           canViewPromptCenter: false,
           policy: "user-provided",
@@ -174,7 +171,6 @@ describe("TicketWorkspace AI settings admin personal key", () => {
         connections={[{ id: "connection-1", label: "Support", active: true }]}
         initialAiSettingsData={{
           activeWorkspace: { id: "connection-1", label: "Support" },
-          allowUserPromptOverrides: false,
           canManageWorkspace: true,
           canViewPromptCenter: false,
           policy: "disabled",

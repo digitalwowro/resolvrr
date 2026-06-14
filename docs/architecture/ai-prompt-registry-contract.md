@@ -13,8 +13,7 @@ Every registered prompt operation must define:
 - a built-in default prompt;
 - a prompt version used for generated-output identity;
 - a maximum prompt length;
-- whether admins may edit the workspace default;
-- whether personal user overrides are allowed.
+- whether admins may edit the workspace default.
 
 Prompt keys are product contracts. They should be short, stable, and tied to an
 operation, not to a model, vendor, or helpdesk provider. Changing a prompt key
@@ -28,32 +27,45 @@ be reused.
 ## Prompt Center Rules
 
 Prompt Center is scoped to the active workspace. Admins manage workspace prompt
-defaults and the workspace option that allows personal overrides where the
-registry permits them. Non-admin users may see personal prompt controls only
-when at least one registered prompt is user-overridable and workspace personal
-overrides are enabled.
+defaults, safety/guardrail instructions, and the workspace rephrase style
+catalog. Non-admin users may see personal rephrase style override controls only
+when their workspace membership allows them.
 
 The current registered prompts are:
 
-- `ticket-summary`: admin-editable and never user-overridable so summaries
-  remain consistent across users in the same workspace.
-- `draft-proofread`: admin-editable and user-overridable when workspace policy
-  allows personal prompt overrides. It applies to draft-only proofread
-  operations and may use My Style.
-- `draft-rephrase`: admin-editable and user-overridable when workspace policy
-  allows personal prompt overrides. It applies to draft-only rephrase
-  operations and may use My Style.
+- `ticket-summary`: admin-editable so summary instructions remain governed by
+  the workspace.
+- `draft-proofread`: admin-editable. It applies to draft-only proofread
+  operations and may use workspace-scoped My Style.
+- `draft-rephrase`: admin-editable. It applies to draft-only rephrase
+  operations, the selected workspace rephrase style, and workspace-scoped My
+  Style.
 
-Disabling personal overrides preserves saved user prompt rows but makes them
-inactive. Effective prompt resolution must ignore user rows while the workspace
-override option is off, even if rows still exist in storage.
+## Rephrase Style Rules
+
+Rephrase styles are workspace-scoped admin-managed records, not hard-coded UI
+modes. The default seed styles are Professional, Friendly, Empathetic, and
+Concise. Admins may create, edit, reorder, disable, or remove styles. Active
+styles are the style choices shown in the inline composer.
+
+Each style has a stable id, label, prompt body, sort order, enabled flag, and
+optional built-in seed key. Built-in styles may be disabled and customized;
+custom styles may be deleted. Removing or disabling a style must make it
+unavailable for new rephrase actions.
+
+Workspace membership may allow personal rephrase style overrides. A personal
+override is scoped to `user + workspace + style`. It replaces that style's
+workspace prompt for the owning user only. It does not create a new public style
+option, does not affect other users, and does not let users change workspace
+base prompts or safety/guardrail instructions.
 
 ## Storage And Privacy
 
-Workspace prompt defaults and user prompt overrides are encrypted at rest with
-the application encryption key. Prompt bodies must not be logged, included in
-telemetry, exposed in client state outside authorized settings views, or copied
-into provider writes.
+Workspace prompt defaults, workspace rephrase style prompts, and personal
+rephrase style overrides are encrypted at rest with the application encryption
+key when they contain user/admin-authored prompt text. Prompt bodies must not be
+logged, included in telemetry, exposed in client state outside authorized
+settings views, or copied into provider writes.
 
 Prompt Center edits may invalidate generated-output caches when the prompt can
 affect the output. Cache identity must include at least the prompt version and a
@@ -64,5 +76,5 @@ telemetry.
 
 Suggested reply and reviewed-action prompts must be registered before
 implementation. Each operation must state whether My Style applies, whether user
-prompt overrides are allowed, which selected-ticket source data is used, and
+rephrase style overrides apply, which selected-ticket source data is used, and
 whether generated output is cached.

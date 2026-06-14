@@ -1,15 +1,18 @@
 import type { AuthUser, AuthUserRole } from "@/auth/types";
 import type {
+  AiRephraseStyleOption,
+  DeleteWorkspaceAiRephraseStyleAction,
   LoadAiPromptCenterAction,
   LoadMyStyleAction,
   LoadWorkspaceAiSettingsAction,
+  MoveWorkspaceAiRephraseStyleAction,
   ResetMyStyleAction,
-  ResetUserAiPromptOverrideAction,
+  ResetUserAiRephraseStyleOverrideAction,
   ResetWorkspaceAiPromptAction,
-  SaveAiPromptOverridePolicyAction,
   SaveMyStyleAction,
-  SaveUserAiPromptOverrideAction,
+  SaveUserAiRephraseStyleOverrideAction,
   SaveUserWorkspaceAiSettingsAction,
+  SaveWorkspaceAiRephraseStyleAction,
   SaveWorkspaceAiPromptAction,
   SaveWorkspaceAiSettingsAction,
   WorkspaceAiSettingsData,
@@ -40,6 +43,7 @@ export type WorkspaceSettingsDialogProps = {
   createConnectionAction?: HelpdeskConnectionFormAction;
   deleteConnectionAction?: HelpdeskConnectionFormAction;
   deleteSavedViewAction?: DeleteWorkspaceSavedViewAction;
+  deleteWorkspaceAiRephraseStyleAction?: DeleteWorkspaceAiRephraseStyleAction;
   disableConnectionAction?: HelpdeskConnectionFormAction;
   initialAiSettingsData?: WorkspaceAiSettingsData;
   initialSection: WorkspaceSettingsSection;
@@ -48,20 +52,22 @@ export type WorkspaceSettingsDialogProps = {
   loadMyStyleAction?: LoadMyStyleAction;
   loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
   loadWorkspaceAiSettingsAction?: LoadWorkspaceAiSettingsAction;
+  moveWorkspaceAiRephraseStyleAction?: MoveWorkspaceAiRephraseStyleAction;
   onAiSettingsDataChange?(data: WorkspaceAiSettingsData): void;
   onClose(): void;
   onProfileUserChange?(user: AuthUser): void;
+  onRephraseStylesChange?(styles: AiRephraseStyleOption[]): void;
   onSavedViewDataChange?(data: SavedViewSettingsData): void;
   providerOptions: ConnectionProviderOption[];
-  resetUserAiPromptOverrideAction?: ResetUserAiPromptOverrideAction;
+  resetUserAiRephraseStyleOverrideAction?: ResetUserAiRephraseStyleOverrideAction;
   resetMyStyleAction?: ResetMyStyleAction;
   resetWorkspaceAiPromptAction?: ResetWorkspaceAiPromptAction;
   reorderSavedViewsAction?: ReorderWorkspaceSavedViewsAction;
-  saveAiPromptOverridePolicyAction?: SaveAiPromptOverridePolicyAction;
   saveMyStyleAction?: SaveMyStyleAction;
   saveSavedViewAction?: SaveWorkspaceSavedViewAction;
-  saveUserAiPromptOverrideAction?: SaveUserAiPromptOverrideAction;
+  saveUserAiRephraseStyleOverrideAction?: SaveUserAiRephraseStyleOverrideAction;
   saveUserWorkspaceAiSettingsAction?: SaveUserWorkspaceAiSettingsAction;
+  saveWorkspaceAiRephraseStyleAction?: SaveWorkspaceAiRephraseStyleAction;
   saveWorkspaceAiPromptAction?: SaveWorkspaceAiPromptAction;
   saveWorkspaceAiSettingsAction?: SaveWorkspaceAiSettingsAction;
   setActiveConnectionAction?: HelpdeskConnectionFormAction;

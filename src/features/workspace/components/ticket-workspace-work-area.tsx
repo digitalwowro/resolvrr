@@ -4,7 +4,11 @@ import type { DropdownOption, SortDirection } from "@/components/ui";
 import type { WorkspaceTicketDetailLoadResult } from "@/features/tickets/detail-action-result";
 import type { WorkspaceTicketLinkTarget } from "@/features/tickets/link-target-search-action-result";
 import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
-import type { RewriteDraftAction, SummarizeWorkspaceTicketAction } from "@/features/ai";
+import type {
+  AiRephraseStyleOption,
+  RewriteDraftAction,
+  SummarizeWorkspaceTicketAction,
+} from "@/features/ai";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type { TicketAiSummaryResult } from "@/features/ai";
 import type {
@@ -165,6 +169,7 @@ export type TicketWorkspaceDetailAreaProps = {
   onRefresh(): void;
   onReturnToListAfterUpdate(): void;
   recentlyViewedLinkTargets: WorkspaceTicketLinkTarget[];
+  rephraseStyleOptions?: AiRephraseStyleOption[];
   refreshing: boolean;
   roundedTop: boolean;
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
@@ -192,6 +197,7 @@ export function TicketWorkspaceDetailArea({
   onRefresh,
   onReturnToListAfterUpdate,
   recentlyViewedLinkTargets,
+  rephraseStyleOptions,
   refreshing,
   roundedTop,
   searchTicketLinkTargetsAction,
@@ -218,6 +224,7 @@ export function TicketWorkspaceDetailArea({
         onRefresh={onRefresh}
         onReturnToListAfterUpdate={onReturnToListAfterUpdate}
         recentlyViewedLinkTargets={recentlyViewedLinkTargets}
+        rephraseStyleOptions={rephraseStyleOptions}
         searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
         rewriteDraftAction={rewriteDraftAction}
         summarizeTicketAction={summarizeTicketAction}

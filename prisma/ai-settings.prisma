@@ -1,7 +1,6 @@
 model WorkspaceAiSetting {
   helpdeskConnectionId      String              @id
   policy                    WorkspaceAiPolicy   @default(DISABLED)
-  allowUserPromptOverrides  Boolean             @default(false)
   providerProtocol          AiProviderProtocol?
   baseUrl                   String?
   modelName                 String?

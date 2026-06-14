@@ -4,6 +4,7 @@ import { createProviderRegistry } from "@/providers";
 import type {
   HelpdeskConnectionWithCredential,
   HelpdeskConnectionsRepository,
+  WorkspaceAccess,
 } from "@/features/helpdesk-connections/repository";
 import { updateWorkspaceTicketMetadata } from "@/features/tickets";
 import { validateProviderBaseUrl } from "@/security/base-url-validation";
@@ -15,6 +16,11 @@ vi.mock("@/security/base-url-validation", () => ({
 
 const encryptionKey = "topic-owner-group-test-key-00000";
 const mockedValidateProviderBaseUrl = vi.mocked(validateProviderBaseUrl);
+const access: WorkspaceAccess = {
+  canEditAiRephraseStyleOverrides: false,
+  canEditMyStyle: true,
+  role: "AGENT",
+};
 
 function credential(payload = { username: "agent", password: "secret" }) {
   return {
@@ -32,6 +38,7 @@ function connection(): HelpdeskConnectionWithCredential {
     displayName: "Support",
     baseUrl: "https://helpdesk.example.com",
     status: "active",
+    access,
     createdAt: new Date("2026-05-24T00:00:00Z"),
     updatedAt: new Date("2026-05-24T00:00:00Z"),
     credential: credential(),
@@ -42,6 +49,7 @@ function repository(): HelpdeskConnectionsRepository {
   return {
     listForUser: async () => [],
     findForUser: async () => connection(),
+    getAccess: async () => access,
     create: async () => {
       throw new Error("not implemented");
     },

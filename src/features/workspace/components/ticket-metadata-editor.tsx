@@ -2,6 +2,7 @@
 
 import { useMemo, type ReactNode } from "react";
 import type {
+  AiRephraseStyleOption,
   RewriteDraftAction,
 } from "@/features/ai";
 import type {
@@ -33,6 +34,7 @@ export function TicketMetadataEditor({
   onMetadataSavedDetailRefresh,
   onReturnToListAfterUpdate,
   recentlyViewedLinkTargets = [],
+  rephraseStyleOptions,
   searchTicketLinkTargetsAction = unavailableLinkTargetSearchAction,
   rewriteDraftAction,
   updateTicketMetadataAction,
@@ -47,6 +49,7 @@ export function TicketMetadataEditor({
   onMetadataSavedDetailRefresh?(ticketId: string): void;
   onReturnToListAfterUpdate(): void;
   recentlyViewedLinkTargets?: WorkspaceTicketLinkTarget[];
+  rephraseStyleOptions?: AiRephraseStyleOption[];
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
   rewriteDraftAction?: RewriteDraftAction;
   updateTicketMetadataAction(
@@ -69,6 +72,7 @@ export function TicketMetadataEditor({
       onMetadataSavedDetailRefresh={onMetadataSavedDetailRefresh}
       onReturnToListAfterUpdate={onReturnToListAfterUpdate}
       recentlyViewedLinkTargets={recentlyViewedLinkTargets}
+      rephraseStyleOptions={rephraseStyleOptions}
       searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
       rewriteDraftAction={rewriteDraftAction}
       updateTicketMetadataAction={updateTicketMetadataAction}

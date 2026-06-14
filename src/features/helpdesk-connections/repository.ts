@@ -19,7 +19,16 @@ export type StoredProviderCredential = {
   keyVersion: string;
 };
 
+export type WorkspaceAccessRole = "ADMIN" | "AGENT";
+
+export type WorkspaceAccess = {
+  canEditAiRephraseStyleOverrides: boolean;
+  canEditMyStyle: boolean;
+  role: WorkspaceAccessRole;
+};
+
 export type HelpdeskConnectionWithCredential = StoredHelpdeskConnection & {
+  access: WorkspaceAccess;
   credential: StoredProviderCredential | null;
 };
 
@@ -44,6 +53,10 @@ export type UpdateHelpdeskConnectionInput = {
 };
 
 export type HelpdeskConnectionsRepository = {
+  getAccess(
+    userId: string,
+    connectionId: string,
+  ): Promise<WorkspaceAccess | null>;
   listForUser(userId: string): Promise<StoredHelpdeskConnection[]>;
   findForUser(
     userId: string,

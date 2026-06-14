@@ -1,13 +1,13 @@
 import sanitizeHtml from "sanitize-html";
 import type { AiRuntimeConfig } from "./provider-config";
 import type {
-  DraftRephraseMode,
   DraftRewriteOperation,
   DraftRewriteRequest,
   DraftRewriteResult,
 } from "./draft-rewrite-model";
 import type { MyStyleData } from "./my-style-model";
 import type { EffectiveAiPrompt } from "./prompt-service";
+import type { EffectiveAiRephraseStyle } from "./rephrase-style-model";
 import {
   generateAiText,
   type AiTextGenerationRequest,
@@ -15,13 +15,6 @@ import {
 } from "./text-generation";
 
 const maxDraftCharacters = 8_000;
-
-const rephraseModeText: Record<DraftRephraseMode, string> = {
-  concise: "Make the draft more concise while preserving meaning.",
-  formal: "Make the draft more formal while preserving meaning.",
-  simple: "Make the draft simpler and easier to understand while preserving meaning.",
-  warmer: "Make the draft warmer while preserving meaning.",
-};
 
 function plainTextFromComposerHtml(html: string): string {
   const withBreaks = html
@@ -52,23 +45,27 @@ function styleInstructions(style: MyStyleData): string {
 
 function operationInstruction(
   operation: DraftRewriteOperation,
-  rephraseMode: DraftRephraseMode | undefined,
+  rephraseStyle: EffectiveAiRephraseStyle | null,
 ): string {
   if (operation === "proofread") {
     return "Operation: proofread the draft.";
   }
-  return `Operation: rephrase the draft. ${
-    rephraseModeText[rephraseMode ?? "concise"]
-  }`;
+  return [
+    "Operation: rephrase the draft.",
+    `Selected style: ${rephraseStyle?.label ?? "Unavailable"}.`,
+    "Style instructions:",
+    rephraseStyle?.prompt ?? "",
+  ].join("\n");
 }
 
 function userPrompt(input: {
   draftText: string;
+  rephraseStyle: EffectiveAiRephraseStyle | null;
   request: DraftRewriteRequest;
   style: MyStyleData;
 }): string {
   return [
-    operationInstruction(input.request.operation, input.request.rephraseMode),
+    operationInstruction(input.request.operation, input.rephraseStyle),
     `Composer type: ${input.request.composerMode}.`,
     styleInstructions(input.style),
     "Draft text:",
@@ -80,6 +77,7 @@ export async function rewriteDraftText(input: {
   aiConfig: AiRuntimeConfig;
   generateText?: typeof generateAiText;
   prompt: Pick<EffectiveAiPrompt, "prompt">;
+  rephraseStyle?: EffectiveAiRephraseStyle | null;
   request: DraftRewriteRequest;
   style: MyStyleData;
 }): Promise<DraftRewriteResult> {
@@ -102,6 +100,13 @@ export async function rewriteDraftText(input: {
       status: "unavailable",
     };
   }
+  if (input.request.operation === "rephrase" && !input.rephraseStyle) {
+    return {
+      reason: "invalid-rephrase-style",
+      retryable: false,
+      status: "unavailable",
+    };
+  }
 
   const generator: (
     config: Extract<AiRuntimeConfig, { status: "available" }>,
@@ -118,6 +123,7 @@ export async function rewriteDraftText(input: {
         : "draft-rephrase",
     userPrompt: userPrompt({
       draftText,
+      rephraseStyle: input.rephraseStyle ?? null,
       request: input.request,
       style: input.style,
     }),
@@ -135,7 +141,12 @@ export async function rewriteDraftText(input: {
     generatedAt: new Date().toISOString(),
     operation: input.request.operation,
     ...(input.request.operation === "rephrase"
-      ? { rephraseMode: input.request.rephraseMode ?? "concise" }
+      ? {
+          rephraseStyle: {
+            id: input.rephraseStyle?.id ?? "",
+            label: input.rephraseStyle?.label ?? "",
+          },
+        }
       : {}),
     status: "available",
     text: result.text,

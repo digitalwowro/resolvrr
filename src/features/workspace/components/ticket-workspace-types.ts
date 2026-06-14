@@ -19,16 +19,20 @@ import type {
   MarkWorkspaceNotificationsReadAction,
 } from "@/features/notifications";
 import type {
+  AiRephraseStyleOption,
+  DeleteWorkspaceAiRephraseStyleAction,
+  LoadAiRephraseStylesAction,
   LoadWorkspaceAiSettingsAction,
   LoadMyStyleAction,
   LoadAiPromptCenterAction,
+  MoveWorkspaceAiRephraseStyleAction,
   ResetMyStyleAction,
-  ResetUserAiPromptOverrideAction,
+  ResetUserAiRephraseStyleOverrideAction,
   ResetWorkspaceAiPromptAction,
-  SaveAiPromptOverridePolicyAction,
   SaveMyStyleAction,
   SaveUserWorkspaceAiSettingsAction,
-  SaveUserAiPromptOverrideAction,
+  SaveUserAiRephraseStyleOverrideAction,
+  SaveWorkspaceAiRephraseStyleAction,
   SaveWorkspaceAiSettingsAction,
   SaveWorkspaceAiPromptAction,
   SummarizeWorkspaceTicketAction,
@@ -83,6 +87,7 @@ export type TicketWorkspaceProps = {
   loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
   loadWorkspaceNotificationsAction?: LoadWorkspaceNotificationsAction;
   loadWorkspaceAiSettingsAction?: LoadWorkspaceAiSettingsAction;
+  loadAiRephraseStylesAction?: LoadAiRephraseStylesAction;
   loadAiPromptCenterAction?: LoadAiPromptCenterAction;
   loadMyStyleAction?: LoadMyStyleAction;
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
@@ -103,12 +108,15 @@ export type TicketWorkspaceProps = {
   initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
   saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
   resetMyStyleAction?: ResetMyStyleAction;
-  resetUserAiPromptOverrideAction?: ResetUserAiPromptOverrideAction;
+  rephraseStyleOptions?: AiRephraseStyleOption[];
+  resetUserAiRephraseStyleOverrideAction?: ResetUserAiRephraseStyleOverrideAction;
   resetWorkspaceAiPromptAction?: ResetWorkspaceAiPromptAction;
-  saveAiPromptOverridePolicyAction?: SaveAiPromptOverridePolicyAction;
   saveMyStyleAction?: SaveMyStyleAction;
+  deleteWorkspaceAiRephraseStyleAction?: DeleteWorkspaceAiRephraseStyleAction;
+  moveWorkspaceAiRephraseStyleAction?: MoveWorkspaceAiRephraseStyleAction;
   saveUserWorkspaceAiSettingsAction?: SaveUserWorkspaceAiSettingsAction;
-  saveUserAiPromptOverrideAction?: SaveUserAiPromptOverrideAction;
+  saveUserAiRephraseStyleOverrideAction?: SaveUserAiRephraseStyleOverrideAction;
+  saveWorkspaceAiRephraseStyleAction?: SaveWorkspaceAiRephraseStyleAction;
   saveWorkspaceAiSettingsAction?: SaveWorkspaceAiSettingsAction;
   saveWorkspaceAiPromptAction?: SaveWorkspaceAiPromptAction;
   saveSavedViewAction?: SaveWorkspaceSavedViewAction;
