@@ -14,7 +14,9 @@ new AI output.
 
 Admins configure workspace AI from `Settings -> AI Settings`. A workspace can
 disable AI, use an admin-managed workspace key, or require each user to provide
-their own workspace key. AI keys are stored server-side and encrypted.
+their own workspace key. AI keys are stored server-side and encrypted. The same
+section lets admins decide whether non-admin workspace users may edit My Style
+and whether they may customize rephrase prompts for their own drafts.
 
 Prompt Center is available when workspace AI is enabled. Admins can manage
 workspace prompt defaults for registered prompt operations and workspace
@@ -30,11 +32,16 @@ constraints. Workspace membership controls whether a user can edit My Style in
 that workspace.
 
 Workspace membership can also allow a user to override rephrase style prompts
-for their own drafts. A personal rephrase style override replaces that style's
-workspace prompt only for the owning user in the active workspace. Admins can
-view and edit workspace base prompts, safety/guardrail instructions, and
-workspace rephrase styles, but they cannot view another user's My Style or
+for their own drafts. The workspace-level AI Settings toggles update those
+permissions for non-admin users. A personal rephrase style override replaces
+that style's workspace prompt only for the owning user in the active workspace.
+Admins can view and edit workspace base prompts, safety/guardrail instructions,
+and workspace rephrase styles, but they cannot view another user's My Style or
 personal rephrase style override text.
+
+Admins can also manage per-user workspace access from `Settings -> Users`,
+including workspace role, My Style edit permission, and personal rephrase prompt
+customization permission.
 
 Proofread and rephrase actions are available in inline internal-note and
 customer-reply composers when AI is configured. They operate on text the user
@@ -82,8 +89,10 @@ retryability, and cache event where relevant.
 Admins control workspace AI availability, provider settings, workspace base
 prompts, safety/guardrail instructions, and workspace rephrase styles. Workspace
 membership permissions control whether a user may edit My Style and personal
-rephrase style overrides in that workspace. Admins cannot view another user's
-My Style content.
+rephrase style overrides in that workspace. AI Settings exposes workspace-level
+defaults for non-admin users. A rephrase style's Enabled state controls whether
+that style is available in the editor; it does not grant personal prompt
+customization. Admins cannot view another user's My Style content.
 
 There is no app-wide AI provider key in v1. AI provider configuration is scoped
 to the active workspace, with optional per-user keys when the workspace requires

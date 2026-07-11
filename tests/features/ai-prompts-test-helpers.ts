@@ -91,6 +91,7 @@ export function connectionRepository(
       return [];
     },
     async setActiveConnectionId() {},
+    async updateWorkspaceAgentAiPermissions() {},
     async update() {
       return null;
     },
@@ -120,6 +121,7 @@ export function settingsRepository(
         config: input.config ?? null,
         helpdeskConnectionId: input.helpdeskConnectionId,
         policy: input.policy,
+        userPermissions: input.userPermissions,
       };
     },
   };
@@ -132,6 +134,10 @@ export function baseWorkspaceSetting(
     config: null,
     helpdeskConnectionId: "connection-1",
     policy: "admin-managed",
+    userPermissions: {
+      canEditAiRephraseStyleOverrides: false,
+      canEditMyStyle: false,
+    },
   };
 }
 

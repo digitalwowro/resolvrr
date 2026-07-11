@@ -33,6 +33,8 @@ describe("TicketWorkspace AI settings", () => {
       expect(formData.get("baseUrl")).toBe("https://api.openai.test/v1");
       expect(formData.get("model")).toBe("gpt-5.4-mini");
       expect(formData.get("apiKey")).toBe("workspace-key");
+      expect(formData.get("usersCanEditMyStyle")).toBe("on");
+      expect(formData.get("usersCanEditAiRephraseStyleOverrides")).toBe("on");
       return {
         code: "ai-settings-saved" as const,
         data: {
@@ -41,6 +43,10 @@ describe("TicketWorkspace AI settings", () => {
           canViewPromptCenter: false,
           policy: "admin-managed" as const,
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: true,
+            canEditMyStyle: true,
+          },
           workspaceConfig: {
             baseUrl: "https://api.openai.test/v1",
             hasApiKey: true,
@@ -63,6 +69,10 @@ describe("TicketWorkspace AI settings", () => {
           canViewPromptCenter: false,
           policy: "disabled",
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
           workspaceConfig: null,
           workspaceConfigConfigured: false,
         }}
@@ -86,7 +96,27 @@ describe("TicketWorkspace AI settings", () => {
     expect(within(dialog).getByRole("heading", { name: "AI Settings" }))
       .toBeInTheDocument();
     expect(within(dialog).getByLabelText("Workspace AI")).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("checkbox", {
+        name: /Allow users to manage My Style/u,
+      }),
+    ).not.toBeChecked();
+    expect(
+      within(dialog).getByRole("checkbox", {
+        name: /Allow users to customize rephrase prompts/u,
+      }),
+    ).not.toBeChecked();
     await selectDropdown(user, dialog, "Workspace AI", "Use workspace key");
+    await user.click(
+      within(dialog).getByRole("checkbox", {
+        name: /Allow users to manage My Style/u,
+      }),
+    );
+    await user.click(
+      within(dialog).getByRole("checkbox", {
+        name: /Allow users to customize rephrase prompts/u,
+      }),
+    );
     expect(within(dialog).getByRole("link", { name: "OpenAI" }))
       .toHaveAttribute("href", "https://developers.openai.com/api/docs/models");
     expect(within(dialog).getByRole("link", { name: "Anthropic" }))
@@ -126,6 +156,10 @@ describe("TicketWorkspace AI settings", () => {
           canViewPromptCenter: false,
           policy: "admin-managed",
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
           workspaceConfig: null,
           workspaceConfigConfigured: true,
         }}
@@ -169,6 +203,10 @@ describe("TicketWorkspace AI settings", () => {
             model: "support-model",
             providerProtocol: "openai-compatible" as const,
           },
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
           workspaceConfig: null,
           workspaceConfigConfigured: false,
         },
@@ -186,6 +224,10 @@ describe("TicketWorkspace AI settings", () => {
           canViewPromptCenter: false,
           policy: "user-provided",
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
           workspaceConfig: null,
           workspaceConfigConfigured: false,
         }}

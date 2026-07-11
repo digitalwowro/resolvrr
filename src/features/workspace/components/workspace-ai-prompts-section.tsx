@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type {
   AiPromptActionResult,
   AiPromptCenterData,
@@ -18,6 +18,13 @@ import {
   WorkspacePromptForm,
   promptMessageText,
 } from "./workspace-ai-prompt-forms";
+import {
+  PromptCenterSidebar,
+  firstPromptCenterSelection,
+  promptCenterSelectionExists,
+  promptCenterSelectionKey,
+  type PromptCenterSelection,
+} from "./workspace-ai-prompt-center-sidebar";
 import {
   NewWorkspaceRephraseStyleForm,
   UserRephraseStyleOverrideForm,
@@ -48,6 +55,9 @@ export function AiPromptsSection({
   saveWorkspaceAiPromptAction?: SaveWorkspaceAiPromptAction;
 }) {
   const [message, setMessage] = useState<{ ok: boolean; text: string }>();
+  const [selected, setSelected] = useState<PromptCenterSelection>();
+  const [pendingKey, setPendingKey] = useState<string>();
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     if (data || !loadAction) {
@@ -62,6 +72,27 @@ export function AiPromptsSection({
       ok: result.ok,
       text: promptMessageText[result.code],
     });
+    if (!result.ok) {
+      return;
+    }
+    if (result.code === "ai-rephrase-style-created") {
+      const created = result.data.workspaceRephraseStyles.at(-1);
+      setSelected(created ? { id: created.id, type: "style" } : undefined);
+    } else if (result.code === "ai-rephrase-style-deleted") {
+      setSelected(undefined);
+    }
+  }
+
+  function moveStyle(styleId: string, direction: "down" | "up") {
+    if (!moveWorkspaceAiRephraseStyleAction) {
+      return;
+    }
+    setPendingKey(`move-${styleId}`);
+    startTransition(() => {
+      void moveWorkspaceAiRephraseStyleAction(styleId, direction)
+        .then(applyResult)
+        .finally(() => setPendingKey(undefined));
+    });
   }
 
   if (!data) {
@@ -71,6 +102,22 @@ export function AiPromptsSection({
       </section>
     );
   }
+
+  const selectionInput = {
+    canManageWorkspace: data.canManageWorkspace,
+    overrides: data.userRephraseStyleOverrides,
+    prompts: data.adminPrompts,
+    styles: data.workspaceRephraseStyles,
+  };
+  const effectiveSelected =
+    data.canView && promptCenterSelectionExists(selected, selectionInput)
+      ? selected
+      : data.canView
+        ? firstPromptCenterSelection(selectionInput)
+        : undefined;
+  const selectedKey = effectiveSelected
+    ? promptCenterSelectionKey(effectiveSelected)
+    : undefined;
 
   return (
     <section className="flex min-h-0 flex-1 flex-col">
@@ -85,70 +132,83 @@ export function AiPromptsSection({
           Review and tune the prompts used by this workspace.
         </p>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-        <PromptMessage message={message} />
-        {!data.canView ? (
+      {!data.canView ? (
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           <div className="rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
             AI prompts are not available for this workspace.
           </div>
-        ) : data.canManageWorkspace ? (
-          <div className="space-y-4">
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              These base prompts and guardrail instructions control workspace AI
-              safety behavior. Changes apply to all users in this workspace.
-            </div>
-            {data.adminPrompts.map((prompt) => (
-              <WorkspacePromptForm
-                action={saveWorkspaceAiPromptAction}
-                key={prompt.key}
-                onResult={applyResult}
-                prompt={prompt}
-                resetAction={resetWorkspaceAiPromptAction}
-              />
-            ))}
-            <section className="space-y-3">
-              <div>
-                <h4 className="text-sm font-semibold text-slate-950">
-                  Rephrase styles
-                </h4>
-                <p className="text-sm text-slate-600">
-                  Create the style options shown in the reply editor.
-                </p>
+        </div>
+      ) : (
+        <div className="grid min-h-0 flex-1 grid-cols-[20rem_minmax(0,1fr)]">
+          <aside className="min-h-0 overflow-y-auto border-r border-slate-200 bg-slate-50 p-4">
+            <PromptCenterSidebar
+              canManageWorkspace={data.canManageWorkspace}
+              onMoveStyle={moveStyle}
+              onSelect={setSelected}
+              pending={Boolean(pendingKey) || isPending}
+              prompts={data.adminPrompts}
+              selectedKey={selectedKey}
+              styles={data.workspaceRephraseStyles}
+              userOverrides={data.userRephraseStyleOverrides}
+            />
+          </aside>
+          <div className="min-h-0 overflow-y-auto px-5 py-4">
+            <PromptMessage message={message} />
+            {data.canManageWorkspace ? (
+              <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                These base prompts and guardrail instructions control workspace
+                AI safety behavior. Changes apply to all users in this workspace.
               </div>
-              {data.workspaceRephraseStyles.map((style) => (
-                <WorkspaceRephraseStyleForm
-                  action={saveWorkspaceAiRephraseStyleAction}
-                  deleteAction={deleteWorkspaceAiRephraseStyleAction}
-                  key={style.id}
-                  moveAction={moveWorkspaceAiRephraseStyleAction}
-                  onResult={applyResult}
-                  style={style}
-                />
-              ))}
+            ) : null}
+            {effectiveSelected?.type === "prompt" ? (
+              data.adminPrompts
+                .filter((prompt) => prompt.key === effectiveSelected.id)
+                .map((prompt) => (
+                  <WorkspacePromptForm
+                    action={saveWorkspaceAiPromptAction}
+                    key={prompt.key}
+                    onResult={applyResult}
+                    prompt={prompt}
+                    resetAction={resetWorkspaceAiPromptAction}
+                  />
+                ))
+            ) : effectiveSelected?.type === "style" ? (
+              data.workspaceRephraseStyles
+                .filter((style) => style.id === effectiveSelected.id)
+                .map((style) => (
+                  <WorkspaceRephraseStyleForm
+                    action={saveWorkspaceAiRephraseStyleAction}
+                    deleteAction={deleteWorkspaceAiRephraseStyleAction}
+                    key={style.id}
+                    onResult={applyResult}
+                    style={style}
+                  />
+                ))
+            ) : effectiveSelected?.type === "new-style" && data.canManageWorkspace ? (
               <NewWorkspaceRephraseStyleForm
                 action={saveWorkspaceAiRephraseStyleAction}
                 onResult={applyResult}
               />
-            </section>
+            ) : effectiveSelected?.type === "override" ? (
+              data.userRephraseStyleOverrides
+                .filter((style) => style.id === effectiveSelected.id)
+                .map((style) => (
+                  <UserRephraseStyleOverrideForm
+                    action={saveUserAiRephraseStyleOverrideAction}
+                    key={style.id}
+                    onResult={applyResult}
+                    resetAction={resetUserAiRephraseStyleOverrideAction}
+                    style={style}
+                  />
+                ))
+            ) : (
+              <div className="rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                Select a prompt or style to edit.
+              </div>
+            )}
           </div>
-        ) : data.userRephraseStyleOverrides.length > 0 ? (
-          <div className="space-y-4">
-            {data.userRephraseStyleOverrides.map((style) => (
-              <UserRephraseStyleOverrideForm
-                action={saveUserAiRephraseStyleOverrideAction}
-                key={style.id}
-                onResult={applyResult}
-                resetAction={resetUserAiRephraseStyleOverrideAction}
-                style={style}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-            No personal rephrase style overrides are available.
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }

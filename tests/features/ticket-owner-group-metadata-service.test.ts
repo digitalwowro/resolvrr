@@ -59,6 +59,7 @@ function repository(): HelpdeskConnectionsRepository {
     getActiveConnectionId: async () => "connection-1",
     setActiveConnectionId: async () => undefined,
     clearActiveConnectionId: async () => undefined,
+    updateWorkspaceAgentAiPermissions: async () => undefined,
   };
 }
 

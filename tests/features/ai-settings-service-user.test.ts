@@ -36,6 +36,10 @@ describe("workspace AI user settings service", () => {
       config: null,
       helpdeskConnectionId: "connection-1",
       policy: "user-provided",
+      userPermissions: {
+        canEditAiRephraseStyleOverrides: false,
+        canEditMyStyle: false,
+      },
     };
     const cache = aiSummaryCache();
 

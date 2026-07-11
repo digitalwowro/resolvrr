@@ -6,6 +6,7 @@ model User {
   lastName             String?
   avatarDataUrl        String?
   role                 UserRole                  @default(USER)
+  deactivatedAt        DateTime?
   createdAt            DateTime                  @default(now())
   updatedAt            DateTime                  @updatedAt
   passwordLogin        PasswordLogin?

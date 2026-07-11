@@ -61,6 +61,10 @@ const configuredWorkspace: StoredWorkspaceAiSetting = {
   },
   helpdeskConnectionId: "connection-1",
   policy: "admin-managed",
+  userPermissions: {
+    canEditAiRephraseStyleOverrides: true,
+    canEditMyStyle: true,
+  },
 };
 
 describe("workspace AI settings data shape", () => {
@@ -80,6 +84,10 @@ describe("workspace AI settings data shape", () => {
         providerProtocol: "openai-compatible",
       },
       workspaceConfigConfigured: true,
+      userPermissions: {
+        canEditAiRephraseStyleOverrides: true,
+        canEditMyStyle: true,
+      },
     });
   });
 
@@ -105,6 +113,10 @@ describe("workspace AI settings data shape", () => {
           config: null,
           helpdeskConnectionId: "connection-1",
           policy: "admin-managed",
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
         }),
         user("USER"),
         workspace(),

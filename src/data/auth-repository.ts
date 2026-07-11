@@ -11,6 +11,7 @@ const userSelect = {
   lastName: true,
   avatarDataUrl: true,
   role: true,
+  deactivatedAt: true,
 } satisfies Prisma.UserSelect;
 
 function derivedDisplayName(user: {
@@ -56,8 +57,8 @@ function isUniqueConstraintError(error: unknown): boolean {
 
 export const prismaAuthRepository: AuthRepository = {
   async findUserWithPasswordByEmail(email) {
-    const user = await prisma.user.findUnique({
-      where: { email },
+    const user = await prisma.user.findFirst({
+      where: { email, deactivatedAt: null },
       select: {
         ...userSelect,
         passwordLogin: {
@@ -77,8 +78,8 @@ export const prismaAuthRepository: AuthRepository = {
   },
 
   async findUserWithPasswordById(userId) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+    const user = await prisma.user.findFirst({
+      where: { id: userId, deactivatedAt: null },
       select: {
         ...userSelect,
         passwordLogin: {
@@ -173,7 +174,7 @@ export const prismaAuthRepository: AuthRepository = {
       },
     });
 
-    if (!session) {
+    if (!session || session.user.deactivatedAt) {
       return null;
     }
 

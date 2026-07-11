@@ -9,12 +9,18 @@ import type {
   StoredAiProviderConfig,
 } from "./settings-repository";
 import type {
+  WorkspaceAiUserPermissions,
   WorkspaceAiSettingsActionCode,
   WorkspaceAiSettingsActionResult,
   WorkspaceAiSettingsData,
 } from "./settings-model";
 
 export const secretKeyVersion = "v1";
+
+export const defaultWorkspaceAiUserPermissions: WorkspaceAiUserPermissions = {
+  canEditAiRephraseStyleOverrides: false,
+  canEditMyStyle: false,
+};
 
 export type ActiveWorkspace = {
   access: {
@@ -64,6 +70,7 @@ export async function settingsDataForWorkspace(
       canViewPromptCenter: false,
       policy: "disabled",
       userConfig: null,
+      userPermissions: defaultWorkspaceAiUserPermissions,
       workspaceConfig: null,
       workspaceConfigConfigured: false,
     };
@@ -84,6 +91,8 @@ export async function settingsDataForWorkspace(
         workspace.access.canEditAiRephraseStyleOverrides),
     policy: workspaceSetting?.policy ?? "disabled",
     userConfig: configView(userConfig),
+    userPermissions:
+      workspaceSetting?.userPermissions ?? defaultWorkspaceAiUserPermissions,
     workspaceConfig:
       user.role === "ADMIN"
         ? configView(workspaceSetting?.config ?? null)

@@ -3,5 +3,6 @@ export type WorkspaceSettingsSection =
   | "my-style"
   | "prompts"
   | "profile"
+  | "users"
   | "views"
   | "workspaces";

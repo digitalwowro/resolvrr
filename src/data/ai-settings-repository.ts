@@ -70,6 +70,17 @@ function configFromRecord(record: {
   };
 }
 
+function userPermissionsFromRecord(record: {
+  usersCanEditAiRephraseStyleOverrides: boolean;
+  usersCanEditMyStyle: boolean;
+}) {
+  return {
+    canEditAiRephraseStyleOverrides:
+      record.usersCanEditAiRephraseStyleOverrides,
+    canEditMyStyle: record.usersCanEditMyStyle,
+  };
+}
+
 function configData(input: Pick<UpsertWorkspaceAiSettingInput, "config">) {
   return input.config
     ? {
@@ -85,6 +96,16 @@ function configData(input: Pick<UpsertWorkspaceAiSettingInput, "config">) {
         modelName: null,
         providerProtocol: null,
       };
+}
+
+function userPermissionsData(
+  input: Pick<UpsertWorkspaceAiSettingInput, "userPermissions">,
+) {
+  return {
+    usersCanEditAiRephraseStyleOverrides:
+      input.userPermissions.canEditAiRephraseStyleOverrides,
+    usersCanEditMyStyle: input.userPermissions.canEditMyStyle,
+  };
 }
 
 export const prismaAiSettingsRepository: AiSettingsRepository = {
@@ -128,6 +149,7 @@ export const prismaAiSettingsRepository: AiSettingsRepository = {
       config: configFromRecord(setting),
       helpdeskConnectionId,
       policy: toPolicy(setting.policy),
+      userPermissions: userPermissionsFromRecord(setting),
     };
   },
 
@@ -165,10 +187,12 @@ export const prismaAiSettingsRepository: AiSettingsRepository = {
         ...configData(input),
         helpdeskConnectionId: input.helpdeskConnectionId,
         policy: toDbPolicy(input.policy),
+        ...userPermissionsData(input),
       },
       update: {
         ...configData(input),
         policy: toDbPolicy(input.policy),
+        ...userPermissionsData(input),
       },
     });
   },

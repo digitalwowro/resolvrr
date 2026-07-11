@@ -37,6 +37,7 @@ export function TicketWorkspace({
   connectionProviderOptions = [],
   createConnectionAction,
   deleteSavedViewAction,
+  deleteManagedUserAction,
   deleteConnectionAction,
   deleteWorkspaceAiRephraseStyleAction,
   detail,
@@ -47,6 +48,7 @@ export function TicketWorkspace({
   loadTicketListPageAction,
   loadAiPromptCenterAction,
   loadMyStyleAction,
+  loadUserManagementAction,
   loadSavedViewsSettingsAction,
   loadWorkspaceNotificationsAction,
   loadWorkspaceAiSettingsAction,
@@ -64,6 +66,7 @@ export function TicketWorkspace({
   initialWorkspaceOpenTabsState,
   rephraseStyleOptions: initialRephraseStyleOptions = [],
   resetUserAiRephraseStyleOverrideAction,
+  resetManagedUserPasswordAction,
   resetMyStyleAction,
   resetWorkspaceAiPromptAction,
   saveWorkspaceOpenTabsStateAction,
@@ -71,6 +74,7 @@ export function TicketWorkspace({
   rewriteDraftAction,
   saveUserWorkspaceAiSettingsAction,
   saveMyStyleAction,
+  saveManagedUserAction,
   saveUserAiRephraseStyleOverrideAction,
   saveWorkspaceAiRephraseStyleAction,
   saveWorkspaceAiSettingsAction,
@@ -189,9 +193,7 @@ export function TicketWorkspace({
           providerSortEnabled={listResult.queryCapabilities?.providerSort === true}
           refreshTicketDetailAfterMetadataSave={providedLoadTicketDetailAction}
           rows={rows}
-          savedViews={
-            workspaceSavedViewOptions
-          }
+          savedViews={workspaceSavedViewOptions}
           initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
           saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
           selectedSavedViewId={selectedSavedViewId ?? allTicketsSavedViewId}
@@ -223,6 +225,7 @@ export function TicketWorkspace({
           connections={settingsConnections}
           createConnectionAction={createConnectionAction}
           deleteConnectionAction={deleteConnectionAction}
+          deleteManagedUserAction={deleteManagedUserAction}
           deleteSavedViewAction={deleteSavedViewAction}
           deleteWorkspaceAiRephraseStyleAction={deleteWorkspaceAiRephraseStyleAction}
           disableConnectionAction={disableConnectionAction}
@@ -233,6 +236,7 @@ export function TicketWorkspace({
           loadAiPromptCenterAction={loadAiPromptCenterAction}
           loadMyStyleAction={loadMyStyleAction}
           loadSavedViewsSettingsAction={loadSavedViewsSettingsAction}
+          loadUserManagementAction={loadUserManagementAction}
           onClose={() => setSettingsOpen(false)}
           onSavedViewDataChange={(data) => {
             setSavedViewSettingsData(data);
@@ -249,6 +253,7 @@ export function TicketWorkspace({
           onRephraseStylesChange={setRephraseStyleOptions}
           providerOptions={connectionProviderOptions}
           resetMyStyleAction={resetMyStyleAction}
+          resetManagedUserPasswordAction={resetManagedUserPasswordAction}
           resetUserAiRephraseStyleOverrideAction={
             resetUserAiRephraseStyleOverrideAction
           }
@@ -257,6 +262,7 @@ export function TicketWorkspace({
           onAiSettingsDataChange={setAiSettingsData}
           moveWorkspaceAiRephraseStyleAction={moveWorkspaceAiRephraseStyleAction}
           saveMyStyleAction={saveMyStyleAction}
+          saveManagedUserAction={saveManagedUserAction}
           saveSavedViewAction={saveSavedViewAction}
           saveUserWorkspaceAiSettingsAction={saveUserWorkspaceAiSettingsAction}
           saveUserAiRephraseStyleOverrideAction={

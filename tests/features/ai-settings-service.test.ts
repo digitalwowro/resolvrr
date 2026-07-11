@@ -52,6 +52,10 @@ describe("workspace AI settings service", () => {
       },
       helpdeskConnectionId: "connection-1",
       policy: "admin-managed",
+      userPermissions: {
+        canEditAiRephraseStyleOverrides: false,
+        canEditMyStyle: false,
+      },
     };
     await expect(
       resolveWorkspaceAiRuntimeConfig(
@@ -69,6 +73,10 @@ describe("workspace AI settings service", () => {
       config: null,
       helpdeskConnectionId: "connection-1",
       policy: "user-provided",
+      userPermissions: {
+        canEditAiRephraseStyleOverrides: false,
+        canEditMyStyle: false,
+      },
     };
     await expect(
       resolveWorkspaceAiRuntimeConfig(
@@ -86,10 +94,11 @@ describe("workspace AI settings service", () => {
   it("lets admins save workspace AI settings and invalidates workspace summaries", async () => {
     const repository = aiSettingsRepository();
     const cache = aiSummaryCache();
+    const connections = connectionRepository();
 
     const result = await saveWorkspaceAiSettings({
       aiSummaryCacheRepository: cache,
-      connectionRepository: connectionRepository(),
+      connectionRepository: connections,
       encryptionKey,
       formData: form({
         apiKey: "openai-key",
@@ -97,6 +106,8 @@ describe("workspace AI settings service", () => {
         model: "support-model",
         policy: "admin-managed",
         providerProtocol: "openai-compatible",
+        usersCanEditAiRephraseStyleOverrides: true,
+        usersCanEditMyStyle: true,
       }),
       repository,
       user: user("ADMIN"),
@@ -108,6 +119,17 @@ describe("workspace AI settings service", () => {
       helpdeskConnectionId: "connection-1",
     });
     expect(repository.workspaceSetting?.policy).toBe("admin-managed");
+    expect(repository.workspaceSetting?.userPermissions).toEqual({
+      canEditAiRephraseStyleOverrides: true,
+      canEditMyStyle: true,
+    });
+    expect(connections.updateWorkspaceAgentAiPermissions).toHaveBeenCalledWith(
+      "connection-1",
+      {
+        canEditAiRephraseStyleOverrides: true,
+        canEditMyStyle: true,
+      },
+    );
     expect(
       decryptSecret(
         repository.workspaceSetting?.config?.encryptedApiKey ?? "",

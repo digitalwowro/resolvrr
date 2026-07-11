@@ -27,6 +27,11 @@ export type WorkspaceAccess = {
   role: WorkspaceAccessRole;
 };
 
+export type WorkspaceUserAiPermissions = Pick<
+  WorkspaceAccess,
+  "canEditAiRephraseStyleOverrides" | "canEditMyStyle"
+>;
+
 export type HelpdeskConnectionWithCredential = StoredHelpdeskConnection & {
   access: WorkspaceAccess;
   credential: StoredProviderCredential | null;
@@ -71,6 +76,10 @@ export type HelpdeskConnectionsRepository = {
     connectionId: string,
     status: HelpdeskConnectionStatus,
   ): Promise<boolean>;
+  updateWorkspaceAgentAiPermissions(
+    connectionId: string,
+    permissions: WorkspaceUserAiPermissions,
+  ): Promise<void>;
   deleteForUser(userId: string, connectionId: string): Promise<boolean>;
   getActiveConnectionId(userId: string): Promise<string | null>;
   setActiveConnectionId(userId: string, connectionId: string): Promise<void>;

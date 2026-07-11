@@ -17,12 +17,18 @@ export type AiSettingsConfigView = {
   providerProtocol: AiProviderProtocol;
 };
 
+export type WorkspaceAiUserPermissions = {
+  canEditAiRephraseStyleOverrides: boolean;
+  canEditMyStyle: boolean;
+};
+
 export type WorkspaceAiSettingsData = {
   activeWorkspace: { id: string; label: string } | null;
   canManageWorkspace: boolean;
   canViewPromptCenter: boolean;
   policy: WorkspaceAiPolicy;
   userConfig: AiSettingsConfigView | null;
+  userPermissions: WorkspaceAiUserPermissions;
   workspaceConfig: AiSettingsConfigView | null;
   workspaceConfigConfigured: boolean;
 };

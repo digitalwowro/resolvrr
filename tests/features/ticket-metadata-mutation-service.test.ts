@@ -65,6 +65,7 @@ function repository(input: {
     getActiveConnectionId: async () => input.activeConnectionId ?? null,
     setActiveConnectionId: async () => undefined,
     clearActiveConnectionId: async () => undefined,
+    updateWorkspaceAgentAiPermissions: async () => undefined,
   };
 }
 

@@ -100,6 +100,7 @@ function repository(seed: HelpdeskConnectionWithCredential[]) {
     clearActiveConnectionId: async () => {
       activeConnectionId = null;
     },
+    updateWorkspaceAgentAiPermissions: async () => undefined,
   };
 
   return {

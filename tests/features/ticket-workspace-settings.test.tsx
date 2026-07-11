@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import type { ConnectionProviderOption } from "@/features/helpdesk-connections";
+import type { UserManagementData } from "@/features/user-management";
 import {
   availableList,
   noopAction,
@@ -35,6 +36,27 @@ const providerOptions: ConnectionProviderOption[] = [
     ],
   },
 ];
+
+const userManagementData: UserManagementData = {
+  currentUserId: "admin-1",
+  users: [
+    {
+      createdAt: "2026-06-18T00:00:00.000Z",
+      deactivatedAt: null,
+      email: "agent@example.com",
+      firstName: "Agent",
+      hasProviderMutations: false,
+      id: "agent-1",
+      lastName: "User",
+      memberships: [],
+      ownedWorkspaceIds: [],
+      role: "USER",
+      status: "active",
+      workspaceAccessCount: 1,
+    },
+  ],
+  workspaces: [{ id: "connection-1", label: "Support", ownerUserId: "admin-1" }],
+};
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -207,5 +229,59 @@ describe("TicketWorkspace settings", () => {
     expect(await within(dialog).findByText("Workspace connected.")).toBeInTheDocument();
     expect(within(dialog).getByText("Support")).toBeInTheDocument();
     expect(routerRefresh).toHaveBeenCalled();
+  });
+
+  it("shows user management to admins only", async () => {
+    const user = userEvent.setup();
+
+    const { rerender } = render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        loadUserManagementAction={async () => userManagementData}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        savedViews={[]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="admin@example.com"
+        userId="admin-1"
+        userRole="ADMIN"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Open profile menu, Support" }));
+    await user.click(screen.getByRole("menuitem", { name: "Settings" }));
+    const dialog = screen.getByRole("dialog", { name: "Settings" });
+    await user.click(within(dialog).getByRole("button", { name: "Users" }));
+
+    expect(within(dialog).getByRole("heading", { name: "Users" })).toBeInTheDocument();
+    expect(within(dialog).getByText("Agent User")).toBeInTheDocument();
+    expect(within(dialog).getByText("agent@example.com")).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Close settings" }));
+    rerender(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        loadUserManagementAction={async () => userManagementData}
+        listResult={availableList}
+        logoutAction={noopAction}
+        rows={[row]}
+        savedViews={[]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="user@example.com"
+        userId="user-1"
+        userRole="USER"
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Open profile menu, Support" }));
+    await user.click(screen.getByRole("menuitem", { name: "Settings" }));
+
+    expect(screen.queryByRole("button", { name: "Users" })).not.toBeInTheDocument();
   });
 });

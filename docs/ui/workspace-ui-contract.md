@@ -207,6 +207,15 @@ users configure a different workspace. When a workspace is saved in
 user-provided-key mode, admins see only their personal key save action until the
 workspace policy changes again.
 
+AI Settings also exposes admin-only user AI permission controls for the active
+workspace. `Allow users to manage My Style` controls whether non-admin workspace
+users can edit their workspace-scoped My Style. `Allow users to customize
+rephrase prompts` controls whether non-admin workspace users can create personal
+rephrase style prompt overrides. These controls update workspace membership
+permissions for non-admin users; they are separate from a rephrase style's
+`Enabled` state, which only controls whether that style appears as an available
+editor option.
+
 The summary panel must report disabled, missing workspace setup, missing user
 setup, unavailable, and rate-limited states without exposing raw provider
 responses. A generated summary is advisory text only: it must not update ticket
@@ -223,14 +232,14 @@ The AI Assistant must not auto-send customer communication or run autonomous
 provider writes.
 
 When workspace AI is enabled, admins also see `Prompt Center` in Settings.
-Prompt Center lists registered admin-managed prompts and allows editing or
-resetting workspace defaults. The current summary prompt is admin-only.
-Prompt Center also lists workspace rephrase styles. Admins can create, edit,
-reorder, disable, or remove styles, and the inline editor shows the active
-workspace styles dynamically. Regular users see Prompt Center only when their
-workspace membership allows personal rephrase style overrides. Those personal
-override controls replace the selected style prompt only for that user in the
-active workspace.
+Prompt Center uses the same sidebar/detail pattern as Views: the sidebar groups
+registered workspace prompts, ordered rephrase styles, and personal overrides
+when available, while the detail pane edits the selected item. Admins can edit
+or reset workspace prompt defaults, create/edit/reorder/disable/remove rephrase
+styles, and the inline editor shows active workspace styles in that flat order.
+Regular users see Prompt Center only when their workspace membership allows
+personal rephrase style overrides. Those personal override controls replace the
+selected style prompt only for that user in the active workspace.
 
 `My Style` lives in `Settings -> My Style` under Workspace Settings because it
 is scoped to the active workspace. It is shown only when workspace AI is enabled.

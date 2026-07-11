@@ -131,13 +131,17 @@ added, moved, renamed, or removed.
     - `ai-rephrase-styles-repository.ts` (`src/data/ai-rephrase-styles-repository.ts`):
       Prisma-backed encrypted workspace rephrase style and personal style override repository.
     - `ai-settings-repository.ts` (`src/data/ai-settings-repository.ts`):
-      Prisma-backed encrypted workspace and per-user AI settings repository.
+      Prisma-backed encrypted workspace/per-user AI settings and workspace-level AI user
+      permission default repository.
     - `ai-summary-cache-repository.ts` (`src/data/ai-summary-cache-repository.ts`):
       Prisma-backed encrypted selected-ticket AI summary output cache repository.
     - `auth-repository.ts` (`src/data/auth-repository.ts`): Prisma-backed auth repository.
     - `helpdesk-connections-repository.ts` (`src/data/helpdesk-connections-repository.ts`):
       Prisma-backed helpdesk connection, workspace membership, seeded rephrase style, and active
       connection preference persistence repository.
+    - `helpdesk-connections-repository-mappers.ts`
+      (`src/data/helpdesk-connections-repository-mappers.ts`): helpdesk connection status,
+      storage/domain mapping, and workspace membership access lookup helpers.
     - `my-style-repository.ts` (`src/data/my-style-repository.ts`): Prisma-backed encrypted
       per-user/per-workspace My Style repository.
     - `prisma.ts` (`src/data/prisma.ts`): Prisma Client singleton with PostgreSQL driver adapter.
@@ -148,6 +152,9 @@ added, moved, renamed, or removed.
     - `ticket-detail-cache-repository.ts` (`src/data/ticket-detail-cache-repository.ts`):
       Prisma-backed selected-ticket detail cache repository that encrypts normalized detail/thread
       payloads and keeps cache identity/freshness metadata scoped to user and connection.
+    - `user-management-repository.ts` (`src/data/user-management-repository.ts`): Prisma-backed
+      admin user-management repository for listing users, workspace memberships, password reset,
+      owner transfer, hard delete, and deactivate/scrub workflows.
     - `workspace-tabs-repository.ts` (`src/data/workspace-tabs-repository.ts`): Prisma-backed user
       and active helpdesk-connection scoped `UiPreference` repository for persisted workspace open
       tabs.
@@ -263,6 +270,19 @@ added, moved, renamed, or removed.
         connection list item, and mutation result shapes.
       - `service.ts` (`src/features/helpdesk-connections/service.ts`): connection mutation use cases
         for ownership, encrypted credential handling, SSRF validation, and provider validation.
+    - `src/features/user-management`: admin-only global user and workspace-access management
+      feature.
+      - `actions.ts` (`src/features/user-management/actions.ts`): authenticated server actions for
+        loading user-management data, saving users, resetting passwords, and delete/deactivate.
+      - `index.ts` (`src/features/user-management/index.ts`): user-management feature exports.
+      - `model.ts` (`src/features/user-management/model.ts`): serializable user-management data,
+        mutation request, action result, and action function types.
+      - `repository.ts` (`src/features/user-management/repository.ts`): provider-neutral
+        user-management persistence contract.
+      - `service.ts` (`src/features/user-management/service.ts`): admin gating, create/update,
+        password reset, owner transfer, hard-delete, and deactivate/scrub orchestration.
+      - `validation.ts` (`src/features/user-management/validation.ts`): request parsing for user
+        save, password reset, and delete/deactivate actions.
     - `src/features/notifications`: provider-neutral workspace notification feature.
       - `actions.ts` (`src/features/notifications/actions.ts`): actions feature module.
       - `index.ts` (`src/features/notifications/index.ts`): index feature module.
@@ -698,7 +718,8 @@ added, moved, renamed, or removed.
           and an avatar/profile menu fed by real connection/action props.
         - `workspace-ai-settings-admin-form.tsx`
           (`src/features/workspace/components/workspace-ai-settings-admin-form.tsx`): admin-only
-          active-workspace AI policy and workspace-default provider settings form.
+          active-workspace AI policy, workspace-default provider settings, and non-admin AI user
+          permission form.
         - `workspace-ai-settings-fields.tsx`
           (`src/features/workspace/components/workspace-ai-settings-fields.tsx`): shared
           provider-neutral AI protocol, HTTPS base URL, model, and API key input fields.
@@ -711,13 +732,17 @@ added, moved, renamed, or removed.
         - `workspace-ai-prompt-forms.tsx`
           (`src/features/workspace/components/workspace-ai-prompt-forms.tsx`): Prompt Center
           workspace prompt and action-message form components.
+        - `workspace-ai-prompt-center-sidebar.tsx`
+          (`src/features/workspace/components/workspace-ai-prompt-center-sidebar.tsx`):
+          grouped Prompt Center sidebar for workspace prompts, ordered rephrase styles, and
+          personal overrides.
         - `workspace-ai-rephrase-style-forms.tsx`
           (`src/features/workspace/components/workspace-ai-rephrase-style-forms.tsx`): Prompt
           Center forms for workspace rephrase style CRUD and personal style overrides.
         - `workspace-ai-prompts-section.tsx`
           (`src/features/workspace/components/workspace-ai-prompts-section.tsx`): Settings dialog
-          Prompt Center section for admin-managed workspace prompts, workspace rephrase styles, and
-          membership-gated personal style overrides.
+          Prompt Center sidebar/detail section for admin-managed workspace prompts, workspace
+          rephrase styles, and membership-gated personal style overrides.
         - `workspace-notifications-panel.tsx`
           (`src/features/workspace/components/workspace-notifications-panel.tsx`): workspace
           notifications panel workspace UI component.
@@ -761,6 +786,15 @@ added, moved, renamed, or removed.
         - `workspace-settings-profile-password-form.tsx`
           (`src/features/workspace/components/workspace-settings-profile-password-form.tsx`):
           in-modal My Profile password-change form.
+        - `workspace-settings-user-form.tsx`
+          (`src/features/workspace/components/workspace-settings-user-form.tsx`): admin user
+          create/edit side-panel form with workspace membership and AI permission controls.
+        - `workspace-settings-users-section.tsx`
+          (`src/features/workspace/components/workspace-settings-users-section.tsx`): admin-only
+          Settings Users section with user table, create/edit, reset-password, and delete flows.
+        - `workspace-settings-users-table.tsx`
+          (`src/features/workspace/components/workspace-settings-users-table.tsx`): shared table
+          presentation for Settings user rows and row actions.
         - `workspace-settings-types.ts`
           (`src/features/workspace/components/workspace-settings-types.ts`): shared Settings section
           identifier type.
@@ -939,7 +973,7 @@ added, moved, renamed, or removed.
   - `ai-prompts.prisma` (`prisma/ai-prompts.prisma`): encrypted workspace AI prompt defaults and
     workspace rephrase style/personal style override schema.
   - `ai-settings.prisma` (`prisma/ai-settings.prisma`): workspace-default and per-user workspace AI
-    settings schema.
+    settings schema, including workspace-level non-admin AI permission defaults.
   - `app-policy.prisma` (`prisma/app-policy.prisma`): app policy key/value schema.
   - `auth.prisma` (`prisma/auth.prisma`): user, password login, and session schema.
   - `caches.prisma` (`prisma/caches.prisma`): selected-ticket detail/thread cache and generated AI
@@ -985,6 +1019,23 @@ added, moved, renamed, or removed.
         (`prisma/migrations/20260614170000_workspace_ai_style_system/migration.sql`): migration
         replacing old My Style and legacy prompt customization structures with workspace memberships,
         workspace-scoped My Style, workspace rephrase styles, and personal rephrase style overrides.
+    - `prisma/migrations/20260618070000_add_ai_user_permission_defaults`: contains related
+      20260618070000_add_ai_user_permission_defaults files.
+      - `migration.sql`
+        (`prisma/migrations/20260618070000_add_ai_user_permission_defaults/migration.sql`):
+        migration adding workspace-level defaults for non-admin My Style and personal rephrase
+        prompt customization permissions.
+    - `prisma/migrations/20260618053953_apply_user_management_deactivation`: contains related
+      20260618053953_apply_user_management_deactivation files.
+      - `migration.sql`
+        (`prisma/migrations/20260618053953_apply_user_management_deactivation/migration.sql`):
+        migration generated during local migration apply to align Prisma-managed index names.
+    - `prisma/migrations/20260618103000_add_user_management_deactivation`: contains related
+      20260618103000_add_user_management_deactivation files.
+      - `migration.sql`
+        (`prisma/migrations/20260618103000_add_user_management_deactivation/migration.sql`):
+        migration adding user deactivation state and changing provider mutation logs to retain
+        audit history instead of cascading on user delete.
     - `migration_lock.toml` (`prisma/migrations/migration_lock.toml`): Prisma migration provider
       lockfile.
   - `saved-views.prisma` (`prisma/saved-views.prisma`): saved view and user saved-view preference
@@ -1268,7 +1319,10 @@ added, moved, renamed, or removed.
       their own user-scoped per-workspace AI key when the workspace requires user-provided keys.
     - `ticket-workspace-prompt-center.test.tsx`
       (`tests/features/ticket-workspace-prompt-center.test.tsx`): verifies Prompt Center visibility,
-      workspace prompt editing, and workspace rephrase style controls.
+      workspace prompt editing, and admin workspace rephrase style controls.
+    - `ticket-workspace-prompt-center-access.test.tsx`
+      (`tests/features/ticket-workspace-prompt-center-access.test.tsx`): verifies Prompt Center
+      visibility for non-admin personal style override access.
     - `ticket-workspace-settings.test.tsx` (`tests/features/ticket-workspace-settings.test.tsx`):
       verifies Settings Views default updates and workspace creation behavior.
     - `ticket-workspace-profile-settings.test.tsx`

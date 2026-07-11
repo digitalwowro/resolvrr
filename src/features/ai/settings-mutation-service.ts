@@ -8,6 +8,7 @@ import type { AiSummaryCacheRepository } from "./summary-cache-repository";
 import { configInputFromForm, policyFromForm } from "./settings-form";
 import type { AiSettingsRepository } from "./settings-repository";
 import type {
+  WorkspaceAiUserPermissions,
   WorkspaceAiPolicy,
   WorkspaceAiSettingsActionResult,
 } from "./settings-model";
@@ -37,6 +38,20 @@ function isWorkspaceAiPolicy(value: string): value is WorkspaceAiPolicy {
   return policies.has(value);
 }
 
+function userPermissionFromForm(formData: FormData, key: string) {
+  return formData.get(key) === "on";
+}
+
+function userPermissionsFromForm(formData: FormData): WorkspaceAiUserPermissions {
+  return {
+    canEditAiRephraseStyleOverrides: userPermissionFromForm(
+      formData,
+      "usersCanEditAiRephraseStyleOverrides",
+    ),
+    canEditMyStyle: userPermissionFromForm(formData, "usersCanEditMyStyle"),
+  };
+}
+
 export async function saveWorkspaceAiSettings(
   input: SaveAiSettingsInput,
 ): Promise<WorkspaceAiSettingsActionResult> {
@@ -49,7 +64,7 @@ export async function saveWorkspaceAiSettings(
   if (!workspace) {
     return actionResult("no-active-workspace", currentData, false);
   }
-  if (input.user.role !== "ADMIN") {
+  if (input.user.role !== "ADMIN" && workspace.access.role !== "ADMIN") {
     return actionResult("not-admin", currentData, false);
   }
 
@@ -57,13 +72,19 @@ export async function saveWorkspaceAiSettings(
   if (!isWorkspaceAiPolicy(policy)) {
     return actionResult("invalid-ai-input", currentData, false);
   }
+  const userPermissions = userPermissionsFromForm(input.formData);
 
   if (policy !== "admin-managed") {
     await input.repository.upsertWorkspaceSetting({
       config: null,
       helpdeskConnectionId: workspace.id,
       policy,
+      userPermissions,
     });
+    await input.connectionRepository.updateWorkspaceAgentAiPermissions(
+      workspace.id,
+      userPermissions,
+    );
     if (policy === "disabled") {
       await input.repository.deleteUserSettingsForWorkspace(workspace.id);
     }
@@ -96,7 +117,12 @@ export async function saveWorkspaceAiSettings(
     config,
     helpdeskConnectionId: workspace.id,
     policy,
+    userPermissions,
   });
+  await input.connectionRepository.updateWorkspaceAgentAiPermissions(
+    workspace.id,
+    userPermissions,
+  );
   await input.repository.deleteUserSettingsForWorkspace(workspace.id);
   await invalidateAiSummaryWorkspaceCache({
     cacheRepository: input.aiSummaryCacheRepository,

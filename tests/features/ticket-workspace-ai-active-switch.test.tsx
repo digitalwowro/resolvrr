@@ -39,6 +39,10 @@ describe("TicketWorkspace AI settings active workspace switch", () => {
           canViewPromptCenter: false,
           policy: "disabled" as const,
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
           workspaceConfig: null,
           workspaceConfigConfigured: false,
         },
@@ -48,9 +52,13 @@ describe("TicketWorkspace AI settings active workspace switch", () => {
     const loadWorkspaceAiSettingsAction = vi.fn(async () => ({
       activeWorkspace: { id: "connection-2", label: "Sales" },
       canManageWorkspace: true,
-          canViewPromptCenter: false,
+      canViewPromptCenter: false,
       policy: "disabled" as const,
       userConfig: null,
+      userPermissions: {
+        canEditAiRephraseStyleOverrides: false,
+        canEditMyStyle: false,
+      },
       workspaceConfig: null,
       workspaceConfigConfigured: false,
     }));
@@ -76,6 +84,10 @@ describe("TicketWorkspace AI settings active workspace switch", () => {
           canViewPromptCenter: false,
           policy: "admin-managed",
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
           workspaceConfig: {
             baseUrl: "https://api.openai.test/v1",
             hasApiKey: true,

@@ -1,12 +1,11 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useTransition, type FormEvent } from "react";
 import { Button, Checkbox } from "@/components/ui";
 import type {
   AiPromptActionResult,
   DeleteWorkspaceAiRephraseStyleAction,
-  MoveWorkspaceAiRephraseStyleAction,
   ResetUserAiRephraseStyleOverrideAction,
   SaveUserAiRephraseStyleOverrideAction,
   SaveWorkspaceAiRephraseStyleAction,
@@ -18,13 +17,11 @@ import { textareaClass } from "./workspace-ai-prompt-forms";
 export function WorkspaceRephraseStyleForm({
   action,
   deleteAction,
-  moveAction,
   onResult,
   style,
 }: {
   action?: SaveWorkspaceAiRephraseStyleAction;
   deleteAction?: DeleteWorkspaceAiRephraseStyleAction;
-  moveAction?: MoveWorkspaceAiRephraseStyleAction;
   onResult(result: AiPromptActionResult): void;
   style: WorkspaceAiRephraseStyleView;
 }) {
@@ -51,15 +48,6 @@ export function WorkspaceRephraseStyleForm({
     });
   }
 
-  function move(direction: "down" | "up") {
-    if (!moveAction) {
-      return;
-    }
-    startTransition(() => {
-      void moveAction(style.id, direction).then(onResult);
-    });
-  }
-
   return (
     <form
       className="rounded-md border border-slate-200 bg-white p-4"
@@ -79,25 +67,7 @@ export function WorkspaceRephraseStyleForm({
             required
           />
         </label>
-        <div className="flex items-center gap-1 pt-7">
-          <button
-            aria-label={`Move ${style.label} up`}
-            className="grid size-9 place-items-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-40"
-            disabled={pending || !moveAction}
-            onClick={() => move("up")}
-            type="button"
-          >
-            <ArrowUp aria-hidden="true" className="size-4" />
-          </button>
-          <button
-            aria-label={`Move ${style.label} down`}
-            className="grid size-9 place-items-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-40"
-            disabled={pending || !moveAction}
-            onClick={() => move("down")}
-            type="button"
-          >
-            <ArrowDown aria-hidden="true" className="size-4" />
-          </button>
+        <div className="pt-7">
           <button
             aria-label={`Remove ${style.label}`}
             className="grid size-9 place-items-center rounded-md text-slate-500 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-40"
@@ -161,24 +131,37 @@ export function NewWorkspaceRephraseStyleForm({
   }
 
   return (
-    <form className="rounded-md border border-dashed border-slate-300 bg-white p-4" onSubmit={submit}>
-      <div className="grid gap-3 md:grid-cols-[280px_1fr_auto]">
+    <form
+      className="rounded-md border border-dashed border-slate-300 bg-white p-4"
+      onSubmit={submit}
+    >
+      <div>
+        <h4 className="text-sm font-semibold text-slate-950">New rephrase style</h4>
+        <p className="text-sm text-slate-600">
+          Create a style option shown in the reply editor.
+        </p>
+      </div>
+      <label className="mt-4 block text-sm font-medium text-slate-700">
+        Style name
         <input
-          className="h-10 rounded-md border border-slate-300 px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          className="mt-2 h-10 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           disabled={pending || !action}
           maxLength={80}
           name="label"
-          placeholder="Style name"
           required
         />
-        <input
-          className="h-10 rounded-md border border-slate-300 px-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+      </label>
+      <label className="mt-4 block text-sm font-medium text-slate-700">
+        Style prompt
+        <textarea
+          className={textareaClass}
           disabled={pending || !action}
           maxLength={2_000}
           name="prompt"
-          placeholder="Style instructions"
           required
         />
+      </label>
+      <div className="mt-4 flex justify-end">
         <Button disabled={pending || !action} loading={pending} type="submit" variant="primary">
           Add style
         </Button>

@@ -1,6 +1,15 @@
 "use client";
 
-import { Bot, Eye, MessageSquareText, PencilLine, Settings, User } from "lucide-react";
+import {
+  Bot,
+  Eye,
+  MessageSquareText,
+  PencilLine,
+  Settings,
+  User,
+  Users,
+} from "lucide-react";
+import type { AuthUserRole } from "@/auth/types";
 import { cn } from "@/components/ui/classnames";
 import type { WorkspaceSettingsSection } from "./workspace-settings-types";
 
@@ -8,6 +17,7 @@ type WorkspaceSettingsNavProps = {
   activeSection: WorkspaceSettingsSection;
   myStyleAvailable: boolean;
   promptCenterAvailable: boolean;
+  userRole: AuthUserRole;
   onSectionChange(section: WorkspaceSettingsSection): void;
 };
 
@@ -28,6 +38,7 @@ export function WorkspaceSettingsNav({
   activeSection,
   myStyleAvailable,
   promptCenterAvailable,
+  userRole,
   onSectionChange,
 }: WorkspaceSettingsNavProps) {
   return (
@@ -51,6 +62,16 @@ export function WorkspaceSettingsNav({
             <Settings aria-hidden="true" className="size-4" />
             Workspaces
           </button>
+          {userRole === "ADMIN" ? (
+            <button
+              className={sectionButtonClass(activeSection === "users")}
+              onClick={() => onSectionChange("users")}
+              type="button"
+            >
+              <Users aria-hidden="true" className="size-4" />
+              Users
+            </button>
+          ) : null}
         </div>
         <div className="space-y-1">
           <p className={sectionGroupLabelClass()}>Workspace settings</p>

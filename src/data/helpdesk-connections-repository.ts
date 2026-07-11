@@ -1,92 +1,17 @@
-import { HelpdeskConnectionStatus as DbConnectionStatus } from "@/generated/prisma/enums";
-import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/data/prisma";
-import type { HelpdeskConnectionStatus } from "@/core/helpdesk-connections";
 import { builtInRephraseStyles } from "@/features/ai/rephrase-style-defaults";
 import {
   activeConnectionPreferenceKey,
   type HelpdeskConnectionWithCredential,
   type HelpdeskConnectionsRepository,
-  type StoredHelpdeskConnection,
-  type WorkspaceAccess,
   type UpdateHelpdeskConnectionInput,
 } from "@/features/helpdesk-connections/repository";
-
-const connectionSelect = {
-  id: true,
-  userId: true,
-  providerKey: true,
-  displayName: true,
-  baseUrl: true,
-  status: true,
-  createdAt: true,
-  updatedAt: true,
-} satisfies Prisma.HelpdeskConnectionSelect;
-
-function toDbStatus(status: HelpdeskConnectionStatus): DbConnectionStatus {
-  if (status === "auth_failed") {
-    return DbConnectionStatus.AUTH_FAILED;
-  }
-  if (status === "disconnected") {
-    return DbConnectionStatus.DISCONNECTED;
-  }
-  return DbConnectionStatus.ACTIVE;
-}
-
-function toDomainStatus(status: DbConnectionStatus): HelpdeskConnectionStatus {
-  if (status === DbConnectionStatus.AUTH_FAILED) {
-    return "auth_failed";
-  }
-  if (status === DbConnectionStatus.DISCONNECTED) {
-    return "disconnected";
-  }
-  return "active";
-}
-
-function toStoredConnection(connection: {
-  id: string;
-  userId: string;
-  providerKey: string;
-  displayName: string;
-  baseUrl: string;
-  status: DbConnectionStatus;
-  createdAt: Date;
-  updatedAt: Date;
-}): StoredHelpdeskConnection {
-  return {
-    ...connection,
-    status: toDomainStatus(connection.status),
-  };
-}
-
-function toWorkspaceAccess(access: {
-  canEditAiRephraseStyleOverrides: boolean;
-  canEditMyStyle: boolean;
-  role: "ADMIN" | "AGENT";
-}): WorkspaceAccess {
-  return {
-    canEditAiRephraseStyleOverrides: access.canEditAiRephraseStyleOverrides,
-    canEditMyStyle: access.canEditMyStyle,
-    role: access.role,
-  };
-}
-
-async function findWorkspaceAccess(userId: string, connectionId: string) {
-  const membership = await prisma.workspaceMembership.findUnique({
-    where: {
-      userId_helpdeskConnectionId: {
-        helpdeskConnectionId: connectionId,
-        userId,
-      },
-    },
-    select: {
-      canEditAiRephraseStyleOverrides: true,
-      canEditMyStyle: true,
-      role: true,
-    },
-  });
-  return membership ? toWorkspaceAccess(membership) : null;
-}
+import {
+  connectionSelect,
+  findWorkspaceAccess,
+  toDbStatus,
+  toStoredConnection,
+} from "./helpdesk-connections-repository-mappers";
 
 export const prismaHelpdeskConnectionsRepository: HelpdeskConnectionsRepository = {
   async getAccess(userId, connectionId) {
@@ -234,6 +159,20 @@ export const prismaHelpdeskConnectionsRepository: HelpdeskConnectionsRepository 
     });
 
     return result.count === 1;
+  },
+
+  async updateWorkspaceAgentAiPermissions(connectionId, permissions) {
+    await prisma.workspaceMembership.updateMany({
+      where: {
+        helpdeskConnectionId: connectionId,
+        role: "AGENT",
+      },
+      data: {
+        canEditAiRephraseStyleOverrides:
+          permissions.canEditAiRephraseStyleOverrides,
+        canEditMyStyle: permissions.canEditMyStyle,
+      },
+    });
   },
 
   async deleteForUser(userId, connectionId) {

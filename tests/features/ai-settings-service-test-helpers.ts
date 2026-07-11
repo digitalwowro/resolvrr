@@ -24,10 +24,16 @@ export function user(role: AuthUser["role"] = "USER"): AuthUser {
   };
 }
 
-export function form(values: Record<string, string>) {
+export function form(values: Record<string, boolean | string>) {
   const formData = new FormData();
   for (const [key, value] of Object.entries(values)) {
-    formData.set(key, value);
+    if (typeof value === "boolean") {
+      if (value) {
+        formData.set(key, "on");
+      }
+    } else {
+      formData.set(key, value);
+    }
   }
   return formData;
 }
@@ -41,6 +47,7 @@ export const defaultWorkspaceAccess: WorkspaceAccess = {
 export function connectionRepository(
   access: WorkspaceAccess = defaultWorkspaceAccess,
 ): HelpdeskConnectionsRepository {
+  const updateWorkspaceAgentAiPermissions = vi.fn(async () => undefined);
   return {
     async clearActiveConnectionId() {},
     async create() {
@@ -79,6 +86,7 @@ export function connectionRepository(
     async updateStatus() {
       return false;
     },
+    updateWorkspaceAgentAiPermissions,
   };
 }
 
@@ -112,6 +120,7 @@ export function aiSettingsRepository(): AiSettingsRepository & {
         config: input.config ?? null,
         helpdeskConnectionId: input.helpdeskConnectionId,
         policy: input.policy,
+        userPermissions: input.userPermissions,
       };
     },
   };

@@ -32,6 +32,10 @@ describe("TicketWorkspace AI settings custom model", () => {
           canViewPromptCenter: false,
           policy: "admin-managed" as const,
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
           workspaceConfig: {
             baseUrl: "https://api.openai.test/v1",
             hasApiKey: true,
@@ -54,6 +58,10 @@ describe("TicketWorkspace AI settings custom model", () => {
           canViewPromptCenter: false,
           policy: "admin-managed",
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
           workspaceConfig: {
             baseUrl: "https://api.openai.test/v1",
             hasApiKey: true,

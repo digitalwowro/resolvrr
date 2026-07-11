@@ -145,7 +145,7 @@ export function VerticalTicketTabs({
 
   return (
     <aside
-      className="flex min-w-64 max-w-xs basis-1/6 shrink-0 flex-col overflow-hidden border-r border-t border-slate-200 bg-slate-50"
+      className="relative z-10 flex min-w-64 max-w-xs basis-1/6 shrink-0 flex-col overflow-hidden border-r border-t border-slate-200 bg-slate-50"
     >
       <div aria-live="polite" className="sr-only">
         {announcement}

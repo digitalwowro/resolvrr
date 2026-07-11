@@ -46,6 +46,11 @@ conversation content.
   request bodies, provider-local ticket or linked-ticket IDs, article IDs,
   recipient addresses, internal note bodies, customer reply bodies, or customer
   message bodies.
+- Provider mutation audit rows are local accountability metadata and are not
+  provider content. Removing a user with provider write history deactivates and
+  scrubs the user record instead of deleting those audit rows. Helpdesk-provider
+  replies and articles remain in the connected provider and are never deleted by
+  Resolvrr user removal.
 
 ## AI Prompt And Output Data
 

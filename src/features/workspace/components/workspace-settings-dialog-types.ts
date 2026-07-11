@@ -31,6 +31,12 @@ import type {
   SetDefaultWorkspaceSavedViewAction,
 } from "@/features/saved-views/settings-model";
 import type {
+  DeleteManagedUserAction,
+  LoadUserManagementAction,
+  ResetManagedUserPasswordAction,
+  SaveManagedUserAction,
+} from "@/features/user-management";
+import type {
   ChangePasswordAction,
   UpdateAvatarAction,
   UpdateProfileAction,
@@ -43,6 +49,7 @@ export type WorkspaceSettingsDialogProps = {
   createConnectionAction?: HelpdeskConnectionFormAction;
   deleteConnectionAction?: HelpdeskConnectionFormAction;
   deleteSavedViewAction?: DeleteWorkspaceSavedViewAction;
+  deleteManagedUserAction?: DeleteManagedUserAction;
   deleteWorkspaceAiRephraseStyleAction?: DeleteWorkspaceAiRephraseStyleAction;
   disableConnectionAction?: HelpdeskConnectionFormAction;
   initialAiSettingsData?: WorkspaceAiSettingsData;
@@ -51,6 +58,7 @@ export type WorkspaceSettingsDialogProps = {
   loadAiPromptCenterAction?: LoadAiPromptCenterAction;
   loadMyStyleAction?: LoadMyStyleAction;
   loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
+  loadUserManagementAction?: LoadUserManagementAction;
   loadWorkspaceAiSettingsAction?: LoadWorkspaceAiSettingsAction;
   moveWorkspaceAiRephraseStyleAction?: MoveWorkspaceAiRephraseStyleAction;
   onAiSettingsDataChange?(data: WorkspaceAiSettingsData): void;
@@ -61,9 +69,11 @@ export type WorkspaceSettingsDialogProps = {
   providerOptions: ConnectionProviderOption[];
   resetUserAiRephraseStyleOverrideAction?: ResetUserAiRephraseStyleOverrideAction;
   resetMyStyleAction?: ResetMyStyleAction;
+  resetManagedUserPasswordAction?: ResetManagedUserPasswordAction;
   resetWorkspaceAiPromptAction?: ResetWorkspaceAiPromptAction;
   reorderSavedViewsAction?: ReorderWorkspaceSavedViewsAction;
   saveMyStyleAction?: SaveMyStyleAction;
+  saveManagedUserAction?: SaveManagedUserAction;
   saveSavedViewAction?: SaveWorkspaceSavedViewAction;
   saveUserAiRephraseStyleOverrideAction?: SaveUserAiRephraseStyleOverrideAction;
   saveUserWorkspaceAiSettingsAction?: SaveUserWorkspaceAiSettingsAction;

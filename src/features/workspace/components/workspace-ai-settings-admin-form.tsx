@@ -1,7 +1,12 @@
 "use client";
 
 import { useTransition, type FormEvent } from "react";
-import { Button, DropdownSelect, type DropdownOption } from "@/components/ui";
+import {
+  Button,
+  Checkbox,
+  DropdownSelect,
+  type DropdownOption,
+} from "@/components/ui";
 import type {
   SaveWorkspaceAiSettingsAction,
   WorkspaceAiPolicy,
@@ -36,10 +41,8 @@ export function WorkspaceAiSettingsAdminForm({
 }) {
   const [pending, startTransition] = useTransition();
   const disabled = pending || !action || !data.activeWorkspace;
-  const policyChanged = selectedPolicy !== data.policy;
-  const showSubmit = selectedPolicy === "admin-managed" || policyChanged;
   const submitLabel =
-    selectedPolicy === "admin-managed" ? "Save workspace key" : "Save workspace policy";
+    selectedPolicy === "admin-managed" ? "Save workspace key" : "Save AI settings";
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -86,13 +89,32 @@ export function WorkspaceAiSettingsAdminForm({
           </div>
         </fieldset>
       ) : null}
-      {showSubmit ? (
-        <div className="mt-6 flex justify-end">
-          <Button disabled={disabled} loading={pending} type="submit" variant="primary">
-            {submitLabel}
-          </Button>
+      <fieldset className="mt-5 border-t border-slate-200 pt-4">
+        <legend className="text-sm font-medium text-slate-700">
+          User AI permissions
+        </legend>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <Checkbox
+            defaultChecked={data.userPermissions.canEditMyStyle}
+            disabled={disabled}
+            helpText="Lets non-admin workspace users edit their own workspace-specific writing guidance."
+            label="Allow users to manage My Style"
+            name="usersCanEditMyStyle"
+          />
+          <Checkbox
+            defaultChecked={data.userPermissions.canEditAiRephraseStyleOverrides}
+            disabled={disabled}
+            helpText="Lets non-admin workspace users customize rephrase style prompts for their own drafts."
+            label="Allow users to customize rephrase prompts"
+            name="usersCanEditAiRephraseStyleOverrides"
+          />
         </div>
-      ) : null}
+      </fieldset>
+      <div className="mt-6 flex justify-end">
+        <Button disabled={disabled} loading={pending} type="submit" variant="primary">
+          {submitLabel}
+        </Button>
+      </div>
     </form>
   );
 }

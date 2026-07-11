@@ -1,5 +1,6 @@
 import type {
   AiProviderProtocol,
+  WorkspaceAiUserPermissions,
   WorkspaceAiPolicy,
 } from "./settings-model";
 
@@ -15,12 +16,14 @@ export type StoredWorkspaceAiSetting = {
   config: StoredAiProviderConfig | null;
   helpdeskConnectionId: string;
   policy: WorkspaceAiPolicy;
+  userPermissions: WorkspaceAiUserPermissions;
 };
 
 export type UpsertWorkspaceAiSettingInput = {
   config?: StoredAiProviderConfig | null;
   helpdeskConnectionId: string;
   policy: WorkspaceAiPolicy;
+  userPermissions: WorkspaceAiUserPermissions;
 };
 
 export type UpsertUserWorkspaceAiSettingInput = StoredAiProviderConfig & {

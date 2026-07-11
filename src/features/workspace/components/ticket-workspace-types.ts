@@ -57,6 +57,12 @@ import type {
   HelpdeskConnectionFormAction,
 } from "@/features/helpdesk-connections/service-types";
 import type {
+  DeleteManagedUserAction,
+  LoadUserManagementAction,
+  ResetManagedUserPasswordAction,
+  SaveManagedUserAction,
+} from "@/features/user-management";
+import type {
   WorkspaceTicketColumn,
   WorkspaceTicketDetail,
   WorkspaceTicketRow,
@@ -77,6 +83,7 @@ export type TicketWorkspaceProps = {
   connectionProviderOptions?: ConnectionProviderOption[];
   createConnectionAction?: HelpdeskConnectionFormAction;
   deleteSavedViewAction?: DeleteWorkspaceSavedViewAction;
+  deleteManagedUserAction?: DeleteManagedUserAction;
   deleteConnectionAction?: HelpdeskConnectionFormAction;
   detail?: WorkspaceTicketDetail;
   detailResult?: WorkspaceTicketDetailLoadResult;
@@ -90,6 +97,7 @@ export type TicketWorkspaceProps = {
   loadAiRephraseStylesAction?: LoadAiRephraseStylesAction;
   loadAiPromptCenterAction?: LoadAiPromptCenterAction;
   loadMyStyleAction?: LoadMyStyleAction;
+  loadUserManagementAction?: LoadUserManagementAction;
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
   rewriteDraftAction?: RewriteDraftAction;
   summarizeTicketAction?: SummarizeWorkspaceTicketAction;
@@ -108,10 +116,12 @@ export type TicketWorkspaceProps = {
   initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
   saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
   resetMyStyleAction?: ResetMyStyleAction;
+  resetManagedUserPasswordAction?: ResetManagedUserPasswordAction;
   rephraseStyleOptions?: AiRephraseStyleOption[];
   resetUserAiRephraseStyleOverrideAction?: ResetUserAiRephraseStyleOverrideAction;
   resetWorkspaceAiPromptAction?: ResetWorkspaceAiPromptAction;
   saveMyStyleAction?: SaveMyStyleAction;
+  saveManagedUserAction?: SaveManagedUserAction;
   deleteWorkspaceAiRephraseStyleAction?: DeleteWorkspaceAiRephraseStyleAction;
   moveWorkspaceAiRephraseStyleAction?: MoveWorkspaceAiRephraseStyleAction;
   saveUserWorkspaceAiSettingsAction?: SaveUserWorkspaceAiSettingsAction;

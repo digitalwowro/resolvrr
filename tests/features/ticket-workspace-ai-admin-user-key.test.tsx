@@ -45,6 +45,10 @@ describe("TicketWorkspace AI settings admin personal key", () => {
             model: "company-support-model",
             providerProtocol: "openai-compatible" as const,
           },
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
           workspaceConfig: null,
           workspaceConfigConfigured: false,
         },
@@ -62,6 +66,10 @@ describe("TicketWorkspace AI settings admin personal key", () => {
           canViewPromptCenter: false,
           policy: "user-provided",
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
           workspaceConfig: null,
           workspaceConfigConfigured: false,
         }}
@@ -127,6 +135,10 @@ describe("TicketWorkspace AI settings admin personal key", () => {
           canViewPromptCenter: false,
           policy: "user-provided",
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
           workspaceConfig: null,
           workspaceConfigConfigured: false,
         }}
@@ -158,7 +170,7 @@ describe("TicketWorkspace AI settings admin personal key", () => {
       name: "Personal workspace key",
     })).toBeNull();
     expect(
-      within(dialog).getByRole("button", { name: "Save workspace policy" }),
+      within(dialog).getByRole("button", { name: "Save AI settings" }),
     ).toBeInTheDocument();
   });
 
@@ -175,6 +187,10 @@ describe("TicketWorkspace AI settings admin personal key", () => {
           canViewPromptCenter: false,
           policy: "disabled",
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
           workspaceConfig: null,
           workspaceConfigConfigured: false,
         }}
@@ -204,7 +220,7 @@ describe("TicketWorkspace AI settings admin personal key", () => {
       name: "Personal workspace key",
     })).toBeNull();
     expect(
-      within(dialog).getByRole("button", { name: "Save workspace policy" }),
+      within(dialog).getByRole("button", { name: "Save AI settings" }),
     ).toBeInTheDocument();
   });
 });

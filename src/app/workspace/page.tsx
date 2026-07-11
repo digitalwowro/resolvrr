@@ -77,10 +77,19 @@ import {
   saveWorkspaceSavedViewAction,
   setDefaultWorkspaceSavedViewAction,
 } from "@/features/saved-views/actions";
+import {
+  deleteManagedUserAction,
+  loadUserManagementAction,
+  resetManagedUserPasswordAction,
+  saveManagedUserAction,
+} from "@/features/user-management";
 import { savedViewSettingsDataFromStored } from "@/features/saved-views/settings-model";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import { providerRegistry } from "@/providers";
-import { savedViewTicketListQuery } from "./workspace-page-helpers";
+import {
+  savedViewTicketListQuery,
+  workspaceMenuConnections,
+} from "./workspace-page-helpers";
 
 type WorkspacePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -200,18 +209,11 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     <TicketWorkspace
       changePasswordAction={changePasswordAction}
       columns={defaultWorkspaceTicketColumns}
-      connections={connections.map((connection) => ({
-        id: connection.id,
-        label: connection.displayName,
-        providerKey: connection.providerKey,
-        providerLabel: connection.providerLabel,
-        baseUrl: connection.baseUrl,
-        status: connection.status,
-        active: connection.active,
-      }))}
+      connections={workspaceMenuConnections(connections)}
       connectionProviderOptions={listConnectionProviderOptions(providerRegistry)}
       createConnectionAction={createHelpdeskConnectionAction}
       deleteConnectionAction={deleteHelpdeskConnectionAction}
+      deleteManagedUserAction={deleteManagedUserAction}
       deleteWorkspaceAiRephraseStyleAction={deleteWorkspaceAiRephraseStyleAction}
       detail={detail}
       detailResult={workspaceDetailResult}
@@ -220,6 +222,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       loadAiPromptCenterAction={loadAiPromptCenterAction}
       loadAiRephraseStylesAction={loadAiRephraseStylesAction}
       loadMyStyleAction={loadMyStyleAction}
+      loadUserManagementAction={loadUserManagementAction}
       loadWorkspaceAiSettingsAction={loadWorkspaceAiSettingsAction}
       loadTicketDetailAction={loadWorkspaceTicketDetailAction}
       loadTicketListPageAction={loadWorkspaceTicketListPageAction}
@@ -254,8 +257,10 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
         resetUserAiRephraseStyleOverrideAction
       }
       resetMyStyleAction={resetMyStyleAction}
+      resetManagedUserPasswordAction={resetManagedUserPasswordAction}
       resetWorkspaceAiPromptAction={resetWorkspaceAiPromptAction}
       rewriteDraftAction={rewriteDraftAction}
+      saveManagedUserAction={saveManagedUserAction}
       saveMyStyleAction={saveMyStyleAction}
       moveWorkspaceAiRephraseStyleAction={moveWorkspaceAiRephraseStyleAction}
       saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}

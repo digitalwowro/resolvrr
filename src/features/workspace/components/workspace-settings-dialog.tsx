@@ -14,6 +14,7 @@ import { AiPromptsSection } from "./workspace-ai-prompts-section";
 import { WorkspaceSettingsNav } from "./workspace-settings-nav";
 import { WorkspaceSettingsMyStyleSection } from "./workspace-settings-my-style-section";
 import { WorkspaceSettingsProfileSection } from "./workspace-settings-profile-section";
+import { WorkspaceSettingsUsersSection } from "./workspace-settings-users-section";
 import type { WorkspaceSettingsDialogProps } from "./workspace-settings-dialog-types";
 import type { WorkspaceSettingsSection } from "./workspace-settings-types";
 import { ViewsSection } from "./workspace-settings-views-section";
@@ -38,6 +39,7 @@ export function WorkspaceSettingsDialog({
   connections: initialConnections,
   createConnectionAction,
   deleteConnectionAction,
+  deleteManagedUserAction,
   deleteSavedViewAction,
   deleteWorkspaceAiRephraseStyleAction,
   disableConnectionAction,
@@ -49,6 +51,7 @@ export function WorkspaceSettingsDialog({
   loadWorkspaceAiSettingsAction,
   moveWorkspaceAiRephraseStyleAction,
   loadSavedViewsSettingsAction,
+  loadUserManagementAction,
   onClose,
   onAiSettingsDataChange,
   onProfileUserChange,
@@ -56,10 +59,12 @@ export function WorkspaceSettingsDialog({
   onSavedViewDataChange,
   providerOptions,
   resetUserAiRephraseStyleOverrideAction,
+  resetManagedUserPasswordAction,
   resetMyStyleAction,
   resetWorkspaceAiPromptAction,
   reorderSavedViewsAction,
   saveMyStyleAction,
+  saveManagedUserAction,
   saveUserAiRephraseStyleOverrideAction,
   saveWorkspaceAiRephraseStyleAction,
   saveWorkspaceAiPromptAction,
@@ -189,6 +194,7 @@ export function WorkspaceSettingsDialog({
           myStyleAvailable={myStyleAvailable}
           onSectionChange={setSection}
           promptCenterAvailable={Boolean(aiSettingsData?.canViewPromptCenter)}
+          userRole={userRole}
         />
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex h-10 shrink-0 items-center justify-end border-b border-slate-200">
@@ -233,6 +239,13 @@ export function WorkspaceSettingsDialog({
               setActiveConnectionAction={setActiveConnectionAction}
               updateConnectionAction={updateConnectionAction}
               validateConnectionAction={validateConnectionAction}
+            />
+          ) : section === "users" && userRole === "ADMIN" ? (
+            <WorkspaceSettingsUsersSection
+              deleteManagedUserAction={deleteManagedUserAction}
+              loadAction={loadUserManagementAction}
+              resetManagedUserPasswordAction={resetManagedUserPasswordAction}
+              saveManagedUserAction={saveManagedUserAction}
             />
           ) : section === "views" ? (
             <ViewsSection

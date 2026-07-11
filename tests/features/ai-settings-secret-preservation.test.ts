@@ -35,9 +35,15 @@ function admin(): AuthUser {
   };
 }
 
-function form(values: Record<string, string>) {
+function form(values: Record<string, boolean | string>) {
   const formData = new FormData();
   for (const [key, value] of Object.entries(values)) {
+    if (typeof value === "boolean") {
+      if (value) {
+        formData.set(key, "on");
+      }
+      continue;
+    }
     formData.set(key, value);
   }
   return formData;
@@ -83,6 +89,7 @@ const connectionRepository: HelpdeskConnectionsRepository = {
     return [];
   },
   async setActiveConnectionId() {},
+  async updateWorkspaceAgentAiPermissions() {},
   async update() {
     return null;
   },
@@ -109,6 +116,7 @@ function repository(workspaceSetting: StoredWorkspaceAiSetting) {
         config: input.config ?? null,
         helpdeskConnectionId: input.helpdeskConnectionId,
         policy: input.policy,
+        userPermissions: input.userPermissions,
       };
     },
   };
@@ -143,6 +151,10 @@ describe("workspace AI settings secret preservation", () => {
       },
       helpdeskConnectionId: "connection-1",
       policy: "admin-managed",
+      userPermissions: {
+        canEditAiRephraseStyleOverrides: false,
+        canEditMyStyle: false,
+      },
     });
 
     const result = await saveWorkspaceAiSettings({
@@ -189,6 +201,10 @@ describe("workspace AI settings secret preservation", () => {
       },
       helpdeskConnectionId: "connection-1",
       policy: "admin-managed",
+      userPermissions: {
+        canEditAiRephraseStyleOverrides: false,
+        canEditMyStyle: false,
+      },
     });
 
     const result = await saveWorkspaceAiSettings({

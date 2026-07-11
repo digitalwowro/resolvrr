@@ -81,6 +81,10 @@ describe("TicketWorkspace My Style settings", () => {
           canViewPromptCenter: false,
           policy: "admin-managed",
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: true,
+          },
           workspaceConfig: null,
           workspaceConfigConfigured: true,
         }}
@@ -143,6 +147,10 @@ describe("TicketWorkspace My Style settings", () => {
           canViewPromptCenter: false,
           policy: "disabled",
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: false,
+            canEditMyStyle: false,
+          },
           workspaceConfig: null,
           workspaceConfigConfigured: false,
         }}

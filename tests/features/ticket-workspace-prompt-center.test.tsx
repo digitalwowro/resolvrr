@@ -37,11 +37,32 @@ describe("TicketWorkspace Prompt Center", () => {
       id: "connection-1",
       label: "Support",
     };
-    const promptCenterData = (
-      prompt: string,
-      isCustomized: boolean,
-      stylePrompt = "Make the reply concise.",
-    ) => ({
+    const promptCenterData = ({
+      prompt = "Built-in summary prompt.",
+      isCustomized = false,
+      styles = [
+        {
+          id: "style-concise",
+          isBuiltIn: true,
+          isCustomized: false,
+          isEnabled: true,
+          label: "Concise",
+          maxLength: 2_000,
+          prompt: "Make the reply concise.",
+          sortOrder: 10,
+        },
+        {
+          id: "style-friendly",
+          isBuiltIn: true,
+          isCustomized: false,
+          isEnabled: true,
+          label: "Friendly",
+          maxLength: 2_000,
+          prompt: "Make the reply friendly.",
+          sortOrder: 20,
+        },
+      ],
+    } = {}) => ({
       activeWorkspace,
       adminPrompts: [
         {
@@ -58,44 +79,138 @@ describe("TicketWorkspace Prompt Center", () => {
       canView: true,
       policy: "admin-managed" as const,
       userRephraseStyleOverrides: [],
-      workspaceRephraseStyles: [
-        {
-          id: "style-concise",
-          isBuiltIn: true,
-          isCustomized: false,
-          isEnabled: true,
-          label: "Concise",
-          maxLength: 2_000,
-          prompt: stylePrompt,
-          sortOrder: 10,
-        },
-      ],
+      workspaceRephraseStyles: styles,
     });
     const loadAiPromptCenterAction = vi.fn(async () => ({
-      ...promptCenterData("Built-in summary prompt.", false),
+      ...promptCenterData(),
     }));
     const saveWorkspaceAiPromptAction = vi.fn(async (formData: FormData) => {
       expect(formData.get("promptKey")).toBe("ticket-summary");
       expect(formData.get("prompt")).toBe("Updated summary prompt.");
       return {
         code: "ai-prompt-saved" as const,
-        data: promptCenterData("Updated summary prompt.", true),
+        data: promptCenterData({
+          isCustomized: true,
+          prompt: "Updated summary prompt.",
+        }),
         ok: true,
       };
     });
     const saveWorkspaceAiRephraseStyleAction = vi.fn(async (formData: FormData) => {
-      expect(formData.get("styleId")).toBe("style-concise");
-      expect(formData.get("prompt")).toBe("Use fewer words.");
+      const styleId = formData.get("styleId");
+      if (styleId === "style-concise") {
+        expect(formData.get("prompt")).toBe("Use fewer words.");
+        return {
+          code: "ai-rephrase-style-saved" as const,
+          data: promptCenterData({
+            isCustomized: true,
+            prompt: "Updated summary prompt.",
+            styles: [
+              {
+                id: "style-concise",
+                isBuiltIn: true,
+                isCustomized: true,
+                isEnabled: true,
+                label: "Concise",
+                maxLength: 2_000,
+                prompt: "Use fewer words.",
+                sortOrder: 10,
+              },
+              {
+                id: "style-friendly",
+                isBuiltIn: true,
+                isCustomized: false,
+                isEnabled: true,
+                label: "Friendly",
+                maxLength: 2_000,
+                prompt: "Make the reply friendly.",
+                sortOrder: 20,
+              },
+            ],
+          }),
+          ok: true,
+        };
+      }
+      expect(styleId).toBeNull();
+      expect(formData.get("label")).toBe("Empathetic");
+      expect(formData.get("prompt")).toBe("Sound empathetic.");
       return {
-        code: "ai-rephrase-style-saved" as const,
+        code: "ai-rephrase-style-created" as const,
         data: promptCenterData(
-          "Updated summary prompt.",
-          true,
-          "Use fewer words.",
+          {
+            isCustomized: true,
+            prompt: "Updated summary prompt.",
+            styles: [
+              {
+                id: "style-concise",
+                isBuiltIn: true,
+                isCustomized: true,
+                isEnabled: true,
+                label: "Concise",
+                maxLength: 2_000,
+                prompt: "Use fewer words.",
+                sortOrder: 10,
+              },
+              {
+                id: "style-friendly",
+                isBuiltIn: true,
+                isCustomized: false,
+                isEnabled: true,
+                label: "Friendly",
+                maxLength: 2_000,
+                prompt: "Make the reply friendly.",
+                sortOrder: 20,
+              },
+              {
+                id: "style-empathetic",
+                isBuiltIn: false,
+                isCustomized: true,
+                isEnabled: true,
+                label: "Empathetic",
+                maxLength: 2_000,
+                prompt: "Sound empathetic.",
+                sortOrder: 30,
+              },
+            ],
+          },
         ),
         ok: true,
       };
     });
+    const moveWorkspaceAiRephraseStyleAction = vi.fn(
+      async (styleId: string, direction: "down" | "up") => {
+        expect(styleId).toBe("style-friendly");
+        expect(direction).toBe("up");
+        return {
+          code: "ai-rephrase-style-moved" as const,
+          data: promptCenterData({
+            styles: [
+              {
+                id: "style-friendly",
+                isBuiltIn: true,
+                isCustomized: false,
+                isEnabled: true,
+                label: "Friendly",
+                maxLength: 2_000,
+                prompt: "Make the reply friendly.",
+                sortOrder: 10,
+              },
+              {
+                id: "style-concise",
+                isBuiltIn: true,
+                isCustomized: false,
+                isEnabled: true,
+                label: "Concise",
+                maxLength: 2_000,
+                prompt: "Make the reply concise.",
+                sortOrder: 20,
+              },
+            ],
+          }),
+          ok: true,
+        };
+      },
+    );
 
     render(
       <TicketWorkspace
@@ -107,6 +222,10 @@ describe("TicketWorkspace Prompt Center", () => {
           canViewPromptCenter: true,
           policy: "admin-managed",
           userConfig: null,
+          userPermissions: {
+            canEditAiRephraseStyleOverrides: true,
+            canEditMyStyle: true,
+          },
           workspaceConfig: {
             baseUrl: "https://api.openai.test/v1",
             hasApiKey: true,
@@ -118,6 +237,7 @@ describe("TicketWorkspace Prompt Center", () => {
         listResult={availableList}
         loadAiPromptCenterAction={loadAiPromptCenterAction}
         logoutAction={noopAction}
+        moveWorkspaceAiRephraseStyleAction={moveWorkspaceAiRephraseStyleAction}
         rows={[row]}
         saveWorkspaceAiRephraseStyleAction={saveWorkspaceAiRephraseStyleAction}
         saveWorkspaceAiPromptAction={saveWorkspaceAiPromptAction}
@@ -136,49 +256,46 @@ describe("TicketWorkspace Prompt Center", () => {
 
     expect(await within(dialog).findByRole("heading", { name: "Prompt Center" }))
       .toBeInTheDocument();
+    expect(within(dialog).getByText("Workspace prompts")).toBeInTheDocument();
+    expect(within(dialog).getByText("Rephrase styles")).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("button", { name: "Ticket summary, Default" }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("button", { name: "Concise, Enabled, Built-in" }),
+    ).toBeInTheDocument();
+
     await user.clear(within(dialog).getByLabelText("Prompt"));
     await user.type(within(dialog).getByLabelText("Prompt"), "Updated summary prompt.");
     await user.click(within(dialog).getByRole("button", { name: "Save prompt" }));
     expect(saveWorkspaceAiPromptAction).toHaveBeenCalledOnce();
 
+    await user.click(
+      within(dialog).getByRole("button", { name: "Concise, Enabled, Built-in" }),
+    );
     const stylePrompt = await within(dialog).findByLabelText("Style prompt");
     await user.clear(stylePrompt);
     await user.type(stylePrompt, "Use fewer words.");
     await user.click(within(dialog).getByRole("button", { name: "Save style" }));
-    expect(saveWorkspaceAiRephraseStyleAction).toHaveBeenCalledOnce();
-  });
+    expect(saveWorkspaceAiRephraseStyleAction).toHaveBeenCalledTimes(1);
 
-  it("hides Prompt Center from non-admins without personal style override access", async () => {
-    const user = userEvent.setup();
-
-    render(
-      <TicketWorkspace
-        columns={defaultWorkspaceTicketColumns}
-        connections={[{ id: "connection-1", label: "Support", active: true }]}
-        initialAiSettingsData={{
-          activeWorkspace: { id: "connection-1", label: "Support" },
-          canManageWorkspace: false,
-          canViewPromptCenter: false,
-          policy: "admin-managed",
-          userConfig: null,
-          workspaceConfig: null,
-          workspaceConfigConfigured: true,
-        }}
-        listResult={availableList}
-        logoutAction={noopAction}
-        rows={[row]}
-        setActiveConnectionAction={noopAction}
-        tabs={[{ ...row }]}
-        updateTicketMetadataAction={noopMutationAction}
-        userEmail="agent@example.com"
-      />,
+    await user.click(
+      within(dialog).getByRole("button", { name: "Friendly, Enabled, Built-in" }),
     );
+    await user.click(within(dialog).getByRole("button", { name: "Move Friendly up" }));
+    expect(moveWorkspaceAiRephraseStyleAction).toHaveBeenCalledOnce();
+    expect(within(dialog).getByLabelText("Style name")).toHaveValue("Friendly");
 
-    await user.click(screen.getByRole("button", { name: "Open profile menu, Support" }));
-    await user.click(screen.getByRole("menuitem", { name: "Settings" }));
-    const dialog = screen.getByRole("dialog", { name: "Settings" });
-
-    expect(within(dialog).queryByRole("button", { name: "Prompt Center" }))
-      .not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "New style" }));
+    await user.type(within(dialog).getByLabelText("Style name"), "Empathetic");
+    await user.type(within(dialog).getByLabelText("Style prompt"), "Sound empathetic.");
+    await user.click(within(dialog).getByRole("button", { name: "Add style" }));
+    expect(saveWorkspaceAiRephraseStyleAction).toHaveBeenCalledTimes(2);
+    expect(
+      await within(dialog).findByRole("button", {
+        name: "Empathetic, Enabled, Custom",
+      }),
+    ).toBeInTheDocument();
   });
+
 });

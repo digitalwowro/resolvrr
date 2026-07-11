@@ -20,6 +20,10 @@ const defaultData: WorkspaceAiSettingsData = {
   canViewPromptCenter: false,
   policy: "disabled",
   userConfig: null,
+  userPermissions: {
+    canEditAiRephraseStyleOverrides: false,
+    canEditMyStyle: false,
+  },
   workspaceConfig: null,
   workspaceConfigConfigured: false,
 };
