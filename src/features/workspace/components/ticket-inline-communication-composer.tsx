@@ -23,7 +23,6 @@ type InlineCommunicationComposerProps = {
   suggestions: PersistedDraftAiSuggestion[];
   mode: InlineCommunicationMode;
   onBodyChange(body: string): void;
-  onClose(): void;
   onSuggestionsChange(suggestions: PersistedDraftAiSuggestion[]): void;
   rephraseStyleOptions?: AiRephraseStyleOption[];
   rewriteDraftAction?: RewriteDraftAction;
@@ -82,7 +81,6 @@ export function TicketInlineCommunicationComposer({
   draftRestored = false,
   mode,
   onBodyChange,
-  onClose,
   onSuggestionsChange,
   rephraseStyleOptions = [],
   rewriteDraftAction,
@@ -229,7 +227,6 @@ export function TicketInlineCommunicationComposer({
         id={`${mode}-${editorId}`}
         label={label}
         onChange={onBodyChange}
-        onClose={onClose}
         placeholder={mode === "comment" ? "Write a comment..." : "Write a reply..."}
         value={body}
       />

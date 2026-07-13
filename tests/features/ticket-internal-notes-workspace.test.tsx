@@ -70,7 +70,7 @@ describe("TicketWorkspace ticket-level communication composer", () => {
     }
   });
 
-  it("hides the top reply composer from the editor toolbar", async () => {
+  it("closes the whole reply composer from its section header", async () => {
     const user = userEvent.setup();
 
     renderWorkspace({ customerReplies: true, internalNotes: true });
@@ -81,7 +81,10 @@ describe("TicketWorkspace ticket-level communication composer", () => {
       screen.getByRole("form", { name: "Reply composer" }),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Close editor" }));
+    const composer = screen.getByRole("form", { name: "Reply composer" });
+    expect(within(composer).queryByRole("button", { name: "Close composer" }))
+      .not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Close composer" }));
 
     expect(
       screen.queryByRole("form", { name: "Reply composer" }),

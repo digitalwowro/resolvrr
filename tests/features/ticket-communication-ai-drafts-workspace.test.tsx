@@ -81,7 +81,7 @@ describe("TicketWorkspace communication AI drafts", () => {
     ).toBeInTheDocument();
 
     await user.click(
-      screen.getByRole("button", { name: "Close editor" }),
+      screen.getByRole("button", { name: "Close composer" }),
     );
 
     expect(persistence.clearPersistedCommunicationDrafts).toHaveBeenCalledWith(

@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { TicketReplyIntent } from "@/core/ticket-replies";
 import type { AiRephraseStyleOption, RewriteDraftAction } from "@/features/ai";
@@ -174,9 +175,21 @@ export function TicketThread({
   return (
     <section className="pr-0">
       {communicationDraft ? (
-        <div id="ticket-communication-composer">
+        <div
+          className="relative bg-indigo-50/30"
+          id="ticket-communication-composer"
+        >
+          <button
+            aria-label="Close composer"
+            className="absolute right-4 top-3 z-10 inline-grid size-7 place-items-center rounded-md border border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={disabled}
+            onClick={closeComposer}
+            type="button"
+          >
+            <X aria-hidden="true" className="size-4" />
+          </button>
           {communicationDraft.kind === "customer-reply" ? (
-            <div className="bg-indigo-50/30 px-4 pt-3 text-xs text-slate-600">
+            <div className="px-4 pb-1 pr-14 pt-3 text-xs text-slate-600">
               Replying to {sourceArticle?.author ?? "selected message"} · {sourceArticle?.meta ?? ""}
               <div className="mt-2">
                 <TicketReplyRecipientEditor
@@ -187,7 +200,11 @@ export function TicketThread({
                 />
               </div>
             </div>
-          ) : null}
+          ) : (
+            <div className="px-4 pr-14 pt-3 text-xs font-medium text-slate-600">
+              Internal comment
+            </div>
+          )}
           <TicketInlineCommunicationComposer
             body={communicationDraft.body}
             disabled={disabled}
@@ -198,7 +215,6 @@ export function TicketThread({
             key={`${communicationDraft.kind}-${sourceArticle?.id ?? "ticket"}`}
             mode={mode}
             onBodyChange={(body) => changeDraft({ ...communicationDraft, body })}
-            onClose={closeComposer}
             onSuggestionsChange={(nextSuggestions) => {
               setSuggestions(nextSuggestions);
               persist(communicationDraft, nextSuggestions);

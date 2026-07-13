@@ -41,7 +41,6 @@ type TicketRichTextEditorProps = {
   id: string;
   label: string;
   onChange(value: string): void;
-  onClose?(): void;
   placeholder: string;
   value: string;
 };
@@ -54,7 +53,6 @@ export function TicketRichTextEditor({
   id,
   label,
   onChange,
-  onClose,
   placeholder,
   value,
 }: TicketRichTextEditorProps) {
@@ -243,7 +241,6 @@ export function TicketRichTextEditor({
         activeToolbarState={activeToolbarState}
         disabled={disabled}
         extraControls={extraToolbarControls}
-        onClose={onClose}
         onCommand={execute}
         onInsertLink={insertLink}
       />
