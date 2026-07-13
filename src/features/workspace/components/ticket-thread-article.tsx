@@ -72,7 +72,7 @@ export function TicketThreadArticle({
           <div
             className={cn(
               "flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm",
-              hasActions && "pr-40",
+              hasActions && "pr-20",
             )}
           >
             {senderControl}

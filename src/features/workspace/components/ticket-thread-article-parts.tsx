@@ -63,7 +63,6 @@ function ThreadActionButton({
   icon,
   isSelected,
   onClick,
-  prominence = "secondary",
   title,
   type,
 }: {
@@ -72,47 +71,34 @@ function ThreadActionButton({
   icon: ReactNode;
   isSelected: boolean;
   onClick(): void;
-  prominence?: "primary" | "secondary";
   title?: string;
   type: WorkspaceArticle["direction"];
 }) {
-  const isPrimary = prominence === "primary";
-
   const button = (
     <button
       aria-label={children}
       className={cn(
-        isPrimary
-          ? "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold"
-          : "inline-grid size-7 place-items-center rounded-md border",
+        "inline-grid size-7 place-items-center rounded-md border",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        isPrimary
-          ? "bg-slate-950 text-white hover:bg-slate-900 active:bg-slate-800"
-          : isSelected
-            ? actionSelectedClass[type]
-            : cn(
-                "border-slate-200 bg-white",
-                actionStateClass[type],
-                "hover:border-slate-300",
-              ),
+        isSelected
+          ? actionSelectedClass[type]
+          : cn(
+              "border-slate-200 bg-white",
+              actionStateClass[type],
+              "hover:border-slate-300",
+            ),
       )}
       disabled={disabled}
       onClick={onClick}
       type="button"
     >
       {icon}
-      {isPrimary ? (
-        <span>{children}</span>
-      ) : (
-        <span className="sr-only">{children}</span>
-      )}
+      <span className="sr-only">{children}</span>
     </button>
   );
 
-  return isPrimary ? (
-    button
-  ) : (
+  return (
     <Tooltip content={title ?? children} delayMs={150}>
       {button}
     </Tooltip>
@@ -172,7 +158,7 @@ export function ArticleActions({
             icon={<Reply aria-hidden="true" className="size-3.5" />}
             isSelected={activeIntent === "reply"}
             onClick={() => onReply("reply")}
-            prominence="primary"
+            title="Reply to this message."
             type={article.direction}
           >
             Reply

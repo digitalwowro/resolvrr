@@ -43,6 +43,18 @@ describe("TicketWorkspace contextual replies", () => {
     expect(within(footer).getByRole("button", { name: "Reply all" })).toBeDisabled();
   });
 
+  it("uses matching subtle icon controls for article Reply actions", () => {
+    renderWorkspace({ articles: articles(), customerReplies: true });
+    const article = screen.getAllByRole("article", {
+      name: "Customer reply from Maya Patel",
+    })[0]!;
+
+    expect(within(article).getByRole("button", { name: "Reply" }))
+      .toHaveClass("size-7", "border", "bg-white");
+    expect(within(article).getByRole("button", { name: "Reply all" }))
+      .toHaveClass("size-7", "border", "bg-white");
+  });
+
   it("lets an older Reply all override the source without nesting the composer", async () => {
     const user = userEvent.setup();
     renderWorkspace({ articles: articles(), customerReplies: true });

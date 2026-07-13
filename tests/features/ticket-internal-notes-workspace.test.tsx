@@ -55,8 +55,8 @@ describe("TicketWorkspace ticket-level communication composer", () => {
       expect(editor).toHaveFocus();
       await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
       expect(within(article).getByRole("button", { name: "Reply" })).toHaveClass(
-        "bg-slate-950",
-        "text-white",
+        "bg-slate-100",
+        "text-slate-950",
       );
       expect(
         within(article).getByRole("button", { name: "Reply all" }),
