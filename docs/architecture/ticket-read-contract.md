@@ -145,24 +145,29 @@ replies:
 
 - `TicketInternalNoteInput.body: string`
 - `TicketInternalNoteInput.bodyFormat?: "plain" | "html"`
-- `SelectedTicketUpdatePayload.communication.bodyFormat?: "plain" | "html"`
-- `SelectedTicketUpdatePayload.communication.commentBody?: string`
-- `TicketCustomerReplyInput.body: string`
-- `TicketCustomerReplyInput.bodyFormat?: "plain" | "html"`
-- `SelectedTicketUpdatePayload.communication.replyBody?: string`
+- internal comment communication: `kind: "internal-comment"`, `body`, and
+  optional `bodyFormat`.
+- customer reply communication: `kind: "customer-reply"`, `body`, optional
+  `bodyFormat`, source article external ID, `reply | reply-all` intent, opaque
+  context version, and explicit `to`/`cc` address arrays.
 
 Internal notes and customer replies are staged in the same selected-ticket draft
-as metadata. `Comment` opens an internal-note rich editor from an article card.
-`Reply` opens a customer-reply rich editor from a public article card. Neither
-composer has its own Send action. The main workspace `Update` action submits
-metadata plus staged communication body content in one provider-neutral
-selected-ticket payload. The workspace rich editor submits sanitized HTML with
-`bodyFormat: "html"`; plain text remains the default for older/direct service
-callers. `Reply all` is visible but disabled until a provider-neutral recipient
-contract exists. The server action trims, sanitizes, and validates the ticket ID
-and staged bodies before dispatching provider-neutral communication inputs. Empty
-bodies, unsupported payload keys, and provider raw fields are rejected before
-provider dispatch.
+as metadata, but exactly one discriminated communication is allowed per Update.
+Comment is ticket-level. Reply and Reply all select a provider-derived source
+article context and open the one composer above the newest thread article;
+article actions never create nested composers. Editable To/Cc recipients are
+normalized and deduplicated with To precedence. Bcc, invalid/control-character
+addresses, empty recipient sets, unsupported payload keys, and provider raw
+fields are rejected at the server boundary. There is no Resolvrr recipient-count
+ceiling.
+
+Each reply-capable article may carry `TicketArticleReplyContext`: channel,
+available intents, defaults per intent, source article external ID, and an
+opaque version. Availability is dynamic per article and does not create new
+provider-wide capabilities. Detail loading derives all article contexts in one
+coordinated provider read. The footer uses the newest reply-capable public
+article and never skips backward merely to enable Reply all. An article hover
+action may intentionally select an older source.
 
 The provider-neutral communication capabilities are:
 
@@ -177,9 +182,13 @@ Communication write results distinguish write failure from refresh failure:
 - `saved-refresh-failed`: provider write succeeded, but the post-write detail
   refresh check failed. UI must present this as non-destructive and must not
   pretend the communication write failed.
+- `partially-saved`: staged metadata was saved, but the helpdesk did not confirm
+  accepting the final communication write. Refreshed metadata becomes the
+  baseline while the communication draft is retained. This describes the API
+  submission only; provider-owned channel delivery is outside Resolvrr.
 
 The UI does not auto-send or optimistic-render note or reply bodies. It keeps
-local communication text in the selected-ticket draft until the user clicks
+local communication text and recipient edits in the selected-ticket draft until the user clicks
 `Update`, shows the shared update pending state while saving, clears the draft
 after the provider write is confirmed (`saved` or `saved-refresh-failed`), and
 shows a non-destructive refresh warning when a confirmed write cannot refresh
@@ -187,10 +196,14 @@ the selected ticket detail. The workspace reloads through the shared
 post-update refresh path after a checked `saved` result.
 
 Zammad internal notes and customer replies are provider-specific article writes
-under `src/providers/zammad/**`. Zammad customer replies derive the reply target
-from provider-owned ticket/customer data, include the resolved customer address
-as the provider article recipient, and fail before article creation when no safe
-customer address can be resolved. Zammad raw article payload fields such as
+under `src/providers/zammad/**`. Zammad derives Reply and Reply all defaults from
+fresh source-article From/To/Cc/Reply-To data, active system email addresses,
+sender role, and web/phone customer fallback rules. On send it re-fetches the
+ticket, source article, and system-address policy; verifies ticket ownership,
+visibility, channel, intent, and context version; then sends the user-reviewed
+normalized To/Cc set. Context lookup and version mismatches fail closed before
+POST. Delivery-uncertain POST failures are not retried automatically. Zammad raw
+article payload fields such as
 `ticket_id`, `to`, `content_type`, `type`, `internal`, and `sender` must not
 escape the provider folder.
 

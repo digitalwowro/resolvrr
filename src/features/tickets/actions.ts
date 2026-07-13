@@ -14,6 +14,7 @@ import {
 import { ticketMetadataMutationActionInput } from "./metadata-action-input";
 import { hasTicketMetadataMutationInput } from "./mutation-model";
 import { updateWorkspaceTicketMetadata } from "./service";
+import { finalizeWorkspaceTicketMutation } from "./mutation-finalization-service";
 import type {
   SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
@@ -66,6 +67,21 @@ function communicationErrorMessage(reason: TicketMetadataMutationErrorReason): s
   if (reason === "unsupported-capability") {
     return "This workspace cannot add that message.";
   }
+  if (reason === "invalid-recipient") {
+    return "Review the To and Cc recipients before updating.";
+  }
+  if (reason === "reply-context-stale") {
+    return "The reply context changed. Reload the ticket and review recipients again.";
+  }
+  if (reason === "reply-context-unavailable") {
+    return "The selected message can no longer be used for a reply.";
+  }
+  if (reason === "unsupported-reply-intent") {
+    return "Reply all is no longer available for the selected message.";
+  }
+  if (reason === "delivery-uncertain") {
+    return "Delivery could not be confirmed. Check the refreshed thread before retrying.";
+  }
   return errorMessage(reason);
 }
 
@@ -114,6 +130,16 @@ function communicationActionStateForResult(
   };
 }
 
+function partialCommunicationActionState(
+  result: Extract<TicketMetadataMutationResult, { status: "failed" }>,
+): TicketMetadataMutationActionState {
+  return {
+    status: "partially-saved",
+    field: "communication",
+    message: `Ticket changes were saved, but the helpdesk did not confirm accepting the message. ${communicationErrorMessage(result.reason)}`,
+  };
+}
+
 function metadataResultFromCommunicationResult(
   result: Awaited<ReturnType<typeof addWorkspaceTicketInternalNote>>,
 ): TicketMetadataMutationResult {
@@ -134,6 +160,7 @@ export async function updateTicketMetadataAction(
 
   const user = await requireCurrentUser();
   let finalResult: TicketMetadataMutationResult | undefined;
+  let mutationSaved = false;
 
   if (hasTicketMetadataMutationInput(actionInput.input)) {
     const result = await updateWorkspaceTicketMetadata(
@@ -145,15 +172,17 @@ export async function updateTicketMetadataAction(
       actionInput.input,
       prismaTicketDetailCacheRepository,
       prismaAiSummaryCacheRepository,
+      { finalize: false },
     );
 
     if (result.status === "failed") {
       return actionStateForResult(actionInput.field, result);
     }
     finalResult = result;
+    mutationSaved = true;
   }
 
-  if (actionInput.commentBody) {
+  if (actionInput.communication?.kind === "internal-comment") {
     const result = metadataResultFromCommunicationResult(
       await addWorkspaceTicketInternalNote(
         prismaHelpdeskConnectionsRepository,
@@ -161,20 +190,38 @@ export async function updateTicketMetadataAction(
         env.APP_ENCRYPTION_KEY,
         user.id,
         actionInput.ticketExternalId,
-        { body: actionInput.commentBody, bodyFormat: actionInput.bodyFormat },
+        {
+          body: actionInput.communication.body,
+          bodyFormat: actionInput.communication.bodyFormat,
+        },
         prismaTicketDetailCacheRepository,
         prismaAiSummaryCacheRepository,
+        { finalize: false },
       ),
     );
     if (result.status === "failed") {
-      return communicationActionStateForResult(result);
+      if (mutationSaved || result.reason === "delivery-uncertain") {
+        await finalizeWorkspaceTicketMutation(
+          prismaHelpdeskConnectionsRepository,
+          providerRegistry,
+          env.APP_ENCRYPTION_KEY,
+          user.id,
+          actionInput.ticketExternalId,
+          prismaTicketDetailCacheRepository,
+          prismaAiSummaryCacheRepository,
+        );
+      }
+      return finalResult
+        ? partialCommunicationActionState(result)
+        : communicationActionStateForResult(result);
     }
     finalResult = finalResult?.status === "saved-refresh-failed"
       ? finalResult
       : result;
+    mutationSaved = true;
   }
 
-  if (actionInput.replyBody) {
+  if (actionInput.communication?.kind === "customer-reply") {
     const result = metadataResultFromCommunicationResult(
       await addWorkspaceTicketCustomerReply(
         prismaHelpdeskConnectionsRepository,
@@ -182,17 +229,44 @@ export async function updateTicketMetadataAction(
         env.APP_ENCRYPTION_KEY,
         user.id,
         actionInput.ticketExternalId,
-        { body: actionInput.replyBody, bodyFormat: actionInput.bodyFormat },
+        actionInput.communication,
         prismaTicketDetailCacheRepository,
         prismaAiSummaryCacheRepository,
+        { finalize: false },
       ),
     );
     if (result.status === "failed") {
-      return communicationActionStateForResult(result);
+      if (mutationSaved || result.reason === "delivery-uncertain") {
+        await finalizeWorkspaceTicketMutation(
+          prismaHelpdeskConnectionsRepository,
+          providerRegistry,
+          env.APP_ENCRYPTION_KEY,
+          user.id,
+          actionInput.ticketExternalId,
+          prismaTicketDetailCacheRepository,
+          prismaAiSummaryCacheRepository,
+        );
+      }
+      return finalResult
+        ? partialCommunicationActionState(result)
+        : communicationActionStateForResult(result);
     }
     finalResult = finalResult?.status === "saved-refresh-failed"
       ? finalResult
       : result;
+    mutationSaved = true;
+  }
+
+  if (mutationSaved) {
+    finalResult = await finalizeWorkspaceTicketMutation(
+      prismaHelpdeskConnectionsRepository,
+      providerRegistry,
+      env.APP_ENCRYPTION_KEY,
+      user.id,
+      actionInput.ticketExternalId,
+      prismaTicketDetailCacheRepository,
+      prismaAiSummaryCacheRepository,
+    );
   }
 
   const result =

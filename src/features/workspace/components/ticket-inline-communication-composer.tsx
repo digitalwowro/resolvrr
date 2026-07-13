@@ -9,7 +9,6 @@ import type {
 } from "@/features/ai";
 import { Button } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
-import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
 import type { PersistedDraftAiSuggestion } from "./ticket-communication-draft-persistence";
 import { escapeHtml } from "./ticket-rich-text-editor-dom";
 import { TicketRichTextEditor } from "./ticket-rich-text-editor";
@@ -17,8 +16,8 @@ import { TicketRichTextEditor } from "./ticket-rich-text-editor";
 export type InlineCommunicationMode = "comment" | "reply";
 
 type InlineCommunicationComposerProps = {
-  article: WorkspaceArticle;
   body: string;
+  editorId: string;
   disabled: boolean;
   draftRestored?: boolean;
   suggestions: PersistedDraftAiSuggestion[];
@@ -77,8 +76,8 @@ function suggestionId(): string {
 }
 
 export function TicketInlineCommunicationComposer({
-  article,
   body,
+  editorId,
   disabled,
   draftRestored = false,
   mode,
@@ -218,8 +217,8 @@ export function TicketInlineCommunicationComposer({
 
   return (
     <div
-      aria-label={`${label} composer for ${article.author}`}
-      className="mt-3 border-t border-slate-200 pt-3"
+      aria-label={`${label} composer`}
+      className="border-b border-slate-200 bg-indigo-50/30 px-4 py-4"
       role="form"
     >
       <TicketRichTextEditor
@@ -227,7 +226,7 @@ export function TicketInlineCommunicationComposer({
         className="border-slate-200"
         disabled={disabled}
         extraToolbarControls={aiControls}
-        id={`${mode}-${article.id}`}
+        id={`${mode}-${editorId}`}
         label={label}
         onChange={onBodyChange}
         onClose={onClose}

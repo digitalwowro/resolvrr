@@ -5,6 +5,17 @@ non-generated repository file should be named literally in this document;
 wildcard summaries are convenience descriptions only. Update it when files are
 added, moved, renamed, or removed.
 
+## Documented File-Size Exceptions
+
+- This map is the repository's exhaustive literal file inventory and is exempt from the handwritten
+  module cap by `scripts/check-file-sizes.mjs`; splitting it would defeat its single-index purpose.
+- `ticket-read-contract.md` was already above 300 lines and remains one normative lifecycle
+  contract. Contextual-reply additions are kept with the read/write invariants they constrain; the
+  document remains below the 500-line merge blocker.
+- `cache-and-privacy-contract.md` was already above 300 lines and remains one coupled cache/privacy
+  threat-boundary contract. The contextual-reply change adds only draft-retention and final-refresh
+  rules, and the document remains below the 500-line merge blocker.
+
 ## Root Files
 
 - `.github`: GitHub automation configuration.
@@ -123,6 +134,8 @@ added, moved, renamed, or removed.
       count, grouping, pagination, result contracts, and normalization.
     - `ticket-lookups.ts` (`src/core/ticket-lookups.ts`): provider-neutral lookup option, lookup
       result, and request-scoped lookup cache-policy contracts.
+    - `ticket-replies.ts` (`src/core/ticket-replies.ts`): focused provider-neutral contextual
+      reply intent, channel, recipient, article context, policy, and send-input contracts.
     - `tickets.ts` (`src/core/tickets.ts`): canonical ticket values and provider-neutral
       ticket/thread/link/subscription/mutation/communication types.
   - `src/data`: server-only database access boundaries.
@@ -371,9 +384,15 @@ added, moved, renamed, or removed.
         parser and validation for one selected-ticket update payload per explicit `Update`,
         including communication, tag, link relation, subscription, pending-date, and raw provider
         field validation.
+      - `update-communication-action-input.ts`
+        (`src/features/tickets/update-communication-action-input.ts`): strict discriminated
+        internal-comment/customer-reply parser and rich-body sanitizer for the shared Update.
       - `metadata-mutation-service.ts` (`src/features/tickets/metadata-mutation-service.ts`):
-        provider-neutral selected-ticket metadata mutation orchestration, cache invalidation, and
-        refresh-after-write behavior.
+        provider-neutral selected-ticket metadata mutation orchestration with optional deferred
+        finalization for combined Updates.
+      - `mutation-finalization-service.ts`
+        (`src/features/tickets/mutation-finalization-service.ts`): shared one-pass post-Update cache
+        invalidation and coordinated provider detail/list refresh.
       - `mutation-model.ts` (`src/features/tickets/mutation-model.ts`): provider-neutral metadata
         mutation capabilities, selected-ticket update payload shape, allowed update payload/slice
         keys, pending-date validation, result/error model, and action state types.
@@ -385,6 +404,8 @@ added, moved, renamed, or removed.
       - `read-model.ts` (`src/features/tickets/read-model.ts`): provider-neutral ticket read result,
         unavailable-state, metadata mutation and communication capability exposure, and default list
         query types.
+      - `reply-input.ts` (`src/features/tickets/reply-input.ts`): strict provider-neutral email
+        normalization, cross-field deduplication, reply intent, and contextual send validation.
       - `service-cache.ts` (`src/features/tickets/service-cache.ts`): metadata-only cache read,
         write, and invalidation timing wrappers used by ticket read and mutation orchestration.
       - `service-list-query.ts` (`src/features/tickets/service-list-query.ts`): ticket list query
@@ -418,8 +439,19 @@ added, moved, renamed, or removed.
           - `vertical-ticket-tabs.tsx`
             (`src/features/workspace/components/ticket-tabs/vertical-ticket-tabs.tsx`): vertical
             ticket tabs workspace UI component.
+        - `communication-draft-factory.ts`
+          (`src/features/workspace/components/communication-draft-factory.ts`): builds contextual
+          reply drafts and identifies the newest reply-capable footer source.
+        - `communication-draft-replacement-dialog.tsx`
+          (`src/features/workspace/components/communication-draft-replacement-dialog.tsx`):
+          focus-managed shared confirmation dialog for replacing dirty communication drafts.
+        - `communication-draft.ts` (`src/features/workspace/components/communication-draft.ts`):
+          communication draft copying, body, recipient-edit, and replacement-confirmation helpers.
+        - `metadata-draft-payload.ts`
+          (`src/features/workspace/components/metadata-draft-payload.ts`): constructs one strict
+          metadata plus discriminated communication Update payload.
         - `metadata-draft-types.ts` (`src/features/workspace/components/metadata-draft-types.ts`):
-          type contracts for metadata draft.
+          selected-ticket metadata and single communication draft contracts.
         - `metadata-draft.ts` (`src/features/workspace/components/metadata-draft.ts`):
           selected-ticket draft shell plus metadata-slice diffing, validation, dirty-field
           detection, reset, explicitly enabled editable-slice guardrail, and structured
@@ -494,13 +526,13 @@ added, moved, renamed, or removed.
           selected-ticket detail composition around the metadata editor and detail header.
         - `ticket-inline-communication-composer.tsx`
           (`src/features/workspace/components/ticket-inline-communication-composer.tsx`):
-          capability-gated inline Reply/Comment rich-text composer shared by article cards. It
+          ticket-level Reply/Comment rich-text composer above the newest article. It
           stages text in the selected-ticket draft, exposes draft-only proofread/rephrase controls,
           and has no local Send/Cancel footer.
         - `ticket-communication-draft-persistence.ts`
           (`src/features/workspace/components/ticket-communication-draft-persistence.ts`):
-          browser-local IndexedDB persistence for unsent inline composer bodies and small AI
-          suggestion history, scoped by user, workspace, ticket, and composer mode.
+          versioned browser-local IndexedDB persistence for one contextual communication draft and
+          small AI suggestion history, scoped by user, workspace, and ticket.
         - `ticket-list-pager-rows.ts`
           (`src/features/workspace/components/ticket-list-pager-rows.ts`): list pager request,
           identity, row append, and refreshed-baseline merge helpers.
@@ -515,8 +547,11 @@ added, moved, renamed, or removed.
           provider-neutral lookup option list rendering for selected-ticket sidebar fields.
         - `ticket-metadata-action-bar.tsx`
           (`src/features/workspace/components/ticket-metadata-action-bar.tsx`): sticky full-width
-          selected-ticket metadata action row with Discard changes and Update controls plus
-          post-update navigation selection.
+          action row with Reply/Reply all/Comment on the left and Discard, navigation, and Update
+          on the right.
+        - `ticket-metadata-editor-sidebar.tsx`
+          (`src/features/workspace/components/ticket-metadata-editor-sidebar.tsx`): focused metadata
+          sidebar field and validation/status composition extracted from editor state.
         - `ticket-metadata-editor-state-types.ts`
           (`src/features/workspace/components/ticket-metadata-editor-state-types.ts`): type
           contracts for ticket metadata editor state.
@@ -549,6 +584,10 @@ added, moved, renamed, or removed.
           (`src/features/workspace/components/ticket-primary-metadata-fields.tsx`): state, priority,
           and pending date/time sidebar controls that render editable inputs only when the provider
           advertises matching write capabilities.
+        - `ticket-reply-recipient-editor.tsx`
+          (`src/features/workspace/components/ticket-reply-recipient-editor.tsx`): editable To/Cc
+          chip rows with normalization, cross-field deduplication, validation, and managed-address
+          warning.
         - `ticket-priority-mutation-options.tsx`
           (`src/features/workspace/components/ticket-priority-mutation-options.tsx`): priority
           dropdown options for staged priority updates.
@@ -618,16 +657,18 @@ added, moved, renamed, or removed.
           companion for thread article variants and action selected states.
         - `ticket-thread-article-parts.tsx`
           (`src/features/workspace/components/ticket-thread-article-parts.tsx`): thread article
-          avatar, recipient detail, reply/comment action, and replyability subcomponents.
+          avatar, recipient detail, contextual Reply/Reply all action, and replyability components.
         - `ticket-thread-article.tsx`
           (`src/features/workspace/components/ticket-thread-article.tsx`): production article-card
           presentation with sanitized rich-text rendering, display-name-first From/To/Cc/Bcc
-          metadata, attachment metadata display, and provider-neutral inline Reply, disabled Reply
-          all, and Comment actions.
+          metadata, attachment metadata display, and provider-neutral contextual reply actions.
         - `ticket-thread.tsx` (`src/features/workspace/components/ticket-thread.tsx`): production
-          ticket article thread state owner. It tracks one active inline composer by article and
-          mode, restores local unsent draft/suggestion state, writes composer text into the
-          selected-ticket draft, and does not render standalone bottom communication composers.
+          ticket article thread and top-composer owner. It restores one local contextual draft,
+          renders recipients and AI suggestions, and delegates article source selection upward.
+        - `use-ticket-communication-selection.ts`
+          (`src/features/workspace/components/use-ticket-communication-selection.ts`): ticket-level
+          communication source/mode selection, dirty-replacement confirmation, scroll, and focus
+          hook shared by footer and article actions.
         - `ticket-workspace-chrome.tsx`
           (`src/features/workspace/components/ticket-workspace-chrome.tsx`): ticket workspace chrome
           workspace UI component.
@@ -854,12 +895,27 @@ added, moved, renamed, or removed.
         display-name, email fallback, recipient, and expanded asset mapping helpers.
       - `plugin.ts` (`src/providers/zammad/plugin.ts`): provider plugin object, capabilities, and
         connection validation boundary.
+      - `reply-addresses.ts` (`src/providers/zammad/reply-addresses.ts`): server-only RFC address
+        list parsing, normalization, managed-address cleanup, and To/Cc deduplication.
+      - `reply-context.ts` (`src/providers/zammad/reply-context.ts`): pure Zammad-native Reply and
+        Reply all eligibility/default derivation plus opaque context versioning.
+      - `reply-policy.ts` (`src/providers/zammad/reply-policy.ts`): active Zammad system email
+        address lookup with fail-closed optional context behavior.
       - `schemas.ts` (`src/providers/zammad/schemas.ts`): Zammad raw ticket, article, expanded
         asset, and user DTO schemas.
       - `ticket-article-mutations.ts` (`src/providers/zammad/ticket-article-mutations.ts`):
-        Zammad-only ticket article write helpers for internal note and customer reply creation.
+        narrow exports for split Zammad article mutation modules.
+      - `ticket-customer-reply-mutation.ts`
+        (`src/providers/zammad/ticket-customer-reply-mutation.ts`): contextual customer reply
+        revalidation, recipient normalization, subject/thread headers, provider POST, and uncertain
+        delivery mapping.
       - `ticket-groups.ts` (`src/providers/zammad/ticket-groups.ts`): Zammad provider-owned
         state/priority bucket discovery and grouped list page orchestration.
+      - `ticket-id.ts` (`src/providers/zammad/ticket-id.ts`): strict provider-local numeric ticket
+        and article reference parser for Zammad writes.
+      - `ticket-internal-note-mutation.ts`
+        (`src/providers/zammad/ticket-internal-note-mutation.ts`): focused Zammad internal-note
+        article write and response validation.
       - `ticket-link-targets.ts` (`src/providers/zammad/ticket-link-targets.ts`): Zammad
         provider-local ticket search for Add link targets, including provider-local same-customer
         query mapping, mapped to provider-neutral link target summaries.
@@ -1138,6 +1194,9 @@ added, moved, renamed, or removed.
     - `selected-ticket-draft.test.ts` (`tests/features/selected-ticket-draft.test.ts`): verifies the
       selected-ticket draft shell, metadata dirty-field tracking, discard/reset copy behavior, and
       provider-neutral metadata submit payload construction.
+    - `selected-ticket-communication-input.test.ts`
+      (`tests/features/selected-ticket-communication-input.test.ts`): verifies strict parsing,
+      sanitization, recipient normalization, and discriminated comment/reply update payloads.
     - `ticket-communication-audit.test.ts` (`tests/features/ticket-communication-audit.test.ts`):
       verifies communication audit logs preserve saved, saved-refresh-failed, and failed outcomes
       without logging raw ticket IDs, note/reply bodies, provider bodies, or customer content.
@@ -1150,6 +1209,10 @@ added, moved, renamed, or removed.
     - `ticket-communication-workspace-test-utils.tsx`
       (`tests/features/ticket-communication-workspace-test-utils.tsx`): shared test utilities for
       ticket communication workspace.
+    - `ticket-contextual-reply-workspace.test.tsx`
+      (`tests/features/ticket-contextual-reply-workspace.test.tsx`): verifies footer latest-source
+      behavior, older Reply all override, top composer placement, replacement confirmation, and
+      managed-address warning.
     - `ticket-detail-action.test.ts` (`tests/features/ticket-detail-action.test.ts`): verifies
       ticket detail action behavior.
     - `ticket-detail-cache-service.test.ts`
@@ -1205,6 +1268,9 @@ added, moved, renamed, or removed.
       (`tests/features/ticket-overdue-pending-priority-update.test.tsx`): verifies overdue pending
       tickets can still submit priority-only staged metadata updates without resubmitting stale
       pending dates.
+    - `ticket-reply-input.test.ts` (`tests/features/ticket-reply-input.test.ts`): verifies contextual
+      reply address normalization, invalid/control rejection, To/Cc deduplication, required context,
+      and absence of an application recipient ceiling.
     - `ticket-owner-group-metadata-service.test.ts`
       (`tests/features/ticket-owner-group-metadata-service.test.ts`): verifies owner and group
       metadata mutation dispatch and capability gating.
@@ -1361,7 +1427,7 @@ added, moved, renamed, or removed.
       - `credentials.test.ts` (`tests/providers/zammad/credentials.test.ts`): verifies
         provider-specific Basic Auth credential helpers.
       - `customer-replies.test.ts` (`tests/providers/zammad/customer-replies.test.ts`): verifies
-        customer replies behavior.
+        contextual reply revalidation, subject/thread payloads, and no-POST stale failure behavior.
       - `internal-notes.test.ts` (`tests/providers/zammad/internal-notes.test.ts`): verifies Zammad
         internal note and customer reply article payloads and provider-safe request usage.
       - `link-targets.test.ts` (`tests/providers/zammad/link-targets.test.ts`): verifies link
@@ -1390,6 +1456,9 @@ added, moved, renamed, or removed.
       - `read.test.ts` (`tests/providers/zammad/read.test.ts`): verifies Zammad ticket list endpoint
         calls, search-backed total counts and grouped bucket counts, canonical list mapping, and
         read timing.
+      - `reply-context.test.ts` (`tests/providers/zammad/reply-context.test.ts`): verifies Zammad
+        customer/agent/system routing, Reply-To, managed-address removal, To/Cc placement,
+        Reply-all availability, deduplication, and web/phone fallbacks.
       - `secondary-mutations.test.ts` (`tests/providers/zammad/secondary-mutations.test.ts`):
         verifies Zammad tag, related-link, and subscription metadata write endpoint payloads.
       - `subscription-diagnostics.test.ts`

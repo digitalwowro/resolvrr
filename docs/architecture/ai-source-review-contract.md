@@ -64,11 +64,11 @@ the original draft or current ticket state remains intact. If the provider write
 later fails after user approval, the normal provider mutation failure handling
 applies.
 
-Unsubmitted inline composer text must be recoverable across page refreshes and
-short browser interruptions. Local browser draft recovery may keep the draft
-body and a small per-composer suggestion history until the user closes the
-composer, discards changes, submits through Update, closes the ticket tab, or
-the local retention window expires.
+Unsubmitted ticket composer text must be recoverable across page refreshes and
+short browser interruptions. Local browser draft recovery may keep contextual
+reply selection, reviewed To/Cc, body, and a small suggestion history. Failures
+retain it; confirmed success, explicit discard/close, or retention expiry clears
+it.
 
 ## Failure States
 

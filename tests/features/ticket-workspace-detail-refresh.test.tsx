@@ -203,10 +203,7 @@ describe("TicketWorkspace detail refresh", () => {
       name: "Customer reply from Maya Patel",
     });
     await user.click(within(article).getByRole("button", { name: "Reply" }));
-    await user.type(
-      within(article).getByRole("textbox", { name: "Reply" }),
-      "Draft stays",
-    );
+    await user.type(screen.getByRole("textbox", { name: "Reply" }), "Draft stays");
 
     await user.click(screen.getByRole("button", { name: "Refresh ticket" }));
     await act(async () => {

@@ -5,9 +5,6 @@ import type {
 import type { ProviderRegistry } from "@/providers";
 import type { HelpdeskConnectionsRepository } from "@/features/helpdesk-connections/repository";
 import {
-  invalidateAiSummaryTicketCache,
-} from "@/features/ai/summary-cache-invalidation";
-import {
   noAiSummaryCacheRepository,
   type AiSummaryCacheRepository,
 } from "@/features/ai/summary-cache-repository";
@@ -20,15 +17,14 @@ import {
   dispatchTicketCustomerReply,
   dispatchTicketInternalNote,
 } from "./communication-dispatch";
-import { dispatchTicketDetailRead } from "./provider-dispatch";
 import {
   noTicketDetailCacheRepository,
   type TicketDetailCacheRepository,
 } from "./cache-repository";
 import {
-  invalidateTicketDetailCache,
-  storeTicketDetailCache,
-} from "./service-cache";
+  finalizeWorkspaceTicketMutation,
+  type TicketMutationFinalizationOptions,
+} from "./mutation-finalization-service";
 import type {
   TicketCommunicationErrorReason,
   TicketCustomerReplyResult,
@@ -131,6 +127,7 @@ export async function addWorkspaceTicketInternalNote(
   input: TicketInternalNoteInput,
   cacheRepository: TicketDetailCacheRepository = noTicketDetailCacheRepository,
   aiSummaryCacheRepository: AiSummaryCacheRepository = noAiSummaryCacheRepository,
+  options: TicketMutationFinalizationOptions = {},
 ): Promise<TicketInternalNoteResult> {
   if (!ticketExternalId.trim() || !input.body.trim()) {
     recordFailedCommunicationAudit(
@@ -165,42 +162,16 @@ export async function addWorkspaceTicketInternalNote(
     return result;
   }
 
-  await invalidateTicketDetailCache({
-    cacheRepository,
-    operation: "mutation",
-    providerContext: providerContext.value,
-    ticketExternalId,
-    userId,
-  });
-  await invalidateAiSummaryTicketCache({
-    cacheRepository: aiSummaryCacheRepository,
-    helpdeskConnectionId: providerContext.value.context.connection.id,
-    ticketExternalId,
-    userId,
-  });
-  const detailRefresh = await dispatchTicketDetailRead(
-    providerContext.value,
-    ticketExternalId,
-  );
-  if (detailRefresh.status === "unavailable") {
-    const result = {
-      status: "saved-refresh-failed",
-      reason: detailRefresh.reason,
-      retryable: detailRefresh.retryable,
-    } as const;
+  if (options.finalize !== false) {
+    const result = await finalizeWorkspaceTicketMutation(
+      repository, registry, encryptionKey, userId, ticketExternalId,
+      cacheRepository, aiSummaryCacheRepository,
+    );
+    if (result.status !== "saved") {
     recordUncertainCommunicationAudit("internal-note", auditContext, result);
     return result;
+    }
   }
-
-  await storeTicketDetailCache({
-    cacheRepository,
-    detail: detailRefresh.detail,
-    encryptionKey,
-    operation: "mutation",
-    providerContext: providerContext.value,
-    ticketExternalId,
-    userId,
-  });
   recordSavedCommunicationAudit("internal-note", auditContext);
   return { status: "saved" };
 }
@@ -214,6 +185,7 @@ export async function addWorkspaceTicketCustomerReply(
   input: TicketCustomerReplyInput,
   cacheRepository: TicketDetailCacheRepository = noTicketDetailCacheRepository,
   aiSummaryCacheRepository: AiSummaryCacheRepository = noAiSummaryCacheRepository,
+  options: TicketMutationFinalizationOptions = {},
 ): Promise<TicketCustomerReplyResult> {
   if (!ticketExternalId.trim() || !input.body.trim()) {
     recordFailedCommunicationAudit(
@@ -248,42 +220,16 @@ export async function addWorkspaceTicketCustomerReply(
     return result;
   }
 
-  await invalidateTicketDetailCache({
-    cacheRepository,
-    operation: "mutation",
-    providerContext: providerContext.value,
-    ticketExternalId,
-    userId,
-  });
-  await invalidateAiSummaryTicketCache({
-    cacheRepository: aiSummaryCacheRepository,
-    helpdeskConnectionId: providerContext.value.context.connection.id,
-    ticketExternalId,
-    userId,
-  });
-  const detailRefresh = await dispatchTicketDetailRead(
-    providerContext.value,
-    ticketExternalId,
-  );
-  if (detailRefresh.status === "unavailable") {
-    const result = {
-      status: "saved-refresh-failed",
-      reason: detailRefresh.reason,
-      retryable: detailRefresh.retryable,
-    } as const;
+  if (options.finalize !== false) {
+    const result = await finalizeWorkspaceTicketMutation(
+      repository, registry, encryptionKey, userId, ticketExternalId,
+      cacheRepository, aiSummaryCacheRepository,
+    );
+    if (result.status !== "saved") {
     recordUncertainCommunicationAudit("customer-reply", auditContext, result);
     return result;
+    }
   }
-
-  await storeTicketDetailCache({
-    cacheRepository,
-    detail: detailRefresh.detail,
-    encryptionKey,
-    operation: "mutation",
-    providerContext: providerContext.value,
-    ticketExternalId,
-    userId,
-  });
   recordSavedCommunicationAudit("customer-reply", auditContext);
   return { status: "saved" };
 }

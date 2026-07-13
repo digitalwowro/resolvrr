@@ -1,7 +1,6 @@
 export type {
   Ticket,
   TicketArticle,
-  TicketCustomerReplyInput,
   TicketDetail,
   TicketInternalNoteInput,
   TicketLinkRelationKind,
@@ -13,6 +12,15 @@ export type {
   TicketState,
   TicketThread,
 } from "@/core/tickets";
+export type {
+  TicketArticleReplyContext,
+  TicketCustomerReplyInput,
+  TicketReplyChannel,
+  TicketReplyIntent,
+  TicketReplyPolicy,
+  TicketReplyRecipient,
+  TicketReplyRecipients,
+} from "@/core/ticket-replies";
 export {
   formatWorkspaceDateTime,
   formatWorkspaceRelativeTime,

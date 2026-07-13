@@ -64,67 +64,6 @@ describe("ticket metadata action input", () => {
     });
   });
 
-  it("parses staged reply and comment text as provider-neutral communication", () => {
-    const result = ticketMetadataMutationActionInput({
-      communication: {
-        commentBody: "  Checked the logs.  ",
-        replyBody: "  Thanks for the report.  ",
-      },
-      ticketExternalId: "ticket-1",
-    });
-
-    expect(result).toMatchObject({
-      bodyFormat: "plain",
-      commentBody: "Checked the logs.",
-      field: "communication",
-      input: {},
-      replyBody: "Thanks for the report.",
-      status: "valid",
-      ticketExternalId: "ticket-1",
-    });
-  });
-
-  it("parses staged rich reply and comment html as provider-neutral communication", () => {
-    const result = ticketMetadataMutationActionInput({
-      communication: {
-        bodyFormat: "html",
-        commentBody:
-          ' <p><strong>Checked</strong> <script>alert(1)</script><a href="javascript:alert(1)">bad</a></p> ',
-        replyBody: '<div>See <a href="https://example.com/docs">docs</a>.</div>',
-      },
-      ticketExternalId: "ticket-1",
-    });
-
-    expect(result).toMatchObject({
-      bodyFormat: "html",
-      commentBody: "<p><strong>Checked</strong> bad</p>",
-      field: "communication",
-      input: {},
-      replyBody:
-        '<p>See <a href="https://example.com/docs" rel="noreferrer noopener" target="_blank">docs</a>.</p>',
-      status: "valid",
-      ticketExternalId: "ticket-1",
-    });
-  });
-
-  it("keeps malformed script fragments out of staged rich communication html", () => {
-    const result = ticketMetadataMutationActionInput({
-      communication: {
-        bodyFormat: "html",
-        commentBody:
-          "<p>Checked <scrip<script>alert(1)</script>t>bad</script></p>",
-      },
-      ticketExternalId: "ticket-1",
-    });
-
-    expect(result.status).toBe("valid");
-    if (result.status !== "valid") {
-      throw new Error("Expected valid communication input");
-    }
-    expect(result.commentBody).toBe("<p>Checked alert(1)t&gt;bad</p>");
-    expect(result.commentBody).not.toContain("<script");
-  });
-
   it("rejects unsupported or orphan link relation values", () => {
     expect(
       ticketMetadataMutationActionInput({
@@ -231,7 +170,7 @@ describe("ticket metadata action input", () => {
     ).toEqual({ status: "invalid", field: "state" });
     expect(
       ticketMetadataMutationActionInput({
-        communication: { commentBody: "" },
+        communication: { body: "", kind: "internal-comment" },
         ticketExternalId: "ticket-1",
       }),
     ).toEqual({ status: "invalid", field: "communication" });

@@ -29,9 +29,9 @@ job queues remain out of scope. Read-only AI behavior is defined separately in
   refresh, and post-save detail refresh fetch provider source-of-truth rather
   than returning a fresh database cache hit.
 - Provider detail refreshes write through to the selected-ticket detail cache.
-- Confirmed metadata and communication writes invalidate the selected-ticket
-  detail cache before the post-write provider refresh; successful refreshes
-  write the refreshed detail back to cache.
+- A selected-ticket Update applies metadata first and its single communication
+  last, then performs one coordinated cache invalidation and provider detail/list
+  refresh. Successful refreshes write the refreshed detail back to cache.
 - Successful helpdesk connection update, validation, disable, and delete
   actions clear selected-ticket detail cache entries scoped to that connection
   and user.
@@ -42,10 +42,12 @@ job queues remain out of scope. Read-only AI behavior is defined separately in
   cache keys include user, active helpdesk connection, selected ticket, prompt
   version, sanitization version, provider protocol, model fingerprint, and
   source fingerprint/freshness metadata.
-- Inline composer drafts are recovered locally in the browser. The local record
-  is scoped by user, active workspace, selected ticket, and composer mode. It
-  may contain the unsent draft body and up to three draft AI suggestions, and it
-  expires after a short retention window.
+- Ticket-level composer drafts are recovered locally in the browser. The
+  versioned record is scoped by user, active workspace, and selected ticket. It
+  may contain communication kind, source/intent/context version, reviewed To/Cc,
+  unsent body, and up to three draft AI suggestions, and expires after a short
+  retention window. Legacy comments restore directly; legacy replies restore
+  only after their source receives a fresh valid context, using fresh defaults.
 - Workspace and per-user AI settings are encrypted server-side configuration,
   not cache data. Changing active-workspace AI policy/default config invalidates
   generated summaries for that workspace; changing a user's per-workspace AI
@@ -154,9 +156,10 @@ Cached data must be classified before persistence:
 - Customer content: ticket titles, previews, sanitized thread content,
   recipients, note bodies, reply bodies, and generated text based on customer
   content. This must not be logged and must be encrypted at rest if persisted.
-- Browser-local draft content: unsent inline comment/reply bodies and local AI
-  suggestion alternatives. This must not be logged or sent to the server except
-  through explicit AI generation or Update actions chosen by the user.
+- Browser-local draft content: unsent comment/reply bodies, recipient selections,
+  source context identifiers/versions, and local AI suggestion alternatives.
+  This must not be logged or sent to the server except through explicit AI
+  generation or Update actions chosen by the user.
 - Secrets: provider credentials, session tokens, cookies, password material, and
   AI credentials. These are never cache data.
 
@@ -171,7 +174,7 @@ Future cache implementations may tune exact TTLs, but the default classes are:
   not return an explicit freshness hint.
 - Generated AI output: selected-ticket summaries use a medium-lived encrypted
   cache, currently around 24 hours, keyed by source/model/prompt identity.
-- Browser-local inline composer drafts: short lived, currently around 7 days,
+- Browser-local ticket composer drafts: short lived, currently around 7 days,
   and cleared earlier when the user closes the composer, discards changes,
   submits through Update, or closes the ticket tab.
 
@@ -195,9 +198,9 @@ confirms the write:
   invalidate all snapshots scoped to that connection for that user.
 - AI settings changes invalidate generated selected-ticket summaries scoped to
   the affected workspace or user/connection.
-- Inline composer drafts are cleared locally when the user closes that composer,
-  discards workspace changes, submits communication through Update, or closes
-  the ticket tab.
+- Ticket composer drafts survive validation, provider, partial-success, and
+  uncertain-delivery failures. They are cleared only after confirmed
+  communication success or an explicit local discard/close action.
 
 Invalidation must not be treated as provider write success. Provider write
 success still comes only from the provider write result. Refresh failure after a

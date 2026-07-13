@@ -1,4 +1,4 @@
-import { waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RewriteDraftAction } from "@/features/ai";
@@ -71,22 +71,21 @@ describe("TicketWorkspace communication AI drafts", () => {
         scope,
       ),
     );
-    const article = getCustomerArticle();
+    getCustomerArticle();
     expect(
-      await within(article).findByRole("textbox", { name: "Reply" }),
+      await screen.findByRole("textbox", { name: "Reply" }),
     ).toHaveTextContent("Saved reply body");
-    expect(within(article).getByText("Draft restored.")).toBeInTheDocument();
+    expect(screen.getByText("Draft restored.")).toBeInTheDocument();
     expect(
-      within(article).getByText("Saved concise suggestion."),
+      screen.getByText("Saved concise suggestion."),
     ).toBeInTheDocument();
 
     await user.click(
-      within(article).getByRole("button", { name: "Close editor" }),
+      screen.getByRole("button", { name: "Close editor" }),
     );
 
     expect(persistence.clearPersistedCommunicationDrafts).toHaveBeenCalledWith(
       scope,
-      "reply",
     );
   });
 
@@ -115,19 +114,16 @@ describe("TicketWorkspace communication AI drafts", () => {
 
     const article = getCustomerArticle();
     await user.click(within(article).getByRole("button", { name: "Reply" }));
-    await user.type(
-      within(article).getByRole("textbox", { name: "Reply" }),
-      "Please check logs",
-    );
-    await user.click(within(article).getByRole("button", { name: "Proofread" }));
+    await user.type(screen.getByRole("textbox", { name: "Reply" }), "Please check logs");
+    await user.click(screen.getByRole("button", { name: "Proofread" }));
 
     expect(
-      await within(article).findByText("Please check the logs."),
+      await screen.findByText("Please check the logs."),
     ).toBeInTheDocument();
     await waitFor(() =>
       expect(persistence.savePersistedCommunicationDraft).toHaveBeenCalledWith(
         expect.objectContaining({
-          mode: "reply",
+          kind: "customer-reply",
           scope,
           suggestions: [
             expect.objectContaining({
@@ -140,8 +136,8 @@ describe("TicketWorkspace communication AI drafts", () => {
       ),
     );
 
-    await user.click(within(article).getByRole("button", { name: "Apply" }));
-    expect(within(article).getByRole("textbox", { name: "Reply" }))
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+    expect(screen.getByRole("textbox", { name: "Reply" }))
       .toHaveTextContent("Please check the logs.");
   });
 });

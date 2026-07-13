@@ -127,8 +127,8 @@ describe("TicketWorkspace selected detail", () => {
       screen.getByText("Explore these links:").parentElement,
     ).not.toHaveClass("whitespace-pre-wrap");
 
-    expect(screen.queryByRole("button", { name: /^Reply$/u })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^Reply all$/u })).toBeNull();
+    expect(screen.getByRole("button", { name: /^Reply$/u })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^Reply all$/u })).toBeDisabled();
 
     const mayaDetails = screen.getByRole("button", {
       name: "Message details for Maya Patel",

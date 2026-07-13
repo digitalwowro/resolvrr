@@ -7,6 +7,10 @@ import type {
   TicketSubscription,
   TicketState,
 } from "@/core/tickets";
+import type {
+  TicketArticleReplyContext,
+  TicketReplyPolicy,
+} from "@/core/ticket-replies";
 
 export type WorkspaceTicketColumnKey =
   | "customer"
@@ -94,6 +98,7 @@ export type WorkspaceArticle = {
   sanitizedHtml: string;
   visibility: string;
   attachments: WorkspaceAttachment[];
+  replyContext?: TicketArticleReplyContext;
 };
 
 export type WorkspaceTicketLink = {
@@ -128,6 +133,7 @@ export type WorkspaceTicketDetail = {
   subscription: TicketSubscription;
   tags: string[];
   metadataMutationConstraints?: TicketMetadataMutationConstraints;
+  replyPolicy?: TicketReplyPolicy;
   articles: WorkspaceArticle[];
 };
 

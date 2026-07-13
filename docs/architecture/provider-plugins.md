@@ -100,14 +100,13 @@ logs.
 
 ## Ticket Communication Mutations
 
-The approved communication write surface covers internal notes and customer
-replies. Provider-neutral code passes `TicketInternalNoteInput.body`,
-`TicketInternalNoteInput.bodyFormat`, `TicketCustomerReplyInput.body`, and
-`TicketCustomerReplyInput.bodyFormat` through the communication service path
-after one explicit selected-ticket `Update` submit. Provider plugins map those
-inputs to provider-specific article/comment payloads inside their own folders;
-Zammad owns the mapping from `bodyFormat: "html"` to its article
-`content_type`.
+The approved communication write surface covers internal notes and contextual
+customer replies. Provider-neutral reply contracts carry source article ID,
+intent, opaque context version, and reviewed To/Cc recipients in addition to
+body and format. Provider plugins derive per-article availability/defaults and
+map sends to provider-specific article payloads inside their own folders.
+Provider message IDs, raw recipient fields, endpoints, and system-address rules
+never cross the provider boundary.
 
 Successful communication writes are followed by a service-layer refresh check
 for the selected ticket detail/thread. If the write succeeds but refresh fails,
@@ -122,11 +121,15 @@ recipient addresses, note bodies, reply bodies, provider request payloads, or
 provider response bodies. `saved-refresh-failed` is logged as its own uncertain
 send outcome, not as a failed provider write.
 
-Provider implementations must not trust client-supplied reply recipients.
-Zammad customer replies resolve the customer recipient from provider-owned
-ticket/customer data and include the resolved address in the provider-local
-article payload. If the provider cannot resolve a safe customer address, the
-reply fails before the article is created.
+Provider implementations must not trust client-supplied baseline recipients.
+Zammad reads active system addresses and derives each source article's Reply and
+Reply all context using its native sender, Reply-To, From/To/Cc, and web/phone
+fallback rules. At send it re-fetches the ticket, article, and address policy;
+checks ownership, visibility, channel, intent, and context version; then strictly
+normalizes the reviewed To/Cc set. User-added addresses remain allowed, including
+warned system addresses. Failed revalidation produces no POST, while an
+uncertain POST result is non-retryable and must be verified from refreshed
+provider source.
 
 ## Ticket Read Observability
 

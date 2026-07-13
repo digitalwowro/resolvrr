@@ -143,10 +143,13 @@ describe("TicketWorkspace staged metadata updates", () => {
       "border-amber-500",
     );
     const actionBar = screen.getByRole("group", {
-      name: "Staged metadata actions",
+      name: "Ticket actions",
     });
     const actionButtons = within(actionBar).getAllByRole("button");
     expect(actionButtons.map((button) => button.textContent)).toEqual([
+      "Reply",
+      "Reply all",
+      "Comment",
       "Discard changes",
       "Update",
     ]);

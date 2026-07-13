@@ -22,10 +22,6 @@ describe("selected ticket draft model", () => {
     const draft = metadataDraftFromDetail(detail);
 
     expect(draft).toEqual({
-      communication: {
-        commentBody: "",
-        replyBody: "",
-      },
       metadata: {
         groupExternalId: "group-1",
         linkAddExternalId: "",
@@ -122,11 +118,13 @@ describe("selected ticket draft model", () => {
     });
   });
 
-  it("adds staged reply and comment text to the selected-ticket update payload", () => {
+  it("adds one staged internal comment to the selected-ticket update payload", () => {
     const baseline = metadataDraftFromDetail(selectedDetailProps().detail);
     const draft = metadataDraftFromBaseline(baseline);
-    draft.communication.commentBody = "  Checked the logs.  ";
-    draft.communication.replyBody = "  Thanks for the report.  ";
+    draft.communication = {
+      body: "  Checked the logs.  ",
+      kind: "internal-comment",
+    };
 
     const payload = metadataDraftUpdatePayload(baseline, draft);
 
@@ -134,8 +132,8 @@ describe("selected ticket draft model", () => {
     expect(payload).toEqual({
       communication: {
         bodyFormat: "html",
-        commentBody: "Checked the logs.",
-        replyBody: "Thanks for the report.",
+        body: "Checked the logs.",
+        kind: "internal-comment",
       },
       ticketExternalId: "ticket-1",
     });
@@ -145,14 +143,30 @@ describe("selected ticket draft model", () => {
     const baseline = metadataDraftFromDetail(selectedDetailProps().detail);
     const draft = metadataDraftFromBaseline(baseline);
     draft.metadata.priority = "high";
-    draft.communication.replyBody = "Thanks for the report.";
+    draft.communication = {
+      body: "Thanks for the report.",
+      cc: ["watcher@example.com"],
+      contextVersion: "context-v1",
+      defaultCc: [],
+      defaultTo: ["customer@example.com"],
+      intent: "reply-all",
+      kind: "customer-reply",
+      sourceArticleExternalId: "article-1",
+      to: ["customer@example.com"],
+    };
 
     const payload = metadataDraftUpdatePayload(baseline, draft);
 
     expect(payload).toEqual({
       communication: {
         bodyFormat: "html",
-        replyBody: "Thanks for the report.",
+        body: "Thanks for the report.",
+        cc: ["watcher@example.com"],
+        contextVersion: "context-v1",
+        intent: "reply-all",
+        kind: "customer-reply",
+        sourceArticleExternalId: "article-1",
+        to: ["customer@example.com"],
       },
       metadata: {
         priority: "high",

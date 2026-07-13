@@ -89,7 +89,11 @@ export const zammadArticleSchema = z
     from: z.string().nullish(),
     to: zammadStringListSchema,
     cc: zammadStringListSchema,
+    reply_to: zammadStringListSchema,
     subject: z.string().nullish(),
+    message_id: z.string().nullish(),
+    in_reply_to: z.string().nullish(),
+    references: zammadStringListSchema,
     body: z.string().nullish(),
     created_at: z.string().nullish(),
     attachments: z.array(zammadAttachmentSchema).default([]),
@@ -97,6 +101,15 @@ export const zammadArticleSchema = z
   .passthrough();
 
 export const zammadArticleListSchema = z.array(zammadArticleSchema);
+
+export const zammadEmailAddressSchema = z
+  .object({
+    email: z.string(),
+    active: z.boolean().optional(),
+  })
+  .passthrough();
+
+export const zammadEmailAddressListSchema = z.array(zammadEmailAddressSchema);
 
 export const zammadGenericNamedAssetSchema = z
   .object({
@@ -152,6 +165,7 @@ export const zammadArticleListResponseSchema = z.union([
 
 export type ZammadTicket = z.infer<typeof zammadTicketSchema>;
 export type ZammadArticle = z.infer<typeof zammadArticleSchema>;
+export type ZammadEmailAddress = z.infer<typeof zammadEmailAddressSchema>;
 export type ZammadAssets = z.infer<typeof zammadAssetsSchema>;
 export type ZammadGenericNamedAsset = z.infer<typeof zammadGenericNamedAssetSchema>;
 export type ZammadGroup = z.infer<typeof zammadGroupSchema>;

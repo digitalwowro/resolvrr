@@ -1,4 +1,9 @@
 import type { TicketLookupData } from "./ticket-lookups";
+import type {
+  TicketArticleReplyContext,
+  TicketCustomerReplyInput,
+  TicketReplyPolicy,
+} from "./ticket-replies";
 
 export const ticketStates = [
   "new",
@@ -145,6 +150,7 @@ export type TicketArticle = {
   sanitizedHtml: string;
   textPreview?: string;
   attachments: TicketAttachment[];
+  replyContext?: TicketArticleReplyContext;
 };
 
 export type TicketCommunicationBodyFormat = "plain" | "html";
@@ -182,6 +188,7 @@ export type TicketDetail = {
   lookupData?: TicketLookupData;
   subscription: TicketSubscription;
   measuredAt: Date;
+  replyPolicy?: TicketReplyPolicy;
 };
 
 export type TicketMetadataMutationInput = {
@@ -202,10 +209,7 @@ export type TicketInternalNoteInput = {
   bodyFormat?: TicketCommunicationBodyFormat;
 };
 
-export type TicketCustomerReplyInput = {
-  body: string;
-  bodyFormat?: TicketCommunicationBodyFormat;
-};
+export type { TicketCustomerReplyInput };
 
 export type TicketMetadataMutationConstraints = {
   hiddenStates?: TicketState[];

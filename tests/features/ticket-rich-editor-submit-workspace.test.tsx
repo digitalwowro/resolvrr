@@ -7,7 +7,7 @@ import {
   type MutationAction,
 } from "./ticket-communication-workspace-test-utils";
 
-describe("TicketWorkspace inline communication composers", () => {
+describe("TicketWorkspace top communication composer", () => {
   it("stages rich reply formatting through workspace Update", async () => {
     const user = userEvent.setup();
     const updateTicketMetadataAction = vi.fn<MutationAction>(async () => ({
@@ -23,17 +23,20 @@ describe("TicketWorkspace inline communication composers", () => {
 
     const article = getCustomerArticle();
     await user.click(within(article).getByRole("button", { name: "Reply" }));
-    await user.type(
-      within(article).getByRole("textbox", { name: "Reply" }),
-      "Important",
-    );
-    await user.click(within(article).getByRole("button", { name: "Bold" }));
+    await user.type(screen.getByRole("textbox", { name: "Reply" }), "Important");
+    await user.click(screen.getByRole("button", { name: "Bold" }));
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     expect(updateTicketMetadataAction).toHaveBeenCalledWith({
       communication: {
         bodyFormat: "html",
-        replyBody: "<strong>Important</strong>",
+        body: "<strong>Important</strong>",
+        cc: [],
+        contextVersion: "context-ticket-1",
+        intent: "reply",
+        kind: "customer-reply",
+        sourceArticleExternalId: "article-ticket-1",
+        to: ["maya@example.com"],
       },
       ticketExternalId: "ticket-1",
     });
@@ -56,20 +59,23 @@ describe("TicketWorkspace inline communication composers", () => {
 
       const article = getCustomerArticle();
       await user.click(within(article).getByRole("button", { name: "Reply" }));
-      await user.type(
-        within(article).getByRole("textbox", { name: "Reply" }),
-        "Docs",
-      );
+      await user.type(screen.getByRole("textbox", { name: "Reply" }), "Docs");
       await user.click(
-        within(article).getByRole("button", { name: "Insert link" }),
+        screen.getByRole("button", { name: "Insert link" }),
       );
       await user.click(screen.getByRole("button", { name: "Update" }));
 
       expect(updateTicketMetadataAction).toHaveBeenCalledWith({
         communication: {
           bodyFormat: "html",
-          replyBody:
+          body:
             '<a href="https://example.com/docs" rel="noreferrer noopener" target="_blank">Docs</a>',
+          cc: [],
+          contextVersion: "context-ticket-1",
+          intent: "reply",
+          kind: "customer-reply",
+          sourceArticleExternalId: "article-ticket-1",
+          to: ["maya@example.com"],
         },
         ticketExternalId: "ticket-1",
       });

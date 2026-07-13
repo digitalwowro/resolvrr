@@ -1,19 +1,11 @@
-import type {
-  TicketCommunicationBodyFormat,
-  TicketMetadataMutationInput,
-  TicketState,
-} from "@/core/tickets";
+import type { TicketMetadataMutationInput, TicketState } from "@/core/tickets";
 import {
-  isTicketCommunicationBodyFormat,
-  normalizedCommunicationBody,
-} from "./communication-body";
-import { sanitizeComposerHtml } from "@/security/sanitize-html";
-import {
-  selectedTicketUpdateCommunicationFields,
   selectedTicketUpdateMetadataFields,
   selectedTicketUpdatePayloadKeys,
   type TicketMetadataMutationField,
+  type SelectedTicketUpdateCommunicationPayload,
 } from "./mutation-model";
+import { selectedTicketCommunicationInput } from "./update-communication-action-input";
 import {
   booleanValue,
   hasOwnValue,
@@ -30,10 +22,8 @@ import {
 export type TicketMetadataMutationActionInput =
   | {
       field: TicketMetadataMutationField;
-      bodyFormat: TicketCommunicationBodyFormat;
-      commentBody?: string;
+      communication?: SelectedTicketUpdateCommunicationPayload;
       input: TicketMetadataMutationInput;
-      replyBody?: string;
       status: "valid";
       ticketExternalId: string;
     }
@@ -56,21 +46,16 @@ function pendingUntilValue(value: string): Date | undefined {
 }
 
 function invalidField(
-  bodyFormat: string,
-  commentBody: string,
+  hasCommunication: boolean,
   groupExternalId: string,
   linkAddExternalId: string,
   linkRemoveExternalIds: string[] | undefined,
   ownerExternalId: string,
-  replyBody: string,
   subscriptionFollowing: boolean | undefined,
   stateValue: string,
   tags: string[] | undefined,
   priorityValue: string,
 ): TicketMetadataMutationField {
-  if (bodyFormat && !isTicketCommunicationBodyFormat(bodyFormat)) {
-    return "communication";
-  }
   if (ownerExternalId) {
     return "owner";
   }
@@ -86,7 +71,7 @@ function invalidField(
   if (subscriptionFollowing !== undefined) {
     return "subscription";
   }
-  if (commentBody || replyBody) {
+  if (hasCommunication) {
     return "communication";
   }
   return stateValue || !priorityValue ? "state" : "priority";
@@ -103,8 +88,10 @@ export function ticketMetadataMutationActionInput(
   ) {
     return { status: "invalid", field: "state" };
   }
-  const communication = objectValue(requestRecord?.communication) ?? {};
-  if (hasUnsupportedKeys(communication, selectedTicketUpdateCommunicationFields)) {
+  const communicationInput = selectedTicketCommunicationInput(
+    requestRecord.communication,
+  );
+  if (communicationInput.status === "invalid") {
     return { status: "invalid", field: "communication" };
   }
   const metadata = objectValue(requestRecord?.metadata) ?? {};
@@ -112,19 +99,9 @@ export function ticketMetadataMutationActionInput(
     return { status: "invalid", field: "state" };
   }
   const ticketExternalId = textValue(requestRecord, "ticketExternalId");
-  const bodyFormatValue = textValue(communication, "bodyFormat");
-  if (
-    hasOwnValue(communication, "bodyFormat") &&
-    !isTicketCommunicationBodyFormat(bodyFormatValue)
-  ) {
-    return { status: "invalid", field: "communication" };
-  }
-  const bodyFormat: TicketCommunicationBodyFormat =
-    bodyFormatValue === "html" ? "html" : "plain";
-  const rawCommentBody = textValue(communication, "commentBody");
-  const commentBody = normalizedCommunicationBody(
-    bodyFormat === "html" ? sanitizeComposerHtml(rawCommentBody) : rawCommentBody,
-  );
+  const parsedCommunication = communicationInput.status === "valid"
+    ? communicationInput.communication
+    : undefined;
   const groupExternalId = textValue(metadata, "groupExternalId");
   const linkAddExternalId = textValue(metadata, "linkAddExternalId").trim().replace(
     /^#/u,
@@ -137,26 +114,12 @@ export function ticketMetadataMutationActionInput(
   const subscriptionFollowing = booleanValue(metadata, "subscriptionFollowing");
   const tags = stringArrayValue(metadata, "tags");
   const priorityValue = textValue(metadata, "priority");
-  const rawReplyBody = textValue(communication, "replyBody");
-  const replyBody = normalizedCommunicationBody(
-    bodyFormat === "html" ? sanitizeComposerHtml(rawReplyBody) : rawReplyBody,
-  );
   const pendingUntilText = textValue(metadata, "pendingUntil");
   const input: TicketMetadataMutationInput = {};
   let field: TicketMetadataMutationField | undefined;
 
-  if (hasOwnValue(communication, "commentBody") && !commentBody) {
-    return { status: "invalid", field: "communication" };
-  }
-  if (commentBody) {
+  if (parsedCommunication) {
     field = "communication";
-  }
-
-  if (hasOwnValue(communication, "replyBody") && !replyBody) {
-    return { status: "invalid", field: "communication" };
-  }
-  if (replyBody) {
-    field = field ?? "communication";
   }
 
   if (hasOwnValue(metadata, "ownerExternalId") && !ownerExternalId) {
@@ -270,13 +233,11 @@ export function ticketMetadataMutationActionInput(
     return {
       status: "invalid",
       field: invalidField(
-        bodyFormatValue,
-        commentBody,
+        Boolean(parsedCommunication),
         groupExternalId,
         linkAddExternalId,
         linkRemoveExternalIds,
         ownerExternalId,
-        replyBody,
         subscriptionFollowing,
         stateValue,
         tags,
@@ -286,11 +247,9 @@ export function ticketMetadataMutationActionInput(
   }
 
   return {
-    bodyFormat,
-    ...(commentBody ? { commentBody } : {}),
+    ...(parsedCommunication ? { communication: parsedCommunication } : {}),
     field,
     input,
-    ...(replyBody ? { replyBody } : {}),
     status: "valid",
     ticketExternalId,
   };

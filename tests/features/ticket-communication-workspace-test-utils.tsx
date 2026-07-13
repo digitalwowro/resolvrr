@@ -42,23 +42,33 @@ export function renderWorkspace({
   articles,
   customerReplies = false,
   internalNotes = false,
+  metadataPriority = false,
   updateTicketMetadataAction = noopMutationAction,
   loadTicketDetailAction,
   rewriteDraftAction,
+  providerManagedAddresses,
   userId,
   workspaceId = "connection-1",
 }: {
   articles?: WorkspaceArticle[];
   customerReplies?: boolean;
   internalNotes?: boolean;
+  metadataPriority?: boolean;
   loadTicketDetailAction?: LoadWorkspaceTicketDetailAction;
   rewriteDraftAction?: RewriteDraftAction;
+  providerManagedAddresses?: string[];
   updateTicketMetadataAction?: MutationAction;
   userId?: string;
   workspaceId?: string;
 } = {}) {
   const detailProps = selectedDetailProps();
-  const detail = articles ? { ...detailProps.detail, articles } : detailProps.detail;
+  const detail = {
+    ...detailProps.detail,
+    ...(articles ? { articles } : {}),
+    ...(providerManagedAddresses
+      ? { replyPolicy: { providerManagedAddresses } }
+      : {}),
+  };
 
   render(
     <TicketWorkspace
@@ -69,6 +79,10 @@ export function renderWorkspace({
       listResult={{
         ...availableList,
         communicationCapabilities: { customerReplies, internalNotes },
+        metadataMutationCapabilities: {
+          ...availableList.metadataMutationCapabilities,
+          priority: metadataPriority,
+        },
       }}
       loadTicketDetailAction={loadTicketDetailAction}
       logoutAction={noopAction}

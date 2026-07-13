@@ -112,6 +112,18 @@ export function detailPropsFor(
           cc: [],
           bcc: [],
           direction: "inbound",
+          replyContext: {
+            availableIntents: ["reply"],
+            channel: "email",
+            contextVersion: `context-${ticket.id}`,
+            defaults: {
+              reply: {
+                to: [{ channel: "to", email: "maya@example.com", name: ticket.customer }],
+                cc: [],
+              },
+            },
+            sourceArticleExternalId: `article-${ticket.id}`,
+          },
           meta: "May 24, 08:31",
           sanitizedHtml: `<p>${articleBody}</p>`,
           visibility: "public",
@@ -168,6 +180,18 @@ export function detailPropsFor(
             cc: [],
             bcc: [],
             direction: "inbound",
+            replyContext: {
+              availableIntents: ["reply"],
+              channel: "email",
+              contextVersion: `context-${ticket.id}`,
+              defaults: {
+                reply: {
+                  to: [{ channel: "to", email: "maya@example.com", name: ticket.customer }],
+                  cc: [],
+                },
+              },
+              sourceArticleExternalId: `article-${ticket.id}`,
+            },
             meta: "May 24, 08:31",
             sanitizedHtml: `<p>${articleBody}</p>`,
             visibility: "public",

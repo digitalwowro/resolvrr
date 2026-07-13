@@ -9,7 +9,7 @@ import {
 } from "./ticket-communication-workspace-test-utils";
 import { selectedDetailProps } from "./ticket-workspace-test-utils";
 
-describe("TicketWorkspace inline communication composers", () => {
+describe("TicketWorkspace ticket-level communication composer", () => {
   it("stages a comment and sends it through workspace Update", async () => {
     const user = userEvent.setup();
     const updateTicketMetadataAction = vi.fn<MutationAction>(async () => ({
@@ -23,13 +23,10 @@ describe("TicketWorkspace inline communication composers", () => {
       updateTicketMetadataAction,
     });
 
-    const article = getCustomerArticle();
-    await user.click(within(article).getByRole("button", { name: "Comment" }));
-    await user.type(
-      within(article).getByRole("textbox", { name: "Comment" }),
-      "Checked the logs.",
-    );
-    expect(within(article).queryByRole("button", { name: "Send" }))
+    getCustomerArticle();
+    await user.click(screen.getByRole("button", { name: "Comment" }));
+    await user.type(screen.getByRole("textbox", { name: "Comment" }), "Checked the logs.");
+    expect(screen.queryByRole("button", { name: "Send" }))
       .not.toBeInTheDocument();
     expect(updateTicketMetadataAction).not.toHaveBeenCalled();
 
@@ -38,15 +35,14 @@ describe("TicketWorkspace inline communication composers", () => {
     expect(updateTicketMetadataAction).toHaveBeenCalledWith({
       communication: {
         bodyFormat: "html",
-        commentBody: "Checked the logs.",
+        body: "Checked the logs.",
+        kind: "internal-comment",
       },
       ticketExternalId: "ticket-1",
     });
     await waitFor(() =>
       expect(
-        within(article).queryByRole("form", {
-          name: "Comment composer for Maya Patel",
-        }),
+        screen.queryByRole("form", { name: "Comment composer" }),
       ).not.toBeInTheDocument(),
     );
   });
@@ -58,16 +54,12 @@ describe("TicketWorkspace inline communication composers", () => {
       internalNotes: true,
     });
 
-    const article = getCustomerArticle();
-    await user.click(within(article).getByRole("button", { name: "Comment" }));
-    await user.type(
-      within(article).getByRole("textbox", { name: "Comment" }),
-      "Checked the logs.",
-    );
+    getCustomerArticle();
+    await user.click(screen.getByRole("button", { name: "Comment" }));
+    await user.type(screen.getByRole("textbox", { name: "Comment" }), "Checked the logs.");
     await user.click(screen.getByRole("button", { name: "Discard changes" }));
 
-    expect(within(article).getByRole("textbox", { name: "Comment" }))
-      .toHaveTextContent("");
+    expect(screen.queryByRole("textbox", { name: "Comment" })).not.toBeInTheDocument();
   });
 
   it("keeps Reply all unavailable and disconnected from server actions", async () => {
@@ -83,8 +75,10 @@ describe("TicketWorkspace inline communication composers", () => {
       updateTicketMetadataAction,
     });
 
-    const article = getCustomerArticle();
-    const replyAllButton = within(article).getByRole("button", {
+    getCustomerArticle();
+    const replyAllButton = within(
+      screen.getByRole("group", { name: "Ticket actions" }),
+    ).getByRole("button", {
       name: "Reply all",
     });
 
@@ -93,13 +87,11 @@ describe("TicketWorkspace inline communication composers", () => {
 
     expect(updateTicketMetadataAction).not.toHaveBeenCalled();
     expect(
-      within(article).queryByRole("form", {
-        name: "Reply composer for Maya Patel",
-      }),
+      screen.queryByRole("form", { name: "Reply composer" }),
     ).not.toBeInTheDocument();
   });
 
-  it("shows comment but not reply actions on internal articles", () => {
+  it("keeps comment ticket-level and hides reply actions on internal articles", () => {
     const articles = [...selectedDetailProps().detail.articles, internalArticle()];
 
     renderWorkspace({
@@ -118,8 +110,8 @@ describe("TicketWorkspace inline communication composers", () => {
     expect(
       within(article).queryByRole("button", { name: "Reply all" }),
     ).not.toBeInTheDocument();
-    expect(
-      within(article).getByRole("button", { name: "Comment" }),
-    ).toHaveClass("bg-slate-950", "text-white");
+    expect(within(article).queryByRole("button", { name: "Comment" }))
+      .not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Comment" })).toBeEnabled();
   });
 });

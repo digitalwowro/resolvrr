@@ -11,6 +11,7 @@ import {
   encryptionKey,
   mockValidatedBaseUrl,
   provider,
+  replyInput,
   repository,
 } from "./ticket-service-test-helpers";
 
@@ -52,7 +53,7 @@ describe("ticket communication audit logs", () => {
       encryptionKey,
       "user-1",
       "ticket-provider-id-contains-customer-text",
-      { body: "raw reply body should never be logged" },
+      replyInput("raw reply body should never be logged"),
     );
 
     expect(result).toEqual({ status: "saved" });
@@ -151,7 +152,7 @@ describe("ticket communication audit logs", () => {
       encryptionKey,
       "user-1",
       "ticket-1",
-      { body: "raw failed reply body should never be logged" },
+      replyInput("raw failed reply body should never be logged"),
     );
 
     expect(result).toEqual({

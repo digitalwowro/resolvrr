@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { TicketReplyIntent } from "@/core/ticket-replies";
 import type { AiRephraseStyleOption, RewriteDraftAction } from "@/features/ai";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
 import type { TicketCommunicationDraft } from "./metadata-draft";
-import type { InlineCommunicationMode } from "./ticket-inline-communication-composer";
+import { replyRecipientsEdited } from "./communication-draft";
 import { TicketThreadArticle } from "./ticket-thread-article";
-import { isPublicReplyableArticle } from "./ticket-thread-article-parts";
+import { TicketInlineCommunicationComposer } from "./ticket-inline-communication-composer";
+import { TicketReplyRecipientEditor } from "./ticket-reply-recipient-editor";
 import {
   clearPersistedCommunicationDrafts,
   loadPersistedCommunicationDrafts,
@@ -15,34 +17,67 @@ import {
   savePersistedCommunicationDraft,
   type CommunicationDraftPersistenceScope,
   type PersistedDraftAiSuggestion,
+  type PersistedCommunicationDraft,
 } from "./ticket-communication-draft-persistence";
 
 type TicketThreadProps = {
   articles: WorkspaceArticle[];
-  communicationDraft: TicketCommunicationDraft;
+  communicationDraft?: TicketCommunicationDraft;
   communicationCapabilities: TicketCommunicationCapabilities;
   disabled: boolean;
   draftPersistenceScope?: CommunicationDraftPersistenceScope;
-  onCommunicationDraftChange(draft: TicketCommunicationDraft): void;
+  managedAddresses: string[];
+  onCommunicationDraftChange(draft: TicketCommunicationDraft | undefined): void;
+  onRequestReply(article: WorkspaceArticle, intent: TicketReplyIntent): void;
   onScrolledToLatest(): void;
   rephraseStyleOptions?: AiRephraseStyleOption[];
   rewriteDraftAction?: RewriteDraftAction;
   scrollAfterArticleCount?: number;
 };
 
-type ActiveComposer = {
-  articleId: string;
-  mode: InlineCommunicationMode;
-};
-
-function canOpenPersistedComposer(
-  article: WorkspaceArticle,
-  mode: InlineCommunicationMode,
+function restoredDraft(
+  record: PersistedCommunicationDraft,
+  articles: WorkspaceArticle[],
   capabilities: TicketCommunicationCapabilities,
-): boolean {
-  return mode === "comment"
-    ? capabilities.internalNotes
-    : capabilities.customerReplies && isPublicReplyableArticle(article);
+): TicketCommunicationDraft | undefined {
+  const kind = record.kind ?? (record.mode === "comment"
+    ? "internal-comment"
+    : record.mode === "reply" ? "customer-reply" : undefined);
+  if (kind === "internal-comment") {
+    return capabilities.internalNotes
+      ? { body: record.bodyHtml, kind }
+      : undefined;
+  }
+  const sourceId = record.sourceArticleExternalId ?? record.articleId;
+  const article = articles.find((item) => item.id === sourceId);
+  const context = article?.replyContext;
+  const intent = record.intent ?? "reply";
+  if (
+    kind !== "customer-reply" ||
+    !capabilities.customerReplies ||
+    !context ||
+    !context.availableIntents.includes(intent) ||
+    (record.contextVersion && record.contextVersion !== context.contextVersion)
+  ) {
+    return undefined;
+  }
+  const defaults = intent === "reply-all"
+    ? context.defaults.replyAll
+    : context.defaults.reply;
+  if (!defaults) return undefined;
+  const defaultTo = defaults.to.map((recipient) => recipient.email);
+  const defaultCc = defaults.cc.map((recipient) => recipient.email);
+  return {
+    body: record.bodyHtml,
+    cc: record.contextVersion ? record.cc ?? defaultCc : defaultCc,
+    contextVersion: context.contextVersion,
+    defaultCc,
+    defaultTo,
+    intent,
+    kind,
+    sourceArticleExternalId: context.sourceArticleExternalId,
+    to: record.contextVersion ? record.to ?? defaultTo : defaultTo,
+  };
 }
 
 export function TicketThread({
@@ -51,218 +86,143 @@ export function TicketThread({
   communicationCapabilities,
   disabled,
   draftPersistenceScope,
+  managedAddresses,
   onCommunicationDraftChange,
+  onRequestReply,
   onScrolledToLatest,
   rephraseStyleOptions,
   rewriteDraftAction,
   scrollAfterArticleCount,
 }: TicketThreadProps) {
-  const [activeComposer, setActiveComposer] = useState<ActiveComposer | null>(null);
-  const [restoredComposer, setRestoredComposer] = useState<ActiveComposer | null>(
-    null,
-  );
-  const [suggestions, setSuggestions] = useState<
-    Record<InlineCommunicationMode, PersistedDraftAiSuggestion[]>
-  >({ comment: [], reply: [] });
+  const [suggestions, setSuggestions] = useState<PersistedDraftAiSuggestion[]>([]);
+  const [draftRestored, setDraftRestored] = useState(false);
   const latestArticleRef = useRef<HTMLDivElement | null>(null);
-  const communicationDraftRef = useRef(communicationDraft);
-  const communicationCapabilitiesRef = useRef(communicationCapabilities);
-  const onCommunicationDraftChangeRef = useRef(onCommunicationDraftChange);
   const restoredScopeRef = useRef("");
+  const draftRef = useRef(communicationDraft);
+  const onDraftChangeRef = useRef(onCommunicationDraftChange);
+
+  useEffect(() => { draftRef.current = communicationDraft; }, [communicationDraft]);
+  useEffect(() => { onDraftChangeRef.current = onCommunicationDraftChange; }, [onCommunicationDraftChange]);
+  useEffect(() => { void pruneExpiredCommunicationDrafts(); }, []);
 
   useEffect(() => {
-    communicationDraftRef.current = communicationDraft;
-  }, [communicationDraft]);
-
-  useEffect(() => {
-    communicationCapabilitiesRef.current = communicationCapabilities;
-    onCommunicationDraftChangeRef.current = onCommunicationDraftChange;
-  }, [communicationCapabilities, onCommunicationDraftChange]);
-
-  useEffect(() => {
-    if (
-      scrollAfterArticleCount === undefined ||
-      articles.length <= scrollAfterArticleCount
-    ) {
-      return;
-    }
-
-    latestArticleRef.current?.scrollIntoView({
-      block: "center",
-      inline: "nearest",
-      behavior: "smooth",
-    });
+    if (scrollAfterArticleCount === undefined || articles.length <= scrollAfterArticleCount) return;
+    latestArticleRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
     onScrolledToLatest();
   }, [articles.length, onScrolledToLatest, scrollAfterArticleCount]);
 
   useEffect(() => {
-    void pruneExpiredCommunicationDrafts();
-  }, []);
-
-  useEffect(() => {
     let cancelled = false;
     const scopeKey = draftPersistenceScope
-      ? [
-          draftPersistenceScope.userId,
-          draftPersistenceScope.workspaceId,
-          draftPersistenceScope.ticketExternalId,
-        ].join(":")
+      ? `${draftPersistenceScope.userId}:${draftPersistenceScope.workspaceId}:${draftPersistenceScope.ticketExternalId}`
       : "";
-    if (!scopeKey || restoredScopeRef.current === scopeKey) {
-      return;
-    }
+    if (!scopeKey || restoredScopeRef.current === scopeKey) return;
     restoredScopeRef.current = scopeKey;
-    async function restoreDrafts() {
-      const records =
-        await loadPersistedCommunicationDrafts(draftPersistenceScope);
-      if (cancelled || records.length === 0) {
-        return;
-      }
-
-      const nextDraft = { ...communicationDraftRef.current };
-      const nextSuggestions: Record<
-        InlineCommunicationMode,
-        PersistedDraftAiSuggestion[]
-      > = { comment: [], reply: [] };
-      for (const record of records) {
-        if (record.mode === "comment") {
-          nextDraft.commentBody = record.bodyHtml;
-        } else {
-          nextDraft.replyBody = record.bodyHtml;
-        }
-        nextSuggestions[record.mode] = record.suggestions;
-      }
-      const latestRecord = records[0];
-      const matchingArticle = articles.find(
-        (article) => article.id === latestRecord.articleId,
-      );
-      const restoredArticle =
-        [matchingArticle, ...articles].find(
-          (article): article is WorkspaceArticle => {
-            if (!article) {
-              return false;
-            }
-            return canOpenPersistedComposer(
-              article,
-              latestRecord.mode,
-              communicationCapabilitiesRef.current,
-            );
-          },
-        ) ?? null;
-      if (restoredArticle) {
-        const composer = {
-          articleId: restoredArticle.id,
-          mode: latestRecord.mode,
-        };
-        setSuggestions(nextSuggestions);
-        setActiveComposer(composer);
-        setRestoredComposer(composer);
-      }
-      onCommunicationDraftChangeRef.current(nextDraft);
-    }
-
-    void restoreDrafts();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    articles,
-    draftPersistenceScope,
-  ]);
-
-  function bodyForMode(mode: InlineCommunicationMode): string {
-    return mode === "comment"
-      ? communicationDraft.commentBody
-      : communicationDraft.replyBody;
-  }
-
-  function updateBody(
-    articleId: string,
-    mode: InlineCommunicationMode,
-    body: string,
-  ) {
-    const nextDraft = {
-      ...communicationDraft,
-      ...(mode === "comment" ? { commentBody: body } : { replyBody: body }),
-    };
-    onCommunicationDraftChange(nextDraft);
-    void savePersistedCommunicationDraft({
-      articleId,
-      bodyHtml: body,
-      mode,
-      scope: draftPersistenceScope,
-      suggestions: suggestions[mode],
+    void loadPersistedCommunicationDrafts(draftPersistenceScope).then((records) => {
+      if (cancelled || draftRef.current || !records[0]) return;
+      const draft = restoredDraft(records[0], articles, communicationCapabilities);
+      if (!draft) return;
+      setSuggestions(records[0].suggestions);
+      setDraftRestored(true);
+      onDraftChangeRef.current(draft);
     });
-  }
+    return () => { cancelled = true; };
+  }, [articles, communicationCapabilities, draftPersistenceScope]);
 
-  function updateSuggestions(
-    articleId: string,
-    mode: InlineCommunicationMode,
-    nextSuggestions: PersistedDraftAiSuggestion[],
+  function persist(
+    draft: TicketCommunicationDraft,
+    nextSuggestions = suggestions,
   ) {
-    setSuggestions((current) => ({ ...current, [mode]: nextSuggestions }));
     void savePersistedCommunicationDraft({
-      articleId,
-      bodyHtml: bodyForMode(mode),
-      mode,
+      articleId: draft.kind === "customer-reply"
+        ? draft.sourceArticleExternalId
+        : undefined,
+      bodyHtml: draft.body,
+      cc: draft.kind === "customer-reply" ? draft.cc : undefined,
+      contextVersion: draft.kind === "customer-reply"
+        ? draft.contextVersion
+        : undefined,
+      intent: draft.kind === "customer-reply" ? draft.intent : undefined,
+      kind: draft.kind,
+      recipientEdited: draft.kind === "customer-reply"
+        ? replyRecipientsEdited(draft)
+        : false,
       scope: draftPersistenceScope,
       suggestions: nextSuggestions,
+      to: draft.kind === "customer-reply" ? draft.to : undefined,
     });
   }
 
-  function closeComposer(mode: InlineCommunicationMode) {
-    onCommunicationDraftChange({
-      ...communicationDraft,
-      ...(mode === "comment" ? { commentBody: "" } : { replyBody: "" }),
-    });
-    setSuggestions((current) => ({ ...current, [mode]: [] }));
-    setActiveComposer(null);
-    setRestoredComposer(null);
-    void clearPersistedCommunicationDrafts(draftPersistenceScope, mode);
+  function changeDraft(draft: TicketCommunicationDraft) {
+    setDraftRestored(false);
+    onCommunicationDraftChange(draft);
+    persist(draft);
   }
+
+  function closeComposer() {
+    setSuggestions([]);
+    setDraftRestored(false);
+    onCommunicationDraftChange(undefined);
+    void clearPersistedCommunicationDrafts(draftPersistenceScope);
+  }
+
+  const sourceArticle = communicationDraft?.kind === "customer-reply"
+    ? articles.find((article) => article.id === communicationDraft.sourceArticleExternalId)
+    : undefined;
+  const mode = communicationDraft?.kind === "internal-comment" ? "comment" : "reply";
 
   return (
     <section className="pr-0">
-      <div className="divide-y divide-slate-200">
-        {articles.map((article, index) => {
-          const latest = index === 0;
-          return (
-            <div key={article.id} ref={latest ? latestArticleRef : undefined}>
-              <TicketThreadArticle
-                activeMode={
-                  activeComposer?.articleId === article.id
-                    ? activeComposer.mode
-                    : null
-                }
-                article={article}
-                communicationDraft={communicationDraft}
-                communicationCapabilities={communicationCapabilities}
-                disabled={disabled}
-                draftRestored={
-                  restoredComposer?.articleId === article.id &&
-                  restoredComposer.mode === activeComposer?.mode
-                }
-                onComposerBodyChange={(mode, body) =>
-                  updateBody(article.id, mode, body)
-                }
-                onCloseComposer={(mode) => closeComposer(mode)}
-                onOpenComposer={(mode) =>
-                  setActiveComposer({ articleId: article.id, mode })
-                }
-                onSuggestionsChange={(mode, nextSuggestions) =>
-                  updateSuggestions(article.id, mode, nextSuggestions)
-                }
-                rephraseStyleOptions={rephraseStyleOptions}
-                rewriteDraftAction={rewriteDraftAction}
-                suggestions={
-                  activeComposer?.articleId === article.id && activeComposer.mode
-                    ? suggestions[activeComposer.mode]
-                    : []
-                }
-              />
+      {communicationDraft ? (
+        <div id="ticket-communication-composer">
+          {communicationDraft.kind === "customer-reply" ? (
+            <div className="bg-indigo-50/30 px-4 pt-3 text-xs text-slate-600">
+              Replying to {sourceArticle?.author ?? "selected message"} · {sourceArticle?.meta ?? ""}
+              <div className="mt-2">
+                <TicketReplyRecipientEditor
+                  disabled={disabled}
+                  draft={communicationDraft}
+                  managedAddresses={managedAddresses}
+                  onChange={changeDraft}
+                />
+              </div>
             </div>
-          );
-        })}
+          ) : null}
+          <TicketInlineCommunicationComposer
+            body={communicationDraft.body}
+            disabled={disabled}
+            draftRestored={draftRestored}
+            editorId={communicationDraft.kind === "customer-reply"
+              ? communicationDraft.sourceArticleExternalId
+              : "ticket"}
+            key={`${communicationDraft.kind}-${sourceArticle?.id ?? "ticket"}`}
+            mode={mode}
+            onBodyChange={(body) => changeDraft({ ...communicationDraft, body })}
+            onClose={closeComposer}
+            onSuggestionsChange={(nextSuggestions) => {
+              setSuggestions(nextSuggestions);
+              persist(communicationDraft, nextSuggestions);
+            }}
+            rephraseStyleOptions={rephraseStyleOptions}
+            rewriteDraftAction={rewriteDraftAction}
+            suggestions={suggestions}
+          />
+        </div>
+      ) : null}
+      <div className="divide-y divide-slate-200">
+        {articles.map((article, index) => (
+          <div key={article.id} ref={index === 0 ? latestArticleRef : undefined}>
+            <TicketThreadArticle
+              activeIntent={communicationDraft?.kind === "customer-reply" &&
+                communicationDraft.sourceArticleExternalId === article.id
+                ? communicationDraft.intent
+                : null}
+              article={article}
+              canReply={communicationCapabilities.customerReplies}
+              onReply={(intent) => onRequestReply(article, intent)}
+            />
+          </div>
+        ))}
         {articles.length === 0 ? (
           <div className="rounded-md border border-dashed border-slate-200 bg-white px-4 py-6 text-sm text-slate-500">
             No ticket thread is available.

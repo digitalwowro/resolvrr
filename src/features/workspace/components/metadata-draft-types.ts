@@ -3,6 +3,7 @@ import type {
   TicketPriority,
   TicketState,
 } from "@/core/tickets";
+import type { TicketReplyIntent } from "@/core/ticket-replies";
 import type { PendingDateTimeParts } from "./ticket-pending-date-time";
 
 export type TicketMetadataDraft = {
@@ -19,10 +20,26 @@ export type TicketMetadataDraft = {
   tags: string[];
 };
 
-export type TicketCommunicationDraft = {
-  commentBody: string;
-  replyBody: string;
+export type TicketInternalCommentDraft = {
+  body: string;
+  kind: "internal-comment";
 };
+
+export type TicketCustomerReplyDraft = {
+  body: string;
+  cc: string[];
+  contextVersion: string;
+  defaultCc: string[];
+  defaultTo: string[];
+  intent: TicketReplyIntent;
+  kind: "customer-reply";
+  sourceArticleExternalId: string;
+  to: string[];
+};
+
+export type TicketCommunicationDraft =
+  | TicketInternalCommentDraft
+  | TicketCustomerReplyDraft;
 
 export const selectedTicketDraftEditableSlices = [
   "metadata",
@@ -33,7 +50,7 @@ export type SelectedTicketDraftEditableSlice =
   (typeof selectedTicketDraftEditableSlices)[number];
 
 export type SelectedTicketDraft = {
-  communication: TicketCommunicationDraft;
+  communication?: TicketCommunicationDraft;
   metadata: TicketMetadataDraft;
   ticketExternalId: string;
 };

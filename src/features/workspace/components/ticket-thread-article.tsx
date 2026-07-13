@@ -3,16 +3,9 @@
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/components/ui/classnames";
-import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
-import type { AiRephraseStyleOption, RewriteDraftAction } from "@/features/ai";
+import type { TicketReplyIntent } from "@/core/ticket-replies";
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
-import type { TicketCommunicationDraft } from "./metadata-draft";
-import type { PersistedDraftAiSuggestion } from "./ticket-communication-draft-persistence";
 import { TicketArticleAttachments } from "./ticket-article-attachments";
-import {
-  TicketInlineCommunicationComposer,
-  type InlineCommunicationMode,
-} from "./ticket-inline-communication-composer";
 import {
   ArticleActions,
   ArticleAvatar,
@@ -26,46 +19,22 @@ import {
 import { TicketArticleBody } from "./ticket-article-body";
 
 type TicketThreadArticleProps = {
-  activeMode: InlineCommunicationMode | null;
+  activeIntent: TicketReplyIntent | null;
   article: WorkspaceArticle;
-  communicationDraft: TicketCommunicationDraft;
-  communicationCapabilities: TicketCommunicationCapabilities;
-  disabled: boolean;
-  draftRestored?: boolean;
-  onCloseComposer(mode: InlineCommunicationMode): void;
-  onComposerBodyChange(mode: InlineCommunicationMode, body: string): void;
-  onOpenComposer(mode: InlineCommunicationMode): void;
-  onSuggestionsChange(
-    mode: InlineCommunicationMode,
-    suggestions: PersistedDraftAiSuggestion[],
-  ): void;
-  rephraseStyleOptions?: AiRephraseStyleOption[];
-  rewriteDraftAction?: RewriteDraftAction;
-  suggestions: PersistedDraftAiSuggestion[];
+  canReply: boolean;
+  onReply(intent: TicketReplyIntent): void;
 };
 
 export function TicketThreadArticle({
-  activeMode,
+  activeIntent,
   article,
-  communicationDraft,
-  communicationCapabilities,
-  disabled,
-  draftRestored,
-  onComposerBodyChange,
-  onCloseComposer,
-  onOpenComposer,
-  onSuggestionsChange,
-  rephraseStyleOptions,
-  rewriteDraftAction,
-  suggestions,
+  canReply,
+  onReply,
 }: TicketThreadArticleProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const hasRecipientDetails =
     article.to.length > 0 || article.cc.length > 0 || article.bcc.length > 0;
-  const canReply =
-    communicationCapabilities.customerReplies && isPublicReplyableArticle(article);
-  const canComment = communicationCapabilities.internalNotes;
-  const hasActions = canReply || canComment;
+  const hasActions = canReply && isPublicReplyableArticle(article);
 
   const senderControl = hasRecipientDetails ? (
     <button
@@ -129,33 +98,10 @@ export function TicketThreadArticle({
           <TicketArticleAttachments attachments={article.attachments} />
           {hasActions ? (
             <ArticleActions
-              activeMode={activeMode}
+              activeIntent={activeIntent}
               article={article}
-              canComment={canComment}
               canReply={canReply}
-              onOpenComposer={onOpenComposer}
-            />
-          ) : null}
-          {activeMode ? (
-            <TicketInlineCommunicationComposer
-              article={article}
-              body={
-                activeMode === "comment"
-                  ? communicationDraft.commentBody
-                  : communicationDraft.replyBody
-              }
-              disabled={disabled}
-              draftRestored={draftRestored}
-              key={`${article.id}-${activeMode}`}
-              mode={activeMode}
-              onBodyChange={(body) => onComposerBodyChange(activeMode, body)}
-              onClose={() => onCloseComposer(activeMode)}
-              onSuggestionsChange={(nextSuggestions) =>
-                onSuggestionsChange(activeMode, nextSuggestions)
-              }
-              rephraseStyleOptions={rephraseStyleOptions}
-              rewriteDraftAction={rewriteDraftAction}
-              suggestions={suggestions}
+              onReply={onReply}
             />
           ) : null}
         </div>

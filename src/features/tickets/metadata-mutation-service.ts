@@ -5,9 +5,6 @@ import type {
 import type { ProviderRegistry } from "@/providers";
 import type { HelpdeskConnectionsRepository } from "@/features/helpdesk-connections/repository";
 import {
-  invalidateAiSummaryTicketCache,
-} from "@/features/ai/summary-cache-invalidation";
-import {
   noAiSummaryCacheRepository,
   type AiSummaryCacheRepository,
 } from "@/features/ai/summary-cache-repository";
@@ -18,11 +15,7 @@ import {
 } from "@/telemetry/ticket-read-timing";
 import { recordTicketMetadataMutationAudit } from "@/telemetry/ticket-mutation-audit";
 import { loadActiveTicketProviderContext } from "./connection-context";
-import {
-  dispatchTicketDetailRead,
-  dispatchTicketListRead,
-  dispatchTicketMetadataMutation,
-} from "./provider-dispatch";
+import { dispatchTicketMetadataMutation } from "./provider-dispatch";
 import {
   hasTicketMetadataMutationInput,
   type TicketMetadataMutationResult,
@@ -31,14 +24,11 @@ import {
   noTicketDetailCacheRepository,
   type TicketDetailCacheRepository,
 } from "./cache-repository";
+import type { TicketReadUnavailable } from "./read-model";
 import {
-  defaultTicketListQuery,
-  type TicketReadUnavailable,
-} from "./read-model";
-import {
-  invalidateTicketDetailCache,
-  storeTicketDetailCache,
-} from "./service-cache";
+  finalizeWorkspaceTicketMutation,
+  type TicketMutationFinalizationOptions,
+} from "./mutation-finalization-service";
 
 function failedMutation(
   result: TicketReadUnavailable,
@@ -59,6 +49,7 @@ export async function updateWorkspaceTicketMetadata(
   input: TicketMetadataMutationInput,
   cacheRepository: TicketDetailCacheRepository = noTicketDetailCacheRepository,
   aiSummaryCacheRepository: AiSummaryCacheRepository = noAiSummaryCacheRepository,
+  options: TicketMutationFinalizationOptions = {},
 ): Promise<TicketMetadataMutationResult> {
   const totalStart = ticketReadTimingStart();
   if (!hasTicketMetadataMutationInput(input)) {
@@ -125,30 +116,15 @@ export async function updateWorkspaceTicketMetadata(
     return mutationResult;
   }
 
-  await invalidateTicketDetailCache({
-    cacheRepository,
-    operation: "mutation",
-    providerContext: providerContext.value,
-    ticketExternalId,
-    userId,
-  });
-  await invalidateAiSummaryTicketCache({
-    cacheRepository: aiSummaryCacheRepository,
-    helpdeskConnectionId: providerContext.value.context.connection.id,
-    ticketExternalId,
-    userId,
-  });
-
-  const [detailRefresh, listRefresh] = await Promise.all([
-    dispatchTicketDetailRead(providerContext.value, ticketExternalId),
-    dispatchTicketListRead(providerContext.value, defaultTicketListQuery),
-  ]);
-  const refreshFailure =
-    detailRefresh.status === "unavailable"
-      ? detailRefresh
-      : listRefresh.status === "unavailable"
-        ? listRefresh
-        : undefined;
+  const finalization = options.finalize === false
+    ? { status: "saved" as const }
+    : await finalizeWorkspaceTicketMutation(
+        repository, registry, encryptionKey, userId, ticketExternalId,
+        cacheRepository, aiSummaryCacheRepository,
+      );
+  const refreshFailure = finalization.status === "saved-refresh-failed"
+    ? finalization
+    : undefined;
 
   recordTicketReadTiming({
     ...mutationLogContext,
@@ -173,18 +149,6 @@ export async function updateWorkspaceTicketMetadata(
       reason: refreshFailure.reason,
       retryable: refreshFailure.retryable,
     };
-  }
-
-  if (detailRefresh.status === "available") {
-    await storeTicketDetailCache({
-      cacheRepository,
-      detail: detailRefresh.detail,
-      encryptionKey,
-      operation: "mutation",
-      providerContext: providerContext.value,
-      ticketExternalId,
-      userId,
-    });
   }
 
   recordTicketMetadataMutationAudit({

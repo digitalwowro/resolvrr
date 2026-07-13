@@ -6,6 +6,9 @@ import type {
   TicketPriority,
   TicketState,
 } from "@/core/tickets";
+import type {
+  TicketReplyIntent,
+} from "@/core/ticket-replies";
 import type { TicketReadUnavailableReason } from "./read-model";
 
 export type TicketMetadataMutationField =
@@ -22,12 +25,6 @@ export const selectedTicketUpdatePayloadKeys = [
   "communication",
   "metadata",
   "ticketExternalId",
-] as const;
-
-export const selectedTicketUpdateCommunicationFields = [
-  "bodyFormat",
-  "commentBody",
-  "replyBody",
 ] as const;
 
 export const selectedTicketUpdateMetadataFields = [
@@ -49,14 +46,26 @@ export type SelectedTicketUpdatePayloadKey =
 export type SelectedTicketUpdateMetadataField =
   (typeof selectedTicketUpdateMetadataFields)[number];
 
-export type SelectedTicketUpdateCommunicationField =
-  (typeof selectedTicketUpdateCommunicationFields)[number];
-
-export type SelectedTicketUpdateCommunicationPayload = {
+export type SelectedTicketUpdateInternalCommentPayload = {
+  body: string;
   bodyFormat?: TicketCommunicationBodyFormat;
-  commentBody?: string;
-  replyBody?: string;
+  kind: "internal-comment";
 };
+
+export type SelectedTicketUpdateCustomerReplyPayload = {
+  body: string;
+  bodyFormat?: TicketCommunicationBodyFormat;
+  cc: string[];
+  contextVersion: string;
+  intent: TicketReplyIntent;
+  kind: "customer-reply";
+  sourceArticleExternalId: string;
+  to: string[];
+};
+
+export type SelectedTicketUpdateCommunicationPayload =
+  | SelectedTicketUpdateInternalCommentPayload
+  | SelectedTicketUpdateCustomerReplyPayload;
 
 export type SelectedTicketUpdateMetadataPayload = {
   groupExternalId?: string;
@@ -91,6 +100,11 @@ export type TicketMetadataMutationCapabilities = {
 export type TicketMetadataMutationErrorReason =
   | TicketReadUnavailableReason
   | "invalid-input"
+  | "invalid-recipient"
+  | "reply-context-stale"
+  | "reply-context-unavailable"
+  | "delivery-uncertain"
+  | "unsupported-reply-intent"
   | "unavailable-transition";
 
 export type TicketMetadataMutationResult =
@@ -107,7 +121,12 @@ export type TicketMetadataMutationResult =
     };
 
 export type TicketMetadataMutationActionState = {
-  status: "idle" | "saved" | "saved-refresh-failed" | "failed";
+  status:
+    | "idle"
+    | "saved"
+    | "saved-refresh-failed"
+    | "partially-saved"
+    | "failed";
   field?: TicketMetadataMutationField;
   message?: string;
 };

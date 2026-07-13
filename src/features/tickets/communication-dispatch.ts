@@ -23,9 +23,30 @@ function normalizedCustomerReplyInput(
   input: TicketCustomerReplyInput,
 ): TicketCustomerReplyInput {
   return {
+    ...input,
     body: input.body.trim(),
-    ...(input.bodyFormat ? { bodyFormat: input.bodyFormat } : {}),
+    cc: [...input.cc],
+    to: [...input.to],
   };
+}
+
+function replyFailureReason(error: ProviderError) {
+  if (error.diagnosticCode === "invalid-recipient") {
+    return "invalid-recipient" as const;
+  }
+  if (error.diagnosticCode === "reply-context-stale") {
+    return "reply-context-stale" as const;
+  }
+  if (error.diagnosticCode === "reply-context-unavailable") {
+    return "reply-context-unavailable" as const;
+  }
+  if (error.diagnosticCode === "unsupported-reply-intent") {
+    return "unsupported-reply-intent" as const;
+  }
+  if (error.diagnosticCode === "delivery-uncertain") {
+    return "delivery-uncertain" as const;
+  }
+  return undefined;
 }
 
 export async function dispatchTicketInternalNote(
@@ -55,6 +76,12 @@ export async function dispatchTicketInternalNote(
     );
     return { status: "saved" };
   } catch (error) {
+    if (error instanceof ProviderError) {
+      const reason = replyFailureReason(error);
+      if (reason) {
+        return { status: "failed", reason, retryable: false };
+      }
+    }
     if (error instanceof ProviderError && error.kind === "validation-failure") {
       return { status: "failed", reason: "invalid-input", retryable: false };
     }
@@ -95,6 +122,12 @@ export async function dispatchTicketCustomerReply(
     );
     return { status: "saved" };
   } catch (error) {
+    if (error instanceof ProviderError) {
+      const reason = replyFailureReason(error);
+      if (reason) {
+        return { status: "failed", reason, retryable: false };
+      }
+    }
     if (error instanceof ProviderError && error.kind === "validation-failure") {
       return { status: "failed", reason: "invalid-input", retryable: false };
     }

@@ -10,6 +10,7 @@ import {
   encryptionKey,
   mockValidatedBaseUrl,
   provider,
+  replyInput,
   repository,
 } from "./ticket-service-test-helpers";
 
@@ -151,7 +152,7 @@ describe("ticket customer reply service", () => {
       encryptionKey,
       "user-1",
       "ticket-1",
-      { body: "  Thanks for the report.  " },
+      replyInput("  Thanks for the report.  "),
     );
 
     expect(result).toEqual({ status: "saved" });
@@ -161,7 +162,7 @@ describe("ticket customer reply service", () => {
         requestSecurity: { validatedAddresses: ["93.184.216.34"] },
       }),
       "ticket-1",
-      { body: "Thanks for the report." },
+      replyInput("Thanks for the report."),
     );
     expect(getTicketDetail).toHaveBeenCalledWith(expect.any(Object), "ticket-1");
   });
@@ -183,7 +184,7 @@ describe("ticket customer reply service", () => {
       encryptionKey,
       "user-1",
       "ticket-1",
-      { body: "Thanks for the report." },
+      replyInput("Thanks for the report."),
     );
 
     expect(result).toEqual({
@@ -216,7 +217,7 @@ describe("ticket customer reply service", () => {
       encryptionKey,
       "user-1",
       "ticket-1",
-      { body: "Thanks for the report." },
+      replyInput("Thanks for the report."),
     );
 
     expect(result).toEqual({

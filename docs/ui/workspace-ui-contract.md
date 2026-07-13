@@ -123,16 +123,23 @@ summary metadata, and article thread live inside one bordered conversation
 section, and that section owns its own vertical scrollbar. The metadata sidebar
 and bottom update bar remain outside that conversation scroller. Thread
 articles render provider-sanitized rich HTML and use the shared global link color. Public
-articles expose provider-neutral Reply when customer replies are supported. All
-articles expose provider-neutral Comment when internal notes are supported.
-Reply all is shown disabled until a provider-neutral recipient contract exists.
-Reply and Comment open inline rich-text editors only; they do not render their
-own Cancel/Send footer. The editor toolbar is scoped to basic formatting:
+reply-capable articles expose provider-neutral Reply and, for email, enabled or
+disabled Reply all. Internal/system/unsupported articles expose no reply action.
+Comment exists only in the ticket footer. Footer Reply and Reply all use the
+newest reply-capable public article; an older article action explicitly overrides
+that source. Every action scrolls to and focuses the single ticket-level composer
+above the newest article, so the thread never implies nested replies.
+
+The reply composer shows editable To and Cc chips and never Bcc. It validates
+plain email additions, deduplicates across fields with To precedence, requires at
+least one recipient, and warns without blocking when a provider-managed address
+is manually added. Switching mode, source, or intent with body text or recipient
+edits requires confirmation. The editor toolbar is scoped to basic formatting:
 bold, italic, underline, ordered list, unordered list, and link, with undo/redo
 controls in the toolbar chrome. Staged communication HTML is part of the
 selected-ticket draft and is sent by the main workspace `Update` action
 alongside metadata.
-After a successful communication update, the inline editor closes and the
+After a successful communication update, the ticket-level editor closes and the
 thread scrolls to the refreshed newest article.
 Article metadata prefers display names over email addresses, exposes email as
 secondary metadata when available, and only shows the expand/collapse affordance
@@ -168,7 +175,9 @@ The default relation is Normal/Related; Parent and Child are selectable only
 when the provider advertises `ticket:update-link-relations`, otherwise those
 options remain visibly unavailable. Subscription controls update the current user's
 following state. Changed controls and staged communication body content are visually
-treated as one selected-ticket draft; `Discard changes`
+treated as one selected-ticket draft. The footer groups Reply, Reply all, and
+Comment on the left, with Discard changes, the post-Update navigation selector,
+and Update on the right. `Discard changes`
 resets the selected-ticket draft to the loaded ticket values, and successful
 saves refresh the workspace after one checked mutation. The action row includes
 a persisted local browser post-Update navigation preference: keep the ticket

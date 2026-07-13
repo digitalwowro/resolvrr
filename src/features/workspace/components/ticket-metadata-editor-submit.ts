@@ -17,7 +17,11 @@ export function mutationStatusText(
   if (saving) {
     return undefined;
   }
-  if (result.status === "failed" || result.status === "saved-refresh-failed") {
+  if (
+    result.status === "failed" ||
+    result.status === "saved-refresh-failed" ||
+    result.status === "partially-saved"
+  ) {
     return result.message;
   }
   return undefined;
@@ -34,8 +38,7 @@ export function updatePayloadNeedsDetailRefresh(
   payload: SelectedTicketUpdatePayload,
 ) {
   return Boolean(
-    payload.communication?.commentBody ||
-      payload.communication?.replyBody ||
+    payload.communication ||
       payload.metadata?.linkAddExternalId ||
       payload.metadata?.linkRemoveExternalIds?.length,
   );

@@ -1,5 +1,6 @@
 import { vi } from "vitest";
 import type { HelpdeskProviderPlugin } from "@/core/providers";
+import type { TicketCustomerReplyInput } from "@/core/ticket-replies";
 import type {
   HelpdeskConnectionWithCredential,
   HelpdeskConnectionsRepository,
@@ -10,6 +11,21 @@ import { validateProviderBaseUrl } from "@/security/base-url-validation";
 
 export const encryptionKey = "0".repeat(32);
 export const mockedValidateProviderBaseUrl = vi.mocked(validateProviderBaseUrl);
+
+export function replyInput(
+  body: string,
+  overrides: Partial<TicketCustomerReplyInput> = {},
+): TicketCustomerReplyInput {
+  return {
+    body,
+    cc: [],
+    contextVersion: "context-v1",
+    intent: "reply",
+    sourceArticleExternalId: "article-1",
+    to: ["customer@example.com"],
+    ...overrides,
+  };
+}
 
 const defaultWorkspaceAccess: WorkspaceAccess = {
   canEditAiRephraseStyleOverrides: false,

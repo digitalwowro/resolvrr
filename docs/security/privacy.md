@@ -20,9 +20,10 @@ conversation content.
   or key status metadata.
 - Provider and AI credentials must never be stored in cookies, localStorage,
   sessionStorage, or client-readable state.
-- Inline composer draft recovery uses browser-local IndexedDB for unsent draft
-  text and a small AI suggestion history. It must not store credentials or
-  provider payloads.
+- Ticket composer draft recovery uses versioned browser-local IndexedDB for the
+  unsent communication kind, source/intent/context version, To/Cc selection,
+  draft text, and a small AI suggestion history. It must not store credentials,
+  provider message IDs, or raw provider payloads.
 
 ## Provider Data
 
@@ -97,10 +98,11 @@ conversation content.
 - Future suggested-reply and source-aware drafting operations must use a fresh
   server-side provider read of the selected ticket before prompt construction.
   They must not generate from stale client state or stale persistent cache.
-- Browser-local inline draft recovery may retain unsent comment/reply text and
-  a small suggestion history for the current user/workspace/ticket until the
-  user closes the composer, discards changes, submits through Update, closes the
-  ticket tab, or the local retention window expires.
+- Browser-local draft recovery may retain unsent comment/reply text, reviewed
+  To/Cc recipients, contextual source/version data, and a small suggestion
+  history for the current user/workspace/ticket. Validation, provider,
+  partial-success, and uncertain-delivery failures retain it; confirmed success,
+  explicit discard/close, or retention expiry clears it.
 - Reviewed agentic actions may prepare suggestions for existing
   provider-neutral update paths, but provider writes still require explicit user
   review and the normal submit/update path.

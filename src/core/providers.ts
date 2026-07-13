@@ -5,7 +5,6 @@ import type {
 } from "./notifications";
 import type { TicketLookupOption } from "./ticket-lookups";
 import type {
-  TicketCustomerReplyInput,
   TicketInternalNoteInput,
   TicketLinkTarget,
   TicketLinkTargetSearchInput,
@@ -13,6 +12,7 @@ import type {
   TicketDetail,
   TicketExternalId,
 } from "./tickets";
+import type { TicketCustomerReplyInput } from "./ticket-replies";
 import type {
   TicketListFilter,
   TicketListQuery,

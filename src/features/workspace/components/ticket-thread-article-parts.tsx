@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquarePlus, Reply, ReplyAll } from "lucide-react";
+import { Reply, ReplyAll } from "lucide-react";
 import type { ReactNode } from "react";
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
@@ -8,7 +8,7 @@ import type {
   WorkspaceArticle,
   WorkspaceArticleContact,
 } from "@/features/tickets/workspace-adapter";
-import type { InlineCommunicationMode } from "./ticket-inline-communication-composer";
+import type { TicketReplyIntent } from "@/core/ticket-replies";
 import {
   actionSelectedClass,
   actionStateClass,
@@ -120,8 +120,7 @@ function ThreadActionButton({
 }
 
 export function isPublicReplyableArticle(article: WorkspaceArticle) {
-  return article.visibility === "public" &&
-    (article.direction === "inbound" || article.direction === "outbound");
+  return Boolean(article.replyContext?.availableIntents.includes("reply"));
 }
 
 export function ArticleAvatar({ article }: { article: WorkspaceArticle }) {
@@ -149,57 +148,48 @@ export function ArticleContactDetails({ article }: { article: WorkspaceArticle }
 }
 
 export function ArticleActions({
-  activeMode,
+  activeIntent,
   article,
-  canComment,
   canReply,
-  onOpenComposer,
+  onReply,
 }: {
-  activeMode: InlineCommunicationMode | null;
+  activeIntent: TicketReplyIntent | null;
   article: WorkspaceArticle;
-  canComment: boolean;
   canReply: boolean;
-  onOpenComposer(mode: InlineCommunicationMode): void;
+  onReply(intent: TicketReplyIntent): void;
 }) {
+  const canReplyAll = Boolean(
+    article.replyContext?.availableIntents.includes("reply-all"),
+  );
+  const showReplyAll = article.replyContext?.channel === "email";
   return (
     <div
       aria-label={`Message actions for ${article.author}`}
       className="pointer-events-none absolute right-4 top-4 flex items-center gap-1 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
     >
-      {canReply ? (
-        <>
+      {canReply ? <>
           <ThreadActionButton
             icon={<Reply aria-hidden="true" className="size-3.5" />}
-            isSelected={activeMode === "reply"}
-            onClick={() => onOpenComposer("reply")}
+            isSelected={activeIntent === "reply"}
+            onClick={() => onReply("reply")}
             prominence="primary"
             type={article.direction}
           >
             Reply
           </ThreadActionButton>
-          <ThreadActionButton
-            disabled
+          {showReplyAll ? <ThreadActionButton
+            disabled={!canReplyAll}
             icon={<ReplyAll aria-hidden="true" className="size-4" />}
-            isSelected={false}
-            onClick={() => undefined}
-            title="Reply all is not available yet."
+            isSelected={activeIntent === "reply-all"}
+            onClick={() => onReply("reply-all")}
+            title={canReplyAll
+              ? "Reply to every external recipient on this message."
+              : "This message has only one external recipient."}
             type={article.direction}
           >
             Reply all
-          </ThreadActionButton>
-        </>
-      ) : null}
-      {canComment ? (
-        <ThreadActionButton
-          icon={<MessageSquarePlus aria-hidden="true" className="size-4" />}
-          isSelected={activeMode === "comment"}
-          onClick={() => onOpenComposer("comment")}
-          prominence={canReply ? "secondary" : "primary"}
-          type={article.direction}
-        >
-          Comment
-        </ThreadActionButton>
-      ) : null}
+          </ThreadActionButton> : null}
+        </> : null}
     </div>
   );
 }

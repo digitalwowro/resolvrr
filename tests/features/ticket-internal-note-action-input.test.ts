@@ -14,7 +14,7 @@ describe("ticket internal note action input", () => {
     ).toEqual({
       status: "valid",
       ticketExternalId: "ticket-1",
-      input: { body: "Checked the logs." },
+      input: { body: "Checked the logs.", bodyFormat: "plain" },
     });
   });
 
@@ -42,11 +42,24 @@ describe("ticket customer reply action input", () => {
       ticketCustomerReplyActionInput({
         ticketExternalId: " ticket-1 ",
         body: "  Thanks for the report.  ",
+        cc: ["Watcher@Example.com"],
+        contextVersion: "context-v1",
+        intent: "reply-all",
+        sourceArticleExternalId: "article-1",
+        to: ["Customer@Example.com"],
       }),
     ).toEqual({
       status: "valid",
       ticketExternalId: "ticket-1",
-      input: { body: "Thanks for the report." },
+      input: {
+        body: "Thanks for the report.",
+        bodyFormat: "plain",
+        cc: ["watcher@example.com"],
+        contextVersion: "context-v1",
+        intent: "reply-all",
+        sourceArticleExternalId: "article-1",
+        to: ["customer@example.com"],
+      },
     });
   });
 

@@ -23,15 +23,13 @@ import {
   shouldReturnToListAfterUpdate,
   type PostUpdateNavigation,
 } from "./post-update-navigation";
-import {
-  assignmentLabel,
-  TicketAssignmentFields,
-} from "./ticket-assignment-fields";
+import { assignmentLabel } from "./ticket-assignment-fields";
 import { TicketMetadataActionBar } from "./ticket-metadata-action-bar";
-import { TicketDetailSidebar } from "./ticket-detail-sidebar";
-import { TicketPrimaryMetadataFields } from "./ticket-primary-metadata-fields";
-import { TicketSecondaryMetadataFields } from "./ticket-secondary-metadata-fields";
+import { TicketMetadataEditorSidebar } from "./ticket-metadata-editor-sidebar";
 import { TicketThread } from "./ticket-thread";
+import { latestReplyableArticle } from "./communication-draft-factory";
+import { CommunicationDraftReplacementDialog } from "./communication-draft-replacement-dialog";
+import { useTicketCommunicationSelection } from "./use-ticket-communication-selection";
 import {
   clearPersistedCommunicationDrafts,
   type CommunicationDraftPersistenceScope,
@@ -110,6 +108,12 @@ export function TicketMetadataEditorState({
     setMutationResult({ status: "idle" });
   }
 
+  const communicationSelection = useTicketCommunicationSelection({
+    draft: currentDraft.communication,
+    onChange: (communication) => changeDraft({ ...currentDraft, communication }),
+  });
+  const latestReplySource = latestReplyableArticle(detail.articles);
+
   function discardChanges() {
     const nextDraft = metadataDraftFromBaseline(currentBaseline);
     setDraft(nextDraft);
@@ -126,10 +130,7 @@ export function TicketMetadataEditorState({
     if (!updatePayload) {
       return;
     }
-    const submittedCommunication = Boolean(
-      updatePayload.communication?.commentBody ||
-        updatePayload.communication?.replyBody,
-    );
+    const submittedCommunication = Boolean(updatePayload.communication);
     const submittedArticleCount = detail.articles.length;
 
     setSaving(true);
@@ -138,6 +139,28 @@ export function TicketMetadataEditorState({
     void updateTicketMetadataAction(updatePayload)
       .then((result) => {
         setMutationResult(result);
+        if (result.status === "partially-saved") {
+          const submittedBaseline = metadataDraftSubmittedBaseline(currentDraft);
+          onMetadataSaved({
+            group: dirtyFields.group
+              ? assignmentLabel(detail.lookupData.groups, submittedBaseline.metadata.groupExternalId, detail.group)
+              : undefined,
+            owner: dirtyFields.owner
+              ? assignmentLabel(detail.lookupData.assignableUsers, submittedBaseline.metadata.ownerExternalId, detail.owner)
+              : undefined,
+            priority: dirtyFields.priority ? submittedBaseline.metadata.priority : undefined,
+            state: dirtyFields.state || dirtyFields.pendingUntil ? submittedBaseline.metadata.state : undefined,
+            ticketExternalId: submittedBaseline.ticketExternalId,
+          });
+          setBaseline(submittedBaseline);
+          setDraft({
+            ...metadataDraftFromBaseline(submittedBaseline),
+            communication: currentDraft.communication,
+          });
+          refreshSavedDetail(submittedBaseline.ticketExternalId);
+          router.refresh();
+          return;
+        }
         if (
           result.status === "saved" ||
           result.status === "saved-refresh-failed"
@@ -198,55 +221,6 @@ export function TicketMetadataEditorState({
       .finally(() => setSaving(false));
   }
 
-  const fields = (
-    <>
-      <TicketPrimaryMetadataFields
-        detail={detail}
-        dirtyFields={dirtyFields}
-        draft={currentDraft}
-        metadataMutationCapabilities={metadataMutationCapabilities}
-        onDraftChange={changeDraft}
-        saving={saving}
-      />
-      <TicketAssignmentFields
-        detail={detail}
-        dirtyFields={dirtyFields}
-        draft={currentDraft}
-        metadataMutationCapabilities={metadataMutationCapabilities}
-        onDraftChange={changeDraft}
-        saving={saving}
-      />
-      <TicketSecondaryMetadataFields
-        detail={detail}
-        dirtyFields={dirtyFields}
-        draft={currentDraft}
-        metadataMutationCapabilities={metadataMutationCapabilities}
-        onDraftChange={changeDraft}
-        recentlyViewedLinkTargets={recentlyViewedLinkTargets}
-        searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
-        saving={saving}
-      />
-      {hasChanges && validation.message ? (
-        <p className="text-xs text-amber-700" role="alert">
-          {validation.message}
-        </p>
-      ) : null}
-      {statusText ? (
-        <p
-          className={
-            mutationResult.status === "failed" ||
-            mutationResult.status === "saved-refresh-failed"
-              ? "text-xs text-amber-700"
-              : "text-xs text-slate-600"
-          }
-          role="alert"
-        >
-          {statusText}
-        </p>
-      ) : null}
-    </>
-  );
-
   return (
     <>
       <section
@@ -265,24 +239,59 @@ export function TicketMetadataEditorState({
             disabled={saving}
             draftPersistenceScope={draftPersistenceScope}
             key={threadComposerResetKey}
+            managedAddresses={detail.replyPolicy?.providerManagedAddresses ?? []}
             onCommunicationDraftChange={(communication) =>
               changeDraft({ ...currentDraft, communication })
             }
+            onRequestReply={communicationSelection.requestReply}
             onScrolledToLatest={() => setScrollAfterArticleCount(undefined)}
             rephraseStyleOptions={rephraseStyleOptions}
             rewriteDraftAction={rewriteDraftAction}
             scrollAfterArticleCount={scrollAfterArticleCount}
           />
         </section>
-        <TicketDetailSidebar>{fields}</TicketDetailSidebar>
+        <TicketMetadataEditorSidebar
+          detail={detail}
+          dirtyFields={dirtyFields}
+          draft={currentDraft}
+          hasChanges={hasChanges}
+          metadataMutationCapabilities={metadataMutationCapabilities}
+          mutationResult={mutationResult}
+          onDraftChange={changeDraft}
+          recentlyViewedLinkTargets={recentlyViewedLinkTargets}
+          saving={saving}
+          searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
+          statusText={statusText}
+          validationMessage={validation.message}
+        />
       </section>
       <TicketMetadataActionBar
+        canComment={communicationCapabilities.internalNotes}
         canDiscard={hasChanges}
+        canReply={Boolean(
+          communicationCapabilities.customerReplies && latestReplySource,
+        )}
+        canReplyAll={Boolean(
+          communicationCapabilities.customerReplies &&
+          latestReplySource?.replyContext?.availableIntents.includes("reply-all"),
+        )}
         canUpdate={canUpdate}
+        onComment={communicationSelection.requestComment}
         onDiscard={discardChanges}
+        onReply={(intent) => {
+          if (latestReplySource) {
+            communicationSelection.requestReply(latestReplySource, intent);
+          }
+        }}
         onUpdate={submitChanges}
         saving={saving}
       />
+      {communicationSelection.pendingReplacement ? (
+        <CommunicationDraftReplacementDialog
+          onCancel={communicationSelection.cancelReplacement}
+          onConfirm={communicationSelection.confirmReplacement}
+        />
+      ) : null}
     </>
   );
 }

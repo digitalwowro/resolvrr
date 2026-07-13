@@ -18,21 +18,21 @@ beforeEach(() => {
   routerPush.mockClear();
 });
 
-describe("TicketWorkspace inline communication composers", () => {
-  it("does not render standalone bottom composers by default", () => {
+describe("TicketWorkspace ticket-level communication composer", () => {
+  it("does not render the top composer by default", () => {
     renderWorkspace({ customerReplies: true, internalNotes: true });
 
     expect(
-      screen.queryByRole("form", { name: "Reply composer for Maya Patel" }),
+      screen.queryByRole("form", { name: "Reply composer" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("form", { name: "Comment composer for Maya Patel" }),
+      screen.queryByRole("form", { name: "Comment composer" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Customer reply")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Internal note")).not.toBeInTheDocument();
   });
 
-  it("opens an inline reply composer from a public article", async () => {
+  it("opens and focuses the top reply composer from a public article", async () => {
     const user = userEvent.setup();
     const scrollIntoView = vi.fn();
     const htmlElementPrototype: {
@@ -47,21 +47,13 @@ describe("TicketWorkspace inline communication composers", () => {
       const article = getCustomerArticle();
 
       await user.click(within(article).getByRole("button", { name: "Reply" }));
-      const editor = within(article).getByRole("textbox", { name: "Reply" });
+      const editor = screen.getByRole("textbox", { name: "Reply" });
 
       expect(
-        within(article).getByRole("form", {
-          name: "Reply composer for Maya Patel",
-        }),
+        screen.getByRole("form", { name: "Reply composer" }),
       ).toBeInTheDocument();
       expect(editor).toHaveFocus();
-      await waitFor(() =>
-        expect(scrollIntoView).toHaveBeenCalledWith({
-          block: "center",
-          inline: "nearest",
-          behavior: "smooth",
-        }),
-      );
+      await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
       expect(within(article).getByRole("button", { name: "Reply" })).toHaveClass(
         "bg-slate-950",
         "text-white",
@@ -78,7 +70,7 @@ describe("TicketWorkspace inline communication composers", () => {
     }
   });
 
-  it("hides the inline reply composer from the editor toolbar", async () => {
+  it("hides the top reply composer from the editor toolbar", async () => {
     const user = userEvent.setup();
 
     renderWorkspace({ customerReplies: true, internalNotes: true });
@@ -86,17 +78,13 @@ describe("TicketWorkspace inline communication composers", () => {
 
     await user.click(within(article).getByRole("button", { name: "Reply" }));
     expect(
-      within(article).getByRole("form", {
-        name: "Reply composer for Maya Patel",
-      }),
+      screen.getByRole("form", { name: "Reply composer" }),
     ).toBeInTheDocument();
 
-    await user.click(within(article).getByRole("button", { name: "Close editor" }));
+    await user.click(screen.getByRole("button", { name: "Close editor" }));
 
     expect(
-      within(article).queryByRole("form", {
-        name: "Reply composer for Maya Patel",
-      }),
+      screen.queryByRole("form", { name: "Reply composer" }),
     ).not.toBeInTheDocument();
     expect(within(article).getByRole("button", { name: "Reply" }))
       .not.toHaveClass("bg-slate-100");
@@ -117,10 +105,7 @@ describe("TicketWorkspace inline communication composers", () => {
 
     const article = getCustomerArticle();
     await user.click(within(article).getByRole("button", { name: "Reply" }));
-    await user.type(
-      within(article).getByRole("textbox", { name: "Reply" }),
-      "Thanks for the report.",
-    );
+    await user.type(screen.getByRole("textbox", { name: "Reply" }), "Thanks for the report.");
     expect(within(article).queryByRole("button", { name: "Send" }))
       .not.toBeInTheDocument();
     expect(updateTicketMetadataAction).not.toHaveBeenCalled();
@@ -130,15 +115,19 @@ describe("TicketWorkspace inline communication composers", () => {
     expect(updateTicketMetadataAction).toHaveBeenCalledWith({
       communication: {
         bodyFormat: "html",
-        replyBody: "Thanks for the report.",
+        body: "Thanks for the report.",
+        cc: [],
+        contextVersion: "context-ticket-1",
+        intent: "reply",
+        kind: "customer-reply",
+        sourceArticleExternalId: "article-ticket-1",
+        to: ["maya@example.com"],
       },
       ticketExternalId: "ticket-1",
     });
     await waitFor(() =>
       expect(
-        within(article).queryByRole("form", {
-          name: "Reply composer for Maya Patel",
-        }),
+        screen.queryByRole("form", { name: "Reply composer" }),
       ).not.toBeInTheDocument(),
     );
   });
@@ -164,10 +153,7 @@ describe("TicketWorkspace inline communication composers", () => {
 
     const article = getCustomerArticle();
     await user.click(within(article).getByRole("button", { name: "Reply" }));
-    await user.type(
-      within(article).getByRole("textbox", { name: "Reply" }),
-      "Thanks for the report.",
-    );
+    await user.type(screen.getByRole("textbox", { name: "Reply" }), "Thanks for the report.");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() =>
@@ -228,17 +214,12 @@ describe("TicketWorkspace inline communication composers", () => {
 
       const article = getCustomerArticle();
       await user.click(within(article).getByRole("button", { name: "Reply" }));
-      await user.type(
-        within(article).getByRole("textbox", { name: "Reply" }),
-        "Thanks for the report.",
-      );
+      await user.type(screen.getByRole("textbox", { name: "Reply" }), "Thanks for the report.");
       scrollIntoView.mockClear();
       await user.click(screen.getByRole("button", { name: "Update" }));
 
       expect(
-        within(article).queryByRole("form", {
-          name: "Reply composer for Maya Patel",
-        }),
+        screen.queryByRole("form", { name: "Reply composer" }),
       ).not.toBeInTheDocument();
       await waitFor(() =>
         expect(loadTicketDetailAction).toHaveBeenCalledWith(
@@ -254,7 +235,6 @@ describe("TicketWorkspace inline communication composers", () => {
       await waitFor(() =>
         expect(scrollIntoView).toHaveBeenCalledWith({
           block: "center",
-          inline: "nearest",
           behavior: "smooth",
         }),
       );
@@ -282,16 +262,39 @@ describe("TicketWorkspace inline communication composers", () => {
 
     const article = getCustomerArticle();
     await user.click(within(article).getByRole("button", { name: "Reply" }));
-    await user.type(
-      within(article).getByRole("textbox", { name: "Reply" }),
-      "Thanks for the report.",
-    );
+    await user.type(screen.getByRole("textbox", { name: "Reply" }), "Thanks for the report.");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
     expect(
       await screen.findByText("The helpdesk could not be reached. Try again."),
     ).toBeInTheDocument();
-    expect(within(article).getByRole("textbox", { name: "Reply" }))
+    expect(screen.getByRole("textbox", { name: "Reply" }))
       .toHaveTextContent("Thanks for the report.");
+  });
+  it("keeps the message draft but adopts saved metadata after partial success", async () => {
+    const user = userEvent.setup();
+    const updateTicketMetadataAction = vi.fn<MutationAction>(async () => ({
+      status: "partially-saved",
+      field: "communication",
+      message: "Ticket changes were saved, but the helpdesk did not confirm accepting the message.",
+    }));
+    renderWorkspace({
+      customerReplies: true,
+      metadataPriority: true,
+      updateTicketMetadataAction,
+    });
+
+    await user.click(screen.getByRole("combobox", { name: "Ticket priority" }));
+    await user.click(screen.getByRole("option", { name: "High" }));
+    const article = getCustomerArticle();
+    await user.click(within(article).getByRole("button", { name: "Reply" }));
+    await user.type(screen.getByRole("textbox", { name: "Reply" }), "Retain me");
+    await user.click(screen.getByRole("button", { name: "Update" }));
+
+    expect(await screen.findByText(/helpdesk did not confirm accepting/u)).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Reply" })).toHaveTextContent("Retain me");
+    await user.click(screen.getByRole("button", { name: "Discard changes" }));
+    expect(screen.getByRole("combobox", { name: "Ticket priority" })).toHaveTextContent("High");
+    expect(screen.queryByRole("textbox", { name: "Reply" })).not.toBeInTheDocument();
   });
 });

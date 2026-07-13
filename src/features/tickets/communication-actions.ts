@@ -66,6 +66,21 @@ function replyErrorMessage(reason: TicketCommunicationErrorReason): string {
   if (reason === "unsupported-capability") {
     return "This workspace cannot send customer replies.";
   }
+  if (reason === "invalid-recipient") {
+    return "Review the To and Cc recipients before sending.";
+  }
+  if (reason === "reply-context-stale") {
+    return "The reply context changed. Reload the ticket and review recipients again.";
+  }
+  if (reason === "reply-context-unavailable") {
+    return "The selected message can no longer be used for a reply.";
+  }
+  if (reason === "unsupported-reply-intent") {
+    return "Reply all is no longer available for the selected message.";
+  }
+  if (reason === "delivery-uncertain") {
+    return "Delivery could not be confirmed. Check the refreshed thread before retrying.";
+  }
   if (reason === "provider-auth-failed") {
     return "The helpdesk rejected the saved credentials.";
   }
@@ -117,13 +132,13 @@ function replyActionStateForResult(
   result: TicketCustomerReplyResult,
 ): TicketCustomerReplyActionState {
   if (result.status === "saved") {
-    return { status: "saved", message: "Reply sent." };
+    return { status: "saved", message: "Reply accepted by the helpdesk." };
   }
   if (result.status === "saved-refresh-failed") {
     return {
       status: "saved-refresh-failed",
       message:
-        "Reply sent, but the ticket could not be refreshed. Refresh the workspace to verify the latest thread.",
+        "Reply accepted by the helpdesk, but the ticket could not be refreshed. Refresh the workspace to verify the latest thread.",
     };
   }
 

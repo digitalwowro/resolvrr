@@ -121,29 +121,46 @@ describe("Zammad ticket article mutations", () => {
   });
 
   it("does not create a customer reply without a safe customer recipient", async () => {
-    mockedSafeProviderJson.mockResolvedValueOnce({
-      status: 200,
-      headers: new Headers(),
-      data: {
-        id: 42,
-        number: "42042",
-        title: "Cannot log in",
-        customer: "Maya Patel",
-        updated_at: "2026-05-24T08:30:00Z",
-      },
-    });
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          id: 42,
+          number: "42042",
+          title: "Cannot log in",
+          customer: "Maya Patel",
+          updated_at: "2026-05-24T08:30:00Z",
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          id: 1, ticket_id: 42, type: "email", sender: "Customer",
+          internal: false, from: null, to: "support@example.com", attachments: [],
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [{ email: "support@example.com", active: true }],
+      });
 
     await expect(
       zammadProviderPlugin.addTicketCustomerReply?.(
         providerContext(),
         "42",
-        { body: "Thanks for the report." },
+        {
+          body: "Thanks for the report.", cc: [], contextVersion: "v1",
+          intent: "reply", sourceArticleExternalId: "1", to: ["customer@example.com"],
+        },
       ),
     ).rejects.toMatchObject({
       kind: "provider-data-mismatch",
     });
 
-    expect(mockedSafeProviderJson).toHaveBeenCalledOnce();
+    expect(mockedSafeProviderJson).toHaveBeenCalledTimes(3);
   });
 
   it("rejects invalid customer reply ticket references before provider I/O", async () => {
@@ -151,7 +168,10 @@ describe("Zammad ticket article mutations", () => {
       zammadProviderPlugin.addTicketCustomerReply?.(
         providerContext(),
         "ticket-42",
-        { body: "Thanks for the report." },
+        {
+          body: "Thanks for the report.", cc: [], contextVersion: "v1",
+          intent: "reply", sourceArticleExternalId: "1", to: ["customer@example.com"],
+        },
       ),
     ).rejects.toMatchObject({
       kind: "validation-failure",

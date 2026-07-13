@@ -1,4 +1,5 @@
 import type { ProviderCapability } from "@/core/providers";
+import type { TicketCustomerReplyInput } from "@/core/ticket-replies";
 import type { TicketReadUnavailableReason } from "./read-model";
 
 export type TicketInternalNotePayload = {
@@ -6,8 +7,7 @@ export type TicketInternalNotePayload = {
   ticketExternalId: string;
 };
 
-export type TicketCustomerReplyPayload = {
-  body: string;
+export type TicketCustomerReplyPayload = TicketCustomerReplyInput & {
   ticketExternalId: string;
 };
 
@@ -18,7 +18,12 @@ export type TicketCommunicationCapabilities = {
 
 export type TicketCommunicationErrorReason =
   | TicketReadUnavailableReason
-  | "invalid-input";
+  | "invalid-input"
+  | "invalid-recipient"
+  | "reply-context-stale"
+  | "reply-context-unavailable"
+  | "delivery-uncertain"
+  | "unsupported-reply-intent";
 
 export type TicketInternalNoteResult =
   | { status: "saved" }

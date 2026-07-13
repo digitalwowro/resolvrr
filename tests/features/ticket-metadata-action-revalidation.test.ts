@@ -5,6 +5,7 @@ import {
   addWorkspaceTicketInternalNote,
 } from "@/features/tickets/communication-service";
 import { updateWorkspaceTicketMetadata } from "@/features/tickets/service";
+import { finalizeWorkspaceTicketMutation } from "@/features/tickets/mutation-finalization-service";
 import { revalidatePath } from "next/cache";
 
 vi.mock("next/cache", () => ({
@@ -43,6 +44,9 @@ vi.mock("@/features/tickets/communication-service", () => ({
   addWorkspaceTicketCustomerReply: vi.fn(),
   addWorkspaceTicketInternalNote: vi.fn(),
 }));
+vi.mock("@/features/tickets/mutation-finalization-service", () => ({
+  finalizeWorkspaceTicketMutation: vi.fn(),
+}));
 
 const mockedUpdateWorkspaceTicketMetadata = vi.mocked(updateWorkspaceTicketMetadata);
 const mockedAddWorkspaceTicketCustomerReply = vi.mocked(
@@ -52,6 +56,9 @@ const mockedAddWorkspaceTicketInternalNote = vi.mocked(
   addWorkspaceTicketInternalNote,
 );
 const mockedRevalidatePath = vi.mocked(revalidatePath);
+const mockedFinalizeWorkspaceTicketMutation = vi.mocked(
+  finalizeWorkspaceTicketMutation,
+);
 
 function priorityUpdatePayload() {
   return {
@@ -63,20 +70,20 @@ function priorityUpdatePayload() {
 describe("updateTicketMetadataAction revalidation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedFinalizeWorkspaceTicketMutation.mockResolvedValue({ status: "saved" });
   });
 
   it.each(["saved", "saved-refresh-failed"] as const)(
     "invalidates the workspace after %s metadata writes",
     async (status) => {
-      mockedUpdateWorkspaceTicketMetadata.mockResolvedValueOnce(
-        status === "saved"
-          ? { status: "saved" }
-          : {
-              status: "saved-refresh-failed",
-              reason: "provider-temporary-failure",
-              retryable: true,
-            },
-      );
+      mockedUpdateWorkspaceTicketMetadata.mockResolvedValueOnce({ status: "saved" });
+      if (status === "saved-refresh-failed") {
+        mockedFinalizeWorkspaceTicketMutation.mockResolvedValueOnce({
+          status,
+          reason: "provider-temporary-failure",
+          retryable: true,
+        });
+      }
 
       await updateTicketMetadataAction(priorityUpdatePayload());
 
@@ -85,7 +92,8 @@ describe("updateTicketMetadataAction revalidation", () => {
   );
 
   it("keeps the saved-refresh-failed warning message", async () => {
-    mockedUpdateWorkspaceTicketMetadata.mockResolvedValueOnce({
+    mockedUpdateWorkspaceTicketMetadata.mockResolvedValueOnce({ status: "saved" });
+    mockedFinalizeWorkspaceTicketMutation.mockResolvedValueOnce({
       status: "saved-refresh-failed",
       reason: "provider-temporary-failure",
       retryable: true,
@@ -129,22 +137,20 @@ describe("updateTicketMetadataAction revalidation", () => {
       },
       { enabled: true },
       { enabled: true },
+      { finalize: false },
     ]);
   });
 
-  it("sends staged comment and reply bodies through the update action", async () => {
+  it("sends exactly one staged communication through the update action", async () => {
     mockedAddWorkspaceTicketInternalNote.mockResolvedValueOnce({
-      status: "saved",
-    });
-    mockedAddWorkspaceTicketCustomerReply.mockResolvedValueOnce({
       status: "saved",
     });
 
     const result = await updateTicketMetadataAction({
       communication: {
         bodyFormat: "html",
-        commentBody: "<p>Checked the logs.</p>",
-        replyBody: "<p>Thanks for the report.</p>",
+        body: "<p>Checked the logs.</p>",
+        kind: "internal-comment",
       },
       ticketExternalId: "ticket-1",
     });
@@ -164,17 +170,89 @@ describe("updateTicketMetadataAction revalidation", () => {
       { body: "<p>Checked the logs.</p>", bodyFormat: "html" },
       { enabled: true },
       { enabled: true },
+      { finalize: false },
     );
-    expect(mockedAddWorkspaceTicketCustomerReply).toHaveBeenCalledWith(
-      {},
-      {},
-      "0123456789abcdef0123456789abcdef",
-      "user-1",
-      "ticket-1",
-      { body: "<p>Thanks for the report.</p>", bodyFormat: "html" },
-      { enabled: true },
-      { enabled: true },
-    );
+    expect(mockedAddWorkspaceTicketCustomerReply).not.toHaveBeenCalled();
     expect(mockedRevalidatePath).toHaveBeenCalledWith("/workspace");
+  });
+
+  it("writes metadata first, sends communication last, and finalizes once", async () => {
+    mockedUpdateWorkspaceTicketMetadata.mockResolvedValueOnce({ status: "saved" });
+    mockedAddWorkspaceTicketCustomerReply.mockResolvedValueOnce({ status: "saved" });
+
+    await updateTicketMetadataAction({
+      communication: {
+        body: "Reply",
+        cc: [],
+        contextVersion: "v1",
+        intent: "reply",
+        kind: "customer-reply",
+        sourceArticleExternalId: "article-1",
+        to: ["customer@example.com"],
+      },
+      metadata: { priority: "high" },
+      ticketExternalId: "ticket-1",
+    });
+
+    expect(mockedUpdateWorkspaceTicketMetadata.mock.invocationCallOrder[0])
+      .toBeLessThan(mockedAddWorkspaceTicketCustomerReply.mock.invocationCallOrder[0]!);
+    expect(mockedAddWorkspaceTicketCustomerReply.mock.invocationCallOrder[0])
+      .toBeLessThan(mockedFinalizeWorkspaceTicketMutation.mock.invocationCallOrder[0]!);
+    expect(mockedFinalizeWorkspaceTicketMutation).toHaveBeenCalledOnce();
+  });
+
+  it("returns partial success and still refreshes when communication fails", async () => {
+    mockedUpdateWorkspaceTicketMetadata.mockResolvedValueOnce({ status: "saved" });
+    mockedAddWorkspaceTicketCustomerReply.mockResolvedValueOnce({
+      status: "failed",
+      reason: "invalid-recipient",
+      retryable: false,
+    });
+
+    const result = await updateTicketMetadataAction({
+      communication: {
+        body: "Reply",
+        cc: [],
+        contextVersion: "v1",
+        intent: "reply",
+        kind: "customer-reply",
+        sourceArticleExternalId: "article-1",
+        to: ["customer@example.com"],
+      },
+      metadata: { priority: "high" },
+      ticketExternalId: "ticket-1",
+    });
+
+    expect(result).toEqual({
+      status: "partially-saved",
+      field: "communication",
+      message: "Ticket changes were saved, but the helpdesk did not confirm accepting the message. Review the To and Cc recipients before updating.",
+    });
+    expect(mockedFinalizeWorkspaceTicketMutation).toHaveBeenCalledOnce();
+  });
+
+  it("refreshes but does not retry after uncertain delivery", async () => {
+    mockedAddWorkspaceTicketCustomerReply.mockResolvedValueOnce({
+      status: "failed",
+      reason: "delivery-uncertain",
+      retryable: false,
+    });
+
+    const result = await updateTicketMetadataAction({
+      communication: {
+        body: "Reply",
+        cc: [],
+        contextVersion: "v1",
+        intent: "reply",
+        kind: "customer-reply",
+        sourceArticleExternalId: "article-1",
+        to: ["customer@example.com"],
+      },
+      ticketExternalId: "ticket-1",
+    });
+
+    expect(result.status).toBe("failed");
+    expect(mockedAddWorkspaceTicketCustomerReply).toHaveBeenCalledOnce();
+    expect(mockedFinalizeWorkspaceTicketMutation).toHaveBeenCalledOnce();
   });
 });

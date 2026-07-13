@@ -18,6 +18,8 @@ import {
 } from "./schemas";
 import { zammadBaseUrl, zammadGetJson } from "./client";
 import { readZammadSecondaryTicketData } from "./ticket-secondary";
+import { readOptionalZammadReplyPolicy } from "./reply-policy";
+import { zammadReplyContext } from "./reply-context";
 export { listZammadTickets } from "./ticket-list";
 
 function providerDataMismatch(): ProviderError {
@@ -260,21 +262,36 @@ export async function getZammadTicketDetail(
         secondary.assets,
         organizationAssets,
       );
+      const managedAddresses = await readOptionalZammadReplyPolicy(context);
+      const mappedTicket = {
+        ...mapTicket(ticket.data, zammadBaseUrl(context), assets),
+        tags: secondary.tags,
+      };
+      const mappedArticles = rawArticlePayload.articles.map((article) => {
+        const mappedArticle = mapArticle(article, assets);
+        const replyContext = managedAddresses
+          ? zammadReplyContext({
+              article,
+              customer: mappedTicket.customer,
+              managedAddresses,
+              mappedArticle,
+            })
+          : undefined;
+        return { ...mappedArticle, ...(replyContext ? { replyContext } : {}) };
+      });
 
       return {
-        ticket: {
-          ...mapTicket(ticket.data, zammadBaseUrl(context), assets),
-          tags: secondary.tags,
-        },
+        ticket: mappedTicket,
         thread: {
           ticketExternalId,
-          articles: rawArticlePayload.articles.map((article) =>
-            mapArticle(article, assets),
-          ),
+          articles: mappedArticles,
         },
         links: secondary.links,
         subscription: secondary.subscription,
         measuredAt: new Date(),
+        ...(managedAddresses
+          ? { replyPolicy: { providerManagedAddresses: managedAddresses } }
+          : {}),
       };
     },
   );

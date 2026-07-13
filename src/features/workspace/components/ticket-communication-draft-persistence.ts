@@ -1,12 +1,11 @@
 "use client";
 
-import type {
-  DraftRewriteOperation,
-} from "@/features/ai";
+import type { DraftRewriteOperation } from "@/features/ai";
+import type { TicketReplyIntent } from "@/core/ticket-replies";
 
 const databaseName = "resolvrr-workspace-drafts";
 const storeName = "communicationDrafts";
-const databaseVersion = 1;
+const databaseVersion = 2;
 export const communicationDraftRetentionMs = 7 * 24 * 60 * 60 * 1_000;
 export const maxPersistedAiSuggestions = 3;
 
@@ -26,38 +25,32 @@ export type PersistedDraftAiSuggestion = {
 };
 
 export type PersistedCommunicationDraft = {
-  articleId: string;
+  articleId?: string;
   bodyHtml: string;
+  cc?: string[];
+  contextVersion?: string;
   expiresAt: number;
   id: string;
-  mode: "comment" | "reply";
+  intent?: TicketReplyIntent;
+  kind?: "internal-comment" | "customer-reply";
+  mode?: "comment" | "reply";
   scope: CommunicationDraftPersistenceScope;
+  sourceArticleExternalId?: string;
   suggestions: PersistedDraftAiSuggestion[];
+  to?: string[];
   updatedAt: number;
 };
 
-function storageAvailable(): boolean {
+function storageAvailable() {
   return typeof window !== "undefined" && "indexedDB" in window;
 }
 
-function draftId(
-  scope: CommunicationDraftPersistenceScope,
-  mode: PersistedCommunicationDraft["mode"],
-): string {
-  return [
-    "v1",
-    scope.userId,
-    scope.workspaceId,
-    scope.ticketExternalId,
-    mode,
-  ].join(":");
+function draftId(scope: CommunicationDraftPersistenceScope): string {
+  return ["v2", scope.userId, scope.workspaceId, scope.ticketExternalId].join(":");
 }
 
 function openDraftDatabase(): Promise<IDBDatabase | null> {
-  if (!storageAvailable()) {
-    return Promise.resolve(null);
-  }
-
+  if (!storageAvailable()) return Promise.resolve(null);
   return new Promise((resolve) => {
     const request = window.indexedDB.open(databaseName, databaseVersion);
     request.onupgradeneeded = () => {
@@ -76,10 +69,7 @@ async function withStore<T>(
   callback: (store: IDBObjectStore) => IDBRequest<T>,
 ): Promise<T | null> {
   const database = await openDraftDatabase();
-  if (!database) {
-    return null;
-  }
-
+  if (!database) return null;
   return new Promise((resolve) => {
     const transaction = database.transaction(storeName, mode);
     const request = callback(transaction.objectStore(storeName));
@@ -93,21 +83,16 @@ async function withStore<T>(
 function sameScope(
   left: CommunicationDraftPersistenceScope,
   right: CommunicationDraftPersistenceScope,
-): boolean {
-  return (
-    left.userId === right.userId &&
+) {
+  return left.userId === right.userId &&
     left.workspaceId === right.workspaceId &&
-    left.ticketExternalId === right.ticketExternalId
-  );
+    left.ticketExternalId === right.ticketExternalId;
 }
 
 export async function loadPersistedCommunicationDrafts(
   scope: CommunicationDraftPersistenceScope | undefined,
 ): Promise<PersistedCommunicationDraft[]> {
-  if (!scope) {
-    return [];
-  }
-
+  if (!scope) return [];
   const records = await withStore<PersistedCommunicationDraft[]>(
     "readonly",
     (store) => store.getAll(),
@@ -116,63 +101,56 @@ export async function loadPersistedCommunicationDrafts(
   const matching = (records ?? []).filter(
     (record) => sameScope(record.scope, scope) && record.expiresAt > now,
   );
-
   if ((records ?? []).some((record) => record.expiresAt <= now)) {
     void pruneExpiredCommunicationDrafts();
   }
-
   return matching.sort((left, right) => right.updatedAt - left.updatedAt);
 }
 
 export async function savePersistedCommunicationDraft(input: {
-  articleId: string;
+  articleId?: string;
   bodyHtml: string;
-  mode: PersistedCommunicationDraft["mode"];
+  cc?: string[];
+  contextVersion?: string;
+  intent?: TicketReplyIntent;
+  kind: "internal-comment" | "customer-reply";
+  recipientEdited?: boolean;
   scope: CommunicationDraftPersistenceScope | undefined;
   suggestions: PersistedDraftAiSuggestion[];
+  to?: string[];
 }): Promise<void> {
-  if (!input.scope) {
-    return;
-  }
-
+  const scope = input.scope;
+  if (!scope) return;
   const suggestions = input.suggestions.slice(0, maxPersistedAiSuggestions);
-  if (!input.bodyHtml.trim() && suggestions.length === 0) {
-    await clearPersistedCommunicationDrafts(input.scope, input.mode);
+  if (!input.bodyHtml.trim() && suggestions.length === 0 && !input.recipientEdited) {
+    await clearPersistedCommunicationDrafts(scope);
     return;
   }
-
   const now = Date.now();
-  const record: PersistedCommunicationDraft = {
-    articleId: input.articleId,
+  await withStore("readwrite", (store) => store.put({
     bodyHtml: input.bodyHtml,
+    cc: input.cc,
+    contextVersion: input.contextVersion,
     expiresAt: now + communicationDraftRetentionMs,
-    id: draftId(input.scope, input.mode),
-    mode: input.mode,
-    scope: input.scope,
+    id: draftId(scope),
+    intent: input.intent,
+    kind: input.kind,
+    scope,
+    sourceArticleExternalId: input.articleId,
     suggestions,
+    to: input.to,
     updatedAt: now,
-  };
-
-  await withStore("readwrite", (store) => store.put(record));
+  } satisfies PersistedCommunicationDraft));
 }
 
 export async function clearPersistedCommunicationDrafts(
   scope: CommunicationDraftPersistenceScope | undefined,
-  mode?: PersistedCommunicationDraft["mode"],
 ): Promise<void> {
-  if (!scope) {
-    return;
-  }
-
-  if (mode) {
-    await withStore("readwrite", (store) => store.delete(draftId(scope, mode)));
-    return;
-  }
-
-  await Promise.all([
-    clearPersistedCommunicationDrafts(scope, "comment"),
-    clearPersistedCommunicationDrafts(scope, "reply"),
-  ]);
+  if (!scope) return;
+  const records = await loadPersistedCommunicationDrafts(scope);
+  await Promise.all(
+    records.map((record) => withStore("readwrite", (store) => store.delete(record.id))),
+  );
 }
 
 export async function pruneExpiredCommunicationDrafts(): Promise<void> {
@@ -184,8 +162,6 @@ export async function pruneExpiredCommunicationDrafts(): Promise<void> {
   await Promise.all(
     (records ?? [])
       .filter((record) => record.expiresAt <= now)
-      .map((record) =>
-        withStore("readwrite", (store) => store.delete(record.id)),
-      ),
+      .map((record) => withStore("readwrite", (store) => store.delete(record.id))),
   );
 }

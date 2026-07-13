@@ -1,7 +1,5 @@
 import type { TicketState } from "@/core/tickets";
-import { normalizedCommunicationBody } from "@/features/tickets/communication-body";
-import type { SelectedTicketUpdatePayload } from "@/features/tickets/mutation-model";
-import { sanitizeComposerHtml } from "@/security/sanitize-html";
+import { normalizedReplyRecipients } from "@/features/tickets/reply-input";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import {
   isFuturePendingDateTime,
@@ -14,7 +12,10 @@ import type {
   TicketMetadataDraftDirtyFields,
   TicketMetadataDraftValidation,
 } from "./metadata-draft-types";
+import { communicationDraftBody, copyCommunicationDraft } from "./communication-draft";
 export * from "./metadata-draft-types";
+export { communicationDraftNeedsReplacementConfirmation } from "./communication-draft";
+export { metadataDraftUpdatePayload } from "./metadata-draft-payload";
 
 function isPendingState(state: TicketState | undefined): boolean {
   return state === "pending_reminder" || state === "pending_close";
@@ -28,10 +29,6 @@ export function metadataDraftFromDetail(
   detail: WorkspaceTicketDetail,
 ): SelectedTicketDraft {
   return {
-    communication: {
-      commentBody: "",
-      replyBody: "",
-    },
     metadata: {
       groupExternalId: detail.groupExternalId,
       linkAddExternalId: "",
@@ -55,10 +52,7 @@ export function metadataDraftFromBaseline(
   baseline: SelectedTicketDraft,
 ): SelectedTicketDraft {
   return {
-    communication: {
-      commentBody: baseline.communication.commentBody,
-      replyBody: baseline.communication.replyBody,
-    },
+    communication: copyCommunicationDraft(baseline.communication),
     metadata: {
       groupExternalId: baseline.metadata.groupExternalId,
       linkAddExternalId: baseline.metadata.linkAddExternalId,
@@ -79,8 +73,16 @@ export function metadataDraftFromBaseline(
 export function metadataDraftKey(draft: SelectedTicketDraft): string {
   return [
     draft.ticketExternalId,
-    draft.communication.commentBody,
-    draft.communication.replyBody,
+    draft.communication?.kind ?? "",
+    communicationDraftBody(draft.communication),
+    draft.communication?.kind === "customer-reply"
+      ? [
+          draft.communication.sourceArticleExternalId,
+          draft.communication.intent,
+          draft.communication.to.join(","),
+          draft.communication.cc.join(","),
+        ].join(":")
+      : "",
     draft.metadata.ownerExternalId ?? "",
     draft.metadata.groupExternalId ?? "",
     draft.metadata.tags.join(","),
@@ -115,8 +117,7 @@ export function metadataDraftDirtyFields(
     draft.metadata.subscriptionFollowing !==
     baseline.metadata.subscriptionFollowing;
   const communication =
-    Boolean(normalizedCommunicationBody(draft.communication.commentBody)) ||
-    Boolean(normalizedCommunicationBody(draft.communication.replyBody));
+    Boolean(communicationDraftBody(draft.communication));
   const pendingUntil =
     isPendingState(draft.metadata.state) &&
     normalizedPendingIso(draft.metadata.pendingDateTime) !==
@@ -144,10 +145,6 @@ function sameStringList(left: string[], right: string[]): boolean {
     left.length === right.length &&
     left.every((value, index) => value === right[index])
   );
-}
-
-function normalizedDraftCommunicationBody(body: string): string {
-  return normalizedCommunicationBody(sanitizeComposerHtml(body));
 }
 
 export function metadataDraftHasChanges(
@@ -184,6 +181,16 @@ export function validateMetadataDraft(
   draft: SelectedTicketDraft,
 ): TicketMetadataDraftValidation {
   if (
+    dirtyFields.communication &&
+    draft.communication?.kind === "customer-reply" &&
+    !normalizedReplyRecipients(draft.communication.to, draft.communication.cc)
+  ) {
+    return {
+      message: "Add at least one valid To or Cc recipient.",
+      valid: false,
+    };
+  }
+  if (
     metadataDraftRequiresPendingDate(detail, draft) &&
     (dirtyFields.state || dirtyFields.pendingUntil) &&
     !isFuturePendingDateTime(draft.metadata.pendingDateTime)
@@ -201,10 +208,6 @@ export function metadataDraftSubmittedBaseline(
   draft: SelectedTicketDraft,
 ): SelectedTicketDraft {
   return {
-    communication: {
-      commentBody: "",
-      replyBody: "",
-    },
     metadata: {
       ...draft.metadata,
       linkAddExternalId: "",
@@ -213,88 +216,6 @@ export function metadataDraftSubmittedBaseline(
       tagText: draft.metadata.tags.join(", "),
       tags: [...draft.metadata.tags],
     },
-    ticketExternalId: draft.ticketExternalId,
-  };
-}
-
-export function metadataDraftUpdatePayload(
-  baseline: SelectedTicketDraft,
-  draft: SelectedTicketDraft,
-): SelectedTicketUpdatePayload | undefined {
-  const dirtyFields = metadataDraftDirtyFields(baseline, draft);
-  if (!metadataDraftHasChanges(dirtyFields)) {
-    return undefined;
-  }
-
-  const metadata: NonNullable<SelectedTicketUpdatePayload["metadata"]> = {};
-  const communication: NonNullable<SelectedTicketUpdatePayload["communication"]> =
-    {};
-  if (dirtyFields.state || dirtyFields.pendingUntil) {
-    if (!draft.metadata.state) {
-      return undefined;
-    }
-    metadata.state = draft.metadata.state;
-    if (isPendingState(draft.metadata.state)) {
-      const pendingUntil = pendingDateTimeIso(draft.metadata.pendingDateTime);
-      if (!pendingUntil) {
-        return undefined;
-      }
-      metadata.pendingUntil = pendingUntil;
-    }
-  }
-  if (dirtyFields.priority) {
-    if (!draft.metadata.priority) {
-      return undefined;
-    }
-    metadata.priority = draft.metadata.priority;
-  }
-  if (dirtyFields.owner) {
-    if (!draft.metadata.ownerExternalId) {
-      return undefined;
-    }
-    metadata.ownerExternalId = draft.metadata.ownerExternalId;
-  }
-  if (dirtyFields.group) {
-    if (!draft.metadata.groupExternalId) {
-      return undefined;
-    }
-    metadata.groupExternalId = draft.metadata.groupExternalId;
-  }
-  if (dirtyFields.tags) {
-    metadata.tags = draft.metadata.tags;
-  }
-  if (dirtyFields.links) {
-    if (draft.metadata.linkAddExternalId) {
-      metadata.linkAddExternalId = draft.metadata.linkAddExternalId;
-      metadata.linkAddRelation = draft.metadata.linkAddRelation;
-    }
-    if (draft.metadata.linkRemoveExternalIds.length > 0) {
-      metadata.linkRemoveExternalIds = draft.metadata.linkRemoveExternalIds;
-    }
-  }
-  if (dirtyFields.subscription) {
-    if (draft.metadata.subscriptionFollowing === undefined) {
-      return undefined;
-    }
-    metadata.subscriptionFollowing = draft.metadata.subscriptionFollowing;
-  }
-  if (dirtyFields.communication) {
-    const commentBody = normalizedDraftCommunicationBody(
-      draft.communication.commentBody,
-    );
-    const replyBody = normalizedDraftCommunicationBody(draft.communication.replyBody);
-    communication.bodyFormat = "html";
-    if (commentBody) {
-      communication.commentBody = commentBody;
-    }
-    if (replyBody) {
-      communication.replyBody = replyBody;
-    }
-  }
-
-  return {
-    ...(Object.keys(communication).length > 0 ? { communication } : {}),
-    ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
     ticketExternalId: draft.ticketExternalId,
   };
 }

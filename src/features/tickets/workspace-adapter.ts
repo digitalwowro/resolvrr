@@ -172,6 +172,7 @@ export function workspaceTicketDetail(
     subscription: detail.subscription,
     tags: detail.ticket.tags,
     metadataMutationConstraints: detail.ticket.metadataMutationConstraints,
+    replyPolicy: detail.replyPolicy,
     articles: newestArticlesFirst(detail.thread.articles).map((article) => ({
       id: article.externalId,
       author: participantName(article.author),
@@ -185,6 +186,7 @@ export function workspaceTicketDetail(
       sanitizedHtml: article.sanitizedHtml,
       visibility: article.visibility,
       attachments: article.attachments.map(workspaceAttachment),
+      replyContext: article.replyContext,
     })),
   };
 }
