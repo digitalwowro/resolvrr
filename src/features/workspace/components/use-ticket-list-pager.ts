@@ -35,9 +35,14 @@ export function useTicketListPager({
   const [sort, setSort] = useState<WorkspaceTicketListSort>();
   const baselineIdentity = useRef(ticketListIdentity(initialRows));
   const hasClientLoadedRowsRef = useRef(false);
+  const loadedPageCountRef = useRef(1);
+  const groupPageCountsRef = useRef(
+    new Map((initialGroups ?? []).map((group) => [group.id, 1])),
+  );
   const lastRefreshedAtRef = useRef<number | undefined>(undefined);
   const { groupError, loadMoreGroup, loadingGroupId, setGroupError } =
     useTicketListGroupLoader({
+      groupPageCountsRef,
       groupBy,
       loadTicketListPageAction,
       savedViewId,
@@ -47,9 +52,11 @@ export function useTicketListPager({
   const { isListStale, silentRefreshCurrentPage, silentRefreshing } =
     useTicketListSilentRefresh({
       groupBy,
+      groupPageCountsRef,
       hasClientLoadedRowsRef,
       lastRefreshedAtRef,
       loadTicketListPageAction,
+      loadedPageCountRef,
       loading,
       savedViewId,
       setErrorReason,
@@ -77,6 +84,10 @@ export function useTicketListPager({
       setErrorReason(undefined);
       setLoading(false);
       hasClientLoadedRowsRef.current = false;
+      loadedPageCountRef.current = 1;
+      groupPageCountsRef.current = new Map(
+        (initialGroups ?? []).map((group) => [group.id, 1]),
+      );
       lastRefreshedAtRef.current = Date.now();
       return;
     }
@@ -123,6 +134,7 @@ export function useTicketListPager({
     setTotalCount(result.totalCount);
     lastRefreshedAtRef.current = Date.now();
     hasClientLoadedRowsRef.current = true;
+    loadedPageCountRef.current += 1;
     setRows((current) => appendUniqueRows(current, result.rows));
   }
 
@@ -152,6 +164,8 @@ export function useTicketListPager({
     }
 
     hasClientLoadedRowsRef.current = false;
+    loadedPageCountRef.current = 1;
+    groupPageCountsRef.current = new Map();
     baselineIdentity.current = ticketListIdentity(result.rows);
     setSort(result.appliedSort ?? nextSort);
     setGroups(undefined);
@@ -190,6 +204,8 @@ export function useTicketListPager({
 
     const nextGroups = result.groups ?? [];
     hasClientLoadedRowsRef.current = false;
+    loadedPageCountRef.current = 1;
+    groupPageCountsRef.current = new Map(nextGroups.map((group) => [group.id, 1]));
     baselineIdentity.current = ticketListIdentity(result.rows);
     setGroupBy(nextGroupBy);
     setGroups(nextGroups);
@@ -237,6 +253,10 @@ export function useTicketListPager({
 
     const nextGroups = result.groups?.length ? result.groups : undefined;
     hasClientLoadedRowsRef.current = false;
+    loadedPageCountRef.current = 1;
+    groupPageCountsRef.current = new Map(
+      (nextGroups ?? []).map((group) => [group.id, 1]),
+    );
     baselineIdentity.current = ticketListIdentity(result.rows);
     setSavedViewId(nextSavedViewId);
     setSort(result.appliedSort);

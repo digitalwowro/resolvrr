@@ -55,6 +55,12 @@ workspace, so it is not recreated. `All tickets` is not a saved view, is not
 seeded, is not shown in Settings, and is not reorderable. It may only appear as
 an internal unmanaged fallback when no saved view can be selected.
 
+Manual and silent list refreshes re-run the active saved-view query for every
+page or independently expanded group page currently loaded by the agent. The
+refreshed window replaces those rows atomically, so tickets that no longer match
+the view—such as a ticket closed from `My work`—do not linger. A failed page
+refresh leaves the prior loaded window intact.
+
 The Views settings section owns personal/shared visibility, title, appearance,
 condition editing, default selection, ordering, and deletion. Agents can manage
 personal views only. Admins can manage shared workspace views and their own

@@ -414,6 +414,12 @@ server action and appends the returned provider-neutral rows in active
 workspace memory. Selected ticket detail/thread loading remains a separate read
 path and is not triggered by loading more list rows.
 
+Manual and scheduled list refreshes follow fresh cursors from the first page to
+re-read the full page window already loaded by the user. Provider-grouped lists
+do the same independently for each expanded bucket. Only a complete successful
+refresh replaces the loaded window; rows omitted by the active saved-view query
+are removed, while a later-page failure retains the prior window unchanged.
+
 ## Read And Mutation Coordination
 
 Provider-backed reads stay coordinated at the service/provider boundary:

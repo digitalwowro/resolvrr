@@ -36,6 +36,7 @@ export function useTicketWorkspaceAutoRefresh({
       void silentRefreshCurrentPage();
     }
 
+    refreshVisibleListIfStale();
     const intervalId = window.setInterval(() => {
       if (!document.hidden) {
         void silentRefreshCurrentPage();

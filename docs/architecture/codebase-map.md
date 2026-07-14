@@ -559,6 +559,10 @@ added, moved, renamed, or removed.
         - `ticket-list-pager-rows.ts`
           (`src/features/workspace/components/ticket-list-pager-rows.ts`): list pager request,
           identity, row append, and refreshed-baseline merge helpers.
+        - `ticket-list-authoritative-refresh.ts`
+          (`src/features/workspace/components/ticket-list-authoritative-refresh.ts`): replaces
+          stale saved-view rows through one coordinated provider refresh while re-fetching every
+          ungrouped page and independently expanded group page already loaded by the user.
         - `ticket-list-pager-types.ts`
           (`src/features/workspace/components/ticket-list-pager-types.ts`): list pager hook prop
           type boundary.

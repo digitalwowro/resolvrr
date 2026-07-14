@@ -1,6 +1,12 @@
 "use client";
 
-import { useRef, useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useCallback,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import type {
   LoadWorkspaceTicketListPageAction,
   WorkspaceTicketListGroup,
@@ -8,16 +14,16 @@ import type {
 } from "@/features/tickets/list-page-action-result";
 import type { TicketReadUnavailableReason } from "@/features/tickets/read-model";
 import type { WorkspaceTicketRow } from "@/features/tickets/workspace-adapter";
-import {
-  mergeRefreshedBaselineRows,
-  savedViewListRequest,
-} from "./ticket-list-pager-rows";
+import { savedViewListRequest } from "./ticket-list-pager-rows";
+import { refreshAuthoritativeTicketList } from "./ticket-list-authoritative-refresh";
 
 type UseTicketListSilentRefreshOptions = {
   groupBy?: "state" | "priority";
+  groupPageCountsRef: { current: Map<string, number> };
   hasClientLoadedRowsRef: { current: boolean };
   lastRefreshedAtRef: { current: number | undefined };
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
+  loadedPageCountRef: { current: number };
   loading: boolean;
   savedViewId: string;
   setErrorReason: Dispatch<SetStateAction<TicketReadUnavailableReason | undefined>>;
@@ -35,9 +41,11 @@ type UseTicketListSilentRefreshOptions = {
 
 export function useTicketListSilentRefresh({
   groupBy,
+  groupPageCountsRef,
   hasClientLoadedRowsRef,
   lastRefreshedAtRef,
   loadTicketListPageAction,
+  loadedPageCountRef,
   loading,
   savedViewId,
   setErrorReason,
@@ -51,7 +59,7 @@ export function useTicketListSilentRefresh({
   const [silentRefreshing, setSilentRefreshing] = useState(false);
   const silentRefreshInFlightRef = useRef(false);
 
-  async function silentRefreshCurrentPage() {
+  const silentRefreshCurrentPage = useCallback(async () => {
     if (
       loading ||
       silentRefreshInFlightRef.current ||
@@ -63,64 +71,77 @@ export function useTicketListSilentRefresh({
     silentRefreshInFlightRef.current = true;
     setSilentRefreshing(true);
     try {
-      const result = await loadTicketListPageAction({
-        ...(groupBy ? { group: groupBy } : {}),
-        ...savedViewListRequest(savedViewId),
-        ...(sort && !groupBy ? { sort } : {}),
+      const refresh = await refreshAuthoritativeTicketList({
+        groupBy,
+        groupPageCounts: groupPageCountsRef.current,
+        load: loadTicketListPageAction,
+        pageCount: loadedPageCountRef.current,
+        request: {
+          ...(groupBy ? { group: groupBy } : {}),
+          ...savedViewListRequest(savedViewId),
+          ...(sort && !groupBy ? { sort } : {}),
+        },
       });
-      if (result.status === "unavailable") {
+      if (refresh.status === "unavailable") {
         return;
       }
+      const { result } = refresh;
 
+      loadedPageCountRef.current = refresh.loadedPageCount;
+      groupPageCountsRef.current = refresh.loadedGroupPageCounts;
       lastRefreshedAtRef.current = Date.now();
       setErrorReason(undefined);
       setGroupError(undefined);
       setTotalCount(result.totalCount);
       if (groupBy) {
         const refreshedGroups = result.groups ?? [];
-        setGroups((current) => {
-          const currentById = new Map(
-            (current ?? []).map((group) => [group.id, group]),
-          );
-          const nextGroups = refreshedGroups.map((group) => {
-            const currentGroup = currentById.get(group.id);
-            return currentGroup
-              ? {
-                  ...group,
-                  loadedCount: Math.max(
-                    currentGroup.loadedCount ?? currentGroup.rows.length,
-                    group.loadedCount ?? group.rows.length,
-                  ),
-                  nextCursor: currentGroup.nextCursor ?? group.nextCursor,
-                  rows: mergeRefreshedBaselineRows(
-                    currentGroup.rows,
-                    group.rows,
-                  ),
-                }
-              : group;
-          });
-          setRows(nextGroups.flatMap((group) => group.rows));
-          return nextGroups;
-        });
+        hasClientLoadedRowsRef.current = refreshedGroups.some(
+          (group) => (refresh.loadedGroupPageCounts.get(group.id) ?? 1) > 1,
+        );
+        setGroups(refreshedGroups);
+        setRows(refreshedGroups.flatMap((group) => group.rows));
+        setNextCursor(undefined);
         return;
       }
 
-      setRows((current) => mergeRefreshedBaselineRows(current, result.rows));
-      setNextCursor((current) =>
-        hasClientLoadedRowsRef.current ? current : result.nextCursor,
-      );
+      hasClientLoadedRowsRef.current = refresh.loadedPageCount > 1;
+      setGroups(undefined);
+      setRows(result.rows);
+      setNextCursor(result.nextCursor);
     } catch {
       return;
     } finally {
       silentRefreshInFlightRef.current = false;
       setSilentRefreshing(false);
     }
-  }
+  }, [
+    groupBy,
+    groupPageCountsRef,
+    hasClientLoadedRowsRef,
+    lastRefreshedAtRef,
+    loadTicketListPageAction,
+    loadedPageCountRef,
+    loading,
+    savedViewId,
+    setErrorReason,
+    setGroupError,
+    setGroups,
+    setNextCursor,
+    setRows,
+    setTotalCount,
+    sort,
+  ]);
 
-  function isListStale(staleMs: number) {
-    const lastRefreshedAt = lastRefreshedAtRef.current;
-    return lastRefreshedAt === undefined || Date.now() - lastRefreshedAt >= staleMs;
-  }
+  const isListStale = useCallback(
+    (staleMs: number) => {
+      const lastRefreshedAt = lastRefreshedAtRef.current;
+      return (
+        lastRefreshedAt === undefined ||
+        Date.now() - lastRefreshedAt >= staleMs
+      );
+    },
+    [lastRefreshedAtRef],
+  );
 
   return { isListStale, silentRefreshCurrentPage, silentRefreshing };
 }

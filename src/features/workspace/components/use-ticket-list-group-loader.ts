@@ -13,6 +13,7 @@ import {
 } from "./ticket-list-pager-rows";
 
 type UseTicketListGroupLoaderOptions = {
+  groupPageCountsRef: { current: Map<string, number> };
   groupBy?: "state" | "priority";
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
   savedViewId: string;
@@ -21,6 +22,7 @@ type UseTicketListGroupLoaderOptions = {
 };
 
 export function useTicketListGroupLoader({
+  groupPageCountsRef,
   groupBy,
   loadTicketListPageAction,
   savedViewId,
@@ -67,6 +69,11 @@ export function useTicketListGroupLoader({
       setGroupError({ groupId: group.id, reason: result.reason });
       return;
     }
+
+    groupPageCountsRef.current.set(
+      group.id,
+      (groupPageCountsRef.current.get(group.id) ?? 1) + 1,
+    );
 
     setGroups((current) => {
       const nextGroups = (current ?? []).map((currentGroup) =>

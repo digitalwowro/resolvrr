@@ -230,6 +230,9 @@ Provider-backed surfaces may use these states:
 
 The workspace must not silently show stale data as fresh. Manual refresh should
 request provider source-of-truth data and update the visible freshness state.
+For ticket lists, a successful refresh atomically replaces the complete loaded
+saved-view page window rather than merging back rows omitted by the provider.
+If any loaded page cannot be refreshed, the prior window remains visible.
 Refresh paths that are semantically provider-source refreshes must bypass
 fresh persistent detail cache reads. Normal initial selected-ticket detail loads
 and unopened tab loads may use a fresh cache entry.
