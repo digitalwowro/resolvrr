@@ -27,7 +27,7 @@ import {
 } from "./mutation-model";
 import {
   unavailableTicketRead,
-  type TicketDetailReadResult,
+  type TicketDetailProviderReadResult,
   type TicketListReadResult,
 } from "./read-model";
 
@@ -128,7 +128,7 @@ export async function dispatchTicketListRead(
 export async function dispatchTicketDetailRead(
   providerContext: TicketProviderContext,
   ticketExternalId: TicketExternalId,
-): Promise<TicketDetailReadResult> {
+): Promise<TicketDetailProviderReadResult> {
   if (!hasCapability(providerContext, "ticket:detail")) {
     return unavailableTicketRead("unsupported-capability");
   }
@@ -137,12 +137,28 @@ export async function dispatchTicketDetailRead(
   }
 
   try {
+    const result = await providerContext.plugin.getTicketDetail(
+      providerContext.context,
+      ticketExternalId,
+    );
+    if (!("kind" in result)) {
+      return { status: "available", detail: result };
+    }
+    if (result.kind === "replaced") {
+      return {
+        status: "replaced",
+        cause: result.cause,
+        sourceExternalId: result.sourceExternalId,
+        ...(result.sourceNumber ? { sourceNumber: result.sourceNumber } : {}),
+        targetExternalId: result.targetExternalId,
+      };
+    }
     return {
-      status: "available",
-      detail: await providerContext.plugin.getTicketDetail(
-        providerContext.context,
-        ticketExternalId,
-      ),
+      status: "retired",
+      reason: "merged-target-unavailable",
+      retryable: false,
+      sourceExternalId: result.sourceExternalId,
+      ...(result.sourceNumber ? { sourceNumber: result.sourceNumber } : {}),
     };
   } catch (error) {
     return readUnavailableForProviderError(error);

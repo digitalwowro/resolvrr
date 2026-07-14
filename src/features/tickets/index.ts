@@ -9,6 +9,7 @@ export type {
   TicketListItem,
   TicketMetadataMutationInput,
   TicketPriority,
+  TicketSelectableState,
   TicketState,
   TicketThread,
 } from "@/core/tickets";

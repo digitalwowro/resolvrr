@@ -1,4 +1,9 @@
-import type { TicketDetail, TicketExternalId, TicketListItem } from "@/core/tickets";
+import type {
+  TicketDetail,
+  TicketExternalId,
+  TicketListItem,
+  TicketMergeResolution,
+} from "@/core/tickets";
 import type {
   TicketListBucket,
   TicketListQueryCapabilities,
@@ -48,10 +53,34 @@ export type TicketDetailAvailable = {
   status: "available";
   detail: TicketDetail;
   helpdeskConnectionId?: string;
+  resolution?: TicketMergeResolution;
+};
+
+export type TicketDetailReplaced = {
+  status: "replaced";
+  cause: "merged";
+  sourceExternalId: TicketExternalId;
+  sourceNumber?: string;
+  targetExternalId: TicketExternalId;
+};
+
+export type TicketDetailRetired = {
+  status: "retired";
+  reason: "merged-target-unavailable";
+  retryable: false;
+  sourceExternalId: TicketExternalId;
+  sourceNumber?: string;
 };
 
 export type TicketListReadResult = TicketListAvailable | TicketReadUnavailable;
-export type TicketDetailReadResult = TicketDetailAvailable | TicketReadUnavailable;
+export type TicketDetailReadResult =
+  | TicketDetailAvailable
+  | TicketDetailRetired
+  | TicketReadUnavailable;
+
+export type TicketDetailProviderReadResult =
+  | TicketDetailReadResult
+  | TicketDetailReplaced;
 
 export function unavailableTicketRead(
   reason: TicketReadUnavailableReason,

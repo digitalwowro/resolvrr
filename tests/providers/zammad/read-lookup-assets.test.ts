@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { zammadProviderPlugin } from "@/providers/zammad";
 import { safeProviderJson } from "@/security/provider-http";
-import { providerContext, rawArticle, rawTicket } from "./read-helpers";
+import { normalTicketDetail, providerContext, rawArticle, rawTicket } from "./read-helpers";
 
 vi.mock("@/security/provider-http", () => ({
   safeProviderJson: vi.fn(),
@@ -123,9 +123,8 @@ describe("Zammad ticket read lookup assets", () => {
         },
       });
 
-    const result = await zammadProviderPlugin.getTicketDetail?.(
-      providerContext(),
-      "42",
+    const result = normalTicketDetail(
+      await zammadProviderPlugin.getTicketDetail?.(providerContext(), "42"),
     );
 
     expect(result?.ticket.customer?.name).toBe("Nicole Braun");
@@ -181,9 +180,8 @@ describe("Zammad ticket read lookup assets", () => {
         },
       });
 
-    const result = await zammadProviderPlugin.getTicketDetail?.(
-      providerContext(),
-      "42",
+    const result = normalTicketDetail(
+      await zammadProviderPlugin.getTicketDetail?.(providerContext(), "42"),
     );
 
     expect(result?.thread.articles[0]?.author.name).toBe("Games Bond");
@@ -246,9 +244,8 @@ describe("Zammad ticket read lookup assets", () => {
         },
       });
 
-    const result = await zammadProviderPlugin.getTicketDetail?.(
-      providerContext(),
-      "245",
+    const result = normalTicketDetail(
+      await zammadProviderPlugin.getTicketDetail?.(providerContext(), "245"),
     );
 
     expect(result?.thread.articles[0]?.author).toEqual({

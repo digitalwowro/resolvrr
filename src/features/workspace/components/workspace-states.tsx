@@ -70,6 +70,19 @@ export function DetailUnavailableState({
   );
 }
 
+export function DetailRetiredState() {
+  return (
+    <section className="flex min-h-0 flex-1 items-center justify-center border-x border-t border-slate-200 bg-white px-4 text-center">
+      <div className="max-w-sm">
+        <h2 className="text-base font-semibold text-slate-950">Ticket unavailable</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          This ticket was merged, but its destination is unavailable.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 export function DetailLoadingState() {
   return (
     <section className="flex min-h-0 flex-1 items-center justify-center border-x border-t border-slate-200 bg-white px-4 text-center">

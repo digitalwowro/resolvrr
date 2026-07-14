@@ -62,8 +62,14 @@ export async function finalizeWorkspaceTicketMutation(
     dispatchTicketDetailRead(providerContext.value, ticketExternalId),
     dispatchTicketListRead(providerContext.value, defaultTicketListQuery),
   ]);
-  if (detail.status === "unavailable") {
-    return { status: "saved-refresh-failed", reason: detail.reason, retryable: detail.retryable };
+  if (detail.status !== "available") {
+    return detail.status === "unavailable"
+      ? { status: "saved-refresh-failed", reason: detail.reason, retryable: detail.retryable }
+      : {
+          status: "saved-refresh-failed",
+          reason: "provider-unexpected-response",
+          retryable: false,
+        };
   }
   if (list.status === "unavailable") {
     return { status: "saved-refresh-failed", reason: list.reason, retryable: list.retryable };

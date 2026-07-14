@@ -5,7 +5,7 @@ import type {
   TicketMetadataMutationConstraints,
   TicketPriority,
   TicketSubscription,
-  TicketState,
+  TicketSelectableState,
 } from "@/core/tickets";
 import type {
   TicketArticleReplyContext,
@@ -47,7 +47,7 @@ export type WorkspaceTicketRow = {
   group: string;
   groupExternalId?: string;
   state: string;
-  stateKey?: TicketState;
+  stateKey?: TicketSelectableState;
   priority: string;
   priorityKey?: TicketPriority;
   createdAt?: string;
@@ -68,7 +68,7 @@ export type WorkspaceTicketTab = {
   owner: string;
   group: string;
   state: string;
-  stateKey?: TicketState;
+  stateKey?: TicketSelectableState;
   priority: string;
   priorityKey?: TicketPriority;
 };
@@ -120,7 +120,7 @@ export type WorkspaceTicketDetail = {
   group: string;
   groupExternalId?: string;
   state: string;
-  stateKey?: TicketState;
+  stateKey?: TicketSelectableState;
   priority: string;
   priorityKey?: TicketPriority;
   createdAt?: string;

@@ -4,6 +4,7 @@ import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
 import { zammadSendJson } from "./client";
 import { zammadArticleSchema } from "./schemas";
 import { zammadTicketId } from "./ticket-id";
+import { readZammadTicketForMutation } from "./ticket-mutation-preflight";
 
 export async function addZammadTicketInternalNote(
   context: ProviderContext,
@@ -13,6 +14,16 @@ export async function addZammadTicketInternalNote(
   if (!input.body.trim()) {
     throw new ProviderError("validation-failure", "Internal note body is required.");
   }
+
+  await measureTicketReadPhase(
+    "provider-metadata-mutation-current-ticket-request",
+    {
+      connectionId: context.connection.id,
+      operation: "mutation",
+      providerKey: context.connection.providerKey,
+    },
+    () => readZammadTicketForMutation(context, ticketExternalId),
+  );
 
   const response = await measureTicketReadPhase(
     "provider-metadata-mutation-request",

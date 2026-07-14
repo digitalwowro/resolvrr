@@ -4,7 +4,7 @@ import type {
   TicketLinkRelationKind,
   TicketMetadataMutationInput,
   TicketPriority,
-  TicketState,
+  TicketMutableState,
 } from "@/core/tickets";
 import type {
   TicketReplyIntent,
@@ -75,7 +75,7 @@ export type SelectedTicketUpdateMetadataPayload = {
   ownerExternalId?: string;
   pendingUntil?: string;
   priority?: TicketPriority;
-  state?: TicketState;
+  state?: TicketMutableState;
   subscriptionFollowing?: boolean;
   tags?: string[];
 };
@@ -176,7 +176,7 @@ export function hasTicketMetadataMutationInput(
   );
 }
 
-function isPendingState(state: TicketState | undefined): boolean {
+function isPendingState(state: TicketMutableState | undefined): boolean {
   return state === "pending_reminder" || state === "pending_close";
 }
 

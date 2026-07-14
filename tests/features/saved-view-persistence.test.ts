@@ -172,7 +172,7 @@ describe("saved view persistence", () => {
     });
     expect(
       savedViewQueryFromStorage({
-        states: ["closed", "provider_raw"],
+        states: ["closed", "merged", "provider_raw"],
         providerRawQuery: "raw-provider-query",
       }),
     ).toEqual({ filter: { states: ["closed"] } });

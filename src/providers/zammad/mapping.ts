@@ -28,6 +28,7 @@ const stateMap = new Map<string, TicketState>([
   ["pending reminder", "pending_reminder"],
   ["pending close", "pending_close"],
   ["closed", "closed"],
+  ["merged", "merged"],
 ]);
 
 const priorityMap = new Map<string, TicketPriority>([

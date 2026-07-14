@@ -36,6 +36,9 @@ conversation content.
   connection, provider ticket identity, and source version. It does not cache
   raw provider payloads, provider request/response bodies, or background sync
   data.
+- Merged source cache records are invalidated and never copied to the surviving
+  ticket. Only the final provider-neutral detail may be cached under the final
+  ticket identity.
 - The cache and freshness contract lives in
   `docs/architecture/cache-and-privacy-contract.md`. Durable provider cache,
   generated output cache, background sync, and webhooks must follow that
@@ -108,3 +111,5 @@ conversation content.
   review and the normal submit/update path.
 - Customer-visible communication still happens only through the selected
   helpdesk provider after explicit user review and submit.
+- A retired merged-ticket tombstone exposes neither source content nor raw
+  provider/history identifiers, and it offers no provider mutation or AI action.

@@ -21,6 +21,7 @@ import {
   type ZammadTicket,
   type ZammadUser,
 } from "./schemas";
+import { isZammadMergedTicket } from "./ticket-state";
 
 function providerDataMismatch(): ProviderError {
   return new ProviderError(
@@ -240,15 +241,18 @@ export async function mapZammadTicketListPayload(
   if (query.count?.includeTotal && payload.totalCount === undefined) {
     throw providerDataMismatch();
   }
+  const visibleTickets = payload.tickets.filter(
+    (ticket) => !isZammadMergedTicket(ticket, payload.assets),
+  );
   const [users, states, priorities] = await Promise.all([
     fetchZammadUsers(context, missingUserIds(
       payload.assets,
-      collectUserIdsFromTickets(payload.tickets),
+      collectUserIdsFromTickets(visibleTickets),
     )),
-    missingStateIds(payload.assets, payload.tickets).length > 0
+    missingStateIds(payload.assets, visibleTickets).length > 0
       ? fetchZammadNamedAssets(context, "/api/v1/ticket_states")
       : Promise.resolve({}),
-    missingPriorityIds(payload.assets, payload.tickets).length > 0
+    missingPriorityIds(payload.assets, visibleTickets).length > 0
       ? fetchZammadNamedAssets(context, "/api/v1/ticket_priorities")
       : Promise.resolve({}),
   ]);
@@ -262,7 +266,7 @@ export async function mapZammadTicketListPayload(
     context,
     missingZammadOrganizationIds({
       assets: assetsWithLookups,
-      tickets: payload.tickets,
+      tickets: visibleTickets,
     }),
     "list",
   );
@@ -276,15 +280,15 @@ export async function mapZammadTicketListPayload(
   const totalCount = query.count?.includeTotal ? payload.totalCount : undefined;
 
   return {
-    tickets: payload.tickets.map((ticket) =>
+    tickets: visibleTickets.map((ticket) =>
       mapTicketListItem(ticket, zammadBaseUrl(context), assets),
     ),
-    loadedCount: payload.tickets.length,
+    loadedCount: visibleTickets.length,
     totalCount,
     nextCursor: nextTicketListCursor(
       page,
       limit,
-      payload.tickets.length,
+      visibleTickets.length,
       totalCount,
     ),
     measuredAt: new Date(),

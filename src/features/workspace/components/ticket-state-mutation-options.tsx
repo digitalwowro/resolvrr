@@ -2,7 +2,7 @@ import type { DropdownOption } from "@/components/ui";
 import {
   ticketStates,
   ticketStateDefinitions,
-  type TicketState,
+  type TicketMutableState,
 } from "@/core/tickets";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import { StateIcon } from "./ticket-table-cells";
@@ -19,13 +19,13 @@ export function stateOptionsFor(detail: WorkspaceTicketDetail): DropdownOption[]
   );
 
   return stateOptions.filter(
-    (option) => !hiddenStates.has(option.value as TicketState),
+    (option) => !hiddenStates.has(option.value as TicketMutableState),
   );
 }
 
 export function stateRequiresPendingDate(
   detail: WorkspaceTicketDetail,
-  state: TicketState | undefined,
+  state: TicketMutableState | undefined,
 ): boolean {
   if (!state) {
     return false;
@@ -36,7 +36,7 @@ export function stateRequiresPendingDate(
   );
 }
 
-export function selectedStateDisplay(state: TicketState | undefined) {
+export function selectedStateDisplay(state: TicketMutableState | undefined) {
   return state
     ? {
         label: ticketStateDefinitions[state].label,
@@ -45,6 +45,6 @@ export function selectedStateDisplay(state: TicketState | undefined) {
     : undefined;
 }
 
-export function stateMutationLabel(state: TicketState | undefined): string {
+export function stateMutationLabel(state: TicketMutableState | undefined): string {
   return state ? ticketStateDefinitions[state].label : "Pending";
 }

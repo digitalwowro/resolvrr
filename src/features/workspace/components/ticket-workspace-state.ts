@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { TicketWorkspaceStateProps } from "./ticket-workspace-state-types";
 import { useTicketDetailLoader } from "./use-ticket-detail-loader";
 import { useTicketWorkspaceTabsState } from "./use-ticket-workspace-tabs-state";
@@ -22,10 +22,16 @@ export function useTicketWorkspaceDisplayState({
   ticketTabs,
 }: TicketWorkspaceStateProps) {
   const initialDetailResult = useMemo(
-    () => (detail ? { status: "available" as const, detail } : detailResult),
+    () =>
+      detailResult?.status === "available" && detailResult.resolution
+        ? detailResult
+        : detail
+          ? { status: "available" as const, detail }
+          : detailResult,
     [detail, detailResult],
   );
   const {
+    adoptResolvedDetail,
     cacheSelectedDetail,
     detailFor,
     ensureTicketDetail,
@@ -52,6 +58,7 @@ export function useTicketWorkspaceDisplayState({
     showTicketFromRow,
     tabOrientation,
     updateOpenTicketTabMetadata,
+    replaceMergedTicket,
   } = useTicketWorkspaceTabsState({
     cacheSelectedDetail,
     detail,
@@ -62,6 +69,8 @@ export function useTicketWorkspaceDisplayState({
     ticketTabs,
   });
   const activeDetail = detailFor(activeTicketId);
+  const handledMergeResolutions = useRef(new Set<string>());
+  const [mergeNotice, setMergeNotice] = useState<string>();
   const {
     allSelected,
     clearRowSelection,
@@ -108,6 +117,37 @@ export function useTicketWorkspaceDisplayState({
     refreshTicketDetail,
   ]);
 
+  useEffect(() => {
+    if (activeDetail?.status !== "available" || !activeDetail.resolution) {
+      return;
+    }
+    const { resolution } = activeDetail;
+    const sourceIds = resolution.sources.map((source) => source.externalId);
+    const key = `${sourceIds.join(",")}->${resolution.targetExternalId}`;
+    if (handledMergeResolutions.current.has(key)) {
+      return;
+    }
+    handledMergeResolutions.current.add(key);
+    adoptResolvedDetail(
+      sourceIds,
+      resolution.targetExternalId,
+      activeDetail,
+    );
+    replaceMergedTicket(sourceIds, activeDetail.detail);
+    const sourceNumber = resolution.sources[0]?.number ?? sourceIds[0];
+    setMergeNotice(
+      `Ticket #${sourceNumber} was merged into ${activeDetail.detail.number}.`,
+    );
+  }, [activeDetail, adoptResolvedDetail, replaceMergedTicket]);
+
+  useEffect(() => {
+    if (!mergeNotice) {
+      return;
+    }
+    const timeout = window.setTimeout(() => setMergeNotice(undefined), 6000);
+    return () => window.clearTimeout(timeout);
+  }, [mergeNotice]);
+
   function refreshList() {
     clearRowSelection();
   }
@@ -147,6 +187,7 @@ export function useTicketWorkspaceDisplayState({
     handleGroupByChange,
     isActiveTicketDetailStale,
     listActive,
+    mergeNotice,
     openTicketTabs,
     partiallySelected,
     recentTicketTabs,

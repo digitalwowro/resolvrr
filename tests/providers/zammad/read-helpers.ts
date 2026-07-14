@@ -1,4 +1,14 @@
 import type { ProviderContext } from "@/core/providers";
+import type { TicketDetail, TicketDetailProviderResult } from "@/core/tickets";
+
+export function normalTicketDetail(
+  result: TicketDetailProviderResult | undefined,
+): TicketDetail {
+  if (!result || "kind" in result) {
+    throw new Error("Expected an ordinary ticket detail result.");
+  }
+  return result;
+}
 
 export function providerContext(): ProviderContext {
   return {

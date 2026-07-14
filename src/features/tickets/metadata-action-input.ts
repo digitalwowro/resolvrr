@@ -1,4 +1,7 @@
-import type { TicketMetadataMutationInput, TicketState } from "@/core/tickets";
+import type {
+  TicketMetadataMutationInput,
+  TicketMutableState,
+} from "@/core/tickets";
 import {
   selectedTicketUpdateMetadataFields,
   selectedTicketUpdatePayloadKeys,
@@ -32,7 +35,7 @@ export type TicketMetadataMutationActionInput =
       status: "invalid";
     };
 
-function isPendingState(state: TicketState | undefined): boolean {
+function isPendingState(state: TicketMutableState | undefined): boolean {
   return state === "pending_reminder" || state === "pending_close";
 }
 

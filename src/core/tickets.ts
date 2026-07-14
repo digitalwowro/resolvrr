@@ -4,27 +4,36 @@ import type {
   TicketCustomerReplyInput,
   TicketReplyPolicy,
 } from "./ticket-replies";
+import {
+  ticketSelectableStates,
+  type TicketMutableState,
+  type TicketSelectableState,
+  type TicketState,
+} from "./ticket-lifecycle";
 
-export const ticketStates = [
-  "new",
-  "open",
-  "pending_reminder",
-  "pending_close",
-  "closed",
-] as const;
-
-export type TicketState = (typeof ticketStates)[number];
+export const ticketStates = ticketSelectableStates;
+export {
+  isTicketSelectableState,
+  ticketSelectableStates,
+  type TicketMergeResolution,
+  type TicketMutableState,
+  type TicketSelectableState,
+  type TicketState,
+} from "./ticket-lifecycle";
 
 export type TicketStateCategory = "open" | "waiting" | "closed";
 
 export type TicketStateDefinition = {
-  key: TicketState;
+  key: TicketSelectableState;
   label: string;
   category: TicketStateCategory;
   terminal: boolean;
 };
 
-export const ticketStateDefinitions: Record<TicketState, TicketStateDefinition> = {
+export const ticketStateDefinitions: Record<
+  TicketSelectableState,
+  TicketStateDefinition
+> = {
   new: { key: "new", label: "New", category: "open", terminal: false },
   open: { key: "open", label: "Open", category: "open", terminal: false },
   pending_reminder: {
@@ -40,6 +49,18 @@ export const ticketStateDefinitions: Record<TicketState, TicketStateDefinition> 
     terminal: false,
   },
   closed: { key: "closed", label: "Closed", category: "closed", terminal: true },
+};
+
+export const ticketLifecycleCategories: Record<
+  TicketState,
+  { category: TicketStateCategory; terminal: boolean }
+> = {
+  new: { category: "open", terminal: false },
+  open: { category: "open", terminal: false },
+  pending_reminder: { category: "waiting", terminal: false },
+  pending_close: { category: "waiting", terminal: false },
+  closed: { category: "closed", terminal: true },
+  merged: { category: "closed", terminal: true },
 };
 
 export const ticketPriorities = ["low", "medium", "high"] as const;
@@ -102,7 +123,7 @@ export type TicketLinkTarget = {
   externalId: TicketExternalId;
   number: string;
   priority?: TicketPriority;
-  state?: TicketState;
+  state?: TicketSelectableState;
   title: string;
 };
 
@@ -191,6 +212,22 @@ export type TicketDetail = {
   replyPolicy?: TicketReplyPolicy;
 };
 
+export type TicketDetailProviderResult =
+  | TicketDetail
+  | {
+      kind: "replaced";
+      cause: "merged";
+      sourceExternalId: TicketExternalId;
+      sourceNumber?: string;
+      targetExternalId: TicketExternalId;
+    }
+  | {
+      kind: "retired";
+      cause: "merged";
+      sourceExternalId: TicketExternalId;
+      sourceNumber?: string;
+    };
+
 export type TicketMetadataMutationInput = {
   groupExternalId?: string;
   linkAddExternalId?: string;
@@ -198,7 +235,7 @@ export type TicketMetadataMutationInput = {
   linkRemoveExternalIds?: string[];
   ownerExternalId?: string;
   subscriptionFollowing?: boolean;
-  state?: TicketState;
+  state?: TicketMutableState;
   tags?: string[];
   priority?: TicketPriority;
   pendingUntil?: Date;
@@ -212,6 +249,6 @@ export type TicketInternalNoteInput = {
 export type { TicketCustomerReplyInput };
 
 export type TicketMetadataMutationConstraints = {
-  hiddenStates?: TicketState[];
-  pendingDateRequiredStates?: Partial<Record<TicketState, string>>;
+  hiddenStates?: TicketMutableState[];
+  pendingDateRequiredStates?: Partial<Record<TicketMutableState, string>>;
 };

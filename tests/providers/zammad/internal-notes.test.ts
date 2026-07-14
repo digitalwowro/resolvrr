@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { zammadProviderPlugin } from "@/providers/zammad";
 import { safeProviderJson } from "@/security/provider-http";
-import { providerContext } from "./read-helpers";
+import { providerContext, rawTicket } from "./read-helpers";
 
 vi.mock("@/security/provider-http", () => ({
   safeProviderJson: vi.fn(),
@@ -25,6 +25,10 @@ describe("Zammad ticket article mutations", () => {
 
   it("creates an internal plain-text note article for the ticket", async () => {
     mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers(),
+      data: rawTicket,
+    }).mockResolvedValueOnce({
       status: 201,
       headers: new Headers(),
       data: {
@@ -45,7 +49,7 @@ describe("Zammad ticket article mutations", () => {
       { body: "  Checked the logs.  " },
     );
 
-    expect(mockedSafeProviderJson).toHaveBeenCalledOnce();
+    expect(mockedSafeProviderJson).toHaveBeenCalledTimes(2);
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
       "https://helpdesk.example.com/api/v1/ticket_articles",
       expect.objectContaining({
@@ -66,6 +70,10 @@ describe("Zammad ticket article mutations", () => {
 
   it("creates an internal html note article for rich staged comments", async () => {
     mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers(),
+      data: rawTicket,
+    }).mockResolvedValueOnce({
       status: 201,
       headers: new Headers(),
       data: {
@@ -118,6 +126,23 @@ describe("Zammad ticket article mutations", () => {
     });
 
     expect(mockedSafeProviderJson).not.toHaveBeenCalled();
+  });
+
+  it("does not POST an internal note to a merged ticket", async () => {
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers(),
+      data: { ...rawTicket, state: "merged" },
+    });
+
+    await expect(
+      zammadProviderPlugin.addTicketInternalNote?.(
+        providerContext(),
+        "42",
+        { body: "Do not save this." },
+      ),
+    ).rejects.toMatchObject({ diagnosticCode: "ticket-merged" });
+    expect(mockedSafeProviderJson).toHaveBeenCalledTimes(1);
   });
 
   it("does not create a customer reply without a safe customer recipient", async () => {

@@ -91,6 +91,11 @@ ticket detail and list row. If the write succeeds but refresh fails, callers
 receive `saved-refresh-failed` so UI can present a non-destructive warning.
 Optimistic metadata updates are not part of this slice.
 
+Providers must treat non-mutable terminal lifecycle records as a mutation
+precondition. Zammad re-reads the selected ticket before any metadata,
+secondary, internal-note, Reply, or Reply-all write and issues no write request
+when the source is merged.
+
 Metadata mutation and communication audit logs stay at the provider-neutral
 service boundary and record only outcome metadata such as operation kind, field
 names/counts, status, retryability, and safe provider metadata. Provider request
@@ -173,6 +178,11 @@ still be denied by instance policy at mutation time; that surfaces through the
 provider-safe metadata mutation error path.
 Zammad-backed sorting is implemented through the provider's ticket search
 endpoint with provider-neutral sort keys translated to Zammad sort fields.
+Every normal Zammad ticket collection uses the search endpoint with a
+provider-owned exclusion for the protected `merged` state, including otherwise
+unfiltered lists. The same visibility rule applies to buckets, link targets,
+related links, and notification ticket results before they cross the provider
+boundary.
 Zammad-backed total counts and state/priority grouped bucket counts use the
 documented search `with_total_count=true` response and map only
 provider-neutral `totalCount` and bucket metadata out of the provider layer.
@@ -184,6 +194,12 @@ folder: the canonical `new` state is shown as the current value when applicable
 but is omitted from the selectable state menu, and pending-state transitions
 require a future pending date/time. The UI only receives canonical hidden state
 keys, date-required state keys, and user-safe reasons.
+
+For detail reads, Zammad recognizes its protected merged state, reads the
+ticket history inside the provider, and maps the authoritative `merged_into`
+target to a provider-neutral replacement. Raw history events and target fields
+never leave `src/providers/zammad`. Missing or inaccessible destinations map to
+a retired result instead of guessing.
 
 Zammad reads request expanded/full payloads when available so provider-specific
 user assets can be mapped to canonical participants. Display names such as

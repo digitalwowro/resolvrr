@@ -28,6 +28,11 @@ describe("Zammad ticket secondary metadata mutations", () => {
       .mockResolvedValueOnce({
         status: 200,
         headers: new Headers(),
+        data: rawTicket,
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
         data: { tags: ["old", "vip"] },
       })
       .mockResolvedValueOnce({
@@ -80,12 +85,12 @@ describe("Zammad ticket secondary metadata mutations", () => {
     });
 
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
-      1,
+      2,
       "https://helpdesk.example.com/api/v1/tags?object=Ticket&o_id=42",
       expect.any(Object),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
-      2,
+      3,
       "https://helpdesk.example.com/api/v1/tags/remove",
       expect.objectContaining({
         body: JSON.stringify({
@@ -97,7 +102,7 @@ describe("Zammad ticket secondary metadata mutations", () => {
       }),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
-      3,
+      4,
       "https://helpdesk.example.com/api/v1/tags/add",
       expect.objectContaining({
         body: JSON.stringify({
@@ -109,12 +114,12 @@ describe("Zammad ticket secondary metadata mutations", () => {
       }),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
-      4,
+      5,
       "https://helpdesk.example.com/api/v1/tickets/42?expand=true&full=true",
       expect.any(Object),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
-      5,
+      6,
       "https://helpdesk.example.com/api/v1/links/remove",
       expect.objectContaining({
         body: JSON.stringify({
@@ -128,7 +133,7 @@ describe("Zammad ticket secondary metadata mutations", () => {
       }),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
-      6,
+      7,
       "https://helpdesk.example.com/api/v1/links/add",
       expect.objectContaining({
         body: JSON.stringify({
@@ -142,17 +147,17 @@ describe("Zammad ticket secondary metadata mutations", () => {
       }),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
-      7,
+      8,
       "https://helpdesk.example.com/api/v1/users/me",
       expect.any(Object),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
-      8,
+      9,
       "https://helpdesk.example.com/api/v1/mentions?mentionable_type=Ticket&mentionable_id=42",
       expect.any(Object),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
-      9,
+      10,
       "https://helpdesk.example.com/api/v1/mentions",
       expect.objectContaining({
         body: JSON.stringify({
@@ -174,7 +179,17 @@ describe("Zammad ticket secondary metadata mutations", () => {
       .mockResolvedValueOnce({
         status: 200,
         headers: new Headers(),
+        data: rawTicket,
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
         data: {},
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: rawTicket,
       })
       .mockResolvedValueOnce({
         status: 200,
@@ -197,7 +212,7 @@ describe("Zammad ticket secondary metadata mutations", () => {
     });
 
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
-      2,
+      3,
       "https://helpdesk.example.com/api/v1/links/add",
       expect.objectContaining({
         body: JSON.stringify({
@@ -211,7 +226,7 @@ describe("Zammad ticket secondary metadata mutations", () => {
       }),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
-      4,
+      6,
       "https://helpdesk.example.com/api/v1/links/add",
       expect.objectContaining({
         body: JSON.stringify({

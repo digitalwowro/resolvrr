@@ -1,4 +1,4 @@
-import type { TicketState } from "@/core/tickets";
+import type { TicketSelectableState } from "@/core/tickets";
 
 export const postUpdateNavigationStorageKey =
   "resolvrr.workspace.postUpdateNavigation";
@@ -56,7 +56,7 @@ export function shouldReturnToListAfterUpdate({
   finalState,
   navigation,
 }: {
-  finalState?: TicketState;
+  finalState?: TicketSelectableState;
   navigation: PostUpdateNavigation;
 }): boolean {
   return (

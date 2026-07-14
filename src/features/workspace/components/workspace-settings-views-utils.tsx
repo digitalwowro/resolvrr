@@ -18,7 +18,7 @@ import type {
   SavedViewColorName,
   SavedViewVisibility,
 } from "@/core/saved-views";
-import type { TicketPriority, TicketState } from "@/core/tickets";
+import type { TicketPriority, TicketSelectableState } from "@/core/tickets";
 import type { AuthUserRole } from "@/auth/types";
 import type {
   SavedViewSettingsData,
@@ -210,7 +210,7 @@ export function parseConditionValue(
   }
   if (field === "state" && kind === "state") {
     return stateOptions.some((option) => option.value === rawValue)
-      ? { kind: "state", value: rawValue as TicketState }
+      ? { kind: "state", value: rawValue as TicketSelectableState }
       : undefined;
   }
   if (field === "priority" && kind === "priority") {

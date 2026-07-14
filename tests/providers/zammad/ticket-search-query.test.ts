@@ -22,7 +22,9 @@ describe("Zammad saved-view ticket search query", () => {
       ),
     );
 
-    expect(query).toBe('NOT (state.name:"closed") AND owner_id:"77"');
+    expect(query).toBe(
+      '(NOT (state.name:"closed") AND owner_id:"77") AND NOT (state.name:"merged")',
+    );
   });
 
   it("keeps positive and negative provider-specific saved-view mapping inside Zammad", () => {
@@ -46,7 +48,7 @@ describe("Zammad saved-view ticket search query", () => {
     );
 
     expect(query).toBe(
-      'state.name:"open" AND NOT (priority.name:"1 low") AND NOT (owner_id:"88") AND owner_id:null AND group_id:"5" AND NOT (group_id:"6")',
+      '(state.name:"open" AND NOT (priority.name:"1 low") AND NOT (owner_id:"88") AND owner_id:null AND group_id:"5" AND NOT (group_id:"6")) AND NOT (state.name:"merged")',
     );
   });
 });

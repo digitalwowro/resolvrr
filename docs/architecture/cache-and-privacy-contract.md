@@ -29,6 +29,10 @@ job queues remain out of scope. Read-only AI behavior is defined separately in
   refresh, and post-save detail refresh fetch provider source-of-truth rather
   than returning a fresh database cache hit.
 - Provider detail refreshes write through to the selected-ticket detail cache.
+- Merged source details are never cached as ordinary detail. Merge resolution
+  invalidates source entries and stores only the final survivor under its own
+  provider identity; the detail cache source version is bumped when this rule
+  changes.
 - A selected-ticket Update applies metadata first and its single communication
   last, then performs one coordinated cache invalidation and provider detail/list
   refresh. Successful refreshes write the refreshed detail back to cache.
@@ -201,6 +205,9 @@ confirms the write:
 - Ticket composer drafts survive validation, provider, partial-success, and
   uncertain-delivery failures. They are cleared only after confirmed
   communication success or an explicit local discard/close action.
+- A merged source draft is never transferred to its survivor. It remains scoped
+  to the retired source until explicit discard or retention expiry, and any
+  attempted source write is rejected by provider lifecycle preflight.
 
 Invalidation must not be treated as provider write success. Provider write
 success still comes only from the provider write result. Refresh failure after a

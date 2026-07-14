@@ -33,12 +33,13 @@ export async function loadWorkspaceTicketDetailAction(
     ? await loadWorkspaceTicketDetail(...detailArgs, options)
     : await loadWorkspaceTicketDetail(...detailArgs);
 
-  if (result.status === "unavailable") {
+  if (result.status !== "available") {
     return result;
   }
 
   return {
     status: "available",
     detail: workspaceTicketDetail(result.detail),
+    resolution: result.resolution,
   };
 }

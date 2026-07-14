@@ -44,4 +44,29 @@ describe("workspace open tabs state", () => {
     expect(stored?.openTabs[1]?.id).toBe("ticket-10");
     expect(stored?.tabOrientation).toBe("vertical");
   });
+
+  it("removes legacy tabs without selectable state keys", () => {
+    const stored = workspaceOpenTabsStateFromStorage({
+      version: workspaceOpenTabsStateVersion,
+      activePane: "merged-ticket",
+      openTabs: [
+        row,
+        {
+          ...row,
+          id: "merged-ticket",
+          number: "#99",
+          state: "Unknown",
+          stateKey: undefined,
+        },
+      ],
+      recentTabs: [
+        { ...row, id: "merged-ticket", state: "Unknown", stateKey: "merged" },
+      ],
+      tabOrientation: "horizontal",
+      updatedAt: "2026-07-14T00:00:00.000Z",
+    });
+
+    expect(stored?.openTabs.map((tab) => tab.id)).toEqual([row.id]);
+    expect(stored?.recentTabs).toEqual([]);
+  });
 });

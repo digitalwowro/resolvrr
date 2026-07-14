@@ -1,7 +1,8 @@
 import { ProviderError, type ProviderContext } from "@/core/providers";
-import type {
-  TicketLinkTarget,
-  TicketLinkTargetSearchInput,
+import {
+  isTicketSelectableState,
+  type TicketLinkTarget,
+  type TicketLinkTargetSearchInput,
 } from "@/core/tickets";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
 import { mapTicket } from "./mapping";
@@ -13,6 +14,8 @@ import {
   type ZammadAssets,
   type ZammadTicket,
 } from "./schemas";
+import { isZammadMergedTicket } from "./ticket-state";
+import { zammadVisibleTicketQuery } from "./ticket-search-query";
 
 function providerDataMismatch(): ProviderError {
   return new ProviderError(
@@ -82,7 +85,7 @@ function linkTarget(
     externalId: mapped.externalId,
     number: mapped.number,
     priority: mapped.priority,
-    state: mapped.state,
+    state: isTicketSelectableState(mapped.state) ? mapped.state : undefined,
     title: mapped.title,
   };
 }
@@ -113,7 +116,7 @@ export async function searchZammadLinkTargets(
   context: ProviderContext,
   input: TicketLinkTargetSearchInput,
 ): Promise<TicketLinkTarget[]> {
-  const query = zammadCustomerLinkTargetQuery(input);
+    const query = zammadCustomerLinkTargetQuery(input);
   if (!query) {
     return [];
   }
@@ -125,7 +128,7 @@ export async function searchZammadLinkTargets(
       const params = new URLSearchParams({
         full: "true",
         limit: String(input.limit ?? 8),
-        query,
+        query: zammadVisibleTicketQuery(query),
       });
       const raw = await zammadGetJson(
         context,
@@ -142,7 +145,8 @@ export async function searchZammadLinkTargets(
           const externalId = relationId(ticket.id);
           return (
             externalId &&
-            externalId !== input.excludeTicketExternalId
+            externalId !== input.excludeTicketExternalId &&
+            !isZammadMergedTicket(ticket, payload.assets)
           );
         })
         .map((ticket) =>

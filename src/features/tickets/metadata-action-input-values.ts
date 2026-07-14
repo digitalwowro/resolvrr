@@ -4,7 +4,7 @@ import {
   ticketStates,
   type TicketLinkRelationKind,
   type TicketPriority,
-  type TicketState,
+  type TicketMutableState,
 } from "@/core/tickets";
 
 export function objectValue(
@@ -55,8 +55,8 @@ export function hasUnsupportedKeys(
   return Object.keys(record).some((key) => !allowedKeys.includes(key));
 }
 
-export function isTicketState(value: string): value is TicketState {
-  return ticketStates.includes(value as TicketState);
+export function isTicketState(value: string): value is TicketMutableState {
+  return ticketStates.includes(value as TicketMutableState);
 }
 
 export function isTicketPriority(value: string): value is TicketPriority {

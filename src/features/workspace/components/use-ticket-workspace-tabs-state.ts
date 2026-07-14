@@ -7,6 +7,7 @@ import type {
 } from "@/features/tickets/workspace-adapter";
 import {
   cappedWorkspaceTabs,
+  workspaceTabFromDetail,
   workspaceOpenTabsStateVersion,
   type SaveWorkspaceOpenTabsStateAction,
   type WorkspaceOpenTabsState,
@@ -100,6 +101,45 @@ export function useTicketWorkspaceTabsState({
   function updateOpenTicketTabMetadata(patch: TicketMetadataSavedPatch) {
     setOpenTicketTabs((current) => patchTicketTabMetadata(current, patch));
     setRecentTicketTabs((current) => patchTicketTabMetadata(current, patch));
+  }
+
+  function replaceMergedTicket(
+    sourceTicketIds: string[],
+    targetDetail: WorkspaceTicketDetail,
+  ) {
+    const sourceIds = new Set(sourceTicketIds);
+    const targetTab = workspaceTabFromDetail(targetDetail);
+    const replaceTabs = (tabs: WorkspaceTicketTab[]) => {
+      const firstSourceIndex = tabs.findIndex((tab) => sourceIds.has(tab.id));
+      const withoutSourcesOrTarget = tabs.filter(
+        (tab) => !sourceIds.has(tab.id) && tab.id !== targetTab.id,
+      );
+      const targetIndex = firstSourceIndex < 0
+        ? 0
+        : Math.min(firstSourceIndex, withoutSourcesOrTarget.length);
+      withoutSourcesOrTarget.splice(targetIndex, 0, targetTab);
+      return cappedWorkspaceTabs(withoutSourcesOrTarget);
+    };
+
+    setOpenTicketTabs(replaceTabs);
+    setRecentTicketTabs((current) =>
+      cappedWorkspaceTabs([
+        targetTab,
+        ...current.filter(
+          (tab) => !sourceIds.has(tab.id) && tab.id !== targetTab.id,
+        ),
+      ]),
+    );
+    if (
+      activeWorkspacePane !== "list" &&
+      (sourceIds.has(activeWorkspacePane.ticketId) ||
+        activeWorkspacePane.ticketId === targetTab.id)
+    ) {
+      if (sourceIds.has(activeWorkspacePane.ticketId)) {
+        setActiveWorkspacePane({ ticketId: targetTab.id });
+      }
+      replaceWorkspaceUrl(targetTab.id);
+    }
   }
 
   function rememberOpenTicket(ticketId: string) {
@@ -224,6 +264,7 @@ export function useTicketWorkspaceTabsState({
     listActive,
     openTicketTabs,
     recentTicketTabs,
+    replaceMergedTicket,
     reorderOpenTicketTabs,
     returnActiveTicketToList,
     setTabOrientation,

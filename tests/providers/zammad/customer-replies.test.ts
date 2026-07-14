@@ -147,4 +147,48 @@ describe("Zammad contextual customer reply mutations", () => {
     expect(mockedSafeProviderJson).toHaveBeenCalledTimes(3);
     expect(mockedSafeProviderJson.mock.calls.some((call) => call[1]?.method === "POST")).toBe(false);
   });
+
+  it("does not POST a reply when the ticket is merged", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          assets: {
+            Ticket: { "42": { ...ticket, state: "merged" } },
+            User: { "10": user },
+          },
+          record_ids: [42],
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: article(),
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [{ id: 1, email: "support@example.com", active: true }],
+      });
+
+    await expect(
+      zammadProviderPlugin.addTicketCustomerReply?.(
+        providerContext(),
+        "42",
+        {
+          body: "Do not send",
+          cc: [],
+          contextVersion: "unused",
+          intent: "reply-all",
+          sourceArticleExternalId: "500",
+          to: ["maya@example.com"],
+        },
+      ),
+    ).rejects.toMatchObject({ diagnosticCode: "ticket-merged" });
+
+    expect(
+      mockedSafeProviderJson.mock.calls.some((call) => call[1]?.method === "POST"),
+    ).toBe(false);
+  });
 });

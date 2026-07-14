@@ -48,7 +48,6 @@ import {
   loadWorkspaceTicketList,
   selectedTicketExternalId,
   ticketListQueryCapabilities,
-  workspaceTicketDetail,
   workspaceTicketRows,
   workspaceTicketTabs,
 } from "@/features/tickets";
@@ -88,6 +87,7 @@ import { TicketWorkspace } from "@/features/workspace/components/ticket-workspac
 import { providerRegistry } from "@/providers";
 import {
   savedViewTicketListQuery,
+  workspaceDetailSeed,
   workspaceMenuConnections,
 } from "./workspace-page-helpers";
 
@@ -179,23 +179,13 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           prismaTicketDetailCacheRepository,
         )
       : undefined;
-  const workspaceDetailResult =
-    detailResult?.status === "available"
-      ? {
-          status: "available" as const,
-          detail: workspaceTicketDetail(detailResult.detail),
-        }
-      : detailResult;
-  const detail =
-    workspaceDetailResult?.status === "available"
-      ? workspaceDetailResult.detail
-      : undefined;
+  const workspaceSeed = workspaceDetailSeed(detailResult, selectedTicketId);
   const initialCachedSummary =
     detailResult?.status === "available" && detailResult.helpdeskConnectionId
       ? await loadInitialTicketAiSummary({
           detail: detailResult.detail,
           helpdeskConnectionId: detailResult.helpdeskConnectionId,
-          ticketExternalId: selectedTicketId ?? detailResult.detail.ticket.externalId,
+          ticketExternalId: detailResult.detail.ticket.externalId,
           userId: user.id,
         })
       : undefined;
@@ -215,8 +205,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       deleteConnectionAction={deleteHelpdeskConnectionAction}
       deleteManagedUserAction={deleteManagedUserAction}
       deleteWorkspaceAiRephraseStyleAction={deleteWorkspaceAiRephraseStyleAction}
-      detail={detail}
-      detailResult={workspaceDetailResult}
+      detail={workspaceSeed.detail}
+      detailResult={workspaceSeed.detailResult}
       disableConnectionAction={disableHelpdeskConnectionAction}
       listResult={listResult}
       loadAiPromptCenterAction={loadAiPromptCenterAction}
@@ -241,8 +231,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       deleteSavedViewAction={deleteWorkspaceSavedViewAction}
       initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
       initialTicketAiSummary={
-        initialCachedSummary && selectedTicketId
-          ? { result: initialCachedSummary, ticketId: selectedTicketId }
+        initialCachedSummary && workspaceSeed.detail
+          ? { result: initialCachedSummary, ticketId: workspaceSeed.detail.id }
           : undefined
       }
       initialSavedViewSettingsData={savedViewSettingsDataFromStored({
@@ -279,7 +269,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           : activeQueryCapabilities,
       )}
       selectedSavedViewId={selectedSavedViewId}
-      selectedTicketId={selectedTicketId}
+      selectedTicketId={workspaceSeed.selectedTicketId}
       setActiveConnectionAction={setActiveHelpdeskConnectionAction}
       setDefaultSavedViewAction={setDefaultWorkspaceSavedViewAction}
       tabs={workspaceTicketTabs(rows)}

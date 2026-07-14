@@ -148,6 +148,12 @@ describe("ticket metadata action input", () => {
     ).toEqual({ status: "invalid", field: "state" });
     expect(
       ticketMetadataMutationActionInput({
+        metadata: { state: "merged" },
+        ticketExternalId: "ticket-1",
+      }),
+    ).toEqual({ status: "invalid", field: "state" });
+    expect(
+      ticketMetadataMutationActionInput({
         metadata: { priority: "high" },
         ticketExternalId: "",
       }),

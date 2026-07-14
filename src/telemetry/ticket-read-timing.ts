@@ -11,6 +11,7 @@ export type TicketReadTimingPhase =
   | "cache-detail-write"
   | "cache-detail-invalidation"
   | "provider-detail-metadata-request"
+  | "provider-merged-ticket-history-request"
   | "provider-detail-refresh"
   | "provider-secondary-tags-request"
   | "provider-secondary-links-request"

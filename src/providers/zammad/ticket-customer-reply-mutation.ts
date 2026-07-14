@@ -9,13 +9,15 @@ import { readOptionalZammadReplyPolicy } from "./reply-policy";
 import { zammadReplyContext } from "./reply-context";
 import {
   zammadArticleSchema,
-  zammadFullTicketPayloadSchema,
-  zammadTicketSchema,
   zammadUserSchema,
   type ZammadAssets,
   type ZammadTicket,
 } from "./schemas";
 import { zammadTicketId } from "./ticket-id";
+import {
+  assertZammadTicketNotMerged,
+  zammadTicketPayload,
+} from "./ticket-mutation-preflight";
 
 const recipientSchema = z.string().trim().toLowerCase().max(254).email();
 
@@ -27,25 +29,6 @@ function providerMismatch(code?: string): ProviderError {
     undefined,
     code,
   );
-}
-
-function ticketPayload(payload: unknown): { ticket: ZammadTicket; assets?: ZammadAssets } {
-  const full = zammadFullTicketPayloadSchema.safeParse(payload);
-  if (full.success) {
-    const records = full.data.assets.Ticket;
-    const id = full.data.record_ids?.[0];
-    const ticket = id === undefined
-      ? Object.values(records ?? {})[0]
-      : records?.[String(id)];
-    if (ticket) {
-      return { ticket, assets: full.data.assets };
-    }
-  }
-  const ticket = zammadTicketSchema.safeParse(payload);
-  if (!ticket.success) {
-    throw providerMismatch();
-  }
-  return { ticket: ticket.data };
 }
 
 async function customerForTicket(
@@ -122,7 +105,8 @@ async function freshReplyContext(
   if (!managedAddresses) {
     throw providerMismatch("reply-context-unavailable");
   }
-  const payload = ticketPayload(rawTicket);
+  const payload = zammadTicketPayload(rawTicket);
+  assertZammadTicketNotMerged(payload);
   const article = zammadArticleSchema.safeParse(rawArticle);
   if (!article.success || article.data.ticket_id !== ticketId) {
     throw providerMismatch("reply-context-unavailable");

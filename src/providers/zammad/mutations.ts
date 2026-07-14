@@ -3,10 +3,10 @@ import type {
   Ticket,
   TicketMetadataMutationInput,
   TicketPriority,
-  TicketState,
+  TicketMutableState,
 } from "@/core/tickets";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
-import { zammadBaseUrl, zammadGetJson, zammadSendJson } from "./client";
+import { zammadBaseUrl, zammadSendJson } from "./client";
 import { mapTicket } from "./mapping";
 import {
   zammadStateMutationUnavailableReason,
@@ -17,14 +17,9 @@ import {
   updateZammadTicketSubscription,
   updateZammadTicketTags,
 } from "./ticket-secondary-mutations";
-import {
-  zammadFullTicketPayloadSchema,
-  zammadTicketSchema,
-  type ZammadAssets,
-  type ZammadTicket,
-} from "./schemas";
+import { readZammadTicketForMutation } from "./ticket-mutation-preflight";
 
-const zammadStateByCanonical: Record<TicketState, string> = {
+const zammadStateByCanonical: Record<TicketMutableState, string> = {
   new: "new",
   open: "open",
   pending_reminder: "pending reminder",
@@ -87,48 +82,11 @@ function assertNoOrphanPendingDate(input: TicketMetadataMutationInput) {
   }
 }
 
-function providerDataMismatch(): ProviderError {
-  return new ProviderError(
-    "provider-data-mismatch",
-    "The helpdesk provider returned an unexpected response.",
-  );
-}
-
-function firstTicketPayloadRecord(raw: unknown): {
-  assets?: ZammadAssets;
-  ticket: ZammadTicket;
-} {
-  const fullPayload = zammadFullTicketPayloadSchema.safeParse(raw);
-  if (fullPayload.success) {
-    const firstRecordId = fullPayload.data.record_ids?.[0];
-    const ticket =
-      firstRecordId !== undefined
-        ? fullPayload.data.assets.Ticket?.[String(firstRecordId)]
-        : Object.values(fullPayload.data.assets.Ticket ?? {})[0];
-    if (!ticket) {
-      throw providerDataMismatch();
-    }
-    return { assets: fullPayload.data.assets, ticket };
-  }
-
-  const ticket = zammadTicketSchema.safeParse(raw);
-  if (!ticket.success) {
-    throw providerDataMismatch();
-  }
-
-  return { ticket: ticket.data };
-}
-
 async function currentTicketForMutation(
   context: ProviderContext,
   ticketExternalId: string,
-): Promise<{ assets?: ZammadAssets; ticket: ZammadTicket }> {
-  const ticketId = encodeURIComponent(ticketExternalId);
-  const rawTicket = await zammadGetJson(
-    context,
-    `/api/v1/tickets/${ticketId}?expand=true&full=true`,
-  );
-  return firstTicketPayloadRecord(rawTicket);
+) {
+  return readZammadTicketForMutation(context, ticketExternalId);
 }
 
 async function currentMappedTicketForMutation(
@@ -143,24 +101,14 @@ async function currentMappedTicketForMutation(
   return mapTicket(ticket, zammadBaseUrl(context), assets);
 }
 
-async function assertZammadStateMutationAllowed(
-  context: ProviderContext,
-  ticketExternalId: string,
+function assertZammadStateMutationAllowed(
+  currentTicket: Ticket,
   input: TicketMetadataMutationInput,
-): Promise<void> {
+): void {
   if (!input.state) {
     return;
   }
 
-  const currentTicket = await measureTicketReadPhase(
-    "provider-metadata-mutation-current-ticket-request",
-    {
-      connectionId: context.connection.id,
-      operation: "mutation",
-      providerKey: context.connection.providerKey,
-    },
-    () => currentMappedTicketForMutation(context, ticketExternalId),
-  );
   const unavailableReason = zammadStateMutationUnavailableReason(
     currentTicket,
     input.state,
@@ -202,7 +150,16 @@ export async function updateZammadTicketMetadata(
     );
   }
   assertNoOrphanPendingDate(input);
-  await assertZammadStateMutationAllowed(context, ticketExternalId, input);
+  const currentTicket = await measureTicketReadPhase(
+    "provider-metadata-mutation-current-ticket-request",
+    {
+      connectionId: context.connection.id,
+      operation: "mutation",
+      providerKey: context.connection.providerKey,
+    },
+    () => currentMappedTicketForMutation(context, ticketExternalId),
+  );
+  assertZammadStateMutationAllowed(currentTicket, input);
 
   if (Object.keys(payload).length > 0) {
     await measureTicketReadPhase(

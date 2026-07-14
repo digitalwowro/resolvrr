@@ -22,6 +22,7 @@ import { WorkspaceHeaderChrome, WorkspaceTabsChrome } from "./ticket-workspace-c
 import { useTicketWorkspaceSavedViewSelection } from "./use-ticket-workspace-saved-view-selection";
 import { clearPersistedCommunicationDrafts } from "./ticket-communication-draft-persistence";
 import { TicketWorkspaceDisplayWorkArea } from "./ticket-workspace-display-work-area";
+import { TicketMergeNotice } from "./ticket-merge-notice";
 
 export function TicketWorkspaceDisplay({
   connections,
@@ -231,6 +232,7 @@ export function TicketWorkspaceDisplay({
 
   return (
     <>
+      <TicketMergeNotice message={displayState.mergeNotice} />
       <WorkspaceHeaderChrome
         activeTicketId={activeTicketId}
         connections={connections}

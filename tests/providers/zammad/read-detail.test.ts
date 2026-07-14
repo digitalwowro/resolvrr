@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { zammadProviderPlugin } from "@/providers/zammad";
 import { safeProviderJson } from "@/security/provider-http";
-import { providerContext, rawArticle, rawTicket } from "./read-helpers";
+import { normalTicketDetail, providerContext, rawArticle, rawTicket } from "./read-helpers";
 
 vi.mock("@/security/provider-http", () => ({
   safeProviderJson: vi.fn(),
@@ -23,6 +23,77 @@ describe("Zammad ticket detail reads", () => {
     vi.clearAllMocks();
   });
 
+  it("returns the authoritative replacement for a merged ticket", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { ...rawTicket, state: "merged" },
+      })
+      .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: [] })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          assets: {},
+          history: [{ type: "merged_into", id_to: 84 }],
+        },
+      });
+
+    await expect(
+      zammadProviderPlugin.getTicketDetail?.(providerContext(), "42"),
+    ).resolves.toEqual({
+      kind: "replaced",
+      cause: "merged",
+      sourceExternalId: "42",
+      sourceNumber: "42042",
+      targetExternalId: "84",
+    });
+    expect(mockedSafeProviderJson).toHaveBeenCalledTimes(3);
+  });
+
+  it("retires a merged ticket whose history has no usable target", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { ...rawTicket, state: "merged" },
+      })
+      .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: [] })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { assets: {}, history: [{ type: "merged_into", value_to: "deleted" }] },
+      });
+
+    await expect(
+      zammadProviderPlugin.getTicketDetail?.(providerContext(), "42"),
+    ).resolves.toMatchObject({
+      kind: "retired",
+      cause: "merged",
+      sourceExternalId: "42",
+    });
+  });
+
+  it("retires a merged ticket when its merge history is inaccessible", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { ...rawTicket, state: "merged" },
+      })
+      .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: [] })
+      .mockRejectedValueOnce(new Error("denied"));
+
+    await expect(
+      zammadProviderPlugin.getTicketDetail?.(providerContext(), "42"),
+    ).resolves.toMatchObject({
+      kind: "retired",
+      cause: "merged",
+      sourceExternalId: "42",
+    });
+  });
+
   it("maps Zammad detail and thread without optional feature leakage", async () => {
     const consoleInfo = vi
       .spyOn(console, "info")
@@ -39,9 +110,8 @@ describe("Zammad ticket detail reads", () => {
         data: [rawArticle],
       });
 
-    const result = await zammadProviderPlugin.getTicketDetail?.(
-      providerContext(),
-      "42",
+    const result = normalTicketDetail(
+      await zammadProviderPlugin.getTicketDetail?.(providerContext(), "42"),
     );
 
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
@@ -176,9 +246,8 @@ describe("Zammad ticket detail reads", () => {
         },
       });
 
-    const result = await zammadProviderPlugin.getTicketDetail?.(
-      providerContext(),
-      "42",
+    const result = normalTicketDetail(
+      await zammadProviderPlugin.getTicketDetail?.(providerContext(), "42"),
     );
 
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(

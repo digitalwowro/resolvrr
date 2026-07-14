@@ -1,4 +1,4 @@
-import type { TicketPriority, TicketState } from "./tickets";
+import type { TicketPriority, TicketSelectableState } from "./tickets";
 import {
   savedViewConditionFields,
   savedViewConditionOperators,
@@ -56,7 +56,7 @@ function normalizeConditionValue(
       "pending_reminder",
       "pending_close",
       "closed",
-    ] satisfies TicketState[])
+    ] satisfies TicketSelectableState[])
   ) {
     return { kind: "state", value: value.value };
   }

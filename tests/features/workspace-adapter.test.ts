@@ -6,6 +6,19 @@ import {
 } from "@/features/tickets";
 
 describe("workspace ticket adapter date formatting", () => {
+  it("does not adapt merged lifecycle records into workspace rows", () => {
+    const merged = {
+      externalId: "merged-source",
+      number: "99",
+      title: "Retired source",
+      state: "merged",
+      tags: [],
+      updatedAt: new Date("2026-05-17T16:49:00Z"),
+    } satisfies TicketListItem;
+
+    expect(workspaceTicketRows([merged])).toEqual([]);
+  });
+
   it("uses the shared workspace relative time format for rows and detail threads", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-05-25T12:00:00Z"));

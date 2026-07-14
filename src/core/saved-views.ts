@@ -1,4 +1,4 @@
-import type { TicketPriority, TicketState } from "./tickets";
+import type { TicketPriority, TicketSelectableState } from "./tickets";
 import type {
   TicketListGroupKey,
   TicketListGroupRequest,
@@ -92,14 +92,14 @@ export function normalizeSavedViewFilter(
     "pending_reminder",
     "pending_close",
     "closed",
-  ] satisfies TicketState[]);
+  ] satisfies TicketSelectableState[]);
   const excludedStates = canonicalList(filter.excludedStates, [
     "new",
     "open",
     "pending_reminder",
     "pending_close",
     "closed",
-  ] satisfies TicketState[]);
+  ] satisfies TicketSelectableState[]);
   const priorities = canonicalList(filter.priorities, [
     "low",
     "medium",

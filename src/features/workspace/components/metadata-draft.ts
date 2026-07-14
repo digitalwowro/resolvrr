@@ -1,4 +1,4 @@
-import type { TicketState } from "@/core/tickets";
+import type { TicketMutableState } from "@/core/tickets";
 import { normalizedReplyRecipients } from "@/features/tickets/reply-input";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import {
@@ -17,7 +17,7 @@ export * from "./metadata-draft-types";
 export { communicationDraftNeedsReplacementConfirmation } from "./communication-draft";
 export { metadataDraftUpdatePayload } from "./metadata-draft-payload";
 
-function isPendingState(state: TicketState | undefined): boolean {
+function isPendingState(state: TicketMutableState | undefined): boolean {
   return state === "pending_reminder" || state === "pending_close";
 }
 

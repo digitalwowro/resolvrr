@@ -179,7 +179,30 @@ export function useTicketDetailLoader({
     return loadedAt === undefined || Date.now() - loadedAt >= staleMs;
   }
 
+  function adoptResolvedDetail(
+    sourceTicketIds: string[],
+    targetTicketId: string,
+    result: WorkspaceTicketDetailLoadResult,
+  ) {
+    const loadedAt = Date.now();
+    detailLoadedAtRef.current = {
+      ...detailLoadedAtRef.current,
+      ...Object.fromEntries(sourceTicketIds.map((ticketId) => [ticketId, loadedAt])),
+      [targetTicketId]: loadedAt,
+    };
+    setDetailCacheState((current) => {
+      const next = { ...current, [targetTicketId]: result };
+      for (const sourceTicketId of sourceTicketIds) {
+        if (sourceTicketId !== targetTicketId) {
+          delete next[sourceTicketId];
+        }
+      }
+      return next;
+    });
+  }
+
   return {
+    adoptResolvedDetail,
     cacheSelectedDetail,
     detailFor,
     ensureTicketDetail,

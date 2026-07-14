@@ -10,6 +10,7 @@ import type {
   TicketExternalId,
   TicketPriority,
   TicketState,
+  TicketSelectableState,
   TicketThread,
 } from "@/core/tickets";
 import type { TicketDetailCacheRepository } from "@/features/tickets/cache-repository";
@@ -17,10 +18,10 @@ import { decryptSecret, encryptSecret } from "@/security/encryption";
 import { cacheAgeBucket } from "@/telemetry/cache-age-bucket";
 import { prisma } from "./prisma";
 
-const detailCacheSourceVersion = "ticket-detail-v1";
+const detailCacheSourceVersion = "ticket-detail-v2";
 const detailCacheTtlMs = 5 * 60 * 1000;
 
-const stateToDb: Record<TicketState, DbTicketState> = {
+const stateToDb: Record<TicketSelectableState, DbTicketState> = {
   closed: DbTicketState.CLOSED,
   new: DbTicketState.NEW,
   open: DbTicketState.OPEN,
@@ -114,7 +115,7 @@ function restoreTicketDetail(detail: SerializedTicketDetail): TicketDetail {
 }
 
 function dbState(state: TicketState | undefined) {
-  return state ? stateToDb[state] : undefined;
+  return state && state !== "merged" ? stateToDb[state] : undefined;
 }
 
 function dbPriority(priority: TicketPriority | undefined) {
@@ -176,6 +177,9 @@ export const prismaTicketDetailCacheRepository: TicketDetailCacheRepository = {
   async storeTicketDetail(input) {
     const now = input.now ?? new Date();
     const { detail } = input;
+    if (detail.ticket.state === "merged") {
+      return;
+    }
     const encryptedDetailJson = encryptSecret(
       JSON.stringify(serializeTicketDetail(detail)),
       input.encryptionKey,

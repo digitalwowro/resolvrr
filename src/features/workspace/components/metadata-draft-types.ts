@@ -1,7 +1,7 @@
 import type {
   TicketLinkRelationKind,
   TicketPriority,
-  TicketState,
+  TicketMutableState,
 } from "@/core/tickets";
 import type { TicketReplyIntent } from "@/core/ticket-replies";
 import type { PendingDateTimeParts } from "./ticket-pending-date-time";
@@ -14,7 +14,7 @@ export type TicketMetadataDraft = {
   ownerExternalId?: string;
   pendingDateTime: PendingDateTimeParts;
   priority?: TicketPriority;
-  state?: TicketState;
+  state?: TicketMutableState;
   subscriptionFollowing?: boolean;
   tagText: string;
   tags: string[];
@@ -78,7 +78,7 @@ export type TicketMetadataSavedPatch = {
   group?: string;
   owner?: string;
   priority?: TicketPriority;
-  state?: TicketState;
+  state?: TicketMutableState;
   subscriptionFollowing?: boolean;
   tags?: string[];
   ticketExternalId: string;

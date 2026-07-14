@@ -14,6 +14,12 @@ Ticket state values are stable machine keys:
 - `pending_close`
 - `closed`
 
+Providers may additionally observe `merged` as an internal terminal lifecycle
+condition. It is not selectable or mutable: saved views, filters, groups,
+pickers, state controls, and mutation inputs use `TicketSelectableState` /
+`TicketMutableState`, which contain only the five values above. No user-facing
+state definition or label exists for `merged`.
+
 Ticket priority values are stable machine keys:
 
 - `low`
@@ -89,7 +95,7 @@ The approved mutation contract covers state, priority, owner assignment, group
 assignment, tags, related ticket links, and subscription/following state. Core,
 service, and UI code use provider-neutral keys:
 
-- `TicketMetadataMutationInput.state?: TicketState`
+- `TicketMetadataMutationInput.state?: TicketMutableState`
 - `TicketMetadataMutationInput.priority?: TicketPriority`
 - `TicketMetadataMutationInput.ownerExternalId?: string`
 - `TicketMetadataMutationInput.groupExternalId?: string`
@@ -245,6 +251,13 @@ detail shape:
 UI code must not infer capability support by checking for missing fields.
 Capability checks remain explicit through the provider contract.
 
+Detail providers may return a normal detail, a provider-neutral merged-ticket
+replacement, or a retired merged source. The ticket feature follows at most ten
+replacement hops, detects cycles, invalidates every source cache key, and
+returns only the final survivor. A source whose destination cannot be safely
+resolved produces a non-retryable retired result and no ticket content or
+mutation surface.
+
 ## Provider Capabilities
 
 Read-path capabilities:
@@ -313,6 +326,11 @@ Ticket list reads use `TicketListQuery`:
   limited to whether a total count is requested.
 - `group`: optional provider-neutral bucket request keyed by `state`,
   `priority`, `owner`, `customer`, or `group`.
+
+Terminal provider lifecycle records that are not selectable tickets are
+excluded by the provider before pagination and counts. They must not produce
+sparse pages, incorrect totals, state buckets, link targets, related-ticket
+entries, or notification ticket results.
 
 The provider-neutral list query guardrail model exposes these capabilities to
 features:
@@ -411,6 +429,7 @@ The read path logs sanitized timing metadata for these phases:
 - provider list request;
 - provider detail metadata request;
 - provider article/thread request;
+- provider merged-ticket history request;
 - provider secondary tags request;
 - provider secondary links request;
 - provider secondary group lookup request;
@@ -450,9 +469,14 @@ as explicit measured phases when they become part of the coordinated read path.
 Optional secondary read failures should not take down an otherwise available
 selected-ticket detail when a provider-neutral fallback is available.
 
+Every provider ticket mutation must freshly reject a merged source before the
+first write. A failed lifecycle preflight is fail-closed: no ticket, article,
+tag, link, subscription, or communication write may follow it.
+
 ## Non-Goals
 
-- Ticket create, merge, and split mutations.
+- Ticket create, merge, and split mutations. Read-time resolution of merges is
+  implemented; Resolvrr never performs the merge itself.
 - Attachment downloads or previews.
 - Provider-backed ticket caching policy.
 - Saved-view management, background sync, or AI workflows.

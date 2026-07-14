@@ -1,6 +1,31 @@
 import type { TicketListQueryInput } from "@/core/providers";
 import type { StoredSavedView } from "@/features/saved-views";
 import type { ConnectionListItem } from "@/features/helpdesk-connections/service-types";
+import type { TicketDetailReadResult } from "@/features/tickets/read-model";
+import { workspaceTicketDetail } from "@/features/tickets/workspace-adapter";
+
+export function workspaceDetailSeed(
+  result: TicketDetailReadResult | undefined,
+  selectedTicketId: string | undefined,
+) {
+  const detailResult = result?.status === "available"
+    ? {
+        status: "available" as const,
+        detail: workspaceTicketDetail(result.detail),
+        resolution: result.resolution,
+      }
+    : result;
+  return {
+    detail: detailResult?.status === "available"
+      ? detailResult.detail
+      : undefined,
+    detailResult,
+    selectedTicketId:
+      result?.status === "available" && result.resolution
+        ? result.resolution.targetExternalId
+        : selectedTicketId,
+  };
+}
 
 export function savedViewTicketListQuery(
   savedView: StoredSavedView | undefined,

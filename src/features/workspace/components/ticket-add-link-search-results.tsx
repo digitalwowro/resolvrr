@@ -1,5 +1,6 @@
 import { cn } from "@/components/ui/classnames";
 import {
+  isTicketSelectableState,
   ticketPriorityDefinitions,
   ticketStateDefinitions,
 } from "@/core/tickets";
@@ -42,7 +43,9 @@ function unavailableMessage(result: WorkspaceTicketLinkTargetSearchResult) {
 function contextLine(target: WorkspaceTicketLinkTarget) {
   return [
     target.customer,
-    target.state ? ticketStateDefinitions[target.state].label : undefined,
+    isTicketSelectableState(target.state)
+      ? ticketStateDefinitions[target.state].label
+      : undefined,
     target.priority ? ticketPriorityDefinitions[target.priority].label : undefined,
   ].filter(Boolean).join(" · ");
 }

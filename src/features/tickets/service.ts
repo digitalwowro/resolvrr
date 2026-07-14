@@ -10,7 +10,6 @@ import {
 } from "@/telemetry/ticket-read-timing";
 import { loadActiveTicketProviderContext } from "./connection-context";
 import {
-  dispatchTicketDetailRead,
   dispatchTicketListRead,
   dispatchTicketLookupDataRead,
 } from "./provider-dispatch";
@@ -26,10 +25,7 @@ import {
   type TicketListReadResult,
 } from "./read-model";
 import { countAwareListQueryInput } from "./service-list-query";
-import {
-  readFreshTicketDetailCache,
-  storeTicketDetailCache,
-} from "./service-cache";
+import { loadResolvedTicketDetail } from "./detail-resolution-service";
 export { updateWorkspaceTicketMetadata } from "./metadata-mutation-service";
 
 export async function loadWorkspaceTicketList(
@@ -131,35 +127,7 @@ export async function loadWorkspaceTicketDetail(
     return providerContext;
   }
 
-  if (options.cacheMode !== "bypass") {
-    const cachedDetail = await readFreshTicketDetailCache({
-      cacheRepository,
-      encryptionKey,
-      operation: "detail",
-      providerContext: providerContext.value,
-      ticketExternalId,
-      userId,
-    });
-    if (cachedDetail) {
-      const lookupData = await dispatchTicketLookupDataRead(providerContext.value);
-      recordTicketReadTiming({
-        connectionId: providerContext.value.context.connection.id,
-        durationMs: ticketReadTimingDuration(totalStart),
-        operation: "detail",
-        phase: "total-detail-load",
-        providerKey: providerContext.value.context.connection.providerKey,
-        status: "ok",
-      });
-      return {
-        status: "available",
-        helpdeskConnectionId: providerContext.value.context.connection.id,
-        detail: {
-          ...cachedDetail,
-          lookupData,
-        },
-      };
-    }
-  } else {
+  if (options.cacheMode === "bypass") {
     recordTicketReadTiming({
       cacheDataKind: "ticket-detail",
       cacheEvent: "bypass",
@@ -183,11 +151,18 @@ export async function loadWorkspaceTicketDetail(
     status: "ok",
   });
   const refreshStart = ticketReadTimingStart();
-  let result: TicketDetailReadResult;
+  let result: Awaited<ReturnType<typeof loadResolvedTicketDetail>>;
   let lookupData: Awaited<ReturnType<typeof dispatchTicketLookupDataRead>>;
   try {
     [result, lookupData] = await Promise.all([
-      dispatchTicketDetailRead(providerContext.value, ticketExternalId),
+      loadResolvedTicketDetail({
+        cacheRepository,
+        encryptionKey,
+        options,
+        providerContext: providerContext.value,
+        requestedExternalId: ticketExternalId,
+        userId,
+      }),
       dispatchTicketLookupDataRead(providerContext.value),
     ]);
     recordTicketReadTiming({
@@ -199,8 +174,8 @@ export async function loadWorkspaceTicketDetail(
       operation: "detail",
       phase: "provider-detail-refresh",
       providerKey: providerContext.value.context.connection.providerKey,
-      reason: result.status === "unavailable" ? result.reason : undefined,
-      retryable: result.status === "unavailable" ? result.retryable : undefined,
+      reason: result.status === "available" ? undefined : result.reason,
+      retryable: result.status === "available" ? undefined : result.retryable,
       status: result.status === "available" ? "ok" : "unavailable",
     });
   } catch (error) {
@@ -224,27 +199,18 @@ export async function loadWorkspaceTicketDetail(
     operation: "detail",
     phase: "total-detail-load",
     providerKey: providerContext.value.context.connection.providerKey,
-    reason: result.status === "unavailable" ? result.reason : undefined,
-    retryable: result.status === "unavailable" ? result.retryable : undefined,
+    reason: result.status === "available" ? undefined : result.reason,
+    retryable: result.status === "available" ? undefined : result.retryable,
     status: result.status === "available" ? "ok" : "unavailable",
   });
-  if (result.status === "unavailable") {
+  if (result.status !== "available") {
     return result;
   }
-
-  await storeTicketDetailCache({
-    cacheRepository,
-    detail: result.detail,
-    encryptionKey,
-    operation: "detail",
-    providerContext: providerContext.value,
-    ticketExternalId,
-    userId,
-  });
 
   return {
     status: "available",
     helpdeskConnectionId: providerContext.value.context.connection.id,
+    resolution: result.resolution,
     detail: {
       ...result.detail,
       lookupData,

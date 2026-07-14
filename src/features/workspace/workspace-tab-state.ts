@@ -3,6 +3,7 @@ import type {
   WorkspaceTicketDetail,
   WorkspaceTicketTab,
 } from "@/features/tickets/workspace-adapter";
+import { ticketSelectableStates, type TicketSelectableState } from "@/core/tickets";
 
 export const workspaceOpenTabsPreferenceKey = "workspace.openTabs";
 export const workspaceOpenTabsStateVersion = 1;
@@ -44,8 +45,20 @@ function tabFromStorage(value: unknown): WorkspaceTicketTab | undefined {
   const owner = stringValue(record.owner);
   const group = stringValue(record.group);
   const state = stringValue(record.state);
+  const stateKey = optionalStringValue(record.stateKey);
   const priority = stringValue(record.priority);
-  if (!id || !number || !title || !customer || !owner || !group || !state || !priority) {
+  if (
+    !id ||
+    !number ||
+    !title ||
+    !customer ||
+    !owner ||
+    !group ||
+    !state ||
+    !stateKey ||
+    !ticketSelectableStates.includes(stateKey as TicketSelectableState) ||
+    !priority
+  ) {
     return undefined;
   }
 
@@ -63,9 +76,7 @@ function tabFromStorage(value: unknown): WorkspaceTicketTab | undefined {
     owner,
     group,
     state,
-    ...(optionalStringValue(record.stateKey)
-      ? { stateKey: optionalStringValue(record.stateKey) as WorkspaceTicketTab["stateKey"] }
-      : {}),
+    stateKey: stateKey as TicketSelectableState,
     priority,
     ...(optionalStringValue(record.priorityKey)
       ? {

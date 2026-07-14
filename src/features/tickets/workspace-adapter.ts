@@ -1,6 +1,7 @@
 import type { TicketListBucket } from "@/core/providers";
 import { unsupportedTicketLookupData } from "@/core/ticket-lookups";
 import {
+  isTicketSelectableState,
   ticketPriorityDefinitions,
   ticketStateDefinitions,
   type TicketArticle,
@@ -48,7 +49,7 @@ function displayTicketNumber(number: string) {
 }
 
 function stateLabel(ticket: TicketListItem | TicketDetail["ticket"]): string {
-  return ticket.state
+  return isTicketSelectableState(ticket.state)
     ? ticketStateDefinitions[ticket.state].label
     : "Unknown";
 }
@@ -109,7 +110,7 @@ export function workspaceTicketRow(ticket: TicketListItem): WorkspaceTicketRow {
     group: groupName(ticket.group),
     groupExternalId: ticket.group?.externalId,
     state: stateLabel(ticket),
-    stateKey: ticket.state,
+    stateKey: isTicketSelectableState(ticket.state) ? ticket.state : undefined,
     priority: priorityLabel(ticket),
     priorityKey: ticket.priority,
     createdAt: labelDate(ticket.createdAt),
@@ -122,7 +123,9 @@ export function workspaceTicketRow(ticket: TicketListItem): WorkspaceTicketRow {
 }
 
 export function workspaceTicketRows(tickets: TicketListItem[]): WorkspaceTicketRow[] {
-  return tickets.map(workspaceTicketRow);
+  return tickets
+    .filter((ticket) => ticket.state !== "merged")
+    .map(workspaceTicketRow);
 }
 
 export function workspaceTicketListGroups(buckets: TicketListBucket[] = []) {

@@ -1,5 +1,5 @@
 import { DropdownSelect } from "@/components/ui";
-import type { TicketPriority, TicketState } from "@/core/tickets";
+import type { TicketMutableState, TicketPriority } from "@/core/tickets";
 import type { TicketMetadataMutationCapabilities } from "@/features/tickets/mutation-model";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 import type {
@@ -49,7 +49,7 @@ export function TicketPrimaryMetadataFields({
             onValueChange={(value) =>
               onDraftChange({
                 ...draft,
-                metadata: { ...draft.metadata, state: value as TicketState },
+                metadata: { ...draft.metadata, state: value as TicketMutableState },
               })
             }
             options={stateOptionsFor(detail)}

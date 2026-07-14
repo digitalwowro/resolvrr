@@ -69,7 +69,7 @@ describe("Zammad ticket reads", () => {
     });
 
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
-      "https://helpdesk.example.com/api/v1/tickets?page=1&per_page=10&expand=true&full=true",
+      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=10&expand=true&full=true&query=NOT+%28state.name%3A%22merged%22%29",
       expect.objectContaining({
         allowedAddresses: ["93.184.216.34"],
         headers: expect.objectContaining({
@@ -114,6 +114,22 @@ describe("Zammad ticket reads", () => {
     );
   });
 
+  it("defensively omits merged tickets from provider list payloads", async () => {
+    mockedSafeProviderJson.mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: [rawTicket, { ...rawTicket, id: 43, state: "merged" }],
+    });
+
+    const result = await zammadProviderPlugin.listTickets?.(providerContext(), {
+      filter: {},
+      pageSize: 10,
+    });
+
+    expect(result?.tickets.map((ticket) => ticket.externalId)).toEqual(["42"]);
+    expect(result?.loadedCount).toBe(1);
+  });
+
   it("uses the Zammad search endpoint for provider-backed sorting", async () => {
     mockedSafeProviderJson.mockResolvedValue({
       status: 200,
@@ -128,7 +144,7 @@ describe("Zammad ticket reads", () => {
     });
 
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
-      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=10&expand=true&full=true&query=*&sort_by=updated_at&order_by=desc",
+      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=10&expand=true&full=true&query=NOT+%28state.name%3A%22merged%22%29&sort_by=updated_at&order_by=desc",
       expect.objectContaining({
         allowedAddresses: ["93.184.216.34"],
         headers: expect.objectContaining({
@@ -159,7 +175,7 @@ describe("Zammad ticket reads", () => {
     });
 
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
-      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=25&expand=true&full=true&query=*&with_total_count=true",
+      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=25&expand=true&full=true&query=NOT+%28state.name%3A%22merged%22%29&with_total_count=true",
       expect.objectContaining({
         allowedAddresses: ["93.184.216.34"],
         headers: expect.objectContaining({
@@ -203,7 +219,10 @@ describe("Zammad ticket reads", () => {
       .mockResolvedValueOnce({
         status: 200,
         headers: new Headers(),
-        data: [{ id: 2, name: "open" }],
+        data: [
+          { id: 1, name: "merged" },
+          { id: 2, name: "open" },
+        ],
       })
       .mockResolvedValueOnce({
         status: 200,
@@ -229,7 +248,7 @@ describe("Zammad ticket reads", () => {
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
       2,
-      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=10&expand=true&full=true&query=state.name%3A%22open%22&with_total_count=true",
+      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=10&expand=true&full=true&query=%28state.name%3A%22open%22%29+AND+NOT+%28state.name%3A%22merged%22%29&with_total_count=true",
       expect.any(Object),
     );
     expect(result).toMatchObject({

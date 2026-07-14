@@ -76,6 +76,8 @@ orientation, and an update timestamp. This state is user-scoped and
 connection-scoped so it survives browser restarts and syncs across devices.
 The stored tab list is capped to the supported workspace limit and latest
 server write wins.
+Persisted tabs without a valid selectable state key are removed individually;
+legacy `Unknown` merged tabs do not invalidate otherwise valid preferences.
 
 Horizontal ticket tabs sit directly above the list toolbar or selected-ticket
 pane. The List tab starts the tab strip; horizontal tabs stay constrained to the
@@ -115,6 +117,14 @@ available in the saved open-tab set, the workspace falls back to List.
 The browser URL is kept aligned with the active ticket or List view. The ticket
 detail header also exposes an icon-only copy-link control that writes the
 current ticket's direct `/workspace?ticket=ID` URL to the clipboard.
+
+An old URL or tab for a merged source resolves to the final surviving ticket
+before editable detail is rendered. The source tab is replaced and deduplicated,
+the URL is changed to the survivor, source open/recent entries are removed, and
+a non-modal notice identifies the source and destination ticket numbers. If the
+destination cannot be resolved or read, the workspace shows only a read-only
+merged-ticket tombstone; it exposes no ticket content, provider identifier,
+composer, metadata controls, AI actions, footer, or Update button.
 
 ## Ticket Detail
 
@@ -186,6 +196,8 @@ closed. Provider-supplied hidden state options are omitted from the state
 dropdown. If a provider lacks the capability, the field renders as ordinary
 read-only metadata; owner and group editing also require available lookup
 options for the matching field.
+`Merged` never appears as a state label, badge, row, group, count, filter,
+saved-view value, link candidate, related-ticket entry, or notification.
 
 ## AI Assistant
 

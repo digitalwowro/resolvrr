@@ -193,4 +193,80 @@ describe("TicketWorkspace client detail loader", () => {
     expect(loadTicketDetailAction).not.toHaveBeenCalled();
   });
 
+  it("replaces a merged source tab and URL with the final ticket", async () => {
+    const user = userEvent.setup();
+    const target = detailPropsFor(highRow, "Final merged ticket");
+    const loadTicketDetailAction = vi.fn(async (): Promise<WorkspaceTicketDetailLoadResult> => ({
+      status: "available",
+      detail: target.detail,
+      resolution: {
+        cause: "merged",
+        sources: [{ externalId: row.id, number: "1001" }],
+        targetExternalId: highRow.id,
+      },
+    }));
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        listResult={availableList}
+        loadTicketDetailAction={loadTicketDetailAction}
+        logoutAction={noopAction}
+        rows={[row, highRow]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }, { ...highRow }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await user.click(screen.getByRole("row", { name: /Cannot log in/u }));
+
+    expect(await screen.findByText("Final merged ticket")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /#1002/u })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.queryByRole("tab", { name: /#1001/u })).toBeNull();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Ticket #1001 was merged into #1002.",
+    );
+    expect(window.location.search).toBe("?ticket=ticket-2");
+  });
+
+  it("renders a read-only tombstone for an unresolved merged ticket", async () => {
+    const user = userEvent.setup();
+    const loadTicketDetailAction = vi.fn(async (): Promise<WorkspaceTicketDetailLoadResult> => ({
+      status: "retired",
+      reason: "merged-target-unavailable",
+      retryable: false,
+      sourceExternalId: row.id,
+      sourceNumber: "1001",
+    }));
+
+    render(
+      <TicketWorkspace
+        columns={defaultWorkspaceTicketColumns}
+        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        listResult={availableList}
+        loadTicketDetailAction={loadTicketDetailAction}
+        logoutAction={noopAction}
+        rows={[row]}
+        setActiveConnectionAction={noopAction}
+        tabs={[{ ...row }]}
+        updateTicketMetadataAction={noopMutationAction}
+        userEmail="agent@example.com"
+      />,
+    );
+
+    await user.click(screen.getByRole("row", { name: /Cannot log in/u }));
+
+    expect(
+      await screen.findByText("This ticket was merged, but its destination is unavailable."),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Update" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Comment" })).toBeNull();
+  });
+
 });

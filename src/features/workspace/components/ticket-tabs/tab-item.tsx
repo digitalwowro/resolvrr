@@ -9,12 +9,12 @@ import {
 } from "lucide-react";
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
-import type { TicketState } from "@/core/tickets";
+import type { TicketSelectableState } from "@/core/tickets";
 import type {
   WorkspaceTicketTab,
 } from "@/features/tickets/workspace-adapter";
 
-export const stateColor: Record<TicketState | "unknown", string> = {
+export const stateColor: Record<TicketSelectableState | "unknown", string> = {
   new: "text-rose-600",
   open: "text-indigo-600",
   pending_reminder: "text-amber-600",
@@ -23,7 +23,7 @@ export const stateColor: Record<TicketState | "unknown", string> = {
   unknown: "text-slate-500",
 };
 
-export const stateIcon: Record<TicketState | "unknown", LucideIcon> = {
+export const stateIcon: Record<TicketSelectableState | "unknown", LucideIcon> = {
   new: CirclePlus,
   open: Circle,
   pending_reminder: Clock3,

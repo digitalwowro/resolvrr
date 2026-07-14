@@ -30,6 +30,7 @@ import { TicketTable, type TicketTableGroup } from "./ticket-table";
 import { ticketGroupOptions } from "./ticket-table-grouping";
 import {
   DetailLoadingState,
+  DetailRetiredState,
   DetailUnavailableState,
   EmptyDetailState,
 } from "./workspace-states";
@@ -208,6 +209,10 @@ export function TicketWorkspaceDetailArea({
   userId,
   workspaceId,
 }: TicketWorkspaceDetailAreaProps) {
+  if (activeDetail?.status === "retired") {
+    return <DetailRetiredState key="work-area" />;
+  }
+
   if (activeDetail?.status === "unavailable") {
     return <DetailUnavailableState key="work-area" reason={activeDetail.reason} />;
   }

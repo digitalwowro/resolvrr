@@ -7,7 +7,9 @@ import { ProviderError, type ProviderContext } from "@/core/providers";
 import { z } from "zod";
 import { zammadGetJson, zammadSendJson } from "./client";
 import { cleanString } from "./participants";
-import { zammadTicketSchema, type ZammadTicket } from "./schemas";
+import type { ZammadAssets, ZammadTicket } from "./schemas";
+import { zammadTicketPayloadRecords } from "./ticket-detail-payload";
+import { isZammadMergedTicket } from "./ticket-state";
 
 const zammadNotificationSchema = z
   .object({
@@ -61,17 +63,17 @@ function notificationType(value: string | null | undefined): HelpdeskNotificatio
 async function readZammadTicket(
   context: ProviderContext,
   ticketExternalId: string,
-): Promise<ZammadTicket> {
+): Promise<{ assets?: ZammadAssets; ticket: ZammadTicket }> {
   const rawTicket = await zammadGetJson(
     context,
-    `/api/v1/tickets/${encodeURIComponent(ticketExternalId)}`,
+    `/api/v1/tickets/${encodeURIComponent(ticketExternalId)}?expand=true&full=true`,
   );
-  const parsed = zammadTicketSchema.safeParse(rawTicket);
-  if (!parsed.success) {
+  const parsed = zammadTicketPayloadRecords(rawTicket);
+  const ticket = parsed.tickets[0];
+  if (!ticket) {
     throw providerDataMismatch();
   }
-
-  return parsed.data;
+  return { assets: parsed.assets, ticket };
 }
 
 export async function listZammadNotifications(
@@ -105,18 +107,22 @@ export async function listZammadNotifications(
   ];
   const ticketEntries = await Promise.all(
     ticketIds.map(async (ticketExternalId) => {
-      const ticket = await readZammadTicket(context, ticketExternalId);
-      return [ticketExternalId, ticket] as const;
+      const payload = await readZammadTicket(context, ticketExternalId);
+      return [ticketExternalId, payload] as const;
     }),
   );
   const ticketsById = new Map(ticketEntries);
 
   return ticketNotifications
     .map((notification) => {
-      const ticket = ticketsById.get(notification.ticketExternalId);
-      if (!ticket) {
+      const payload = ticketsById.get(notification.ticketExternalId);
+      if (!payload) {
         return undefined;
       }
+      if (isZammadMergedTicket(payload.ticket, payload.assets)) {
+        return undefined;
+      }
+      const ticket = payload.ticket;
 
       return {
         id: String(notification.id),

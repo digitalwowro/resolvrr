@@ -9,7 +9,7 @@ import type {
   TicketLinkTarget,
   TicketLinkTargetSearchInput,
   TicketMetadataMutationInput,
-  TicketDetail,
+  TicketDetailProviderResult,
   TicketExternalId,
 } from "./tickets";
 import type { TicketCustomerReplyInput } from "./ticket-replies";
@@ -143,7 +143,7 @@ export type HelpdeskProviderPlugin = {
   getTicketDetail?(
     context: ProviderContext,
     ticketExternalId: TicketExternalId,
-  ): Promise<TicketDetail>;
+  ): Promise<TicketDetailProviderResult>;
   updateTicketMetadata?(
     context: ProviderContext,
     ticketExternalId: TicketExternalId,

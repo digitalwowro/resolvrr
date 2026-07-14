@@ -8,10 +8,10 @@ import {
   Triangle,
   type LucideIcon,
 } from "lucide-react";
-import type { TicketPriority, TicketState } from "@/core/tickets";
+import type { TicketPriority, TicketSelectableState } from "@/core/tickets";
 import { TicketStateBadge } from "./ticket-state-badge";
 
-const stateClass: Record<TicketState | "unknown", string> = {
+const stateClass: Record<TicketSelectableState | "unknown", string> = {
   new: "text-rose-600",
   open: "text-indigo-600",
   pending_reminder: "text-amber-600",
@@ -20,7 +20,7 @@ const stateClass: Record<TicketState | "unknown", string> = {
   unknown: "text-slate-500",
 };
 
-const stateIcon: Record<TicketState | "unknown", LucideIcon> = {
+const stateIcon: Record<TicketSelectableState | "unknown", LucideIcon> = {
   new: CirclePlus,
   open: Circle,
   pending_reminder: Clock3,
@@ -55,7 +55,7 @@ export function StateIcon({
   state,
 }: {
   monochrome?: boolean;
-  state?: TicketState;
+  state?: TicketSelectableState;
 }) {
   const key = state ?? "unknown";
   const Icon = stateIcon[key];
@@ -70,7 +70,7 @@ export function StateCell({
 }: {
   label: string;
   monochrome?: boolean;
-  state?: TicketState;
+  state?: TicketSelectableState;
 }) {
   return <TicketStateBadge label={label} state={state} />;
 }

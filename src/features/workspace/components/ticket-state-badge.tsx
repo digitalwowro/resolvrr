@@ -1,7 +1,7 @@
 import { cn } from "@/components/ui/classnames";
-import type { TicketState } from "@/core/tickets";
+import type { TicketSelectableState } from "@/core/tickets";
 
-const stateBadgeClass: Record<TicketState | "unknown", string> = {
+const stateBadgeClass: Record<TicketSelectableState | "unknown", string> = {
   new: "bg-rose-50 text-rose-700",
   open: "bg-indigo-50 text-indigo-700",
   pending_reminder: "bg-amber-50 text-amber-700",
@@ -15,7 +15,7 @@ export function TicketStateBadge({
   state,
 }: {
   label: string;
-  state?: TicketState;
+  state?: TicketSelectableState;
 }) {
   return (
     <span

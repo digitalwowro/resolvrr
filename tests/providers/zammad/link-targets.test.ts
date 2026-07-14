@@ -74,7 +74,7 @@ describe("Zammad link target search", () => {
       },
     ]);
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
-      "https://helpdesk.example.com/api/v1/tickets/search?full=true&limit=8&query=16004",
+      "https://helpdesk.example.com/api/v1/tickets/search?full=true&limit=8&query=%2816004%29+AND+NOT+%28state.name%3A%22merged%22%29",
       expect.any(Object),
     );
   });
@@ -106,8 +106,35 @@ describe("Zammad link target search", () => {
     ).resolves.toEqual([]);
 
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
-      "https://helpdesk.example.com/api/v1/tickets/search?full=true&limit=8&query=customer_id%3A5",
+      "https://helpdesk.example.com/api/v1/tickets/search?full=true&limit=8&query=%28customer_id%3A5%29+AND+NOT+%28state.name%3A%22merged%22%29",
       expect.any(Object),
     );
+  });
+
+  it("defensively omits merged tickets returned by search", async () => {
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers(),
+      data: {
+        record_ids: [77],
+        assets: {
+          Ticket: {
+            "77": {
+              id: 77,
+              number: "16004",
+              title: "Merged",
+              state: "merged",
+              updated_at: "2026-05-24T09:00:00.000Z",
+            },
+          },
+        },
+      },
+    });
+
+    await expect(
+      zammadProviderPlugin.searchLinkTargets?.(providerContext(), {
+        query: "16004",
+      }),
+    ).resolves.toEqual([]);
   });
 });

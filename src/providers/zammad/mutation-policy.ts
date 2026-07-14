@@ -1,17 +1,17 @@
 import {
   type Ticket,
   type TicketMetadataMutationConstraints,
-  type TicketState,
+  type TicketMutableState,
 } from "@/core/tickets";
 
-const pendingStates = new Set<TicketState>([
+const pendingStates = new Set<TicketMutableState>([
   "pending_reminder",
   "pending_close",
 ]);
 
 export function zammadStateMutationUnavailableReason(
   ticket: Pick<Ticket, "pendingUntil" | "state">,
-  targetState: TicketState,
+  targetState: TicketMutableState,
 ): string | undefined {
   if (targetState === ticket.state) {
     return undefined;
@@ -24,7 +24,7 @@ export function zammadStateMutationUnavailableReason(
   return undefined;
 }
 
-export function zammadStateRequiresPendingDate(state: TicketState): boolean {
+export function zammadStateRequiresPendingDate(state: TicketMutableState): boolean {
   return pendingStates.has(state);
 }
 

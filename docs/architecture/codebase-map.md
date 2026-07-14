@@ -13,8 +13,8 @@ added, moved, renamed, or removed.
   contract. Contextual-reply additions are kept with the read/write invariants they constrain; the
   document remains below the 500-line merge blocker.
 - `cache-and-privacy-contract.md` was already above 300 lines and remains one coupled cache/privacy
-  threat-boundary contract. The contextual-reply change adds only draft-retention and final-refresh
-  rules, and the document remains below the 500-line merge blocker.
+  threat-boundary contract. Contextual-reply and merged-source changes stay with their cache-key,
+  invalidation, and draft-retention rules; the document remains below the 500-line merge blocker.
 
 ## Root Files
 
@@ -136,6 +136,8 @@ added, moved, renamed, or removed.
       result, and request-scoped lookup cache-policy contracts.
     - `ticket-replies.ts` (`src/core/ticket-replies.ts`): focused provider-neutral contextual
       reply intent, channel, recipient, article context, policy, and send-input contracts.
+    - `ticket-lifecycle.ts` (`src/core/ticket-lifecycle.ts`): observable, selectable, and mutable
+      ticket state types plus provider-neutral merged replacement/retirement contracts.
     - `tickets.ts` (`src/core/tickets.ts`): canonical ticket values and provider-neutral
       ticket/thread/link/subscription/mutation/communication types.
   - `src/data`: server-only database access boundaries.
@@ -356,8 +358,11 @@ added, moved, renamed, or removed.
       - `detail-action-result.ts` (`src/features/tickets/detail-action-result.ts`): client-safe
         workspace ticket detail action result and loader action function types.
       - `detail-actions.ts` (`src/features/tickets/detail-actions.ts`): authenticated server action
-        for post-hydration workspace detail loads. It returns adapted workspace detail or
-        provider-neutral unavailable state only.
+        for post-hydration workspace detail loads. It returns adapted final detail, merged-source
+        retirement, or provider-neutral unavailable state.
+      - `detail-resolution-service.ts` (`src/features/tickets/detail-resolution-service.ts`):
+        bounded, cycle-safe merged replacement traversal with source invalidation and final-target
+        cache ownership.
       - `index.ts` (`src/features/tickets/index.ts`): ticket workflow feature boundary. It does not
         export server actions so component/test imports do not pull in env or database modules.
       - `link-target-actions.ts` (`src/features/tickets/link-target-actions.ts`): authenticated
@@ -711,7 +716,10 @@ added, moved, renamed, or removed.
           (`src/features/workspace/components/ticket-workspace-state.ts`): client-side
           workspace-only state for active pane, open ticket tabs, recently viewed tabs, tab metadata
           patches after successful staged updates, tab orientation, visible columns, row selection,
-          grouping, sorting, and route navigation.
+          grouping, sorting, merged-ticket replacement/notice coordination, and route navigation.
+        - `ticket-merge-notice.tsx`
+          (`src/features/workspace/components/ticket-merge-notice.tsx`): non-modal merged-source to
+          survivor workspace notice.
         - `ticket-workspace-types.ts`
           (`src/features/workspace/components/ticket-workspace-types.ts`): type contracts for ticket
           workspace.
@@ -858,7 +866,8 @@ added, moved, renamed, or removed.
           (`src/features/workspace/components/workspace-settings-workspaces-section.tsx`): in-modal
           helpdesk connection management surface.
         - `workspace-states.tsx` (`src/features/workspace/components/workspace-states.tsx`):
-          provider-neutral unavailable, detail-unavailable, and empty-detail states.
+          provider-neutral unavailable, retired merged-ticket tombstone, detail-unavailable, and
+          empty-detail states.
         - `workspace-url.ts` (`src/features/workspace/components/workspace-url.ts`): workspace
           ticket/List URL path helper used by local tab navigation and explicit ticket link sharing,
           plus history replacement helpers for local tab navigation.
@@ -909,6 +918,8 @@ added, moved, renamed, or removed.
         (`src/providers/zammad/ticket-customer-reply-mutation.ts`): contextual customer reply
         revalidation, recipient normalization, subject/thread headers, provider POST, and uncertain
         delivery mapping.
+      - `ticket-detail-payload.ts` (`src/providers/zammad/ticket-detail-payload.ts`): focused
+        expanded/full detail payload, user lookup, and asset merge helpers.
       - `ticket-groups.ts` (`src/providers/zammad/ticket-groups.ts`): Zammad provider-owned
         state/priority bucket discovery and grouped list page orchestration.
       - `ticket-id.ts` (`src/providers/zammad/ticket-id.ts`): strict provider-local numeric ticket
@@ -919,6 +930,10 @@ added, moved, renamed, or removed.
       - `ticket-link-targets.ts` (`src/providers/zammad/ticket-link-targets.ts`): Zammad
         provider-local ticket search for Add link targets, including provider-local same-customer
         query mapping, mapped to provider-neutral link target summaries.
+      - `ticket-merge-resolution.ts` (`src/providers/zammad/ticket-merge-resolution.ts`):
+        provider-owned ticket history parsing and authoritative merged destination mapping.
+      - `ticket-mutation-preflight.ts` (`src/providers/zammad/ticket-mutation-preflight.ts`):
+        shared fresh-ticket merged-state rejection before ticket or article writes.
       - `ticket-list.ts` (`src/providers/zammad/ticket-list.ts`): Zammad ticket list endpoint reads,
         search query composition, pagination, grouped-list dispatch, and read-phase timing.
       - `ticket-list-payload.ts` (`src/providers/zammad/ticket-list-payload.ts`): Zammad ticket list
@@ -927,7 +942,10 @@ added, moved, renamed, or removed.
       - `ticket-lookups.ts` (`src/providers/zammad/ticket-lookups.ts`): Zammad assignable-user,
         group, and global tag suggestion lookup reads mapped to provider-neutral lookup options.
       - `ticket-search-query.ts` (`src/providers/zammad/ticket-search-query.ts`): Zammad ticket
-        search path, sort, state/priority filter, and state/priority bucket query construction.
+        search path, sort, state/priority filter, merged-source exclusion, and state/priority bucket
+        query construction.
+      - `ticket-state.ts` (`src/providers/zammad/ticket-state.ts`): protected merged-state
+        recognition from raw ticket fields and expanded assets.
       - `ticket-secondary-mutations.ts` (`src/providers/zammad/ticket-secondary-mutations.ts`):
         Zammad selected-ticket secondary metadata writes for tags, related links, relation-kind link
         adds, and subscription state.

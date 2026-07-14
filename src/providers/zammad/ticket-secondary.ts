@@ -11,6 +11,7 @@ import {
   type ZammadTicket,
 } from "./schemas";
 import { readOptionalZammadTicketSubscription } from "./ticket-subscription";
+import { isZammadMergedTicket } from "./ticket-state";
 
 const zammadTagsResponseSchema = z
   .object({ tags: z.array(z.string()).default([]) })
@@ -92,6 +93,13 @@ function mapZammadLinks(
     assets: parsed.data.assets,
     links: parsed.data.links
       .filter((link) => link.link_object === "Ticket")
+      .filter((link) => {
+        const externalId = String(link.link_object_value ?? "");
+        const ticket = parsed.data.assets?.Ticket?.[externalId];
+        return Boolean(
+          ticket && !isZammadMergedTicket(ticket, parsed.data.assets),
+        );
+      })
       .map((link) => {
         const externalId = String(link.link_object_value ?? "");
         const ticket = parsed.data.assets?.Ticket?.[externalId];

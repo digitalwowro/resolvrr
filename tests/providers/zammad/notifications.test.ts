@@ -3,6 +3,13 @@ import { zammadProviderPlugin } from "@/providers/zammad";
 import { safeProviderJson } from "@/security/provider-http";
 import { providerContext, rawTicket } from "./read-helpers";
 
+function fullTicket(ticket = rawTicket) {
+  return {
+    assets: { Ticket: { [String(ticket.id)]: ticket } },
+    record_ids: [ticket.id],
+  };
+}
+
 vi.mock("@/security/provider-http", () => ({
   safeProviderJson: vi.fn(),
   ProviderJsonBodyError: class ProviderJsonBodyError extends Error {
@@ -51,7 +58,7 @@ describe("Zammad notifications", () => {
       .mockResolvedValueOnce({
         status: 200,
         headers: new Headers(),
-        data: rawTicket,
+        data: fullTicket(),
       });
 
     const result = await zammadProviderPlugin.listNotifications?.(
@@ -67,7 +74,7 @@ describe("Zammad notifications", () => {
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
       2,
-      "https://helpdesk.example.com/api/v1/tickets/42",
+      "https://helpdesk.example.com/api/v1/tickets/42?expand=true&full=true",
       expect.any(Object),
     );
     expect(result).toEqual([
@@ -122,5 +129,57 @@ describe("Zammad notifications", () => {
         method: "POST",
       }),
     );
+  });
+
+  it("suppresses notifications whose ticket has been merged", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [
+          {
+            id: 7,
+            object: "Ticket",
+            o_id: 42,
+            seen: false,
+            type: "update",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: fullTicket({ ...rawTicket, state: "merged" }),
+      });
+
+    await expect(
+      zammadProviderPlugin.listNotifications?.(providerContext()),
+    ).resolves.toEqual([]);
+  });
+
+  it("rejects malformed array ticket payloads", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [
+          {
+            id: 7,
+            object: "Ticket",
+            o_id: 42,
+            seen: false,
+            type: "update",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [{}],
+      });
+
+    await expect(
+      zammadProviderPlugin.listNotifications?.(providerContext()),
+    ).rejects.toMatchObject({ kind: "provider-data-mismatch" });
   });
 });

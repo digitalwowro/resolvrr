@@ -3,7 +3,9 @@ import {
   type TicketDetail,
   ticketPriorities,
   ticketPriorityDefinitions,
+  ticketLifecycleCategories,
   ticketStateDefinitions,
+  isTicketSelectableState,
   ticketStates,
 } from "@/core/tickets";
 
@@ -26,6 +28,12 @@ describe("ticket contract", () => {
       category: "closed",
       terminal: true,
     });
+    expect(ticketLifecycleCategories.merged).toMatchObject({
+      category: "closed",
+      terminal: true,
+    });
+    expect("merged" in ticketStateDefinitions).toBe(false);
+    expect(isTicketSelectableState("merged")).toBe(false);
   });
 
   it("uses stable machine keys for canonical priorities", () => {

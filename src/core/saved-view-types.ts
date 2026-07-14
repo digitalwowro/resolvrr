@@ -1,4 +1,4 @@
-import type { TicketPriority, TicketState } from "./tickets";
+import type { TicketPriority, TicketSelectableState } from "./tickets";
 import type {
   TicketListGroupRequest,
   TicketSort,
@@ -15,7 +15,7 @@ export type SavedViewOwnerPreset = "myself" | "unassigned" | "all";
 export type SavedViewConditionValue =
   | { kind: "owner-preset"; value: SavedViewOwnerPreset }
   | { kind: "external"; externalId: string; label?: string }
-  | { kind: "state"; value: TicketState }
+  | { kind: "state"; value: TicketSelectableState }
   | { kind: "priority"; value: TicketPriority };
 
 export type SavedViewCondition = {
@@ -26,8 +26,8 @@ export type SavedViewCondition = {
 };
 
 export type SavedViewFilter = {
-  states?: TicketState[];
-  excludedStates?: TicketState[];
+  states?: TicketSelectableState[];
+  excludedStates?: TicketSelectableState[];
   priorities?: TicketPriority[];
   excludedPriorities?: TicketPriority[];
   ownerExternalIds?: string[];

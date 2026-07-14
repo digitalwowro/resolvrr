@@ -45,8 +45,10 @@ export const summarizeWorkspaceTicketAction: SummarizeWorkspaceTicketAction =
       prismaTicketDetailCacheRepository,
       { cacheMode: "bypass" },
     );
-    if (detailResult.status === "unavailable") {
-      return unavailableTicketSummary(detailResult.retryable);
+    if (detailResult.status !== "available") {
+      return unavailableTicketSummary(
+        detailResult.status === "unavailable" && detailResult.retryable,
+      );
     }
 
     const aiConfig = detailResult.helpdeskConnectionId
@@ -77,7 +79,7 @@ export const summarizeWorkspaceTicketAction: SummarizeWorkspaceTicketAction =
             encryptionKey: env.APP_ENCRYPTION_KEY,
             scope: {
               helpdeskConnectionId: detailResult.helpdeskConnectionId,
-              ticketExternalId: trimmedTicketId,
+              ticketExternalId: detailResult.detail.ticket.externalId,
               userId: user.id,
             },
           }

@@ -14,6 +14,14 @@ The local app boundary is `/home/resolvrr/resolvrr`.
 - Run checks: `npm run lint`, `npm run typecheck`, `npm run size:check`,
   `npm test`, `npm run build`, `npm audit`
 
+Merged-ticket changes require focused coverage for provider query exclusion,
+history/replacement chains, cache source invalidation, zero-write mutation
+preflight, notification/link visibility, persisted-tab cleanup, URL/tab
+replacement, and the read-only tombstone. Live characterization must use the
+existing provider-safe read boundary and must not mutate production tickets.
+Browser automation and screenshots are not part of routine verification unless
+explicitly requested.
+
 ## Local Services
 
 The app listens on `0.0.0.0:3005`. Open the app through

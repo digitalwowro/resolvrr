@@ -7,7 +7,7 @@ import {
   ticketPriorityDefinitions,
   ticketStateDefinitions,
   type TicketPriority,
-  type TicketState,
+  type TicketSelectableState,
 } from "@/core/tickets";
 import { mapPriority, mapState } from "./mapping";
 import type { ZammadGenericNamedAsset } from "./schemas";
@@ -15,7 +15,7 @@ import type { ZammadGenericNamedAsset } from "./schemas";
 export type ZammadBucketDefinition =
   | {
       key: "state";
-      value: TicketState;
+      value: TicketSelectableState;
       label: string;
       searchQuery: string;
     }
@@ -39,7 +39,7 @@ const zammadTicketSortFields: Record<TicketSortKey, string> = {
   priority: "priority_id",
 };
 
-const zammadStateSearchName: Record<TicketState, string> = {
+const zammadStateSearchName: Record<TicketSelectableState, string> = {
   new: "new",
   open: "open",
   pending_reminder: "pending reminder",
@@ -73,8 +73,17 @@ function zammadSearchNot(clause: string) {
   return `NOT (${clause})`;
 }
 
+export function zammadVisibleTicketQuery(baseQuery: string) {
+  const normalized = baseQuery.trim();
+  const visible = "NOT (state.name:\"merged\")";
+  return normalized ? `(${normalized}) AND ${visible}` : visible;
+}
+
 function zammadTicketSearchQuery(query: TicketListQuery, baseQuery?: string) {
-  const parts = baseQuery && baseQuery !== "*" ? [baseQuery] : [];
+  const parts: string[] = [];
+  if (baseQuery && baseQuery !== "*") {
+    parts.push(baseQuery);
+  }
 
   if (query.filter.states?.length) {
     parts.push(
@@ -143,7 +152,7 @@ function zammadTicketSearchQuery(query: TicketListQuery, baseQuery?: string) {
     );
   }
 
-  return parts.length > 0 ? parts.join(" AND ") : "*";
+  return zammadVisibleTicketQuery(parts.join(" AND "));
 }
 
 export function zammadTicketListPath(
@@ -193,7 +202,7 @@ export function zammadBucketDefinition(
 
   if (groupKey === "state") {
     const value = mapState(asset.name);
-    return value
+    return value && value !== "merged"
       ? {
           key: "state",
           label: ticketStateDefinitions[value].label,

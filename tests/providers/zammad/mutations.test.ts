@@ -103,6 +103,11 @@ describe("Zammad ticket metadata mutations", () => {
     mockedSafeProviderJson.mockResolvedValueOnce({
       status: 200,
       headers: new Headers(),
+      data: rawTicket,
+    });
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers(),
       data: { id: 42 },
     });
 
@@ -111,7 +116,7 @@ describe("Zammad ticket metadata mutations", () => {
       groupExternalId: "7",
     });
 
-    expect(mockedSafeProviderJson).toHaveBeenCalledOnce();
+    expect(mockedSafeProviderJson).toHaveBeenCalledTimes(2);
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
       "https://helpdesk.example.com/api/v1/tickets/42",
       expect.objectContaining({
@@ -169,6 +174,31 @@ describe("Zammad ticket metadata mutations", () => {
     });
 
     expect(mockedSafeProviderJson).not.toHaveBeenCalled();
+  });
+
+  it("rejects every metadata write for a merged ticket", async () => {
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers(),
+      data: { ...rawTicket, state: "merged" },
+    });
+
+    await expect(
+      zammadProviderPlugin.updateTicketMetadata?.(providerContext(), "42", {
+        linkAddExternalId: "77",
+        linkRemoveExternalIds: ["88"],
+        priority: "high",
+        subscriptionFollowing: true,
+        tags: ["vip"],
+      }),
+    ).rejects.toMatchObject({
+      kind: "validation-failure",
+      diagnosticCode: "ticket-merged",
+    });
+    expect(mockedSafeProviderJson).toHaveBeenCalledTimes(1);
+    expect(mockedSafeProviderJson.mock.calls[0]?.[1]).not.toMatchObject({
+      method: expect.stringMatching(/POST|PUT|PATCH|DELETE/u),
+    });
   });
 
   it("rejects returning non-new Zammad tickets to new before the write", async () => {
