@@ -43,7 +43,7 @@ describe("trimArticleBodyHtml", () => {
     expect(result.hiddenHtml).toContain("Super Support");
   });
 
-  it("collapses contact clusters as signatures", () => {
+  it("keeps ambiguous plain-text contact clusters visible", () => {
     const result = trimArticleBodyHtml(`
       <p>Hello,</p>
       <p>Yes, this looks great.</p>
@@ -51,11 +51,8 @@ describe("trimArticleBodyHtml", () => {
       <p>Tel: +40 731 059 660<br>Linkedin: https://www.linkedin.com/in/razvanrosca/<br>Facebook: https://fb.com/razvanrosca.com</p>
     `);
 
-    expect(result.collapsed).toBe(true);
-    if (!result.collapsed) return;
-    expect(result.hiddenKind).toBe("signature");
-    expect(result.visibleHtml).toContain("Yes, this looks great.");
-    expect(result.hiddenHtml).toContain("Linkedin:");
+    expect(result.collapsed).toBe(false);
+    expect(result.visibleHtml).toContain("Linkedin:");
   });
 
   it("collapses signatures before quoted replies as combined trimmed content", () => {
@@ -63,8 +60,12 @@ describe("trimArticleBodyHtml", () => {
       <p>Hello,</p>
       <p>Yes, this looks great!</p>
       <p>Fusce tempor sollicitudin varius. Vestibulum sit amet scelerisque augue, eu posuere augue. Aenean eget odio eros.</p>
-      <p>Razvan Rosca</p>
-      <p>Tel: +40 731 059 660<br>Linkedin: https://www.linkedin.com/in/razvanrosca/<br>Facebook: https://fb.com/razvanrosca.com</p>
+      <div>
+        <div><strong>Razvan Rosca</strong></div>
+        <div>+40 731 059 660</div>
+        <div><a href="https://example.com/profile">Profile</a></div>
+        <div><a href="mailto:agent@example.com">agent@example.com</a></div>
+      </div>
       <p><br></p>
       <p>On Tue, Jun 2, 2026 at 5:01 PM Za Mad via Users &lt;users@example.com&gt; wrote:</p>
       <blockquote>
@@ -77,9 +78,8 @@ describe("trimArticleBodyHtml", () => {
     if (!result.collapsed) return;
     expect(result.hiddenKind).toBe("trimmed-content");
     expect(result.visibleHtml).toContain("Fusce tempor");
-    expect(result.visibleHtml).toContain("Razvan Rosca");
-    expect(result.visibleHtml).not.toContain("Tel:");
-    expect(result.hiddenHtml).toContain("Linkedin:");
+    expect(result.visibleHtml).not.toContain("Razvan Rosca");
+    expect(result.hiddenHtml).toContain("agent@example.com");
     expect(result.hiddenHtml).toContain("Za Mad via Users");
   });
 
@@ -89,7 +89,8 @@ describe("trimArticleBodyHtml", () => {
         <div>
           Hello,<br><br>Yes, this looks great!<br><br>
           Fusce tempor sollicitudin varius. Vestibulum sit amet scelerisque augue, eu posuere augue.
-          Pellentesque eu felis sed augue malesuada bibendum vel at magna.<br><br>
+          Pellentesque eu felis sed augue malesuada bibendum vel at magna. This additional message
+          context keeps the compact contact card materially smaller than the authored reply.<br><br>
         </div>
         <div>
           <div>
@@ -119,7 +120,7 @@ describe("trimArticleBodyHtml", () => {
     expect(result.collapsed).toBe(true);
     if (!result.collapsed) return;
     expect(result.hiddenKind).toBe("trimmed-content");
-    expect(result.visibleHtml).toContain("Razvan Rosca");
+    expect(result.visibleHtml).not.toContain("Razvan Rosca");
     expect(result.visibleHtml).not.toContain("Tel:");
     expect(result.visibleHtml).not.toContain("Linkedin:");
     expect(result.hiddenHtml).toContain("Tel:");
@@ -128,15 +129,15 @@ describe("trimArticleBodyHtml", () => {
 
   it("collapses the raw Zammad nested contact signature before a quoted reply", () => {
     const result = trimArticleBodyHtml(
-      '<div><div>Hello,<br /><br />Yes, this looks great!<br /><br />Fusce tempor sollicitudin varius. Vestibulum sit amet scelerisque augue, eu posuere augue. Aenean eget odio eros. Pellentesque eu felis sed augue malesuada bibendum vel at magna. Vivamus imperdiet pellentesque massa eget pharetra. Ut ultrices porttitor tellus, eget interdum arcu consectetur id. Nulla a nisi vulputate, scelerisque est et, ultricies mi. Nunc at mauris eget sapien luctus pulvinar. Maecenas consectetur lectus vel est eleifend, eu vehicula orci blandit.<br /><br /></div><div><div><div>Razvan Rosca</div><div><br /></div><div>Tel: +40 731 059 660<br /></div><div>Linkedin: <a href="https://www.linkedin.com/in/razvanrosca/" rel="noreferrer noopener" target="_blank">https://www.linkedin.com/in/razvanrosca/</a></div><div>Facebook: <a href="https://fb.com/razvanrosca.com" rel="noreferrer noopener" target="_blank">https://fb.com/razvanrosca.com</a></div></div></div><br /></div><br /><div><div>On Tue, Jun 2, 2026 at 5:01 PM Za Mad via Users &lt;users@zammad.isp.fun&gt; wrote:<br /></div><blockquote><div><div>Hello,<br /><br />Thanks, we\'re working on it!<br /><br />Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ullamcorper ipsum odio, eu pretium justo porta quis. Sed tempus sodales libero, eget bibendum dui dignissim in. Pellentesque sollicitudin feugiat sapien maximus varius. Integer eget elit dictum, pulvinar tortor a, egestas dolor. Nam pretium enim quis pharetra mattis. Sed pellentesque augue quis tellus bibendum sodales. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent maximus urna commodo tincidunt dapibus. Vestibulum cursus dui a malesuada laoreet. Suspendisse est mauris, efficitur vitae rutrum sed, rutrum vitae nisi. Nullam lorem arcu, ultrices cursus eleifend ac, auctor vitae mi. Praesent a tristique erat. Phasellus viverra, lacus in convallis iaculis, ex turpis bibendum dolor, vitae posuere mauris tellus in arcu. Etiam in ipsum neque. Pellentesque faucibus erat eget est vulputate vulputate sit amet et mi. Quisque eget faucibus massa.<br /><br /><div>Za Mad<br /><span class="js-signatureMarker"></span><br />--<br /> Super Support - Waterford Business Park<br /> 5201 Blue Lagoon Drive - 8th Floor &amp; 9th Floor - Miami, 33126 USA<br /> Email: <a href="mailto:hot@example.com" rel="noreferrer noopener" target="_blank">hot@example.com</a> - Web: <a href="http://www.example.com/" rel="noreferrer noopener" target="_blank">http://www.example.com/</a><br />--</div></div></div></blockquote></div>',
+      '<div><div>Hello,<br /><br />Yes, this looks great!<br /><br />Fusce tempor sollicitudin varius. Vestibulum sit amet scelerisque augue, eu posuere augue. Aenean eget odio eros. Pellentesque eu felis sed augue malesuada bibendum vel at magna. Vivamus imperdiet pellentesque massa eget pharetra. Ut ultrices porttitor tellus, eget interdum arcu consectetur id. Nulla a nisi vulputate, scelerisque est et, ultricies mi. Nunc at mauris eget sapien luctus pulvinar. Maecenas consectetur lectus vel est eleifend, eu vehicula orci blandit.<br /><br /></div><div><div><div><strong>Razvan Rosca</strong></div><div><br /></div><div>+40 731 059 660<br /></div><div><a href="https://example.com/profile" rel="noreferrer noopener" target="_blank">Profile</a></div><div><a href="mailto:agent@example.com" rel="noreferrer noopener" target="_blank">agent@example.com</a></div></div></div><br /></div><br /><div><div>On Tue, Jun 2, 2026 at 5:01 PM Za Mad via Users &lt;users@example.com&gt; wrote:<br /></div><blockquote><div><div>Hello,<br /><br />Thanks, we\'re working on it!<br /><br />Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ullamcorper ipsum odio, eu pretium justo porta quis. Sed tempus sodales libero, eget bibendum dui dignissim in. Pellentesque sollicitudin feugiat sapien maximus varius. Integer eget elit dictum, pulvinar tortor a, egestas dolor. Nam pretium enim quis pharetra mattis. Sed pellentesque augue quis tellus bibendum sodales. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent maximus urna commodo tincidunt dapibus. Vestibulum cursus dui a malesuada laoreet. Suspendisse est mauris, efficitur vitae rutrum sed, rutrum vitae nisi. Nullam lorem arcu, ultrices cursus eleifend ac, auctor vitae mi. Praesent a tristique erat. Phasellus viverra, lacus in convallis iaculis, ex turpis bibendum dolor, vitae posuere mauris tellus in arcu. Etiam in ipsum neque. Pellentesque faucibus erat eget est vulputate vulputate sit amet et mi. Quisque eget faucibus massa.<br /><br /><div>Za Mad<br /><span data-resolvrr-signature-boundary="explicit"></span><br />--<br /> Super Support - Waterford Business Park<br /> 5201 Blue Lagoon Drive - 8th Floor &amp; 9th Floor - Miami, 33126 USA<br /> <a href="mailto:hot@example.com" rel="noreferrer noopener" target="_blank">hot@example.com</a> - <a href="http://www.example.com/" rel="noreferrer noopener" target="_blank">http://www.example.com/</a><br />--</div></div></div></blockquote></div>',
     );
 
     expect(result.collapsed).toBe(true);
     if (!result.collapsed) return;
     expect(result.hiddenKind).toBe("trimmed-content");
-    expect(result.visibleHtml).toContain("Razvan Rosca");
-    expect(result.visibleHtml).not.toContain("Tel:");
-    expect(result.hiddenHtml).toContain("Tel:");
+    expect(result.visibleHtml).not.toContain("Razvan Rosca");
+    expect(result.visibleHtml).not.toContain("+40 731 059 660");
+    expect(result.hiddenHtml).toContain("+40 731 059 660");
     expect(result.hiddenHtml).toContain("Za Mad via Users");
   });
 
@@ -147,9 +148,10 @@ describe("trimArticleBodyHtml", () => {
         "Thanks, we're working on it!<br><br>",
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>",
         "Za Mad<br><br>",
-        "Tel: +40 731 059 660<br>",
-        "Linkedin: https://www.linkedin.com/in/razvanrosca/<br>",
-        "Facebook: https://fb.com/razvanrosca.com<br><br>",
+        '<span data-resolvrr-signature-boundary="explicit"></span>',
+        "+40 731 059 660<br>",
+        "https://example.com/profile<br>",
+        "https://example.com/company<br><br>",
         "On Tue, Jun 2, 2026 at 5:01 PM Za Mad via Users &lt;users@example.com&gt; wrote:<br>",
         "Hello again.</span>",
       ].join(""),
@@ -170,7 +172,7 @@ describe("trimArticleBodyHtml", () => {
         "Thanks, we're working on it!<br><br>",
         "<span>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</span><br><br>",
         "<div>  Za Mad<br><br></div>",
-        "<span class=\"js-signatureMarker\"></span><br>--<br>",
+        "<span data-resolvrr-signature-boundary=\"explicit\"></span><br>--<br>",
         "Super Support - Waterford Business Park<br>",
         "5201 Blue Lagoon Drive<br>",
         "Email: hot@example.com - Web: http://www.example.com/<br>--",

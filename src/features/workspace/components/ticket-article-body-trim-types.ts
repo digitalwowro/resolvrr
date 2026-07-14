@@ -21,6 +21,7 @@ export type HtmlLine = {
 };
 
 export type CollapseCandidate = {
+  confidence: "delimiter" | "explicit" | "structural";
   hiddenKind: ArticleBodyHiddenKind;
   htmlStart: number;
 };

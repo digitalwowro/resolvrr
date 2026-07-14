@@ -18,7 +18,7 @@ import { decryptSecret, encryptSecret } from "@/security/encryption";
 import { cacheAgeBucket } from "@/telemetry/cache-age-bucket";
 import { prisma } from "./prisma";
 
-const detailCacheSourceVersion = "ticket-detail-v2";
+const detailCacheSourceVersion = "ticket-detail-v3";
 const detailCacheTtlMs = 5 * 60 * 1000;
 
 const stateToDb: Record<TicketSelectableState, DbTicketState> = {

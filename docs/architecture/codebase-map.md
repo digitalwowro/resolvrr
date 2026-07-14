@@ -508,8 +508,14 @@ added, moved, renamed, or removed.
           line extraction, plain-text conversion, trailing-empty-block trimming, and open-tag repair
           helpers for body trimming.
         - `ticket-article-body-trim-candidates.ts`
-          (`src/features/workspace/components/ticket-article-body-trim-candidates.ts`): quoted
-          reply, forwarded-message, and signature collapse candidate heuristics for article bodies.
+          (`src/features/workspace/components/ticket-article-body-trim-candidates.ts`): article
+          collapse orchestration and shared collapse eligibility checks.
+        - `ticket-article-body-quote.ts`
+          (`src/features/workspace/components/ticket-article-body-quote.ts`): quoted-reply and
+          forwarded-message structural and header detection.
+        - `ticket-article-body-signature.ts`
+          (`src/features/workspace/components/ticket-article-body-signature.ts`): precision-first,
+          language-neutral explicit-marker, delimiter, and compact contact-block signature detection.
         - `ticket-article-body-trim-types.ts`
           (`src/features/workspace/components/ticket-article-body-trim-types.ts`): article body
           trim result and candidate type contracts.
@@ -912,6 +918,8 @@ added, moved, renamed, or removed.
       - `index.ts` (`src/providers/zammad/index.ts`): provider plugin export.
       - `mapping.ts` (`src/providers/zammad/mapping.ts`): provider raw value to canonical ticket,
         article, attachment, state, and priority mapping.
+      - `article-body.ts` (`src/providers/zammad/article-body.ts`): sanitized Zammad article-body
+        mapping that replaces provider signature markers with a provider-neutral boundary.
       - `mutation-policy.ts` (`src/providers/zammad/mutation-policy.ts`): Zammad-only state mutation
         availability rules, exposed to core/UI as canonical hidden state keys and pending-date
         requirements.

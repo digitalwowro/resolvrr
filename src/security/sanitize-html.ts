@@ -2,12 +2,14 @@ import sanitizeHtml from "sanitize-html";
 
 const allowedTags = [
   "a",
+  "address",
   "blockquote",
   "br",
   "b",
   "code",
   "div",
   "em",
+  "footer",
   "h1",
   "h2",
   "h3",
@@ -20,6 +22,7 @@ const allowedTags = [
   "p",
   "pre",
   "s",
+  "section",
   "span",
   "strong",
   "sub",

@@ -10,7 +10,7 @@ import type {
   TicketPriority,
   TicketState,
 } from "@/core/tickets";
-import { sanitizeProviderHtml } from "@/security/sanitize-html";
+import { sanitizeZammadArticleBody } from "./article-body";
 import {
   articleAuthor,
   namedAssetValue,
@@ -253,7 +253,7 @@ export function mapArticle(
   assets?: ZammadAssets,
 ): TicketArticle {
   const direction = articleDirection(article);
-  const sanitizedHtml = sanitizeProviderHtml(article.body ?? "");
+  const sanitizedHtml = sanitizeZammadArticleBody(article.body ?? "");
   const role = participantRole(direction);
 
   return {
