@@ -4,6 +4,25 @@ import { describe, expect, it, vi } from "vitest";
 import { TicketRichTextEditor } from "@/features/workspace/components/ticket-rich-text-editor";
 
 describe("TicketRichTextEditor behavior", () => {
+  it("sanitizes persisted html before assigning it to the editor DOM", () => {
+    const onChange = vi.fn();
+
+    render(
+      <TicketRichTextEditor
+        disabled={false}
+        id="rich-restored-test"
+        label="Reply"
+        onChange={onChange}
+        placeholder="Write a reply..."
+        value={'<img src=x onerror="alert(1)"><p onclick="alert(2)">Safe</p><script>alert(3)</script>'}
+      />,
+    );
+
+    const editor = screen.getByRole("textbox", { name: "Reply" });
+    expect(editor.innerHTML).toBe("<p>Safe</p>");
+    expect(editor.querySelector("img, script, [onerror], [onclick]")).toBeNull();
+  });
+
   it("marks toolbar buttons active for the current editor selection", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

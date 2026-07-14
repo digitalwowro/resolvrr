@@ -6,6 +6,7 @@ import {
 } from "./communication-body";
 import type { SelectedTicketUpdateCommunicationPayload } from "./mutation-model";
 import { customerReplyInput } from "./reply-input";
+import { customerForwardInput } from "./forward-input";
 import {
   hasUnsupportedKeys,
   objectValue,
@@ -24,6 +25,10 @@ const customerReplyFields = [
   "sourceArticleExternalId",
   "to",
 ] as const;
+const customerForwardFields = [
+  "attachmentExternalIds", "body", "bodyFormat", "cc", "contextVersion",
+  "includeOriginal", "kind", "sourceArticleExternalId", "subject", "to",
+] as const;
 
 export function selectedTicketCommunicationInput(value: unknown):
   | { status: "absent" }
@@ -35,7 +40,9 @@ export function selectedTicketCommunicationInput(value: unknown):
   const kind = textValue(record, "kind");
   const allowedFields = kind === "internal-comment"
     ? internalCommentFields
-    : kind === "customer-reply" ? customerReplyFields : [];
+    : kind === "customer-reply"
+      ? customerReplyFields
+      : kind === "customer-forward" ? customerForwardFields : [];
   if (!allowedFields.length || hasUnsupportedKeys(record, allowedFields)) {
     return { status: "invalid" };
   }
@@ -50,9 +57,25 @@ export function selectedTicketCommunicationInput(value: unknown):
   const body = normalizedCommunicationBody(
     bodyFormat === "html" ? sanitizeComposerHtml(rawBody) : rawBody,
   );
-  if (!body) return { status: "invalid" };
+  if (!body && kind !== "customer-forward") return { status: "invalid" };
   if (kind === "internal-comment") {
     return { communication: { body, bodyFormat, kind }, status: "valid" };
+  }
+  if (kind === "customer-forward") {
+    const forward = customerForwardInput({
+      attachmentExternalIds: stringArrayValue(record, "attachmentExternalIds") ?? [],
+      body,
+      bodyFormat,
+      cc: stringArrayValue(record, "cc") ?? [],
+      contextVersion: textValue(record, "contextVersion"),
+      includeOriginal: record.includeOriginal === true,
+      sourceArticleExternalId: textValue(record, "sourceArticleExternalId"),
+      subject: textValue(record, "subject"),
+      to: stringArrayValue(record, "to") ?? [],
+    });
+    return forward
+      ? { communication: { ...forward, kind }, status: "valid" }
+      : { status: "invalid" };
   }
   const reply = customerReplyInput({
     body,

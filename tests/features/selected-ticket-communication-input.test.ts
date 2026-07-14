@@ -66,6 +66,47 @@ describe("selected ticket communication input", () => {
     expect(result.communication?.body).not.toContain("<script");
   });
 
+  it("parses a forward with empty introduction but reviewed provider-neutral context", () => {
+    expect(ticketMetadataMutationActionInput({
+      communication: {
+        attachmentExternalIds: ["91", "91"],
+        body: "",
+        cc: ["Watcher@Example.com"],
+        contextVersion: "forward-v1",
+        includeOriginal: true,
+        kind: "customer-forward",
+        sourceArticleExternalId: "500",
+        subject: "Original subject",
+        to: ["Customer@Example.com"],
+      },
+      ticketExternalId: "ticket-1",
+    })).toMatchObject({
+      communication: {
+        attachmentExternalIds: ["91"], body: "", cc: ["watcher@example.com"],
+        contextVersion: "forward-v1", includeOriginal: true,
+        kind: "customer-forward", sourceArticleExternalId: "500",
+        subject: "Original subject", to: ["customer@example.com"],
+      },
+      status: "valid",
+    });
+  });
+
+  it("rejects forward Bcc, control-character subjects, and arbitrary attachment references", () => {
+    const base = {
+      attachmentExternalIds: ["91"], body: "", cc: [], contextVersion: "v1",
+      includeOriginal: true, kind: "customer-forward", sourceArticleExternalId: "500",
+      subject: "Subject", to: ["customer@example.com"],
+    };
+    for (const communication of [
+      { ...base, bcc: ["hidden@example.com"] },
+      { ...base, subject: "Subject\r\nBcc: hidden@example.com" },
+      { ...base, attachmentExternalIds: ["https://example.com/file"] },
+    ]) {
+      expect(ticketMetadataMutationActionInput({ communication, ticketExternalId: "ticket-1" }))
+        .toEqual({ status: "invalid", field: "communication" });
+    }
+  });
+
   it("rejects Bcc and fields from the other communication variant", () => {
     expect(ticketMetadataMutationActionInput({
       communication: {

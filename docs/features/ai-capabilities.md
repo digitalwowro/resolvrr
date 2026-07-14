@@ -43,13 +43,15 @@ Admins can also manage per-user workspace access from `Settings -> Users`,
 including workspace role, My Style edit permission, and personal rephrase prompt
 customization permission.
 
-Proofread and rephrase actions are available in the ticket-level internal-note
-and contextual customer-reply composer when AI is configured. They operate on text the user
+Proofread and rephrase actions are available in the ticket-level internal-note,
+contextual customer-reply, and customer-forward composer when AI is configured.
+For forwards they operate only on the agent introduction, never the quoted
+source message. They operate on text the user
 has already typed. Generated text is shown as a suggestion and does not replace
 the draft unless the user explicitly applies it.
 
 Unsubmitted ticket composer drafts are recovered locally in the browser. The
-communication mode/context, reviewed To/Cc, body, and a small suggestion history
+communication mode/context, reviewed To/Cc, subject/forward options, body, and a small suggestion history
 can survive a page refresh. Failed or partially saved updates retain the draft;
 confirmed success, explicit discard/close, or retention expiry clears it.
 

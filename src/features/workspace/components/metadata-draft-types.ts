@@ -37,9 +37,27 @@ export type TicketCustomerReplyDraft = {
   to: string[];
 };
 
+export type TicketCustomerForwardDraft = {
+  attachmentExternalIds: string[];
+  body: string;
+  cc: string[];
+  contextVersion: string;
+  defaultAttachmentExternalIds: string[];
+  defaultCc: string[];
+  defaultIncludeOriginal: boolean;
+  defaultSubject: string;
+  defaultTo: string[];
+  includeOriginal: boolean;
+  kind: "customer-forward";
+  sourceArticleExternalId: string;
+  subject: string;
+  to: string[];
+};
+
 export type TicketCommunicationDraft =
   | TicketInternalCommentDraft
-  | TicketCustomerReplyDraft;
+  | TicketCustomerReplyDraft
+  | TicketCustomerForwardDraft;
 
 export const selectedTicketDraftEditableSlices = [
   "metadata",

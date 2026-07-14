@@ -1,6 +1,9 @@
 import { safeLogMetadata } from "@/security/safe-log";
 
-export type TicketCommunicationAuditKind = "customer-reply" | "internal-note";
+export type TicketCommunicationAuditKind =
+  | "customer-forward"
+  | "customer-reply"
+  | "internal-note";
 
 type TicketCommunicationAuditStatus =
   | "failed"

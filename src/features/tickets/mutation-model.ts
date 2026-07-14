@@ -63,9 +63,23 @@ export type SelectedTicketUpdateCustomerReplyPayload = {
   to: string[];
 };
 
+export type SelectedTicketUpdateCustomerForwardPayload = {
+  attachmentExternalIds: string[];
+  body: string;
+  bodyFormat?: TicketCommunicationBodyFormat;
+  cc: string[];
+  contextVersion: string;
+  includeOriginal: boolean;
+  kind: "customer-forward";
+  sourceArticleExternalId: string;
+  subject: string;
+  to: string[];
+};
+
 export type SelectedTicketUpdateCommunicationPayload =
   | SelectedTicketUpdateInternalCommentPayload
-  | SelectedTicketUpdateCustomerReplyPayload;
+  | SelectedTicketUpdateCustomerReplyPayload
+  | SelectedTicketUpdateCustomerForwardPayload;
 
 export type SelectedTicketUpdateMetadataPayload = {
   groupExternalId?: string;
@@ -101,6 +115,11 @@ export type TicketMetadataMutationErrorReason =
   | TicketReadUnavailableReason
   | "invalid-input"
   | "invalid-recipient"
+  | "forward-context-stale"
+  | "forward-context-unavailable"
+  | "invalid-forward-attachment"
+  | "forward-attachments-too-large"
+  | "invalid-forward-subject"
   | "reply-context-stale"
   | "reply-context-unavailable"
   | "delivery-uncertain"

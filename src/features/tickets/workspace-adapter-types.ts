@@ -11,6 +11,7 @@ import type {
   TicketArticleReplyContext,
   TicketReplyPolicy,
 } from "@/core/ticket-replies";
+import type { TicketArticleForwardContext } from "@/core/ticket-forwards";
 
 export type WorkspaceTicketColumnKey =
   | "customer"
@@ -98,6 +99,7 @@ export type WorkspaceArticle = {
   sanitizedHtml: string;
   visibility: string;
   attachments: WorkspaceAttachment[];
+  forwardContext?: TicketArticleForwardContext;
   replyContext?: TicketArticleReplyContext;
 };
 

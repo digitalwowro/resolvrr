@@ -14,6 +14,7 @@ import { zammadBaseUrl, zammadGetJson } from "./client";
 import { readZammadSecondaryTicketData } from "./ticket-secondary";
 import { readOptionalZammadReplyPolicy } from "./reply-policy";
 import { zammadReplyContext } from "./reply-context";
+import { zammadForwardContext } from "./forward-context";
 import { resolveZammadMergedTicket } from "./ticket-merge-resolution";
 import { isZammadMergedTicket } from "./ticket-state";
 import {
@@ -133,6 +134,7 @@ export async function getZammadTicketDetail(
       };
       const mappedArticles = rawArticlePayload.articles.map((article) => {
         const mappedArticle = mapArticle(article, assets);
+        const forwardContext = zammadForwardContext(article, mappedTicket.title);
         const replyContext = managedAddresses
           ? zammadReplyContext({
               article,
@@ -141,7 +143,11 @@ export async function getZammadTicketDetail(
               mappedArticle,
             })
           : undefined;
-        return { ...mappedArticle, ...(replyContext ? { replyContext } : {}) };
+        return {
+          ...mappedArticle,
+          ...(forwardContext ? { forwardContext } : {}),
+          ...(replyContext ? { replyContext } : {}),
+        };
       });
 
       return {

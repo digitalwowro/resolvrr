@@ -20,6 +20,12 @@ export function copyCommunicationDraft(
     ? { ...draft }
     : {
         ...draft,
+        ...(draft.kind === "customer-forward"
+          ? {
+              attachmentExternalIds: [...draft.attachmentExternalIds],
+              defaultAttachmentExternalIds: [...draft.defaultAttachmentExternalIds],
+            }
+          : {}),
         cc: [...draft.cc],
         defaultCc: [...draft.defaultCc],
         defaultTo: [...draft.defaultTo],
@@ -27,7 +33,9 @@ export function copyCommunicationDraft(
       };
 }
 
-export function replyRecipientsEdited(draft: TicketCustomerReplyDraft): boolean {
+export function replyRecipientsEdited(
+  draft: Pick<TicketCustomerReplyDraft, "to" | "cc" | "defaultTo" | "defaultCc">,
+): boolean {
   return !sameList(draft.to, draft.defaultTo) || !sameList(draft.cc, draft.defaultCc);
 }
 
@@ -36,8 +44,18 @@ export function communicationDraftNeedsReplacementConfirmation(
 ): boolean {
   return Boolean(
     communicationDraftBody(draft) ||
-      (draft?.kind === "customer-reply" && replyRecipientsEdited(draft)),
+      (draft?.kind === "customer-reply" && replyRecipientsEdited(draft)) ||
+      (draft?.kind === "customer-forward" && forwardDraftEdited(draft)),
   );
+}
+
+export function forwardDraftEdited(
+  draft: Extract<TicketCommunicationDraft, { kind: "customer-forward" }>,
+): boolean {
+  return replyRecipientsEdited(draft) ||
+    draft.subject !== draft.defaultSubject ||
+    draft.includeOriginal !== draft.defaultIncludeOriginal ||
+    !sameList(draft.attachmentExternalIds, draft.defaultAttachmentExternalIds);
 }
 
 function sameList(left: string[], right: string[]): boolean {

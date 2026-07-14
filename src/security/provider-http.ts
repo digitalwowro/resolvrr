@@ -9,6 +9,12 @@ import {
   type SafeProviderJsonOptions,
   type SafeProviderJsonResult,
 } from "./provider-http-request";
+import {
+  ProviderBinaryBodyError,
+  requestPinnedBytesAddress,
+  type SafeProviderBytesResult,
+} from "./provider-http-binary-request";
+export { ProviderBinaryBodyError } from "./provider-http-binary-request";
 export {
   ProviderJsonBodyError,
   type ProviderJsonBodyErrorReason,
@@ -126,6 +132,31 @@ export async function safeProviderJson(
     }
   }
 
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Provider URL could not be reached.");
+}
+
+export async function safeProviderBytes(
+  input: string,
+  options: SafeProviderFetchOptions & { maxResponseBytes: number },
+): Promise<SafeProviderBytesResult> {
+  const url = new URL(input);
+  if (url.protocol !== "https:") throw new Error("Provider requests must use HTTPS.");
+  const host = requestHost(url);
+  const addresses = orderedPinnedAddresses(
+    await resolveRequestAddresses(host),
+    options.allowedAddresses,
+  );
+  let lastError: unknown;
+  for (const address of addresses) {
+    try {
+      return await requestPinnedBytesAddress(url, host, address, options);
+    } catch (error) {
+      lastError = error;
+      if (options.signal?.aborted || error instanceof ProviderBinaryBodyError) throw error;
+    }
+  }
   throw lastError instanceof Error
     ? lastError
     : new Error("Provider URL could not be reached.");

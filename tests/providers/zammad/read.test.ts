@@ -43,6 +43,7 @@ describe("Zammad ticket reads", () => {
       "ticket:update-subscription",
       "ticket:add-internal-note",
       "ticket:add-customer-reply",
+      "ticket:forward-customer-email",
       "lookup:link-targets",
       "lookup:assignable-users",
       "lookup:current-user",

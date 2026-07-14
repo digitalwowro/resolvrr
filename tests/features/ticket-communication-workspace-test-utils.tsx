@@ -41,6 +41,7 @@ export function deferred<T>() {
 export function renderWorkspace({
   articles,
   customerReplies = false,
+  customerForwards = false,
   internalNotes = false,
   metadataPriority = false,
   updateTicketMetadataAction = noopMutationAction,
@@ -52,6 +53,7 @@ export function renderWorkspace({
 }: {
   articles?: WorkspaceArticle[];
   customerReplies?: boolean;
+  customerForwards?: boolean;
   internalNotes?: boolean;
   metadataPriority?: boolean;
   loadTicketDetailAction?: LoadWorkspaceTicketDetailAction;
@@ -78,7 +80,7 @@ export function renderWorkspace({
       detailResult={{ status: "available", detail }}
       listResult={{
         ...availableList,
-        communicationCapabilities: { customerReplies, internalNotes },
+        communicationCapabilities: { customerForwards, customerReplies, internalNotes },
         metadataMutationCapabilities: {
           ...availableList.metadataMutationCapabilities,
           priority: metadataPriority,

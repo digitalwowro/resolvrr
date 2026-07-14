@@ -83,6 +83,16 @@ export function metadataDraftKey(draft: SelectedTicketDraft): string {
           draft.communication.cc.join(","),
         ].join(":")
       : "",
+    draft.communication?.kind === "customer-forward"
+      ? [
+          draft.communication.sourceArticleExternalId,
+          draft.communication.subject,
+          draft.communication.to.join(","),
+          draft.communication.cc.join(","),
+          draft.communication.attachmentExternalIds.join(","),
+          String(draft.communication.includeOriginal),
+        ].join(":")
+      : "",
     draft.metadata.ownerExternalId ?? "",
     draft.metadata.groupExternalId ?? "",
     draft.metadata.tags.join(","),
@@ -116,8 +126,12 @@ export function metadataDraftDirtyFields(
   const subscription =
     draft.metadata.subscriptionFollowing !==
     baseline.metadata.subscriptionFollowing;
-  const communication =
-    Boolean(communicationDraftBody(draft.communication));
+  const communication = Boolean(
+    communicationDraftBody(draft.communication) ||
+    (draft.communication?.kind === "customer-forward" && (
+      draft.communication.to.length + draft.communication.cc.length > 0
+    )),
+  );
   const pendingUntil =
     isPendingState(draft.metadata.state) &&
     normalizedPendingIso(draft.metadata.pendingDateTime) !==
@@ -182,13 +196,26 @@ export function validateMetadataDraft(
 ): TicketMetadataDraftValidation {
   if (
     dirtyFields.communication &&
-    draft.communication?.kind === "customer-reply" &&
+    draft.communication?.kind !== "internal-comment" &&
+    draft.communication &&
     !normalizedReplyRecipients(draft.communication.to, draft.communication.cc)
   ) {
     return {
       message: "Add at least one valid To or Cc recipient.",
       valid: false,
     };
+  }
+  if (
+    dirtyFields.communication && draft.communication?.kind === "customer-forward" &&
+    (!draft.communication.subject.trim() || /[\r\n\0]/u.test(draft.communication.subject))
+  ) {
+    return { message: "Add a valid forward subject.", valid: false };
+  }
+  if (
+    dirtyFields.communication && draft.communication?.kind === "customer-forward" &&
+    !draft.communication.includeOriginal && !communicationDraftBody(draft.communication)
+  ) {
+    return { message: "Add a message or include the original email.", valid: false };
   }
   if (
     metadataDraftRequiresPendingDate(detail, draft) &&

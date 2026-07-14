@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TicketMetadataMutationActionState } from "@/features/tickets/mutation-model";
 import {
@@ -27,13 +27,16 @@ import { assignmentLabel } from "./ticket-assignment-fields";
 import { TicketMetadataActionBar } from "./ticket-metadata-action-bar";
 import { TicketMetadataEditorSidebar } from "./ticket-metadata-editor-sidebar";
 import { TicketThread } from "./ticket-thread";
-import { latestReplyableArticle } from "./communication-draft-factory";
+import {
+  latestForwardableArticle,
+  latestReplyableArticle,
+} from "./communication-draft-factory";
 import { CommunicationDraftReplacementDialog } from "./communication-draft-replacement-dialog";
 import { useTicketCommunicationSelection } from "./use-ticket-communication-selection";
 import {
   clearPersistedCommunicationDrafts,
-  type CommunicationDraftPersistenceScope,
 } from "./ticket-communication-draft-persistence";
+import { useCommunicationDraftScope } from "./use-communication-draft-scope";
 import type { TicketMetadataEditorStateProps } from "./ticket-metadata-editor-state-types";
 
 export function TicketMetadataEditorState({
@@ -89,18 +92,8 @@ export function TicketMetadataEditorState({
   const validation = validateMetadataDraft(detail, dirtyFields, currentDraft);
   const statusText = mutationStatusText(saving, mutationResult);
   const canUpdate = hasChanges && validation.valid && !saving;
-  const draftPersistenceScope = useMemo<
-    CommunicationDraftPersistenceScope | undefined
-  >(
-    () =>
-      userId && workspaceId
-        ? {
-            ticketExternalId: detail.id,
-            userId,
-            workspaceId,
-          }
-        : undefined,
-    [detail.id, userId, workspaceId],
+  const draftPersistenceScope = useCommunicationDraftScope(
+    detail.id, userId, workspaceId,
   );
 
   function changeDraft(nextDraft: SelectedTicketDraft) {
@@ -113,6 +106,7 @@ export function TicketMetadataEditorState({
     onChange: (communication) => changeDraft({ ...currentDraft, communication }),
   });
   const latestReplySource = latestReplyableArticle(detail.articles);
+  const latestForwardSource = latestForwardableArticle(detail.articles);
 
   function discardChanges() {
     const nextDraft = metadataDraftFromBaseline(currentBaseline);
@@ -244,6 +238,7 @@ export function TicketMetadataEditorState({
               changeDraft({ ...currentDraft, communication })
             }
             onRequestReply={communicationSelection.requestReply}
+            onRequestForward={communicationSelection.requestForward}
             onScrolledToLatest={() => setScrollAfterArticleCount(undefined)}
             rephraseStyleOptions={rephraseStyleOptions}
             rewriteDraftAction={rewriteDraftAction}
@@ -267,6 +262,9 @@ export function TicketMetadataEditorState({
       </section>
       <TicketMetadataActionBar
         canComment={communicationCapabilities.internalNotes}
+        canForward={Boolean(
+          communicationCapabilities.customerForwards && latestForwardSource,
+        )}
         canDiscard={hasChanges}
         canReply={Boolean(
           communicationCapabilities.customerReplies && latestReplySource,
@@ -278,6 +276,9 @@ export function TicketMetadataEditorState({
         canUpdate={canUpdate}
         onComment={communicationSelection.requestComment}
         onDiscard={discardChanges}
+        onForward={() => {
+          if (latestForwardSource) communicationSelection.requestForward(latestForwardSource);
+        }}
         onReply={(intent) => {
           if (latestReplySource) {
             communicationSelection.requestReply(latestReplySource, intent);

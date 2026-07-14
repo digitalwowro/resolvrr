@@ -189,6 +189,7 @@ export function workspaceTicketDetail(
       sanitizedHtml: article.sanitizedHtml,
       visibility: article.visibility,
       attachments: article.attachments.map(workspaceAttachment),
+      forwardContext: article.forwardContext,
       replyContext: article.replyContext,
     })),
   };

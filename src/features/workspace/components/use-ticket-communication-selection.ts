@@ -7,7 +7,10 @@ import {
   communicationDraftNeedsReplacementConfirmation,
   type TicketCommunicationDraft,
 } from "./metadata-draft";
-import { replyDraftFromArticle } from "./communication-draft-factory";
+import {
+  forwardDraftFromArticle,
+  replyDraftFromArticle,
+} from "./communication-draft-factory";
 
 const composerId = "ticket-communication-composer";
 
@@ -17,9 +20,12 @@ function sameSelection(
 ) {
   return current?.kind === next.kind && (
     current.kind === "internal-comment" || (
-      next.kind === "customer-reply" &&
-      current.intent === next.intent &&
-      current.sourceArticleExternalId === next.sourceArticleExternalId
+      next.kind !== "internal-comment" &&
+      current.kind === next.kind &&
+      current.sourceArticleExternalId === next.sourceArticleExternalId &&
+      (next.kind !== "customer-reply" || (
+        current.kind === "customer-reply" && current.intent === next.intent
+      ))
     )
   );
 }
@@ -64,6 +70,10 @@ export function useTicketCommunicationSelection({
     },
     pendingReplacement: pending,
     requestComment: () => request({ body: "", kind: "internal-comment" }),
+    requestForward: (article: WorkspaceArticle) => {
+      const next = forwardDraftFromArticle(article);
+      if (next) request(next);
+    },
     requestReply: (article: WorkspaceArticle, intent: TicketReplyIntent) => {
       const next = replyDraftFromArticle(article, intent);
       if (next) request(next);

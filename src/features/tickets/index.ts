@@ -22,6 +22,10 @@ export type {
   TicketReplyRecipient,
   TicketReplyRecipients,
 } from "@/core/ticket-replies";
+export type {
+  TicketArticleForwardContext,
+  TicketCustomerForwardInput,
+} from "@/core/ticket-forwards";
 export {
   formatWorkspaceDateTime,
   formatWorkspaceRelativeTime,
@@ -36,12 +40,15 @@ export {
 } from "./link-target-service";
 export {
   addWorkspaceTicketCustomerReply,
+  forwardWorkspaceTicketEmail,
   addWorkspaceTicketInternalNote,
 } from "./communication-service";
 export {
   noTicketCommunicationCapabilities,
   ticketCommunicationCapabilities,
   type TicketCustomerReplyActionState,
+  type TicketCustomerForwardPayload,
+  type TicketCustomerForwardResult,
   type TicketCustomerReplyPayload,
   type TicketCustomerReplyResult,
   type TicketCommunicationCapabilities,

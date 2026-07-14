@@ -146,8 +146,8 @@ Link target lookup is a separate read capability:
 
 ## Ticket Communication Writes
 
-The approved communication write surface covers internal notes and customer
-replies:
+The approved communication write surface covers internal notes, customer
+replies, and email forwarding through the active helpdesk provider:
 
 - `TicketInternalNoteInput.body: string`
 - `TicketInternalNoteInput.bodyFormat?: "plain" | "html"`
@@ -156,8 +156,10 @@ replies:
 - customer reply communication: `kind: "customer-reply"`, `body`, optional
   `bodyFormat`, source article external ID, `reply | reply-all` intent, opaque
   context version, and explicit `to`/`cc` address arrays.
+- customer forward communication: `kind: "customer-forward"`, optional agent
+  introduction, source/context, subject, To/Cc, original choice, and attachment IDs.
 
-Internal notes and customer replies are staged in the same selected-ticket draft
+All communication kinds are staged in the same selected-ticket draft
 as metadata, but exactly one discriminated communication is allowed per Update.
 Comment is ticket-level. Reply and Reply all select a provider-derived source
 article context and open the one composer above the newest thread article;
@@ -175,10 +177,15 @@ coordinated provider read. The footer uses the newest reply-capable public
 article and never skips backward merely to enable Reply all. An article hover
 action may intentionally select an older source.
 
+Each public email article may carry `TicketArticleForwardContext` independently
+of Reply eligibility. Forward starts with empty recipients and the exact source
+subject. The server re-fetches the source and never trusts browser-rendered HTML.
+
 The provider-neutral communication capabilities are:
 
 - `ticket:add-internal-note`
 - `ticket:add-customer-reply`
+- `ticket:forward-customer-email`
 
 Communication write results distinguish write failure from refresh failure:
 
@@ -201,17 +208,19 @@ shows a non-destructive refresh warning when a confirmed write cannot refresh
 the selected ticket detail. The workspace reloads through the shared
 post-update refresh path after a checked `saved` result.
 
-Zammad internal notes and customer replies are provider-specific article writes
-under `src/providers/zammad/**`. Zammad derives Reply and Reply all defaults from
+Zammad communication writes are provider-specific and remain under
+`src/providers/zammad/**`. Zammad derives Reply and Reply all defaults from
 fresh source-article From/To/Cc/Reply-To data, active system email addresses,
 sender role, and web/phone customer fallback rules. On send it re-fetches the
 ticket, source article, and system-address policy; verifies ticket ownership,
 visibility, channel, intent, and context version; then sends the user-reviewed
 normalized To/Cc set. Context lookup and version mismatches fail closed before
 POST. Delivery-uncertain POST failures are not retried automatically. Zammad raw
-article payload fields such as
-`ticket_id`, `to`, `content_type`, `type`, `internal`, and `sender` must not
-escape the provider folder.
+article payload fields must not escape the provider folder.
+
+Forward creates one public Zammad email article on the same ticket, preserves the
+source subject by default, omits reply-threading headers, and safely handles the
+original plus bounded attachments. Zammad exclusively owns email delivery.
 
 Mutation results distinguish write failure from refresh failure:
 

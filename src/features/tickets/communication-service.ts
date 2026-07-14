@@ -1,4 +1,5 @@
 import type {
+  TicketCustomerForwardInput,
   TicketCustomerReplyInput,
   TicketInternalNoteInput,
 } from "@/core/tickets";
@@ -8,15 +9,19 @@ import {
   noAiSummaryCacheRepository,
   type AiSummaryCacheRepository,
 } from "@/features/ai/summary-cache-repository";
-import {
-  recordTicketCommunicationAudit,
-  type TicketCommunicationAuditKind,
-} from "@/telemetry/ticket-communication-audit";
 import { loadActiveTicketProviderContext } from "./connection-context";
 import {
+  dispatchTicketCustomerForward,
   dispatchTicketCustomerReply,
   dispatchTicketInternalNote,
 } from "./communication-dispatch";
+import {
+  communicationAuditContext,
+  failedCommunicationResult,
+  recordFailedCommunicationAudit,
+  recordSavedCommunicationAudit,
+  recordUncertainCommunicationAudit,
+} from "./communication-service-audit";
 import {
   noTicketDetailCacheRepository,
   type TicketDetailCacheRepository,
@@ -26,97 +31,10 @@ import {
   type TicketMutationFinalizationOptions,
 } from "./mutation-finalization-service";
 import type {
-  TicketCommunicationErrorReason,
+  TicketCustomerForwardResult,
   TicketCustomerReplyResult,
   TicketInternalNoteResult,
 } from "./communication-model";
-
-type CommunicationAuditContext = {
-  connectionId?: string;
-  providerKey?: string;
-};
-
-type CommunicationFailedResult = {
-  reason: TicketCommunicationErrorReason;
-  retryable: boolean;
-  status: "failed";
-};
-
-function failedNoteResult(
-  result: Awaited<ReturnType<typeof loadActiveTicketProviderContext>>,
-): CommunicationFailedResult {
-  return {
-    status: "failed",
-    reason: result.status === "unavailable"
-      ? result.reason
-      : "provider-unexpected-response",
-    retryable: result.status === "unavailable" ? result.retryable : false,
-  };
-}
-
-function communicationAuditContext(
-  result: Awaited<ReturnType<typeof loadActiveTicketProviderContext>>,
-): CommunicationAuditContext {
-  if (result.status === "available") {
-    return {
-      connectionId: result.value.context.connection.id,
-      providerKey: result.value.context.connection.providerKey,
-    };
-  }
-
-  return {};
-}
-
-function recordFailedCommunicationAudit(
-  kind: TicketCommunicationAuditKind,
-  context: CommunicationAuditContext,
-  result: { reason: string; retryable: boolean },
-) {
-  recordTicketCommunicationAudit({
-    ...context,
-    kind,
-    reason: result.reason,
-    retryable: result.retryable,
-    status: "failed",
-  });
-}
-
-function recordSavedCommunicationAudit(
-  kind: TicketCommunicationAuditKind,
-  context: CommunicationAuditContext,
-) {
-  recordTicketCommunicationAudit({
-    ...context,
-    kind,
-    status: "saved",
-  });
-}
-
-function recordUncertainCommunicationAudit(
-  kind: TicketCommunicationAuditKind,
-  context: CommunicationAuditContext,
-  result: { reason: string; retryable: boolean },
-) {
-  recordTicketCommunicationAudit({
-    ...context,
-    kind,
-    reason: result.reason,
-    retryable: result.retryable,
-    status: "saved-refresh-failed",
-  });
-}
-
-function failedReplyResult(
-  result: Awaited<ReturnType<typeof loadActiveTicketProviderContext>>,
-): CommunicationFailedResult {
-  return {
-    status: "failed",
-    reason: result.status === "unavailable"
-      ? result.reason
-      : "provider-unexpected-response",
-    retryable: result.status === "unavailable" ? result.retryable : false,
-  };
-}
 
 export async function addWorkspaceTicketInternalNote(
   repository: HelpdeskConnectionsRepository,
@@ -147,7 +65,7 @@ export async function addWorkspaceTicketInternalNote(
   );
   const auditContext = communicationAuditContext(providerContext);
   if (providerContext.status === "unavailable") {
-    const result = failedNoteResult(providerContext);
+    const result = failedCommunicationResult(providerContext);
     recordFailedCommunicationAudit("internal-note", auditContext, result);
     return result;
   }
@@ -205,7 +123,7 @@ export async function addWorkspaceTicketCustomerReply(
   );
   const auditContext = communicationAuditContext(providerContext);
   if (providerContext.status === "unavailable") {
-    const result = failedReplyResult(providerContext);
+    const result = failedCommunicationResult(providerContext);
     recordFailedCommunicationAudit("customer-reply", auditContext, result);
     return result;
   }
@@ -231,5 +149,51 @@ export async function addWorkspaceTicketCustomerReply(
     }
   }
   recordSavedCommunicationAudit("customer-reply", auditContext);
+  return { status: "saved" };
+}
+
+export async function forwardWorkspaceTicketEmail(
+  repository: HelpdeskConnectionsRepository,
+  registry: ProviderRegistry,
+  encryptionKey: string,
+  userId: string,
+  ticketExternalId: string,
+  input: TicketCustomerForwardInput,
+  cacheRepository: TicketDetailCacheRepository = noTicketDetailCacheRepository,
+  aiSummaryCacheRepository: AiSummaryCacheRepository = noAiSummaryCacheRepository,
+  options: TicketMutationFinalizationOptions = {},
+): Promise<TicketCustomerForwardResult> {
+  if (!ticketExternalId.trim() || !input.subject.trim()) {
+    const result = { reason: "invalid-input", retryable: false } as const;
+    recordFailedCommunicationAudit("customer-forward", {}, result);
+    return { status: "failed", ...result };
+  }
+  const providerContext = await loadActiveTicketProviderContext(
+    repository, registry, encryptionKey, userId, "mutation",
+  );
+  const auditContext = communicationAuditContext(providerContext);
+  if (providerContext.status === "unavailable") {
+    const result = failedCommunicationResult(providerContext);
+    recordFailedCommunicationAudit("customer-forward", auditContext, result);
+    return result;
+  }
+  const result = await dispatchTicketCustomerForward(
+    providerContext.value, ticketExternalId, input,
+  );
+  if (result.status !== "saved") {
+    recordFailedCommunicationAudit("customer-forward", auditContext, result);
+    return result;
+  }
+  if (options.finalize !== false) {
+    const finalized = await finalizeWorkspaceTicketMutation(
+      repository, registry, encryptionKey, userId, ticketExternalId,
+      cacheRepository, aiSummaryCacheRepository,
+    );
+    if (finalized.status !== "saved") {
+      recordUncertainCommunicationAudit("customer-forward", auditContext, finalized);
+      return finalized;
+    }
+  }
+  recordSavedCommunicationAudit("customer-forward", auditContext);
   return { status: "saved" };
 }

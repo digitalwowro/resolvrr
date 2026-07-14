@@ -19,22 +19,29 @@ import {
 import { TicketArticleBody } from "./ticket-article-body";
 
 type TicketThreadArticleProps = {
+  activeForward: boolean;
   activeIntent: TicketReplyIntent | null;
   article: WorkspaceArticle;
+  canForward: boolean;
   canReply: boolean;
+  onForward(): void;
   onReply(intent: TicketReplyIntent): void;
 };
 
 export function TicketThreadArticle({
+  activeForward,
   activeIntent,
   article,
+  canForward,
   canReply,
+  onForward,
   onReply,
 }: TicketThreadArticleProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const hasRecipientDetails =
     article.to.length > 0 || article.cc.length > 0 || article.bcc.length > 0;
-  const hasActions = canReply && isPublicReplyableArticle(article);
+  const hasActions = (canReply && isPublicReplyableArticle(article)) ||
+    (canForward && Boolean(article.forwardContext));
 
   const senderControl = hasRecipientDetails ? (
     <button
@@ -99,8 +106,11 @@ export function TicketThreadArticle({
           {hasActions ? (
             <ArticleActions
               activeIntent={activeIntent}
+              activeForward={activeForward}
               article={article}
+              canForward={canForward}
               canReply={canReply}
+              onForward={onForward}
               onReply={onReply}
             />
           ) : null}

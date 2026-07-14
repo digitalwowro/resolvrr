@@ -5,7 +5,7 @@ import type { TicketReplyIntent } from "@/core/ticket-replies";
 
 const databaseName = "resolvrr-workspace-drafts";
 const storeName = "communicationDrafts";
-const databaseVersion = 2;
+const databaseVersion = 3;
 export const communicationDraftRetentionMs = 7 * 24 * 60 * 60 * 1_000;
 export const maxPersistedAiSuggestions = 3;
 
@@ -26,17 +26,20 @@ export type PersistedDraftAiSuggestion = {
 
 export type PersistedCommunicationDraft = {
   articleId?: string;
+  attachmentExternalIds?: string[];
   bodyHtml: string;
   cc?: string[];
   contextVersion?: string;
   expiresAt: number;
   id: string;
   intent?: TicketReplyIntent;
-  kind?: "internal-comment" | "customer-reply";
+  includeOriginal?: boolean;
+  kind?: "internal-comment" | "customer-forward" | "customer-reply";
   mode?: "comment" | "reply";
   scope: CommunicationDraftPersistenceScope;
   sourceArticleExternalId?: string;
   suggestions: PersistedDraftAiSuggestion[];
+  subject?: string;
   to?: string[];
   updatedAt: number;
 };
@@ -109,14 +112,17 @@ export async function loadPersistedCommunicationDrafts(
 
 export async function savePersistedCommunicationDraft(input: {
   articleId?: string;
+  attachmentExternalIds?: string[];
   bodyHtml: string;
   cc?: string[];
   contextVersion?: string;
   intent?: TicketReplyIntent;
-  kind: "internal-comment" | "customer-reply";
+  includeOriginal?: boolean;
+  kind: "internal-comment" | "customer-forward" | "customer-reply";
   recipientEdited?: boolean;
   scope: CommunicationDraftPersistenceScope | undefined;
   suggestions: PersistedDraftAiSuggestion[];
+  subject?: string;
   to?: string[];
 }): Promise<void> {
   const scope = input.scope;
@@ -129,15 +135,18 @@ export async function savePersistedCommunicationDraft(input: {
   const now = Date.now();
   await withStore("readwrite", (store) => store.put({
     bodyHtml: input.bodyHtml,
+    attachmentExternalIds: input.attachmentExternalIds,
     cc: input.cc,
     contextVersion: input.contextVersion,
     expiresAt: now + communicationDraftRetentionMs,
     id: draftId(scope),
     intent: input.intent,
+    includeOriginal: input.includeOriginal,
     kind: input.kind,
     scope,
     sourceArticleExternalId: input.articleId,
     suggestions,
+    subject: input.subject,
     to: input.to,
     updatedAt: now,
   } satisfies PersistedCommunicationDraft));

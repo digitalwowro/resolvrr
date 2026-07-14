@@ -1,6 +1,8 @@
 import { ProviderError, type ProviderContext } from "@/core/providers";
 import {
+  ProviderBinaryBodyError,
   ProviderJsonBodyError,
+  safeProviderBytes,
   safeProviderJson,
 } from "@/security/provider-http";
 import {
@@ -97,6 +99,48 @@ export async function zammadGetJson(
     throw classifyZammadResponse(response.status);
   }
 
+  return response.data;
+}
+
+export async function zammadGetBytes(
+  context: ProviderContext,
+  path: string,
+  maxResponseBytes: number,
+): Promise<Uint8Array> {
+  const baseUrl = zammadBaseUrl(context);
+  let response;
+  try {
+    response = await safeProviderBytes(`${baseUrl}${path}`, {
+      allowedAddresses: context.requestSecurity.validatedAddresses,
+      headers: {
+        Authorization: authHeader(context),
+        Accept: "application/octet-stream",
+        "User-Agent": zammadUserAgent,
+      },
+      signal: AbortSignal.timeout(defaultReadTimeoutMs),
+      maxResponseBytes,
+    });
+  } catch (error) {
+    if (error instanceof ProviderBinaryBodyError) {
+      throw new ProviderError(
+        "validation-failure",
+        "The selected helpdesk attachment is too large.",
+        false,
+        undefined,
+        "forward-attachments-too-large",
+      );
+    }
+    throw new ProviderError(
+      "temporary-provider-failure",
+      "The helpdesk attachment could not be read.",
+      true,
+      undefined,
+      diagnosticCode(error),
+    );
+  }
+  if (response.status < 200 || response.status >= 300) {
+    throw classifyZammadResponse(response.status);
+  }
   return response.data;
 }
 

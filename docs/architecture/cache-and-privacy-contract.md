@@ -49,7 +49,8 @@ job queues remain out of scope. Read-only AI behavior is defined separately in
 - Ticket-level composer drafts are recovered locally in the browser. The
   versioned record is scoped by user, active workspace, and selected ticket. It
   may contain communication kind, source/intent/context version, reviewed To/Cc,
-  unsent body, and up to three draft AI suggestions, and expires after a short
+  forward subject/options and attachment IDs, unsent body, and up to three draft
+  AI suggestions, and expires after a short
   retention window. Legacy comments restore directly; legacy replies restore
   only after their source receives a fresh valid context, using fresh defaults.
 - Workspace and per-user AI settings are encrypted server-side configuration,
@@ -160,7 +161,7 @@ Cached data must be classified before persistence:
 - Customer content: ticket titles, previews, sanitized thread content,
   recipients, note bodies, reply bodies, and generated text based on customer
   content. This must not be logged and must be encrypted at rest if persisted.
-- Browser-local draft content: unsent comment/reply bodies, recipient selections,
+- Browser-local draft content: unsent comment/reply/forward bodies, recipient selections,
   source context identifiers/versions, and local AI suggestion alternatives.
   This must not be logged or sent to the server except through explicit AI
   generation or Update actions chosen by the user.
@@ -195,7 +196,7 @@ confirms the write:
   list/group snapshots that could contain the ticket.
 - Owner/group/tag/link/subscription writes invalidate selected-ticket detail,
   affected list rows, and any related lookup-derived display where applicable.
-- Internal notes and customer replies invalidate selected-ticket detail and
+- Internal notes, customer replies, and customer forwards invalidate selected-ticket detail and
   thread snapshots plus generated selected-ticket summaries.
 - Saved-view changes invalidate list snapshots keyed by that saved view.
 - Helpdesk connection credential, active connection, or permission changes

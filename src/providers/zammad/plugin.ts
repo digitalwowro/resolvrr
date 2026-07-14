@@ -24,6 +24,7 @@ import { updateZammadTicketMetadata } from "./mutations";
 import {
   addZammadTicketCustomerReply,
   addZammadTicketInternalNote,
+  forwardZammadTicketEmail,
 } from "./ticket-article-mutations";
 import {
   listZammadNotifications,
@@ -114,6 +115,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "ticket:update-subscription",
     "ticket:add-internal-note",
     "ticket:add-customer-reply",
+    "ticket:forward-customer-email",
     "lookup:link-targets",
     "lookup:assignable-users",
     "lookup:current-user",
@@ -143,6 +145,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   updateTicketMetadata: updateZammadTicketMetadata,
   addTicketInternalNote: addZammadTicketInternalNote,
   addTicketCustomerReply: addZammadTicketCustomerReply,
+  forwardTicketEmail: forwardZammadTicketEmail,
   listAssignableUsers: listZammadAssignableUsers,
   getCurrentUser: getZammadCurrentUser,
   listGroups: listZammadGroups,

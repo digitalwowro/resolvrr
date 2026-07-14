@@ -135,10 +135,17 @@ and bottom update bar remain outside that conversation scroller. Thread
 articles render provider-sanitized rich HTML and use the shared global link color. Public
 reply-capable articles expose provider-neutral Reply and, for email, enabled or
 disabled Reply all. Internal/system/unsupported articles expose no reply action.
+Public email articles expose Forward independently of Reply eligibility.
 Comment exists only in the ticket footer. Footer Reply and Reply all use the
 newest reply-capable public article; an older article action explicitly overrides
 that source. Every action scrolls to and focuses the single ticket-level composer
 above the newest article, so the thread never implies nested replies.
+
+Forward opens the same ticket-level composer with editable To/Cc and Subject.
+Recipients start empty, the subject defaults exactly to the source subject, and
+the agent can include or omit the original message and each source attachment.
+The original preview is read-only; only the agent introduction is editable and
+eligible for proofread/rephrase. No Bcc control is available.
 
 The reply composer shows editable To and Cc chips and never Bcc. It validates
 plain email additions, deduplicates across fields with To precedence, requires at
@@ -185,8 +192,8 @@ The default relation is Normal/Related; Parent and Child are selectable only
 when the provider advertises `ticket:update-link-relations`, otherwise those
 options remain visibly unavailable. Subscription controls update the current user's
 following state. Changed controls and staged communication body content are visually
-treated as one selected-ticket draft. The footer groups Reply, Reply all, and
-Comment on the left, with Discard changes, the post-Update navigation selector,
+treated as one selected-ticket draft. The footer groups Reply, Reply all,
+Forward, and Comment on the left, with Discard changes, the post-Update navigation selector,
 and Update on the right. `Discard changes`
 resets the selected-ticket draft to the loaded ticket values, and successful
 saves refresh the workspace after one checked mutation. The action row includes

@@ -116,8 +116,9 @@ never cross the provider boundary.
 Successful communication writes are followed by a service-layer refresh check
 for the selected ticket detail/thread. If the write succeeds but refresh fails,
 callers receive `saved-refresh-failed` so UI can present a non-destructive
-warning and keep provider source-of-truth semantics. Optimistic rendering and
-attachment sends are not part of this slice.
+warning and keep provider source-of-truth semantics. Optimistic rendering is
+not used. Forwarded source attachments are revalidated and read only inside the
+provider boundary with bounded binary responses.
 
 Communication audit logs record only the communication kind, final status,
 provider-neutral failure reason, retryability, and safe connection/provider
@@ -135,6 +136,14 @@ normalizes the reviewed To/Cc set. User-added addresses remain allowed, includin
 warned system addresses. Failed revalidation produces no POST, while an
 uncertain POST result is non-retryable and must be verified from refreshed
 provider source.
+
+Zammad forwarding is independent of reply derivation. Any public email article
+may expose a provider-neutral forward context, including system-originated mail
+whose From/To/Reply-To values are all managed addresses. The provider freshly
+revalidates the ticket and exact source article, subject, recipients, context
+version, and selected attachment IDs before creating one email article. The
+forward payload intentionally omits `in_reply_to` and `references`; Zammad alone
+performs outbound channel delivery.
 
 ## Ticket Read Observability
 
@@ -154,8 +163,9 @@ cache. UI components must not introduce provider fetch fan-out.
 ## Zammad Boundary
 
 Zammad ticket list, detail, thread DTO validation, endpoint construction,
-metadata write payload construction, internal-note/customer-reply article
-payload construction, customer reply recipient resolution, and raw
+metadata write payload construction, internal-note/customer-reply/customer-forward
+article payload construction, customer reply recipient resolution, forward
+source/attachment revalidation, and raw
 state/priority/assignment/tag/link/subscription normalization live under
 `src/providers/zammad`. Core, feature, UI, and provider-neutral tests consume
 only canonical ticket values and provider capabilities. Zammad currently
@@ -166,6 +176,7 @@ advertises `ticket:list`,
 `ticket:update-group`, `ticket:update-tags`, `ticket:update-links`,
 `ticket:update-link-relations`, `ticket:update-subscription`,
 `ticket:add-internal-note`, `ticket:add-customer-reply`,
+`ticket:forward-customer-email`,
 `lookup:link-targets`, `lookup:assignable-users`, `lookup:groups`, and
 `lookup:tags`.
 Subscription fields still use the stable empty canonical shapes documented in

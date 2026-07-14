@@ -4,6 +4,10 @@ import type {
   TicketCustomerReplyInput,
   TicketReplyPolicy,
 } from "./ticket-replies";
+import type {
+  TicketArticleForwardContext,
+  TicketCustomerForwardInput,
+} from "./ticket-forwards";
 import {
   ticketSelectableStates,
   type TicketMutableState,
@@ -171,6 +175,7 @@ export type TicketArticle = {
   sanitizedHtml: string;
   textPreview?: string;
   attachments: TicketAttachment[];
+  forwardContext?: TicketArticleForwardContext;
   replyContext?: TicketArticleReplyContext;
 };
 
@@ -247,6 +252,7 @@ export type TicketInternalNoteInput = {
 };
 
 export type { TicketCustomerReplyInput };
+export type { TicketCustomerForwardInput };
 
 export type TicketMetadataMutationConstraints = {
   hiddenStates?: TicketMutableState[];

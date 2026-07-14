@@ -13,7 +13,7 @@ import type { PersistedDraftAiSuggestion } from "./ticket-communication-draft-pe
 import { escapeHtml } from "./ticket-rich-text-editor-dom";
 import { TicketRichTextEditor } from "./ticket-rich-text-editor";
 
-export type InlineCommunicationMode = "comment" | "reply";
+export type InlineCommunicationMode = "comment" | "forward" | "reply";
 
 type InlineCommunicationComposerProps = {
   body: string;
@@ -86,7 +86,7 @@ export function TicketInlineCommunicationComposer({
   rewriteDraftAction,
   suggestions,
 }: InlineCommunicationComposerProps) {
-  const label = mode === "comment" ? "Comment" : "Reply";
+  const label = mode === "comment" ? "Comment" : mode === "forward" ? "Forward" : "Reply";
   const [pendingOperation, setPendingOperation] = useState<
     "proofread" | "rephrase" | null
   >(null);
@@ -118,7 +118,7 @@ export function TicketInlineCommunicationComposer({
     try {
       const result = await rewriteDraftAction({
         bodyHtml: body,
-        composerMode: mode,
+        composerMode: mode === "forward" ? "reply" : mode,
         operation,
         ...(operation === "rephrase"
           ? { rephraseStyleId: selectedStyleId }
@@ -227,7 +227,9 @@ export function TicketInlineCommunicationComposer({
         id={`${mode}-${editorId}`}
         label={label}
         onChange={onBodyChange}
-        placeholder={mode === "comment" ? "Write a comment..." : "Write a reply..."}
+        placeholder={mode === "comment"
+          ? "Write a comment..."
+          : mode === "forward" ? "Add a message..." : "Write a reply..."}
         value={body}
       />
       {message ? (

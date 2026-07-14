@@ -1,6 +1,6 @@
 "use client";
 
-import { Reply, ReplyAll } from "lucide-react";
+import { Forward, Reply, ReplyAll } from "lucide-react";
 import type { ReactNode } from "react";
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
@@ -134,26 +134,33 @@ export function ArticleContactDetails({ article }: { article: WorkspaceArticle }
 }
 
 export function ArticleActions({
+  activeForward,
   activeIntent,
   article,
+  canForward,
   canReply,
+  onForward,
   onReply,
 }: {
+  activeForward: boolean;
   activeIntent: TicketReplyIntent | null;
   article: WorkspaceArticle;
+  canForward: boolean;
   canReply: boolean;
+  onForward(): void;
   onReply(intent: TicketReplyIntent): void;
 }) {
   const canReplyAll = Boolean(
     article.replyContext?.availableIntents.includes("reply-all"),
   );
+  const showReply = canReply && isPublicReplyableArticle(article);
   const showReplyAll = article.replyContext?.channel === "email";
   return (
     <div
       aria-label={`Message actions for ${article.author}`}
       className="pointer-events-none absolute right-4 top-4 flex items-center gap-1 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
     >
-      {canReply ? <>
+      {showReply ? <>
           <ThreadActionButton
             icon={<Reply aria-hidden="true" className="size-3.5" />}
             isSelected={activeIntent === "reply"}
@@ -176,6 +183,17 @@ export function ArticleActions({
             Reply all
           </ThreadActionButton> : null}
         </> : null}
+      {canForward && article.forwardContext ? (
+        <ThreadActionButton
+          icon={<Forward aria-hidden="true" className="size-3.5" />}
+          isSelected={activeForward}
+          onClick={onForward}
+          title="Forward this message to reviewed recipients."
+          type={article.direction}
+        >
+          Forward
+        </ThreadActionButton>
+      ) : null}
     </div>
   );
 }

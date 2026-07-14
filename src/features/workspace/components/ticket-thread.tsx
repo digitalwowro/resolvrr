@@ -8,9 +8,12 @@ import type { TicketCommunicationCapabilities } from "@/features/tickets/communi
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
 import type { TicketCommunicationDraft } from "./metadata-draft";
 import { replyRecipientsEdited } from "./communication-draft";
+import { forwardDraftEdited } from "./communication-draft";
 import { TicketThreadArticle } from "./ticket-thread-article";
 import { TicketInlineCommunicationComposer } from "./ticket-inline-communication-composer";
 import { TicketReplyRecipientEditor } from "./ticket-reply-recipient-editor";
+import { TicketForwardOptions } from "./ticket-forward-options";
+import { restoredCommunicationDraft } from "./ticket-communication-draft-restore";
 import {
   clearPersistedCommunicationDrafts,
   loadPersistedCommunicationDrafts,
@@ -18,7 +21,6 @@ import {
   savePersistedCommunicationDraft,
   type CommunicationDraftPersistenceScope,
   type PersistedDraftAiSuggestion,
-  type PersistedCommunicationDraft,
 } from "./ticket-communication-draft-persistence";
 
 type TicketThreadProps = {
@@ -30,56 +32,12 @@ type TicketThreadProps = {
   managedAddresses: string[];
   onCommunicationDraftChange(draft: TicketCommunicationDraft | undefined): void;
   onRequestReply(article: WorkspaceArticle, intent: TicketReplyIntent): void;
+  onRequestForward(article: WorkspaceArticle): void;
   onScrolledToLatest(): void;
   rephraseStyleOptions?: AiRephraseStyleOption[];
   rewriteDraftAction?: RewriteDraftAction;
   scrollAfterArticleCount?: number;
 };
-
-function restoredDraft(
-  record: PersistedCommunicationDraft,
-  articles: WorkspaceArticle[],
-  capabilities: TicketCommunicationCapabilities,
-): TicketCommunicationDraft | undefined {
-  const kind = record.kind ?? (record.mode === "comment"
-    ? "internal-comment"
-    : record.mode === "reply" ? "customer-reply" : undefined);
-  if (kind === "internal-comment") {
-    return capabilities.internalNotes
-      ? { body: record.bodyHtml, kind }
-      : undefined;
-  }
-  const sourceId = record.sourceArticleExternalId ?? record.articleId;
-  const article = articles.find((item) => item.id === sourceId);
-  const context = article?.replyContext;
-  const intent = record.intent ?? "reply";
-  if (
-    kind !== "customer-reply" ||
-    !capabilities.customerReplies ||
-    !context ||
-    !context.availableIntents.includes(intent) ||
-    (record.contextVersion && record.contextVersion !== context.contextVersion)
-  ) {
-    return undefined;
-  }
-  const defaults = intent === "reply-all"
-    ? context.defaults.replyAll
-    : context.defaults.reply;
-  if (!defaults) return undefined;
-  const defaultTo = defaults.to.map((recipient) => recipient.email);
-  const defaultCc = defaults.cc.map((recipient) => recipient.email);
-  return {
-    body: record.bodyHtml,
-    cc: record.contextVersion ? record.cc ?? defaultCc : defaultCc,
-    contextVersion: context.contextVersion,
-    defaultCc,
-    defaultTo,
-    intent,
-    kind,
-    sourceArticleExternalId: context.sourceArticleExternalId,
-    to: record.contextVersion ? record.to ?? defaultTo : defaultTo,
-  };
-}
 
 export function TicketThread({
   articles,
@@ -90,6 +48,7 @@ export function TicketThread({
   managedAddresses,
   onCommunicationDraftChange,
   onRequestReply,
+  onRequestForward,
   onScrolledToLatest,
   rephraseStyleOptions,
   rewriteDraftAction,
@@ -121,7 +80,7 @@ export function TicketThread({
     restoredScopeRef.current = scopeKey;
     void loadPersistedCommunicationDrafts(draftPersistenceScope).then((records) => {
       if (cancelled || draftRef.current || !records[0]) return;
-      const draft = restoredDraft(records[0], articles, communicationCapabilities);
+      const draft = restoredCommunicationDraft(records[0], articles, communicationCapabilities);
       if (!draft) return;
       setSuggestions(records[0].suggestions);
       setDraftRestored(true);
@@ -135,22 +94,27 @@ export function TicketThread({
     nextSuggestions = suggestions,
   ) {
     void savePersistedCommunicationDraft({
-      articleId: draft.kind === "customer-reply"
+      articleId: draft.kind !== "internal-comment"
         ? draft.sourceArticleExternalId
         : undefined,
+      attachmentExternalIds: draft.kind === "customer-forward"
+        ? draft.attachmentExternalIds
+        : undefined,
       bodyHtml: draft.body,
-      cc: draft.kind === "customer-reply" ? draft.cc : undefined,
-      contextVersion: draft.kind === "customer-reply"
+      cc: draft.kind !== "internal-comment" ? draft.cc : undefined,
+      contextVersion: draft.kind !== "internal-comment"
         ? draft.contextVersion
         : undefined,
       intent: draft.kind === "customer-reply" ? draft.intent : undefined,
+      includeOriginal: draft.kind === "customer-forward" ? draft.includeOriginal : undefined,
       kind: draft.kind,
       recipientEdited: draft.kind === "customer-reply"
         ? replyRecipientsEdited(draft)
-        : false,
+        : draft.kind === "customer-forward" ? forwardDraftEdited(draft) : false,
       scope: draftPersistenceScope,
       suggestions: nextSuggestions,
-      to: draft.kind === "customer-reply" ? draft.to : undefined,
+      subject: draft.kind === "customer-forward" ? draft.subject : undefined,
+      to: draft.kind !== "internal-comment" ? draft.to : undefined,
     });
   }
 
@@ -167,10 +131,12 @@ export function TicketThread({
     void clearPersistedCommunicationDrafts(draftPersistenceScope);
   }
 
-  const sourceArticle = communicationDraft?.kind === "customer-reply"
+  const sourceArticle = communicationDraft?.kind !== "internal-comment" && communicationDraft
     ? articles.find((article) => article.id === communicationDraft.sourceArticleExternalId)
     : undefined;
-  const mode = communicationDraft?.kind === "internal-comment" ? "comment" : "reply";
+  const mode = communicationDraft?.kind === "internal-comment"
+    ? "comment"
+    : communicationDraft?.kind === "customer-forward" ? "forward" : "reply";
 
   return (
     <section className="pr-0">
@@ -188,9 +154,9 @@ export function TicketThread({
           >
             <X aria-hidden="true" className="size-4" />
           </button>
-          {communicationDraft.kind === "customer-reply" ? (
+          {communicationDraft.kind !== "internal-comment" ? (
             <div className="px-4 pb-1 pr-14 pt-3 text-xs text-slate-600">
-              Replying to {sourceArticle?.author ?? "selected message"} · {sourceArticle?.meta ?? ""}
+              {communicationDraft.kind === "customer-forward" ? "Forwarding" : "Replying to"} {sourceArticle?.author ?? "selected message"} · {sourceArticle?.meta ?? ""}
               <div className="mt-2">
                 <TicketReplyRecipientEditor
                   disabled={disabled}
@@ -199,6 +165,14 @@ export function TicketThread({
                   onChange={changeDraft}
                 />
               </div>
+              {communicationDraft.kind === "customer-forward" ? (
+                <TicketForwardOptions
+                  article={sourceArticle}
+                  disabled={disabled}
+                  draft={communicationDraft}
+                  onChange={changeDraft}
+                />
+              ) : null}
             </div>
           ) : (
             <div className="px-4 pr-14 pt-3 text-xs font-medium text-slate-600">
@@ -209,7 +183,7 @@ export function TicketThread({
             body={communicationDraft.body}
             disabled={disabled}
             draftRestored={draftRestored}
-            editorId={communicationDraft.kind === "customer-reply"
+            editorId={communicationDraft.kind !== "internal-comment"
               ? communicationDraft.sourceArticleExternalId
               : "ticket"}
             key={`${communicationDraft.kind}-${sourceArticle?.id ?? "ticket"}`}
@@ -233,8 +207,12 @@ export function TicketThread({
                 communicationDraft.sourceArticleExternalId === article.id
                 ? communicationDraft.intent
                 : null}
+              activeForward={communicationDraft?.kind === "customer-forward" &&
+                communicationDraft.sourceArticleExternalId === article.id}
               article={article}
+              canForward={Boolean(communicationCapabilities.customerForwards)}
               canReply={communicationCapabilities.customerReplies}
+              onForward={() => onRequestForward(article)}
               onReply={(intent) => onRequestReply(article, intent)}
             />
           </div>

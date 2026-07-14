@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { sanitizeProviderHtml } from "@/security/sanitize-html";
+import {
+  sanitizeForwardedProviderHtml,
+  sanitizeProviderHtml,
+} from "@/security/sanitize-html";
 
 describe("provider HTML sanitization", () => {
   it("removes scripts and unsafe attributes", () => {
@@ -27,5 +30,16 @@ describe("provider HTML sanitization", () => {
     expect(sanitized).toContain("<ul><li>");
     expect(sanitized).toContain('href="https://example.com/docs"');
     expect(sanitized).toContain("<table><tr><th>A</th></tr><tr><td>B</td></tr></table>");
+  });
+
+  it("preserves safe forwarded-email styling but removes active content and tracking images", () => {
+    const sanitized = sanitizeForwardedProviderHtml(
+      '<div style="color:#125599;position:fixed"><table><tr><td style="padding:10px">Hi</td></tr></table><img src="https://tracker.example/pixel"><script>bad()</script></div>',
+    );
+    expect(sanitized).toContain('style="color:#125599"');
+    expect(sanitized).toContain('style="padding:10px"');
+    expect(sanitized).not.toContain("position");
+    expect(sanitized).not.toContain("tracker.example");
+    expect(sanitized).not.toContain("<script");
   });
 });

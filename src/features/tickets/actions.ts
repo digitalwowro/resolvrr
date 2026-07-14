@@ -9,6 +9,7 @@ import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-re
 import { providerRegistry } from "@/providers";
 import {
   addWorkspaceTicketCustomerReply,
+  forwardWorkspaceTicketEmail,
   addWorkspaceTicketInternalNote,
 } from "./communication-service";
 import { ticketMetadataMutationActionInput } from "./metadata-action-input";
@@ -18,127 +19,14 @@ import { finalizeWorkspaceTicketMutation } from "./mutation-finalization-service
 import type {
   SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
-  TicketMetadataMutationErrorReason,
-  TicketMetadataMutationField,
   TicketMetadataMutationResult,
 } from "./mutation-model";
-
-function errorMessage(reason: TicketMetadataMutationErrorReason): string {
-  if (reason === "invalid-input") {
-    return "Choose a metadata value to save.";
-  }
-  if (reason === "unsupported-capability") {
-    return "This workspace cannot update that field.";
-  }
-  if (reason === "unavailable-transition") {
-    return "That state change is not available for this ticket.";
-  }
-  if (reason === "provider-auth-failed") {
-    return "The helpdesk rejected the saved credentials.";
-  }
-  if (reason === "provider-permission-denied") {
-    return "The helpdesk account does not have permission to update this ticket.";
-  }
-  if (reason === "provider-rate-limited") {
-    return "The helpdesk rate limit was reached. Try again later.";
-  }
-  if (reason === "provider-temporary-failure") {
-    return "The helpdesk could not be reached. Try again.";
-  }
-  if (reason === "invalid-connection") {
-    return "The active helpdesk workspace is no longer valid.";
-  }
-  if (
-    reason === "no-active-connection" ||
-    reason === "inactive-connection" ||
-    reason === "missing-credentials" ||
-    reason === "unknown-provider"
-  ) {
-    return "No active helpdesk workspace is available for ticket updates.";
-  }
-
-  return "The helpdesk returned an unexpected response.";
-}
-
-function communicationErrorMessage(reason: TicketMetadataMutationErrorReason): string {
-  if (reason === "invalid-input") {
-    return "Enter a reply or comment before updating.";
-  }
-  if (reason === "unsupported-capability") {
-    return "This workspace cannot add that message.";
-  }
-  if (reason === "invalid-recipient") {
-    return "Review the To and Cc recipients before updating.";
-  }
-  if (reason === "reply-context-stale") {
-    return "The reply context changed. Reload the ticket and review recipients again.";
-  }
-  if (reason === "reply-context-unavailable") {
-    return "The selected message can no longer be used for a reply.";
-  }
-  if (reason === "unsupported-reply-intent") {
-    return "Reply all is no longer available for the selected message.";
-  }
-  if (reason === "delivery-uncertain") {
-    return "Delivery could not be confirmed. Check the refreshed thread before retrying.";
-  }
-  return errorMessage(reason);
-}
-
-function actionStateForResult(
-  field: TicketMetadataMutationField,
-  result: TicketMetadataMutationResult,
-): TicketMetadataMutationActionState {
-  if (result.status === "saved") {
-    return { status: "saved", field, message: "Saved." };
-  }
-  if (result.status === "saved-refresh-failed") {
-    return {
-      status: "saved-refresh-failed",
-      field,
-      message:
-        "Saved, but the ticket could not be refreshed. Refresh the workspace to verify the latest value.",
-    };
-  }
-
-  return {
-    status: "failed",
-    field,
-    message: errorMessage(result.reason),
-  };
-}
-
-function communicationActionStateForResult(
-  result: TicketMetadataMutationResult,
-): TicketMetadataMutationActionState {
-  if (result.status === "saved") {
-    return { status: "saved", field: "communication", message: "Saved." };
-  }
-  if (result.status === "saved-refresh-failed") {
-    return {
-      status: "saved-refresh-failed",
-      field: "communication",
-      message:
-        "Saved, but the ticket could not be refreshed. Refresh the workspace to verify the latest value.",
-    };
-  }
-
-  return {
-    status: "failed",
-    field: "communication",
-    message: communicationErrorMessage(result.reason),
-  };
-}
-
-function partialCommunicationActionState(
-  result: Extract<TicketMetadataMutationResult, { status: "failed" }>,
-): TicketMetadataMutationActionState {
-  return {
-    status: "partially-saved",
-    field: "communication",
-    message: `Ticket changes were saved, but the helpdesk did not confirm accepting the message. ${communicationErrorMessage(result.reason)}`,
-  };
-}
+import {
+  actionStateForResult,
+  communicationActionStateForResult,
+  metadataMutationErrorMessage,
+  partialCommunicationActionState,
+} from "./mutation-action-results";
 
 function metadataResultFromCommunicationResult(
   result: Awaited<ReturnType<typeof addWorkspaceTicketInternalNote>>,
@@ -154,7 +42,7 @@ export async function updateTicketMetadataAction(
     return {
       status: "failed",
       field: actionInput.field,
-      message: errorMessage("invalid-input"),
+      message: metadataMutationErrorMessage("invalid-input"),
     };
   }
 
@@ -254,6 +142,36 @@ export async function updateTicketMetadataAction(
     finalResult = finalResult?.status === "saved-refresh-failed"
       ? finalResult
       : result;
+    mutationSaved = true;
+  }
+
+  if (actionInput.communication?.kind === "customer-forward") {
+    const result = metadataResultFromCommunicationResult(
+      await forwardWorkspaceTicketEmail(
+        prismaHelpdeskConnectionsRepository,
+        providerRegistry,
+        env.APP_ENCRYPTION_KEY,
+        user.id,
+        actionInput.ticketExternalId,
+        actionInput.communication,
+        prismaTicketDetailCacheRepository,
+        prismaAiSummaryCacheRepository,
+        { finalize: false },
+      ),
+    );
+    if (result.status === "failed") {
+      if (mutationSaved || result.reason === "delivery-uncertain") {
+        await finalizeWorkspaceTicketMutation(
+          prismaHelpdeskConnectionsRepository, providerRegistry,
+          env.APP_ENCRYPTION_KEY, user.id, actionInput.ticketExternalId,
+          prismaTicketDetailCacheRepository, prismaAiSummaryCacheRepository,
+        );
+      }
+      return finalResult
+        ? partialCommunicationActionState(result)
+        : communicationActionStateForResult(result);
+    }
+    finalResult = finalResult?.status === "saved-refresh-failed" ? finalResult : result;
     mutationSaved = true;
   }
 

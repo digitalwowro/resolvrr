@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquarePlus, Reply, ReplyAll, RotateCcw, Send } from "lucide-react";
+import { Forward, MessageSquarePlus, Reply, ReplyAll, RotateCcw, Send } from "lucide-react";
 import { Button, Tooltip } from "@/components/ui";
 import type { PostUpdateNavigation } from "./post-update-navigation";
 import {
@@ -11,22 +11,26 @@ import {
 export function TicketMetadataActionBar({
   canDiscard,
   canComment,
+  canForward,
   canReply,
   canReplyAll,
   canUpdate,
   onDiscard,
   onComment,
+  onForward,
   onReply,
   onUpdate,
   saving,
 }: {
   canDiscard: boolean;
   canComment: boolean;
+  canForward: boolean;
   canReply: boolean;
   canReplyAll: boolean;
   canUpdate: boolean;
   onDiscard(): void;
   onComment(): void;
+  onForward(): void;
   onReply(intent: "reply" | "reply-all"): void;
   onUpdate(navigation: PostUpdateNavigation): void;
   saving: boolean;
@@ -49,6 +53,9 @@ export function TicketMetadataActionBar({
               Reply all
             </Button>
           </Tooltip>
+          <Button disabled={!canForward || saving} icon={<Forward aria-hidden="true" className="size-3.5" />} onClick={onForward} size="sm" type="button">
+            Forward
+          </Button>
           <Button disabled={!canComment || saving} icon={<MessageSquarePlus aria-hidden="true" className="size-3.5" />} onClick={onComment} size="sm" type="button">
             Comment
           </Button>

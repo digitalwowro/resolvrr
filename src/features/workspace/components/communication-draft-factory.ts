@@ -1,6 +1,9 @@
 import type { TicketReplyIntent } from "@/core/ticket-replies";
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
-import type { TicketCustomerReplyDraft } from "./metadata-draft-types";
+import type {
+  TicketCustomerForwardDraft,
+  TicketCustomerReplyDraft,
+} from "./metadata-draft-types";
 
 export function replyDraftFromArticle(
   article: WorkspaceArticle,
@@ -35,4 +38,34 @@ export function latestReplyableArticle(
   return articles.find((article) =>
     article.replyContext?.availableIntents.includes("reply"),
   );
+}
+
+export function forwardDraftFromArticle(
+  article: WorkspaceArticle,
+): TicketCustomerForwardDraft | undefined {
+  const context = article.forwardContext;
+  if (!context) return undefined;
+  const attachmentExternalIds = article.attachments.map((attachment) => attachment.id);
+  return {
+    attachmentExternalIds,
+    body: "",
+    cc: [],
+    contextVersion: context.contextVersion,
+    defaultAttachmentExternalIds: [...attachmentExternalIds],
+    defaultCc: [],
+    defaultIncludeOriginal: true,
+    defaultSubject: context.subject,
+    defaultTo: [],
+    includeOriginal: true,
+    kind: "customer-forward",
+    sourceArticleExternalId: context.sourceArticleExternalId,
+    subject: context.subject,
+    to: [],
+  };
+}
+
+export function latestForwardableArticle(
+  articles: WorkspaceArticle[],
+): WorkspaceArticle | undefined {
+  return articles.find((article) => Boolean(article.forwardContext));
 }

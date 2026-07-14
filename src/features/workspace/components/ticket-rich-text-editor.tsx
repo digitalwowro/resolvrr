@@ -11,7 +11,10 @@ import {
 } from "react";
 import { cn } from "@/components/ui/classnames";
 import { communicationBodyHasText } from "@/features/tickets/communication-body";
-import { sanitizeComposerHtml } from "@/security/sanitize-html";
+import {
+  sanitizeComposerEditorHtml,
+  sanitizeComposerHtml,
+} from "@/security/sanitize-html";
 import {
   commandState,
   clearStickyFormattingWhenEmpty,
@@ -85,8 +88,9 @@ export function TicketRichTextEditor({
     if (editor && editorFocusedRef.current) {
       return;
     }
-    if (editor && editor.innerHTML !== value) {
-      editor.innerHTML = normalizeEditorStructure(value);
+    const safeValue = normalizeEditorStructure(sanitizeComposerEditorHtml(value));
+    if (editor && editor.innerHTML !== safeValue) {
+      editor.innerHTML = safeValue;
     }
   }, [value]);
 
@@ -121,7 +125,9 @@ export function TicketRichTextEditor({
       return;
     }
 
-    const normalizedHtml = normalizeEditorStructure(editor.innerHTML);
+    const normalizedHtml = normalizeEditorStructure(
+      sanitizeComposerEditorHtml(editor.innerHTML),
+    );
     if (editor.innerHTML !== normalizedHtml) {
       editor.innerHTML = normalizedHtml;
     }

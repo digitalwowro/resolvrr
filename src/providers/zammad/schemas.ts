@@ -83,7 +83,7 @@ export const zammadArticleSchema = z
     ticket_id: z.number(),
     type: z.string().nullish(),
     sender: z.string().nullish(),
-    internal: z.boolean().default(false),
+    internal: z.boolean(),
     created_by_id: zammadIdSchema,
     created_by: zammadExpandedUserReferenceSchema,
     from: z.string().nullish(),
@@ -96,6 +96,7 @@ export const zammadArticleSchema = z
     references: zammadStringListSchema,
     body: z.string().nullish(),
     created_at: z.string().nullish(),
+    updated_at: z.string().nullish(),
     attachments: z.array(zammadAttachmentSchema).default([]),
   })
   .passthrough();

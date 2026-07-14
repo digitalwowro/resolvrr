@@ -59,10 +59,11 @@ export function metadataDraftUpdatePayload(
   const body = normalizedCommunicationBody(
     sanitizeComposerHtml(draft.communication?.body ?? ""),
   );
-  const communication = body && draft.communication
+  const hasForward = draft.communication?.kind === "customer-forward";
+  const communication = (body || hasForward) && draft.communication
     ? draft.communication.kind === "internal-comment"
       ? { kind: draft.communication.kind, body, bodyFormat: "html" as const }
-      : {
+      : draft.communication.kind === "customer-reply" ? {
           kind: draft.communication.kind,
           body,
           bodyFormat: "html" as const,
@@ -70,6 +71,18 @@ export function metadataDraftUpdatePayload(
           contextVersion: draft.communication.contextVersion,
           intent: draft.communication.intent,
           sourceArticleExternalId: draft.communication.sourceArticleExternalId,
+          to: draft.communication.to,
+        }
+      : {
+          attachmentExternalIds: draft.communication.attachmentExternalIds,
+          body,
+          bodyFormat: "html" as const,
+          cc: draft.communication.cc,
+          contextVersion: draft.communication.contextVersion,
+          includeOriginal: draft.communication.includeOriginal,
+          kind: draft.communication.kind,
+          sourceArticleExternalId: draft.communication.sourceArticleExternalId,
+          subject: draft.communication.subject,
           to: draft.communication.to,
         }
     : undefined;

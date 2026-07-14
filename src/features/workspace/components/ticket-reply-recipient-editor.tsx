@@ -3,7 +3,12 @@
 import { AlertTriangle, X } from "lucide-react";
 import { useState, type KeyboardEvent } from "react";
 import { normalizedReplyAddress } from "@/features/tickets/reply-input";
-import type { TicketCustomerReplyDraft } from "./metadata-draft-types";
+import type {
+  TicketCustomerForwardDraft,
+  TicketCustomerReplyDraft,
+} from "./metadata-draft-types";
+
+type RecipientDraft = TicketCustomerReplyDraft | TicketCustomerForwardDraft;
 
 function RecipientRow({
   disabled,
@@ -94,9 +99,9 @@ export function TicketReplyRecipientEditor({
   onChange,
 }: {
   disabled: boolean;
-  draft: TicketCustomerReplyDraft;
+  draft: RecipientDraft;
   managedAddresses: string[];
-  onChange(draft: TicketCustomerReplyDraft): void;
+  onChange(draft: RecipientDraft): void;
 }) {
   const managed = new Set(managedAddresses.map((address) => address.toLowerCase()));
   const includesManaged = [...draft.to, ...draft.cc].some((address) =>

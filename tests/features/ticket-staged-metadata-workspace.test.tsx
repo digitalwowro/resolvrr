@@ -149,6 +149,7 @@ describe("TicketWorkspace staged metadata updates", () => {
     expect(actionButtons.map((button) => button.textContent)).toEqual([
       "Reply",
       "Reply all",
+      "Forward",
       "Comment",
       "Discard changes",
       "Update",
