@@ -522,7 +522,8 @@ added, moved, renamed, or removed.
           forwarded-message structural and header detection.
         - `ticket-article-body-signature.ts`
           (`src/features/workspace/components/ticket-article-body-signature.ts`): precision-first,
-          language-neutral explicit-marker, delimiter, and compact contact-block signature detection.
+          language-neutral explicit-marker, delimiter, compact contact-block, and high-confidence
+          terminal rich-media contact-table signature detection.
         - `ticket-article-body-trim-types.ts`
           (`src/features/workspace/components/ticket-article-body-trim-types.ts`): article body
           trim result and candidate type contracts.

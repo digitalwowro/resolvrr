@@ -182,4 +182,54 @@ describe("precision-first article signature detection", () => {
     expect(result.visibleHtml).toContain("Arbitrary sign-off");
     expect(result.hiddenHtml).toContain("Example Agent");
   });
+
+  it("collapses a terminal rich-media contact table and disclaimer before a quote", () => {
+    const result = trimArticleBodyHtml(`
+      <p>Please review the embedded document.</p>
+      <p><img src="/inline/document" alt="Document"></p>
+      <p>The identifiers and requested change are described above.</p>
+      <br><br>
+      <table><tbody>
+        <tr><td rowspan="5"><img src="/inline/company-logo" alt="Company"></td><td><img src="/inline/person" alt="Person"></td><td>Example Person</td></tr>
+        <tr><td></td><td>Customer Engineering</td></tr>
+        <tr><td></td><td>+1 (555) 867-5309</td></tr>
+        <tr><td></td><td><a href="https://company.example.test">https://company.example.test</a></td></tr>
+        <tr><td></td><td>
+          <a href="https://social.example.test/one"><img src="/inline/social-one" alt=""></a>
+          <a href="https://social.example.test/two"><img src="/inline/social-two" alt=""></a>
+          <a href="https://social.example.test/three"><img src="/inline/social-three" alt=""></a>
+          <a href="https://social.example.test/four"><img src="/inline/social-four" alt=""></a>
+        </td></tr>
+        <tr><td colspan="3">This communication and any included files are intended for the addressed recipient. If it reached you unintentionally, remove it from your system.</td></tr>
+      </tbody></table>
+      <div>On Tue, Jul 14, 2026 at 8:00 AM Earlier Author &lt;earlier@example.test&gt; wrote:</div>
+      <blockquote><p>Earlier message content that belongs behind the existing quoted-reply disclosure.</p></blockquote>
+    `);
+
+    expect(result.collapsed).toBe(true);
+    if (!result.collapsed) return;
+    expect(result.hiddenKind).toBe("trimmed-content");
+    expect(result.visibleHtml).toContain("embedded document");
+    expect(result.visibleHtml).toContain('/inline/document');
+    expect(result.visibleHtml).not.toContain("Example Person");
+    expect(result.hiddenHtml).toContain("Example Person");
+    expect(result.hiddenHtml).toContain("This communication");
+    expect(result.hiddenHtml).toContain("Earlier Author");
+  });
+
+  it("keeps a terminal linked image gallery without contact-card evidence visible", () => {
+    const result = trimArticleBodyHtml(`
+      <p>The following product options are part of the requested comparison.</p><br><br>
+      <table><tbody><tr>
+        <td><a href="https://catalog.example.test/one"><img src="/inline/one" alt="One"></a></td>
+        <td><a href="https://catalog.example.test/two"><img src="/inline/two" alt="Two"></a></td>
+        <td><a href="https://catalog.example.test/three"><img src="/inline/three" alt="Three"></a></td>
+        <td><a href="https://catalog.example.test/four"><img src="/inline/four" alt="Four"></a></td>
+      </tr><tr><td colspan="4"><a href="https://catalog.example.test">Browse the catalog</a></td></tr></tbody></table>
+    `);
+
+    expect(result.collapsed).toBe(false);
+    expect(result.visibleHtml).toContain("requested comparison");
+    expect(result.visibleHtml).toContain("Browse the catalog");
+  });
 });

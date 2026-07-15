@@ -21,6 +21,8 @@ const tagPattern = /<\/?\s*([a-z0-9-]+)(?:\s[^>]*)?>/giu;
 const anchorPattern =
   /<a\b[^>]*href=(['"])([^'"]+)\1[^>]*>([\s\S]*?)<\/a>/giu;
 const emphasisPattern = /<(?:b|strong)\b/iu;
+const imagePattern = /<img\b/giu;
+const linkedImagePattern = /<img\b/iu;
 const emailTextPattern =
   /\b[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+\b/iu;
 const phoneTextPattern = /(?:^|\D)\+?\d[\d\s().-]{6,}\d(?:\D|$)/u;
@@ -188,10 +190,11 @@ function isStrongSignatureBlock(html: string, range: HtmlBlockRange) {
     const rowCount = (blockHtml.match(/<tr\b/giu) ?? []).length;
     const cellCount = (blockHtml.match(/<t[dh]\b/giu) ?? []).length;
     return (
-      contactLinkCount >= 1 &&
-      hasEmphasis &&
-      rowCount <= 2 &&
-      cellCount <= 4
+      (contactLinkCount >= 1 &&
+        hasEmphasis &&
+        rowCount <= 2 &&
+        cellCount <= 4) ||
+      isRichMediaContactTable(blockHtml, blockText, contactLinkCount)
     );
   }
   return (
@@ -200,6 +203,27 @@ function isStrongSignatureBlock(html: string, range: HtmlBlockRange) {
       phoneTextPattern.test(blockText) &&
       emailTextPattern.test(blockText))
   );
+}
+
+function isRichMediaContactTable(
+  html: string,
+  text: string,
+  contactLinkCount: number,
+) {
+  const imageCount = (html.match(imagePattern) ?? []).length;
+  if (
+    imageCount < 4 ||
+    contactLinkCount < 1 ||
+    !phoneTextPattern.test(text)
+  ) {
+    return false;
+  }
+
+  let linkedImageCount = 0;
+  for (const match of html.matchAll(anchorPattern)) {
+    if (linkedImagePattern.test(match[3] ?? "")) linkedImageCount += 1;
+  }
+  return linkedImageCount >= 3;
 }
 
 function countContactLinks(html: string) {
