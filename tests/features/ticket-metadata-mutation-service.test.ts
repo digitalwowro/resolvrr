@@ -35,17 +35,27 @@ function connection(
 ): HelpdeskConnectionWithCredential {
   return {
     id: "connection-1",
+    workspaceId: "connection-1",
     userId: "user-1",
     providerKey: "test-provider",
     displayName: "Support",
     baseUrl: "https://helpdesk.example.com",
     status: "active",
+    providerIdentityExternalId: "agent-1",
+    providerIdentityDisplayName: "Agent One",
+    identityVersion: "identity-v1",
     access,
     createdAt: new Date("2026-05-24T00:00:00Z"),
     updatedAt: new Date("2026-05-24T00:00:00Z"),
     credential: credential(),
+    workspace: {
+      id: "connection-1", ownerUserId: "user-1", providerKey: "test-provider",
+      displayName: "Support", baseUrl: "https://helpdesk.example.com",
+      createdAt: new Date("2026-05-24T00:00:00Z"),
+      updatedAt: new Date("2026-05-24T00:00:00Z"),
+    },
     ...overrides,
-  };
+  } as HelpdeskConnectionWithCredential;
 }
 
 function repository(input: {
@@ -55,16 +65,23 @@ function repository(input: {
   return {
     listForUser: async () => [],
     findForUser: async () => input.connection ?? null,
+    findForUserWorkspace: async () => input.connection ?? null,
+    findWorkspaceForUser: async () => input.connection
+      ? { ...input.connection.workspace, access: input.connection.access, connection: input.connection }
+      : null,
     getAccess: async () => input.connection?.access ?? null,
     create: async () => {
       throw new Error("not implemented");
     },
+    createPersonalConnection: async () => null,
+    updatePersonalConnection: async () => null,
+    updateWorkspace: async () => null,
     update: async () => null,
     updateStatus: async () => false,
     deleteForUser: async () => false,
-    getActiveConnectionId: async () => input.activeConnectionId ?? null,
-    setActiveConnectionId: async () => undefined,
-    clearActiveConnectionId: async () => undefined,
+    getActiveWorkspaceId: async () => input.activeConnectionId ?? null,
+    setActiveWorkspaceId: async () => undefined,
+    clearActiveWorkspaceId: async () => undefined,
     updateWorkspaceAgentAiPermissions: async () => undefined,
   };
 }
@@ -77,7 +94,7 @@ function provider(
     label: "Test Provider",
     capabilities: ["ticket:list", "ticket:detail"],
     credentialSchemes: [],
-    validateConnection: async () => undefined,
+    validateConnection: async () => ({ externalId: "agent-1", displayName: "Agent One" }),
     listTickets: async () => ({
       tickets: [
         {

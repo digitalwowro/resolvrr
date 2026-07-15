@@ -202,15 +202,21 @@ export function WorkspacesSection({
                       </p>
                       <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-slate-700">
                         <StatusIcon aria-hidden="true" className="size-4" />
-                        {statusLabel[connectionStatus(connection)]}
+                        {connection.connectionId
+                          ? statusLabel[connectionStatus(connection)]
+                          : "Personal connection required"}
                       </p>
+                      {connection.connectedAs ? (
+                        <p className="mt-1 text-sm text-slate-600">
+                          Connected as {connection.connectedAs}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="flex flex-wrap justify-end gap-2">
                       <Button
                         disabled={
                           pending ||
-                          connection.active ||
-                          connection.status !== "active"
+                          connection.active
                         }
                         loading={pendingKey === `active-${connection.id}`}
                         onClick={() =>
@@ -225,7 +231,7 @@ export function WorkspacesSection({
                         Set active
                       </Button>
                       <Button
-                        disabled={pending}
+                        disabled={pending || !connection.connectionId}
                         loading={pendingKey === `validate-${connection.id}`}
                         onClick={() =>
                           runAction(
@@ -238,7 +244,7 @@ export function WorkspacesSection({
                       >
                         Validate
                       </Button>
-                      {connection.status === "active" ? (
+                      {connection.connectionId && connection.status === "active" ? (
                         <Button
                           disabled={pending}
                           loading={pendingKey === `disable-${connection.id}`}
@@ -259,9 +265,9 @@ export function WorkspacesSection({
                         onClick={() => setEditing({ mode: "edit", connection })}
                         type="button"
                       >
-                        Edit
+                        {connection.connectionId ? "Edit" : "Connect"}
                       </Button>
-                      <Button
+                      {connection.connectionId ? <Button
                         className="border-rose-200 text-rose-700 hover:bg-rose-50"
                         disabled={pending}
                         loading={pendingKey === `delete-${connection.id}`}
@@ -274,8 +280,8 @@ export function WorkspacesSection({
                         }
                         type="button"
                       >
-                        Delete
-                      </Button>
+                        Disconnect
+                      </Button> : null}
                     </div>
                   </div>
                 </article>

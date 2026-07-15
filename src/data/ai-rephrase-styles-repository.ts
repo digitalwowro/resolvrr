@@ -46,7 +46,7 @@ export const prismaAiRephraseStyleRepository: AiRephraseStyleRepository = {
     const record = await prisma.workspaceAiRephraseStyle.create({
       data: {
         encryptedPrompt: input.encryptedPrompt,
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         keyVersion: input.keyVersion,
         label: input.label,
         sortOrder: input.sortOrder,
@@ -58,7 +58,7 @@ export const prismaAiRephraseStyleRepository: AiRephraseStyleRepository = {
   async deleteUserStyleOverride(input) {
     await prisma.userAiRephraseStyleOverride.deleteMany({
       where: {
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         styleId: input.styleId,
         userId: input.userId,
       },
@@ -68,7 +68,7 @@ export const prismaAiRephraseStyleRepository: AiRephraseStyleRepository = {
   async deleteWorkspaceStyle(input) {
     const style = await prisma.workspaceAiRephraseStyle.findFirst({
       where: {
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         id: input.styleId,
       },
       select: { seedKey: true },
@@ -79,7 +79,7 @@ export const prismaAiRephraseStyleRepository: AiRephraseStyleRepository = {
     if (style.seedKey) {
       await prisma.workspaceAiRephraseStyle.updateMany({
         where: {
-          helpdeskConnectionId: input.helpdeskConnectionId,
+          workspaceId: input.workspaceId,
           id: input.styleId,
         },
         data: { isEnabled: false },
@@ -88,7 +88,7 @@ export const prismaAiRephraseStyleRepository: AiRephraseStyleRepository = {
     }
     await prisma.workspaceAiRephraseStyle.deleteMany({
       where: {
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         id: input.styleId,
       },
     });
@@ -97,8 +97,8 @@ export const prismaAiRephraseStyleRepository: AiRephraseStyleRepository = {
   async getUserStyleOverride(input) {
     const record = await prisma.userAiRephraseStyleOverride.findUnique({
       where: {
-        userId_helpdeskConnectionId_styleId: {
-          helpdeskConnectionId: input.helpdeskConnectionId,
+        userId_workspaceId_styleId: {
+          workspaceId: input.workspaceId,
           styleId: input.styleId,
           userId: input.userId,
         },
@@ -110,7 +110,7 @@ export const prismaAiRephraseStyleRepository: AiRephraseStyleRepository = {
   async getWorkspaceStyle(input) {
     const record = await prisma.workspaceAiRephraseStyle.findFirst({
       where: {
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         id: input.styleId,
       },
     });
@@ -120,16 +120,16 @@ export const prismaAiRephraseStyleRepository: AiRephraseStyleRepository = {
   async listUserStyleOverrides(input) {
     const records = await prisma.userAiRephraseStyleOverride.findMany({
       where: {
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         userId: input.userId,
       },
     });
     return records.map(overrideRecord);
   },
 
-  async listWorkspaceStyles(helpdeskConnectionId) {
+  async listWorkspaceStyles(workspaceId) {
     const records = await prisma.workspaceAiRephraseStyle.findMany({
-      where: { helpdeskConnectionId },
+      where: { workspaceId },
       orderBy: [{ sortOrder: "asc" }, { label: "asc" }],
     });
     return records.map(styleRecord);
@@ -138,7 +138,7 @@ export const prismaAiRephraseStyleRepository: AiRephraseStyleRepository = {
   async updateWorkspaceStyle(input) {
     const record = await prisma.workspaceAiRephraseStyle.updateManyAndReturn({
       where: {
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         id: input.styleId,
       },
       data: {
@@ -157,7 +157,7 @@ export const prismaAiRephraseStyleRepository: AiRephraseStyleRepository = {
       input.orderedStyleIds.map((styleId, index) =>
         prisma.workspaceAiRephraseStyle.updateMany({
           where: {
-            helpdeskConnectionId: input.helpdeskConnectionId,
+            workspaceId: input.workspaceId,
             id: styleId,
           },
           data: { sortOrder: (index + 1) * 10 },
@@ -169,15 +169,15 @@ export const prismaAiRephraseStyleRepository: AiRephraseStyleRepository = {
   async upsertUserStyleOverride(input) {
     await prisma.userAiRephraseStyleOverride.upsert({
       where: {
-        userId_helpdeskConnectionId_styleId: {
-          helpdeskConnectionId: input.helpdeskConnectionId,
+        userId_workspaceId_styleId: {
+          workspaceId: input.workspaceId,
           styleId: input.styleId,
           userId: input.userId,
         },
       },
       create: {
         encryptedPrompt: input.encryptedPrompt,
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         keyVersion: input.keyVersion,
         styleId: input.styleId,
         userId: input.userId,

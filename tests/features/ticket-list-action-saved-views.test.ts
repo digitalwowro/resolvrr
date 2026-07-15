@@ -14,7 +14,7 @@ vi.mock("@/config/env", () => ({
 
 vi.mock("@/data/helpdesk-connections-repository", () => ({
   prismaHelpdeskConnectionsRepository: {
-    getActiveConnectionId: vi.fn(),
+    getActiveWorkspaceId: vi.fn(),
   },
 }));
 
@@ -34,7 +34,7 @@ vi.mock("@/features/tickets/service", () => ({
 
 const mockedLoadWorkspaceTicketList = vi.mocked(loadWorkspaceTicketList);
 const mockedGetActiveConnectionId = vi.mocked(
-  prismaHelpdeskConnectionsRepository.getActiveConnectionId,
+  prismaHelpdeskConnectionsRepository.getActiveWorkspaceId,
 );
 const mockedFindSavedView = vi.mocked(prismaSavedViewsRepository.findForUser);
 
@@ -49,7 +49,7 @@ describe("loadWorkspaceTicketListPageAction saved views", () => {
     mockedFindSavedView.mockResolvedValueOnce({
       id: "view-1",
       ownerUserId: "user-1",
-      helpdeskConnectionId: "connection-1",
+      workspaceId: "connection-1",
       name: "Open priority",
       visibility: "personal",
       filter: { states: ["open"] },
@@ -66,6 +66,8 @@ describe("loadWorkspaceTicketListPageAction saved views", () => {
     });
     mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
       status: "available",
+      helpdeskConnectionId: "connection-1",
+      workspaceId: "workspace-1",
       connectionName: "Support",
       communicationCapabilities: { customerReplies: false, internalNotes: false },
       metadataMutationCapabilities: { state: false, priority: false },
@@ -117,6 +119,8 @@ describe("loadWorkspaceTicketListPageAction saved views", () => {
     });
     mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
       status: "available",
+      helpdeskConnectionId: "connection-1",
+      workspaceId: "workspace-1",
       connectionName: "Support",
       communicationCapabilities: { customerReplies: false, internalNotes: false },
       metadataMutationCapabilities: { state: false, priority: false },

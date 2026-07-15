@@ -10,7 +10,7 @@ const plugin: HelpdeskProviderPlugin = {
   label: "Example",
   capabilities: [],
   credentialSchemes: [],
-  validateConnection: async () => undefined,
+  validateConnection: async () => ({ externalId: "agent-1", displayName: "Agent One" }),
   listTickets: async () => ({
     tickets: [],
     loadedCount: 0,

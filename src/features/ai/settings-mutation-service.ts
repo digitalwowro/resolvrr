@@ -77,7 +77,7 @@ export async function saveWorkspaceAiSettings(
   if (policy !== "admin-managed") {
     await input.repository.upsertWorkspaceSetting({
       config: null,
-      helpdeskConnectionId: workspace.id,
+      workspaceId: workspace.id,
       policy,
       userPermissions,
     });
@@ -90,7 +90,7 @@ export async function saveWorkspaceAiSettings(
     }
     await invalidateAiSummaryWorkspaceCache({
       cacheRepository: input.aiSummaryCacheRepository,
-      helpdeskConnectionId: workspace.id,
+      workspaceId: workspace.id,
     });
     return actionResult(
       "ai-settings-saved",
@@ -115,7 +115,7 @@ export async function saveWorkspaceAiSettings(
 
   await input.repository.upsertWorkspaceSetting({
     config,
-    helpdeskConnectionId: workspace.id,
+    workspaceId: workspace.id,
     policy,
     userPermissions,
   });
@@ -126,7 +126,7 @@ export async function saveWorkspaceAiSettings(
   await input.repository.deleteUserSettingsForWorkspace(workspace.id);
   await invalidateAiSummaryWorkspaceCache({
     cacheRepository: input.aiSummaryCacheRepository,
-    helpdeskConnectionId: workspace.id,
+    workspaceId: workspace.id,
   });
   return actionResult(
     "ai-settings-saved",
@@ -166,14 +166,20 @@ export async function saveUserWorkspaceAiSettings(
 
   await input.repository.upsertUserSetting({
     ...config,
-    helpdeskConnectionId: workspace.id,
+    workspaceId: workspace.id,
     userId: input.user.id,
   });
-  await invalidateAiSummaryConnectionCache({
-    cacheRepository: input.aiSummaryCacheRepository,
-    helpdeskConnectionId: workspace.id,
-    userId: input.user.id,
-  });
+  const accessibleWorkspace = await input.connectionRepository.findWorkspaceForUser(
+    input.user.id,
+    workspace.id,
+  );
+  if (accessibleWorkspace?.connection) {
+    await invalidateAiSummaryConnectionCache({
+      cacheRepository: input.aiSummaryCacheRepository,
+      helpdeskConnectionId: accessibleWorkspace.connection.id,
+      userId: input.user.id,
+    });
+  }
   return actionResult(
     "ai-user-settings-saved",
     await settingsDataForWorkspace(input.repository, input.user, workspace),

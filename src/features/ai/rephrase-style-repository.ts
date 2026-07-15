@@ -18,7 +18,7 @@ export type StoredUserAiRephraseStyleOverride = {
 
 export type WorkspaceAiRephraseStyleInput = {
   encryptedPrompt: string | null;
-  helpdeskConnectionId: string;
+  workspaceId: string;
   keyVersion: string;
   label: string;
   sortOrder: number;
@@ -26,7 +26,7 @@ export type WorkspaceAiRephraseStyleInput = {
 
 export type UpdateWorkspaceAiRephraseStyleInput = {
   encryptedPrompt: string | null;
-  helpdeskConnectionId: string;
+  workspaceId: string;
   isEnabled: boolean;
   keyVersion: string;
   label: string;
@@ -35,7 +35,7 @@ export type UpdateWorkspaceAiRephraseStyleInput = {
 
 export type UpsertUserAiRephraseStyleOverrideInput = {
   encryptedPrompt: string;
-  helpdeskConnectionId: string;
+  workspaceId: string;
   keyVersion: string;
   styleId: string;
   userId: string;
@@ -46,35 +46,35 @@ export type AiRephraseStyleRepository = {
     input: WorkspaceAiRephraseStyleInput,
   ): Promise<StoredWorkspaceAiRephraseStyle>;
   deleteUserStyleOverride(input: {
-    helpdeskConnectionId: string;
+    workspaceId: string;
     styleId: string;
     userId: string;
   }): Promise<void>;
   deleteWorkspaceStyle(input: {
-    helpdeskConnectionId: string;
+    workspaceId: string;
     styleId: string;
   }): Promise<void>;
   getUserStyleOverride(input: {
-    helpdeskConnectionId: string;
+    workspaceId: string;
     styleId: string;
     userId: string;
   }): Promise<StoredUserAiRephraseStyleOverride | null>;
   getWorkspaceStyle(input: {
-    helpdeskConnectionId: string;
+    workspaceId: string;
     styleId: string;
   }): Promise<StoredWorkspaceAiRephraseStyle | null>;
   listUserStyleOverrides(input: {
-    helpdeskConnectionId: string;
+    workspaceId: string;
     userId: string;
   }): Promise<StoredUserAiRephraseStyleOverride[]>;
   listWorkspaceStyles(
-    helpdeskConnectionId: string,
+    workspaceId: string,
   ): Promise<StoredWorkspaceAiRephraseStyle[]>;
   updateWorkspaceStyle(
     input: UpdateWorkspaceAiRephraseStyleInput,
   ): Promise<StoredWorkspaceAiRephraseStyle | null>;
   updateWorkspaceStyleOrder(input: {
-    helpdeskConnectionId: string;
+    workspaceId: string;
     orderedStyleIds: string[];
   }): Promise<void>;
   upsertUserStyleOverride(

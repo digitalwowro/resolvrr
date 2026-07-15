@@ -206,11 +206,21 @@ confirms the write:
 - Saved-view changes invalidate list snapshots keyed by that saved view.
 - Helpdesk connection credential, active connection, or permission changes
   invalidate all snapshots scoped to that connection for that user.
+- Provider-derived ticket, thread, and generated-summary caches belong to the
+  signed-in user's personal helpdesk connection, never to shared workspace
+  membership. Missing personal credentials must fail before a cache read.
+- Changing a workspace provider URL invalidates every member connection,
+  rotates identity versions, and deletes every provider-derived cache for that
+  workspace. Ownership transfer does not change cache ownership.
 - AI settings changes invalidate generated selected-ticket summaries scoped to
   the affected workspace or user/connection.
 - Ticket composer drafts survive validation, provider, partial-success, and
   uncertain-delivery failures. They are cleared only after confirmed
   communication success or an explicit local discard/close action.
+- Browser drafts are keyed by user, workspace, personal helpdesk connection,
+  connection identity version, and ticket. Disconnect/reconnect, provider URL
+  replacement, or provider identity rotation prevents an older draft from
+  restoring. Legacy drafts from shared credentials are intentionally ignored.
 - A merged source draft is never transferred to its survivor. It remains scoped
   to the retired source until explicit discard or retention expiry, and any
   attempted source write is rejected by provider lifecycle preflight.

@@ -1,16 +1,12 @@
 "use client";
 
 import { allTicketsSavedViewId, type WorkspaceSavedView } from "@/features/saved-views/workspace";
-import {
-  noTicketCommunicationCapabilities,
-} from "@/features/tickets/communication-model";
+import { noTicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type { HelpdeskConnectionFormAction } from "@/features/helpdesk-connections/service-types";
 import { useMemo, useState } from "react";
 import { workspaceTicketListGroups } from "@/features/tickets/workspace-adapter";
 import { TicketWorkspaceDisplay } from "./ticket-workspace-display";
-import {
-  WorkspaceHeader,
-} from "./workspace-header";
+import { WorkspaceHeader } from "./workspace-header";
 import { UnavailableState } from "./workspace-states";
 import {
   WorkspaceSettingsDialog,
@@ -141,7 +137,8 @@ export function TicketWorkspace({
     () => connections.map(workspaceSettingsConnectionFromMenu),
     [connections],
   );
-  const activeWorkspaceId = connections.find((connection) => connection.active)?.id;
+  const activeWorkspace = connections.find((connection) => connection.active);
+  const activeWorkspaceId = activeWorkspace?.id;
 
   function openSettings(section: WorkspaceSettingsSection) {
     setSettingsSection(section);
@@ -215,6 +212,8 @@ export function TicketWorkspace({
           userFirstName={profileUser.firstName}
           userId={userId}
           workspaceId={activeWorkspaceId}
+          helpdeskConnectionId={activeWorkspace?.connectionId ?? undefined}
+          identityVersion={activeWorkspace?.identityVersion ?? undefined}
           userLastName={profileUser.lastName}
           onOpenSettings={openSettings}
         />

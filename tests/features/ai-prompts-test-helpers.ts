@@ -1,9 +1,5 @@
 import { vi } from "vitest";
 import type { AuthUser } from "@/auth/types";
-import type {
-  HelpdeskConnectionsRepository,
-  WorkspaceAccess,
-} from "@/features/helpdesk-connections/repository";
 import type { AiSummaryCacheRepository } from "@/features/ai/summary-cache-repository";
 import type {
   AiPromptRepository,
@@ -23,6 +19,10 @@ import type {
 } from "@/features/ai/settings-repository";
 
 export const encryptionKey = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+export {
+  connectionRepository,
+  defaultWorkspaceAccess,
+} from "./ai-prompts-connection-repository";
 
 export function user(role: AuthUser["role"] = "USER"): AuthUser {
   return {
@@ -50,57 +50,6 @@ export function form(values: Record<string, string | boolean>) {
   return formData;
 }
 
-export const defaultWorkspaceAccess: WorkspaceAccess = {
-  canEditAiRephraseStyleOverrides: false,
-  canEditMyStyle: true,
-  role: "AGENT",
-};
-
-export function connectionRepository(
-  access: WorkspaceAccess = defaultWorkspaceAccess,
-): HelpdeskConnectionsRepository {
-  return {
-    async clearActiveConnectionId() {},
-    async create() {
-      throw new Error("not used");
-    },
-    async deleteForUser() {
-      return false;
-    },
-    async findForUser(userId, connectionId) {
-      return {
-        baseUrl: "https://helpdesk.example.com",
-        access,
-        createdAt: new Date("2026-06-01T00:00:00Z"),
-        credential: null,
-        displayName: "Support",
-        id: connectionId,
-        providerKey: "example",
-        status: "active",
-        updatedAt: new Date("2026-06-01T00:00:00Z"),
-        userId,
-      };
-    },
-    async getAccess() {
-      return access;
-    },
-    async getActiveConnectionId() {
-      return "connection-1";
-    },
-    async listForUser() {
-      return [];
-    },
-    async setActiveConnectionId() {},
-    async updateWorkspaceAgentAiPermissions() {},
-    async update() {
-      return null;
-    },
-    async updateStatus() {
-      return false;
-    },
-  };
-}
-
 export function settingsRepository(
   workspaceSetting: StoredWorkspaceAiSetting,
 ): AiSettingsRepository & { workspaceSetting: StoredWorkspaceAiSetting } {
@@ -119,7 +68,7 @@ export function settingsRepository(
     async upsertWorkspaceSetting(input) {
       repo.workspaceSetting = {
         config: input.config ?? null,
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         policy: input.policy,
         userPermissions: input.userPermissions,
       };
@@ -132,7 +81,7 @@ export function baseWorkspaceSetting(
 ): StoredWorkspaceAiSetting {
   return {
     config: null,
-    helpdeskConnectionId: "connection-1",
+    workspaceId: "connection-1",
     policy: "admin-managed",
     userPermissions: {
       canEditAiRephraseStyleOverrides: false,
@@ -145,8 +94,8 @@ export function promptRepository(): AiPromptRepository & {
   workspacePrompts: Map<string, StoredAiPrompt>;
 } {
   const workspacePrompts = new Map<string, StoredAiPrompt>();
-  const key = (input: { helpdeskConnectionId: string; promptKey: string }) =>
-    `${input.helpdeskConnectionId}:${input.promptKey}`;
+  const key = (input: { workspaceId: string; promptKey: string }) =>
+    `${input.workspaceId}:${input.promptKey}`;
   const record = (
     input: UpsertWorkspaceAiPromptInput,
   ): StoredAiPrompt => ({
@@ -163,9 +112,9 @@ export function promptRepository(): AiPromptRepository & {
     async getWorkspacePrompt(input) {
       return workspacePrompts.get(key(input)) ?? null;
     },
-    async listWorkspacePrompts(helpdeskConnectionId) {
+    async listWorkspacePrompts(workspaceId) {
       return [...workspacePrompts.entries()]
-        .filter(([storedKey]) => storedKey.startsWith(`${helpdeskConnectionId}:`))
+        .filter(([storedKey]) => storedKey.startsWith(`${workspaceId}:`))
         .map(([, prompt]) => prompt);
     },
     async upsertWorkspacePrompt(input) {
@@ -183,10 +132,10 @@ export function rephraseStyleRepository(
   const styles = new Map(seed.map((style) => [style.id, style]));
   const userOverrides = new Map<string, StoredUserAiRephraseStyleOverride>();
   const overrideKey = (input: {
-    helpdeskConnectionId: string;
+    workspaceId: string;
     styleId: string;
     userId: string;
-  }) => `${input.userId}:${input.helpdeskConnectionId}:${input.styleId}`;
+  }) => `${input.userId}:${input.workspaceId}:${input.styleId}`;
   const styleFromInput = (
     input: WorkspaceAiRephraseStyleInput,
     id = `style-${styles.size + 1}`,
@@ -232,12 +181,12 @@ export function rephraseStyleRepository(
     async listUserStyleOverrides(input) {
       return [...userOverrides.entries()]
         .filter(([key]) =>
-          key.startsWith(`${input.userId}:${input.helpdeskConnectionId}:`),
+          key.startsWith(`${input.userId}:${input.workspaceId}:`),
         )
         .map(([, override]) => override);
     },
-    async listWorkspaceStyles(_helpdeskConnectionId) {
-      void _helpdeskConnectionId;
+    async listWorkspaceStyles(_workspaceId) {
+      void _workspaceId;
       return [...styles.values()]
         .sort((left, right) => left.sortOrder - right.sortOrder);
     },

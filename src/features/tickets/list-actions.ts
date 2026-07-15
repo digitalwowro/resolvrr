@@ -149,14 +149,14 @@ export async function loadWorkspaceTicketListPageAction(
   }
 
   const user = await requireCurrentUser();
-  const activeConnectionId =
+  const activeWorkspaceId =
     request.savedViewId && request.savedViewId !== allTicketsSavedViewId
-      ? await prismaHelpdeskConnectionsRepository.getActiveConnectionId(user.id)
+      ? await prismaHelpdeskConnectionsRepository.getActiveWorkspaceId(user.id)
       : undefined;
   const savedView = await savedViewForRequest(
     user.id,
     request.savedViewId,
-    activeConnectionId ?? undefined,
+    activeWorkspaceId ?? undefined,
   );
   if (savedView === null) {
     return unavailableTicketRead("provider-unexpected-response");

@@ -41,7 +41,13 @@ describe("ticket read service", () => {
   it.each([
     ["inactive-connection", connection({ status: "disconnected" })],
     ["missing-credentials", connection({ credential: null })],
-    ["unknown-provider", connection({ providerKey: "missing-provider" })],
+    ["unknown-provider", connection({
+      providerKey: "missing-provider",
+      workspace: {
+        ...connection().workspace,
+        providerKey: "missing-provider",
+      },
+    })],
   ])("returns %s before calling the provider", async (reason, storedConnection) => {
     const result = await loadWorkspaceTicketList(
       repository({
@@ -74,6 +80,8 @@ describe("ticket read service", () => {
 
     expect(result).toMatchObject({
       status: "available",
+      helpdeskConnectionId: "connection-1",
+      workspaceId: "workspace-1",
       connectionName: "Support",
       communicationCapabilities: { customerReplies: false, internalNotes: false },
       metadataMutationCapabilities: { state: false, priority: false },

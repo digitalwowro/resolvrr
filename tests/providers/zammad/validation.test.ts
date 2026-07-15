@@ -1,13 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ProviderError } from "@/core/providers";
 import { zammadProviderPlugin } from "@/providers/zammad";
-import { safeProviderFetch } from "@/security/provider-http";
+import { safeProviderJson } from "@/security/provider-http";
 
 vi.mock("@/security/provider-http", () => ({
-  safeProviderFetch: vi.fn(),
+  safeProviderJson: vi.fn(),
 }));
 
-const mockedSafeProviderFetch = vi.mocked(safeProviderFetch);
+const mockedSafeProviderJson = vi.mocked(safeProviderJson);
+const currentUser = { id: 42, fullname: "Agent One" };
 
 describe("Zammad connection validation", () => {
   afterEach(() => {
@@ -15,9 +16,11 @@ describe("Zammad connection validation", () => {
   });
 
   it("validates Basic Auth through the SSRF-safe current-user endpoint request", async () => {
-    mockedSafeProviderFetch.mockResolvedValue(new Response("{}", { status: 200 }));
+    mockedSafeProviderJson.mockResolvedValue({
+      status: 200, headers: new Headers(), data: currentUser,
+    });
 
-    await zammadProviderPlugin.validateConnection({
+    const identity = await zammadProviderPlugin.validateConnection({
       baseUrl: "https://helpdesk.example.com",
       validatedAddresses: ["93.184.216.34"],
       credentialScheme: "basic-auth",
@@ -25,10 +28,13 @@ describe("Zammad connection validation", () => {
       timeoutMs: 1000,
     });
 
-    expect(mockedSafeProviderFetch).toHaveBeenCalledWith(
+    expect(identity).toEqual({ externalId: "42", displayName: "Agent One" });
+
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
       "https://helpdesk.example.com/api/v1/users/me",
       expect.objectContaining({
         allowedAddresses: ["93.184.216.34"],
+        maxResponseBytes: 256 * 1024,
         headers: expect.objectContaining({
           Accept: "application/json",
           Authorization: "Basic YWdlbnQ6c2VjcmV0",
@@ -40,7 +46,9 @@ describe("Zammad connection validation", () => {
   });
 
   it("does not duplicate the API path when users enter a Zammad API URL", async () => {
-    mockedSafeProviderFetch.mockResolvedValue(new Response("{}", { status: 200 }));
+    mockedSafeProviderJson.mockResolvedValue({
+      status: 200, headers: new Headers(), data: currentUser,
+    });
 
     await zammadProviderPlugin.validateConnection({
       baseUrl: "https://helpdesk.example.com/api/v1",
@@ -49,14 +57,14 @@ describe("Zammad connection validation", () => {
       credentialPayload: { username: "agent", password: "secret" },
     });
 
-    expect(mockedSafeProviderFetch).toHaveBeenCalledWith(
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
       "https://helpdesk.example.com/api/v1/users/me",
       expect.any(Object),
     );
   });
 
   it("does not send credentials to redirect targets", async () => {
-    mockedSafeProviderFetch.mockResolvedValue(new Response(null, { status: 302 }));
+    mockedSafeProviderJson.mockResolvedValue({ status: 302, headers: new Headers() });
 
     await expect(
       zammadProviderPlugin.validateConnection({
@@ -70,7 +78,7 @@ describe("Zammad connection validation", () => {
       statusCode: 302,
     });
 
-    expect(mockedSafeProviderFetch).toHaveBeenCalledTimes(1);
+    expect(mockedSafeProviderJson).toHaveBeenCalledTimes(1);
   });
 
   it.each([
@@ -81,7 +89,7 @@ describe("Zammad connection validation", () => {
   ])(
     "classifies Zammad validation status %i",
     async (status, kind, retryable) => {
-      mockedSafeProviderFetch.mockResolvedValue(new Response(null, { status }));
+      mockedSafeProviderJson.mockResolvedValue({ status, headers: new Headers() });
 
       await expect(
         zammadProviderPlugin.validateConnection({
@@ -97,7 +105,7 @@ describe("Zammad connection validation", () => {
   it("classifies unreachable provider validation as retryable temporary failure", async () => {
     const error = new Error("network unreachable");
     Object.defineProperty(error, "code", { value: "ENETUNREACH" });
-    mockedSafeProviderFetch.mockRejectedValue(error);
+    mockedSafeProviderJson.mockRejectedValue(error);
 
     await expect(
       zammadProviderPlugin.validateConnection({
@@ -130,5 +138,22 @@ describe("Zammad connection validation", () => {
         credentialPayload: { username: "agent" },
       }),
     ).rejects.toMatchObject({ kind: "validation-failure" });
+  });
+
+  it("rejects current-user responses without a usable provider identity", async () => {
+    mockedSafeProviderJson.mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { fullname: "Agent without id" },
+    });
+
+    await expect(
+      zammadProviderPlugin.validateConnection({
+        baseUrl: "https://helpdesk.example.com",
+        validatedAddresses: ["93.184.216.34"],
+        credentialScheme: "basic-auth",
+        credentialPayload: { username: "agent", password: "secret" },
+      }),
+    ).rejects.toMatchObject({ kind: "provider-data-mismatch" });
   });
 });

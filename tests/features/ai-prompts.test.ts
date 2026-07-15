@@ -51,13 +51,13 @@ describe("AI prompts", () => {
     expect(decryptSecret(stored.encryptedPrompt, encryptionKey))
       .toBe("Custom admin summary prompt.");
     expect(cache.invalidateWorkspace).toHaveBeenCalledWith({
-      helpdeskConnectionId: "connection-1",
+      workspaceId: "connection-1",
     });
 
     await expect(
       resolveEffectiveAiPrompt({
         encryptionKey,
-        helpdeskConnectionId: "connection-1",
+        workspaceId: "connection-1",
         promptKey: ticketSummaryPromptKey,
         promptRepository: prompts,
         settingsRepository: settings,

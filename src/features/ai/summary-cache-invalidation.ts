@@ -42,7 +42,7 @@ export async function invalidateAiSummaryConnectionCache(input: {
 
 export async function invalidateAiSummaryWorkspaceCache(input: {
   cacheRepository: AiSummaryCacheRepository;
-  helpdeskConnectionId: string;
+  workspaceId: string;
 }): Promise<void> {
   if (!input.cacheRepository.enabled) {
     return;
@@ -50,7 +50,7 @@ export async function invalidateAiSummaryWorkspaceCache(input: {
 
   try {
     await input.cacheRepository.invalidateWorkspace({
-      helpdeskConnectionId: input.helpdeskConnectionId,
+      workspaceId: input.workspaceId,
     });
   } catch {
     return;

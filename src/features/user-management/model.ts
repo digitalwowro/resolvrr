@@ -5,8 +5,9 @@ export type ManagedUserStatus = "active" | "deactivated";
 export type ManagedUserMembership = {
   canEditAiRephraseStyleOverrides: boolean;
   canEditMyStyle: boolean;
-  helpdeskConnectionId: string;
+  workspaceId: string;
   role: ManagedWorkspaceRole;
+  connectionStatus?: "active" | "auth_failed" | "disconnected" | "not-connected";
 };
 
 export type ManagedWorkspaceOption = {

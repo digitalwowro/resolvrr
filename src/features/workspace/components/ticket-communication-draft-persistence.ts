@@ -5,7 +5,7 @@ import type { TicketReplyIntent } from "@/core/ticket-replies";
 
 const databaseName = "resolvrr-workspace-drafts";
 const storeName = "communicationDrafts";
-const databaseVersion = 3;
+const databaseVersion = 4;
 export const communicationDraftRetentionMs = 7 * 24 * 60 * 60 * 1_000;
 export const maxPersistedAiSuggestions = 3;
 
@@ -13,6 +13,8 @@ export type CommunicationDraftPersistenceScope = {
   ticketExternalId: string;
   userId: string;
   workspaceId: string;
+  helpdeskConnectionId: string;
+  identityVersion: string;
 };
 
 export type PersistedDraftAiSuggestion = {
@@ -49,7 +51,14 @@ function storageAvailable() {
 }
 
 function draftId(scope: CommunicationDraftPersistenceScope): string {
-  return ["v2", scope.userId, scope.workspaceId, scope.ticketExternalId].join(":");
+  return [
+    "v4",
+    scope.userId,
+    scope.workspaceId,
+    scope.helpdeskConnectionId,
+    scope.identityVersion,
+    scope.ticketExternalId,
+  ].join(":");
 }
 
 function openDraftDatabase(): Promise<IDBDatabase | null> {
@@ -83,13 +92,17 @@ async function withStore<T>(
   });
 }
 
-function sameScope(
-  left: CommunicationDraftPersistenceScope,
+export function communicationDraftMatchesScope(
+  left: unknown,
   right: CommunicationDraftPersistenceScope,
 ) {
-  return left.userId === right.userId &&
-    left.workspaceId === right.workspaceId &&
-    left.ticketExternalId === right.ticketExternalId;
+  if (!left || typeof left !== "object") return false;
+  const candidate = left as Partial<CommunicationDraftPersistenceScope>;
+  return candidate.userId === right.userId &&
+    candidate.workspaceId === right.workspaceId &&
+    candidate.helpdeskConnectionId === right.helpdeskConnectionId &&
+    candidate.identityVersion === right.identityVersion &&
+    candidate.ticketExternalId === right.ticketExternalId;
 }
 
 export async function loadPersistedCommunicationDrafts(
@@ -102,7 +115,7 @@ export async function loadPersistedCommunicationDrafts(
   );
   const now = Date.now();
   const matching = (records ?? []).filter(
-    (record) => sameScope(record.scope, scope) && record.expiresAt > now,
+    (record) => communicationDraftMatchesScope(record.scope, scope) && record.expiresAt > now,
   );
   if ((records ?? []).some((record) => record.expiresAt <= now)) {
     void pruneExpiredCommunicationDrafts();

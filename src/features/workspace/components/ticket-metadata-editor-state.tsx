@@ -55,6 +55,8 @@ export function TicketMetadataEditorState({
   updateTicketMetadataAction,
   userId,
   workspaceId,
+  helpdeskConnectionId,
+  identityVersion,
 }: TicketMetadataEditorStateProps) {
   const router = useRouter();
   const refreshSavedDetail =
@@ -93,7 +95,7 @@ export function TicketMetadataEditorState({
   const statusText = mutationStatusText(saving, mutationResult);
   const canUpdate = hasChanges && validation.valid && !saving;
   const draftPersistenceScope = useCommunicationDraftScope(
-    detail.id, userId, workspaceId,
+    detail.id, userId, workspaceId, helpdeskConnectionId, identityVersion,
   );
 
   function changeDraft(nextDraft: SelectedTicketDraft) {

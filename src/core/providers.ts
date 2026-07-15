@@ -122,6 +122,11 @@ export type ProviderConnectionInput = {
   timeoutMs?: number;
 };
 
+export type ProviderConnectionIdentity = {
+  externalId: string;
+  displayName: string;
+};
+
 export type ProviderContext = {
   connection: HelpdeskConnection;
   credentialScheme: string;
@@ -138,7 +143,9 @@ export type HelpdeskProviderPlugin = {
   label: string;
   capabilities: ProviderCapability[];
   credentialSchemes: ProviderCredentialScheme[];
-  validateConnection(input: ProviderConnectionInput): Promise<void>;
+  validateConnection(
+    input: ProviderConnectionInput,
+  ): Promise<ProviderConnectionIdentity>;
   listTickets?(
     context: ProviderContext,
     query: TicketListQuery,

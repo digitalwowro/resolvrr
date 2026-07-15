@@ -51,18 +51,18 @@ export const summarizeWorkspaceTicketAction: SummarizeWorkspaceTicketAction =
       );
     }
 
-    const aiConfig = detailResult.helpdeskConnectionId
+    const aiConfig = detailResult.workspaceId
       ? await resolveWorkspaceAiRuntimeConfig(
           prismaAiSettingsRepository,
           env.APP_ENCRYPTION_KEY,
           user.id,
-          detailResult.helpdeskConnectionId,
+          detailResult.workspaceId,
       )
       : { status: "unconfigured" as const, reason: "no-active-workspace" as const };
-    const summaryPrompt = detailResult.helpdeskConnectionId
+    const summaryPrompt = detailResult.workspaceId
       ? await resolveEffectiveAiPrompt({
           encryptionKey: env.APP_ENCRYPTION_KEY,
-          helpdeskConnectionId: detailResult.helpdeskConnectionId,
+          workspaceId: detailResult.workspaceId,
           promptKey: ticketSummaryPromptKey,
           promptRepository: prismaAiPromptRepository,
           settingsRepository: prismaAiSettingsRepository,

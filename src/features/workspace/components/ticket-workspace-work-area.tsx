@@ -185,6 +185,8 @@ export type TicketWorkspaceDetailAreaProps = {
   ): Promise<TicketMetadataMutationActionState>;
   userId?: string;
   workspaceId?: string;
+  helpdeskConnectionId?: string;
+  identityVersion?: string;
 };
 
 export function TicketWorkspaceDetailArea({
@@ -208,6 +210,8 @@ export function TicketWorkspaceDetailArea({
   updateTicketMetadataAction,
   userId,
   workspaceId,
+  helpdeskConnectionId,
+  identityVersion,
 }: TicketWorkspaceDetailAreaProps) {
   if (activeDetail?.status === "retired") {
     return <DetailRetiredState key="work-area" />;
@@ -238,6 +242,8 @@ export function TicketWorkspaceDetailArea({
         updateTicketMetadataAction={updateTicketMetadataAction}
         userId={userId}
         workspaceId={workspaceId}
+        helpdeskConnectionId={helpdeskConnectionId}
+        identityVersion={identityVersion}
       />
     );
   }

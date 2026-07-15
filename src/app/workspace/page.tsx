@@ -68,7 +68,10 @@ import {
   workspaceSavedViews,
   type EnsureMyWorkSavedViewResult,
 } from "@/features/saved-views";
-import { unavailableTicketRead } from "@/features/tickets/read-model";
+import {
+  unavailableTicketRead,
+  type TicketReadUnavailable,
+} from "@/features/tickets/read-model";
 import {
   deleteWorkspaceSavedViewAction,
   loadWorkspaceSavedViewsSettingsAction,
@@ -114,6 +117,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     ? ticketListQueryCapabilities(activeProvider.capabilities)
     : undefined;
   let currentHelpdeskUser;
+  let providerContextUnavailable: TicketReadUnavailable | undefined;
   if (activeConnection) {
     const providerContext = await loadActiveTicketProviderContext(
       prismaHelpdeskConnectionsRepository,
@@ -129,6 +133,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
         currentUserLookup.status === "available"
           ? currentUserLookup.options[0]
           : undefined;
+    } else {
+      providerContextUnavailable = providerContext;
     }
   }
   const savedViewSeedResult: EnsureMyWorkSavedViewResult = activeConnection
@@ -153,7 +159,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       ? savedViewSelection.selectedSavedViewId
       : undefined;
   const listResult =
-    savedViewSelection.status === "blocked"
+    providerContextUnavailable ??
+    (savedViewSelection.status === "blocked"
       ? unavailableTicketRead("unsupported-capability")
       : await loadWorkspaceTicketList(
           prismaHelpdeskConnectionsRepository,
@@ -161,7 +168,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           env.APP_ENCRYPTION_KEY,
           user.id,
           savedViewTicketListQuery(savedViewSelection.selectedSavedView),
-        );
+        ));
 
   const rows =
     listResult.status === "available"
@@ -181,10 +188,13 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       : undefined;
   const workspaceSeed = workspaceDetailSeed(detailResult, selectedTicketId);
   const initialCachedSummary =
-    detailResult?.status === "available" && detailResult.helpdeskConnectionId
+    detailResult?.status === "available" &&
+    detailResult.helpdeskConnectionId &&
+    detailResult.workspaceId
       ? await loadInitialTicketAiSummary({
           detail: detailResult.detail,
           helpdeskConnectionId: detailResult.helpdeskConnectionId,
+          workspaceId: detailResult.workspaceId,
           ticketExternalId: detailResult.detail.ticket.externalId,
           userId: user.id,
         })

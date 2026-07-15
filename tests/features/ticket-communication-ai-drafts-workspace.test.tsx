@@ -24,6 +24,8 @@ const scope = {
   ticketExternalId: "ticket-1",
   userId: "user-1",
   workspaceId: "connection-1",
+  helpdeskConnectionId: "personal-connection-1",
+  identityVersion: "identity-v1",
 };
 
 beforeEach(() => {

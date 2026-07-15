@@ -10,8 +10,16 @@ conversation content.
 - Passwords are hashed with Argon2id.
 - Browser storage receives only the http-only `resolvrr_session` cookie.
 - SQL stores only a hash of the session token.
-- Helpdesk credentials are stored server-side, encrypted at rest, and scoped to
-  the Resolvrr user and helpdesk connection.
+- A Workspace stores shared provider type, canonical helpdesk URL, memberships,
+  saved views, AI configuration, and workspace UI settings. It stores no shared
+  provider credential.
+- Each helpdesk connection belongs to exactly one Resolvrr user and one
+  workspace. Its encrypted credential and validated provider identity are
+  personal; membership, workspace administration, global administration, and
+  workspace ownership never authorize another user's credential.
+- A signed-in user without an active personal connection fails closed before
+  credential decryption, cache access, or a provider request. There is no owner
+  credential fallback.
 - AI provider API keys are stored server-side, encrypted at rest, and scoped to
   either the active workspace default or a user plus workspace. They are managed
   from `Avatar -> Settings -> AI Settings`.
@@ -23,7 +31,9 @@ conversation content.
 - Ticket composer draft recovery uses versioned browser-local IndexedDB for the
   unsent communication kind, source/intent/context version, To/Cc selection,
   draft text, and a small AI suggestion history. It must not store credentials,
-  provider message IDs, or raw provider payloads.
+  provider message IDs, or raw provider payloads. Draft identity includes user,
+  workspace, personal connection, connection identity version, and ticket;
+  legacy shared-credential drafts are never restored or transferred.
 
 ## Provider Data
 
@@ -33,7 +43,8 @@ conversation content.
   content and encrypt sensitive body fields at rest.
 - The current durable provider cache stores selected-ticket detail/thread
   snapshots as encrypted normalized payloads scoped by user, active helpdesk
-  connection, provider ticket identity, and source version. It does not cache
+  connection, provider ticket identity, and source version. Shared workspace
+  membership alone cannot select or read another member's cache. It does not cache
   raw provider payloads, provider request/response bodies, or background sync
   data.
 - Merged source cache records are invalidated and never copied to the surviving
@@ -54,7 +65,12 @@ conversation content.
   provider content. Removing a user with provider write history deactivates and
   scrubs the user record instead of deleting those audit rows. Helpdesk-provider
   replies and articles remain in the connected provider and are never deleted by
-  Resolvrr user removal.
+  Resolvrr user removal. Historical rows retain workspace identity separately;
+  deleting a personal connection clears only its optional connection reference.
+- Provider identity external IDs and display labels are used only to bind one
+  personal connection and prevent duplicate users from linking the same
+  provider account within a workspace. Identities, usernames, credentials, and
+  raw current-user responses must not be logged.
 
 ## AI Prompt And Output Data
 

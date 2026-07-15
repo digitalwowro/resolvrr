@@ -39,6 +39,10 @@ function workspaceSettingsConnection(
     baseUrl: connection.baseUrl,
     status: connection.status,
     active: connection.active,
+    connectionId: connection.connectionId,
+    connectedAs: connection.connectedAs,
+    identityVersion: connection.identityVersion,
+    access: connection.access,
   };
 }
 
@@ -74,23 +78,23 @@ export async function createHelpdeskConnectionAction(formData: FormData) {
 
 export async function updateHelpdeskConnectionAction(formData: FormData) {
   const user = await requireCurrentUser();
-  const connectionId = textValue(formData, "connectionId");
+  const workspaceId = textValue(formData, "connectionId");
   const result = await updateConnection(
     prismaHelpdeskConnectionsRepository,
     providerRegistry,
     env.APP_ENCRYPTION_KEY,
     user.id,
-    connectionId,
+    workspaceId,
     formData,
   );
-  if (result.ok) {
+  if (result.ok && result.connectionId) {
     await prismaTicketDetailCacheRepository.invalidateConnection({
-      helpdeskConnectionId: connectionId,
+      helpdeskConnectionId: result.connectionId,
       userId: user.id,
     });
     await invalidateAiSummaryConnectionCache({
       cacheRepository: prismaAiSummaryCacheRepository,
-      helpdeskConnectionId: connectionId,
+      helpdeskConnectionId: result.connectionId,
       userId: user.id,
     });
   }

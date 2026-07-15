@@ -50,14 +50,14 @@ function form(values: Record<string, boolean | string>) {
 }
 
 const connectionRepository: HelpdeskConnectionsRepository = {
-  async clearActiveConnectionId() {},
+  async clearActiveWorkspaceId() {},
   async create() {
     throw new Error("not used");
   },
   async deleteForUser() {
     return false;
   },
-  async findForUser() {
+  async findForUser(userId, connectionId) {
     return {
       baseUrl: "https://helpdesk.example.com",
       createdAt: new Date("2026-06-01T00:00:00Z"),
@@ -68,14 +68,37 @@ const connectionRepository: HelpdeskConnectionsRepository = {
         role: "AGENT",
       },
       displayName: "Support",
-      id: "connection-1",
+      id: connectionId,
+      workspaceId: connectionId,
+      identityVersion: "identity-v1",
+      providerIdentityExternalId: "agent-1",
+      providerIdentityDisplayName: "Agent One",
       providerKey: "example",
       status: "active",
       updatedAt: new Date("2026-06-01T00:00:00Z"),
-      userId: "admin-1",
+      userId,
+      workspace: {
+        id: connectionId, ownerUserId: userId, providerKey: "example",
+        displayName: "Support", baseUrl: "https://helpdesk.example.com",
+        createdAt: new Date("2026-06-01T00:00:00Z"),
+        updatedAt: new Date("2026-06-01T00:00:00Z"),
+      },
     };
   },
-  async getActiveConnectionId() {
+  async findForUserWorkspace(userId, workspaceId) {
+    return this.findForUser(userId, workspaceId);
+  },
+  async findWorkspaceForUser(userId, workspaceId) {
+    return {
+      id: workspaceId, ownerUserId: userId, providerKey: "example",
+      displayName: "Support", baseUrl: "https://helpdesk.example.com",
+      createdAt: new Date("2026-06-01T00:00:00Z"),
+      updatedAt: new Date("2026-06-01T00:00:00Z"),
+      access: { canEditAiRephraseStyleOverrides: false, canEditMyStyle: true, role: "AGENT" },
+      connection: null,
+    };
+  },
+  async getActiveWorkspaceId() {
     return "connection-1";
   },
   async getAccess() {
@@ -88,11 +111,11 @@ const connectionRepository: HelpdeskConnectionsRepository = {
   async listForUser() {
     return [];
   },
-  async setActiveConnectionId() {},
+  async setActiveWorkspaceId() {},
+  async createPersonalConnection() { return null; },
+  async updatePersonalConnection() { return null; },
+  async updateWorkspace() { return null; },
   async updateWorkspaceAgentAiPermissions() {},
-  async update() {
-    return null;
-  },
   async updateStatus() {
     return false;
   },
@@ -114,7 +137,7 @@ function repository(workspaceSetting: StoredWorkspaceAiSetting) {
     async upsertWorkspaceSetting(input) {
       repo.workspaceSetting = {
         config: input.config ?? null,
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         policy: input.policy,
         userPermissions: input.userPermissions,
       };
@@ -149,7 +172,7 @@ describe("workspace AI settings secret preservation", () => {
         model: "old-model",
         providerProtocol: "openai-compatible",
       },
-      helpdeskConnectionId: "connection-1",
+      workspaceId: "connection-1",
       policy: "admin-managed",
       userPermissions: {
         canEditAiRephraseStyleOverrides: false,
@@ -199,7 +222,7 @@ describe("workspace AI settings secret preservation", () => {
         model: "old-model",
         providerProtocol: "openai-compatible",
       },
-      helpdeskConnectionId: "connection-1",
+      workspaceId: "connection-1",
       policy: "admin-managed",
       userPermissions: {
         canEditAiRephraseStyleOverrides: false,

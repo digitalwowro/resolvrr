@@ -20,7 +20,7 @@ const workspaceRoleOptions = [
 ];
 
 function membershipKey(membership: ManagedUserMembership) {
-  return membership.helpdeskConnectionId;
+  return membership.workspaceId;
 }
 
 function userNamePart(value: string | null) {
@@ -59,7 +59,7 @@ export function WorkspaceSettingsUserForm({
   ) {
     setMemberships((current) =>
       current.map((membership) =>
-        membership.helpdeskConnectionId === workspaceId
+        membership.workspaceId === workspaceId
           ? update(membership)
           : membership,
       ),
@@ -70,10 +70,10 @@ export function WorkspaceSettingsUserForm({
     setMemberships((current) => {
       if (!checked) {
         return current.filter(
-          (membership) => membership.helpdeskConnectionId !== workspaceId,
+          (membership) => membership.workspaceId !== workspaceId,
         );
       }
-      if (current.some((membership) => membership.helpdeskConnectionId === workspaceId)) {
+      if (current.some((membership) => membership.workspaceId === workspaceId)) {
         return current;
       }
       return [
@@ -81,7 +81,7 @@ export function WorkspaceSettingsUserForm({
         {
           canEditAiRephraseStyleOverrides: false,
           canEditMyStyle: false,
-          helpdeskConnectionId: workspaceId,
+          workspaceId: workspaceId,
           role: "AGENT",
         },
       ];
@@ -204,6 +204,9 @@ export function WorkspaceSettingsUserForm({
                         value={membership.role}
                       />
                       <div className="space-y-2 pt-6 text-sm">
+                        <p className="text-xs text-slate-500">
+                          Helpdesk: {membership.connectionStatus ?? "not-connected"}
+                        </p>
                         <Checkbox
                           checked={membership.canEditMyStyle}
                           label="Can manage My Style"

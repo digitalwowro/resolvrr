@@ -35,6 +35,8 @@ type TicketWorkspaceDisplayWorkAreaProps = {
   updateTicketMetadataAction: TicketWorkspaceDisplayProps["updateTicketMetadataAction"];
   userId: TicketWorkspaceDisplayProps["userId"];
   workspaceId: TicketWorkspaceDisplayProps["workspaceId"];
+  helpdeskConnectionId: TicketWorkspaceDisplayProps["helpdeskConnectionId"];
+  identityVersion: TicketWorkspaceDisplayProps["identityVersion"];
 };
 
 export function TicketWorkspaceDisplayWorkArea({
@@ -62,6 +64,8 @@ export function TicketWorkspaceDisplayWorkArea({
   updateTicketMetadataAction,
   userId,
   workspaceId,
+  helpdeskConnectionId,
+  identityVersion,
 }: TicketWorkspaceDisplayWorkAreaProps) {
   if (displayState.listActive) {
     return (
@@ -129,6 +133,8 @@ export function TicketWorkspaceDisplayWorkArea({
       updateTicketMetadataAction={updateTicketMetadataAction}
       userId={userId}
       workspaceId={workspaceId}
+      helpdeskConnectionId={helpdeskConnectionId}
+      identityVersion={identityVersion}
     />
   );
 }

@@ -40,6 +40,8 @@ export function TicketMetadataEditor({
   updateTicketMetadataAction,
   userId,
   workspaceId,
+  helpdeskConnectionId,
+  identityVersion,
 }: {
   communicationCapabilities?: TicketCommunicationCapabilities;
   detail: WorkspaceTicketDetail;
@@ -57,6 +59,8 @@ export function TicketMetadataEditor({
   ): Promise<TicketMetadataMutationActionState>;
   userId?: string;
   workspaceId?: string;
+  helpdeskConnectionId?: string;
+  identityVersion?: string;
 }) {
   const loadedBaseline = useMemo(() => metadataDraftFromDetail(detail), [detail]);
 
@@ -78,6 +82,8 @@ export function TicketMetadataEditor({
       updateTicketMetadataAction={updateTicketMetadataAction}
       userId={userId}
       workspaceId={workspaceId}
+      helpdeskConnectionId={helpdeskConnectionId}
+      identityVersion={identityVersion}
     />
   );
 }

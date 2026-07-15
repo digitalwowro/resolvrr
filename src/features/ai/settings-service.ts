@@ -36,14 +36,14 @@ export async function activeWorkspace(
   repository: HelpdeskConnectionsRepository,
   userId: string,
 ): Promise<ActiveWorkspace | null> {
-  const activeConnectionId = await repository.getActiveConnectionId(userId);
-  if (!activeConnectionId) {
+  const activeWorkspaceId = await repository.getActiveWorkspaceId(userId);
+  if (!activeWorkspaceId) {
     return null;
   }
 
-  const connection = await repository.findForUser(userId, activeConnectionId);
-  return connection
-    ? { access: connection.access, id: connection.id, label: connection.displayName }
+  const workspace = await repository.findWorkspaceForUser(userId, activeWorkspaceId);
+  return workspace
+    ? { access: workspace.access, id: workspace.id, label: workspace.displayName }
     : null;
 }
 
@@ -134,10 +134,10 @@ export async function resolveWorkspaceAiRuntimeConfig(
   repository: AiSettingsRepository,
   encryptionKey: string,
   userId: string,
-  helpdeskConnectionId: string,
+  workspaceId: string,
 ): Promise<AiRuntimeConfig> {
   const workspaceSetting =
-    await repository.getWorkspaceSetting(helpdeskConnectionId);
+    await repository.getWorkspaceSetting(workspaceId);
   if (!workspaceSetting || workspaceSetting.policy === "disabled") {
     return { status: "unconfigured", reason: "ai-disabled" };
   }
@@ -148,7 +148,7 @@ export async function resolveWorkspaceAiRuntimeConfig(
       : { status: "unconfigured", reason: "missing-workspace-ai-config" };
   }
 
-  const userConfig = await repository.getUserSetting(userId, helpdeskConnectionId);
+  const userConfig = await repository.getUserSetting(userId, workspaceId);
   return userConfig
     ? runtimeConfigFromStored(userConfig, encryptionKey)
     : { status: "unconfigured", reason: "missing-user-ai-config" };

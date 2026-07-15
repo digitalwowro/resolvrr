@@ -11,6 +11,7 @@ model User {
   updatedAt            DateTime                  @updatedAt
   passwordLogin        PasswordLogin?
   sessions             Session[]
+  ownedWorkspaces      Workspace[]                 @relation("WorkspaceOwner")
   helpdeskConnections  HelpdeskConnection[]
   workspaceMemberships WorkspaceMembership[]
   savedViews           SavedView[]

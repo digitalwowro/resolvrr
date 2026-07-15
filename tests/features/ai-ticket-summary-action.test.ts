@@ -57,6 +57,7 @@ describe("summarizeWorkspaceTicketAction", () => {
     mockedLoadWorkspaceTicketDetail.mockResolvedValueOnce({
       status: "available",
       helpdeskConnectionId: "connection-1",
+      workspaceId: "workspace-1",
       detail: {
         links: [],
         measuredAt: new Date("2026-05-24T08:35:00Z"),

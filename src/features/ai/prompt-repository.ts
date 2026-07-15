@@ -9,20 +9,20 @@ export type StoredAiPrompt = {
 
 export type UpsertWorkspaceAiPromptInput = {
   encryptedPrompt: string;
-  helpdeskConnectionId: string;
+  workspaceId: string;
   keyVersion: string;
   promptKey: AiPromptKey;
 };
 
 export type AiPromptRepository = {
   deleteWorkspacePrompt(input: {
-    helpdeskConnectionId: string;
+    workspaceId: string;
     promptKey: AiPromptKey;
   }): Promise<void>;
   getWorkspacePrompt(input: {
-    helpdeskConnectionId: string;
+    workspaceId: string;
     promptKey: AiPromptKey;
   }): Promise<StoredAiPrompt | null>;
-  listWorkspacePrompts(helpdeskConnectionId: string): Promise<StoredAiPrompt[]>;
+  listWorkspacePrompts(workspaceId: string): Promise<StoredAiPrompt[]>;
   upsertWorkspacePrompt(input: UpsertWorkspaceAiPromptInput): Promise<void>;
 };

@@ -60,5 +60,9 @@ export function workspaceMenuConnections(
     providerKey: connection.providerKey,
     providerLabel: connection.providerLabel,
     status: connection.status,
+    connectionId: connection.connectionId,
+    connectedAs: connection.connectedAs,
+    identityVersion: connection.identityVersion,
+    access: connection.access,
   }));
 }

@@ -1,6 +1,7 @@
 import {
   ProviderError,
   type HelpdeskProviderPlugin,
+  type ProviderConnectionIdentity,
   type ProviderConnectionInput,
 } from "@/core/providers";
 import {
@@ -11,7 +12,7 @@ import {
   zammadProviderKey,
 } from "./credentials";
 import { classifyZammadResponse } from "./errors";
-import { safeProviderFetch } from "@/security/provider-http";
+import { safeProviderJson } from "@/security/provider-http";
 import { getZammadTicketDetail, listZammadTickets } from "./tickets";
 import {
   getZammadCurrentUser,
@@ -31,6 +32,7 @@ import {
   markZammadNotificationsRead,
 } from "./notifications";
 import { getZammadTicketInlineImage } from "./ticket-inline-images";
+import { zammadConnectionIdentity } from "./connection-identity";
 
 const defaultValidationTimeoutMs = 5000;
 const zammadValidationUserAgent = "Resolvrr/1.0";
@@ -48,7 +50,9 @@ function diagnosticCode(error: unknown): string | undefined {
   return error instanceof Error ? error.name : undefined;
 }
 
-async function validateBasicAuth(input: ProviderConnectionInput): Promise<void> {
+async function validateBasicAuth(
+  input: ProviderConnectionInput,
+): Promise<ProviderConnectionIdentity> {
   if (input.credentialScheme !== zammadBasicAuthScheme) {
     throw new ProviderError(
       "unsupported-capability",
@@ -67,11 +71,12 @@ async function validateBasicAuth(input: ProviderConnectionInput): Promise<void> 
   }
 
   const baseUrl = normalizeZammadBaseUrl(input.baseUrl);
-  let response: Response;
+  let response: Awaited<ReturnType<typeof safeProviderJson>>;
 
   try {
-    response = await safeProviderFetch(`${baseUrl}/api/v1/users/me`, {
+    response = await safeProviderJson(`${baseUrl}/api/v1/users/me`, {
       allowedAddresses: input.validatedAddresses,
+      maxResponseBytes: 256 * 1024,
       headers: {
         Authorization: buildBasicAuthHeader(credentialsResult.data),
         Accept: "application/json",
@@ -89,9 +94,11 @@ async function validateBasicAuth(input: ProviderConnectionInput): Promise<void> 
     );
   }
 
-  if (!response.ok) {
+  if (response.status < 200 || response.status >= 300) {
     throw classifyZammadResponse(response.status);
   }
+
+  return zammadConnectionIdentity(response.data);
 }
 
 export const zammadProviderPlugin: HelpdeskProviderPlugin = {

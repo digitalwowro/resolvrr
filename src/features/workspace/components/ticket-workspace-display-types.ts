@@ -86,5 +86,7 @@ export type TicketWorkspaceDisplayProps = {
   userFirstName?: string | null;
   userId?: string;
   workspaceId?: string;
+  helpdeskConnectionId?: string;
+  identityVersion?: string;
   userLastName?: string | null;
 };

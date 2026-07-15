@@ -79,7 +79,7 @@ export const rewriteDraftAction: RewriteDraftAction = async (request) => {
     ),
     resolveEffectiveAiPrompt({
       encryptionKey: env.APP_ENCRYPTION_KEY,
-      helpdeskConnectionId: workspace.id,
+      workspaceId: workspace.id,
       promptKey:
         normalized.operation === "proofread"
           ? draftProofreadPromptKey
@@ -90,14 +90,14 @@ export const rewriteDraftAction: RewriteDraftAction = async (request) => {
     }),
     loadMyStyle({
       encryptionKey: env.APP_ENCRYPTION_KEY,
-      helpdeskConnectionId: workspace.id,
+      workspaceId: workspace.id,
       repository: prismaMyStyleRepository,
       userId: user.id,
     }),
     normalized.operation === "rephrase"
       ? resolveEffectiveAiRephraseStyle({
           encryptionKey: env.APP_ENCRYPTION_KEY,
-          helpdeskConnectionId: workspace.id,
+          workspaceId: workspace.id,
           styleId: normalized.rephraseStyleId,
           styleRepository: prismaAiRephraseStyleRepository,
           userId: user.id,

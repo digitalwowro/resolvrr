@@ -1,8 +1,5 @@
 import type { ProviderRegistry } from "@/providers";
-import type {
-  HelpdeskConnectionsRepository,
-  StoredHelpdeskConnection,
-} from "./repository";
+import type { HelpdeskConnectionsRepository } from "./repository";
 import type {
   ConnectionListItem,
   ConnectionProviderOption,
@@ -27,37 +24,27 @@ export async function listConnectionsForUser(
   registry: ProviderRegistry,
   userId: string,
 ): Promise<ConnectionListItem[]> {
-  const [connections, activeConnectionId] = await Promise.all([
+  const [workspaces, activeWorkspaceId] = await Promise.all([
     repository.listForUser(userId),
-    repository.getActiveConnectionId(userId),
+    repository.getActiveWorkspaceId(userId),
   ]);
 
-  return connections.map((connection) => ({
-    ...connection,
+  return workspaces.map((workspace) => ({
+    ...workspace,
     providerLabel:
-      registry.get(connection.providerKey)?.label ?? connection.providerKey,
-    active: connection.id === activeConnectionId,
+      registry.get(workspace.providerKey)?.label ?? workspace.providerKey,
+    active: workspace.id === activeWorkspaceId,
+    connectionId: workspace.connection?.id ?? null,
+    status: workspace.connection?.status ?? "disconnected",
+    connectedAs: workspace.connection?.providerIdentityDisplayName ?? null,
+    identityVersion: workspace.connection?.identityVersion ?? null,
   }));
 }
 
 export async function getConnectionForEdit(
   repository: HelpdeskConnectionsRepository,
   userId: string,
-  connectionId: string,
-): Promise<StoredHelpdeskConnection | null> {
-  const connection = await repository.findForUser(userId, connectionId);
-  if (!connection) {
-    return null;
-  }
-
-  return {
-    id: connection.id,
-    userId: connection.userId,
-    providerKey: connection.providerKey,
-    displayName: connection.displayName,
-    baseUrl: connection.baseUrl,
-    status: connection.status,
-    createdAt: connection.createdAt,
-    updatedAt: connection.updatedAt,
-  };
+  workspaceId: string,
+): ReturnType<HelpdeskConnectionsRepository["findWorkspaceForUser"]> {
+  return repository.findWorkspaceForUser(userId, workspaceId);
 }

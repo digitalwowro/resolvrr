@@ -1,171 +1,53 @@
-import { describe, expect, it, vi } from "vitest";
-import { ProviderError, type HelpdeskProviderPlugin } from "@/core/providers";
-import { createProviderRegistry } from "@/providers";
-import { encryptSecret } from "@/security/encryption";
-import type {
-  HelpdeskConnectionWithCredential,
-  HelpdeskConnectionsRepository,
-  WorkspaceAccess,
-} from "@/features/helpdesk-connections/repository";
+import { describe, expect, it } from "vitest";
 import {
   setActiveConnection,
   updateConnection,
+  validateConnection,
 } from "@/features/helpdesk-connections/service";
-
-const key = Buffer.from("0123456789abcdef0123456789abcdef").toString("base64");
-const access: WorkspaceAccess = {
-  canEditAiRephraseStyleOverrides: false,
-  canEditMyStyle: true,
-  role: "AGENT",
-};
-
-function form(values: Record<string, string>): FormData {
-  const formData = new FormData();
-  Object.entries(values).forEach(([name, value]) => formData.set(name, value));
-  return formData;
-}
-
-function connection(
-  overrides: Partial<HelpdeskConnectionWithCredential> = {},
-): HelpdeskConnectionWithCredential {
-  return {
-    id: "conn_1",
-    userId: "user_1",
-    providerKey: "example",
-    displayName: "Support",
-    baseUrl: "https://93.184.216.34",
-    status: "active",
-    access,
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    credential: {
-      scheme: "basic-auth",
-      encryptedPayload: encryptSecret(
-        JSON.stringify({ username: "agent", password: "secret" }),
-        key,
-      ),
-      keyVersion: "v1",
-    },
-    ...overrides,
-  };
-}
-
-function repository(seed: HelpdeskConnectionWithCredential[]) {
-  const rows = new Map(seed.map((row) => [row.id, row]));
-  let activeConnectionId: string | null = null;
-  let lastUpdate: Record<string, unknown> | null = null;
-
-  const repo: HelpdeskConnectionsRepository = {
-    listForUser: async (userId) =>
-      [...rows.values()].filter((row) => row.userId === userId),
-    findForUser: async (userId, connectionId) => {
-      const row = rows.get(connectionId);
-      return row?.userId === userId ? row : null;
-    },
-    getAccess: async (userId, connectionId) => {
-      const row = rows.get(connectionId);
-      return row?.userId === userId ? row.access : null;
-    },
-    create: async () => {
-      throw new Error("Not needed in this test");
-    },
-    update: async (input) => {
-      const existing = rows.get(input.id);
-      if (!existing || existing.userId !== input.userId) {
-        return null;
-      }
-      lastUpdate = input as Record<string, unknown>;
-      const updated = {
-        ...existing,
-        displayName: input.displayName,
-        baseUrl: input.baseUrl,
-        status: input.status ?? existing.status,
-      };
-      rows.set(input.id, updated);
-      return updated;
-    },
-    updateStatus: async (userId, connectionId, status) => {
-      const existing = rows.get(connectionId);
-      if (!existing || existing.userId !== userId) {
-        return false;
-      }
-      rows.set(connectionId, { ...existing, status });
-      return true;
-    },
-    deleteForUser: async () => false,
-    getActiveConnectionId: async () => activeConnectionId,
-    setActiveConnectionId: async (_userId, connectionId) => {
-      activeConnectionId = connectionId;
-    },
-    clearActiveConnectionId: async () => {
-      activeConnectionId = null;
-    },
-    updateWorkspaceAgentAiPermissions: async () => undefined,
-  };
-
-  return {
-    repo,
-    get activeConnectionId() {
-      return activeConnectionId;
-    },
-    get lastUpdate() {
-      return lastUpdate;
-    },
-  };
-}
-
-function registry() {
-  const plugin: HelpdeskProviderPlugin = {
-    key: "example",
-    label: "Example",
-    capabilities: [],
-    credentialSchemes: [
-      {
-        key: "basic-auth",
-        label: "Basic Auth",
-        fields: [
-          { name: "username", label: "Username", type: "text", required: true },
-          {
-            name: "password",
-            label: "Password",
-            type: "password",
-            required: true,
-          },
-        ],
-      },
-    ],
-    validateConnection: vi.fn().mockResolvedValue(undefined),
-    listTickets: async () => ({
-      tickets: [],
-      loadedCount: 0,
-      measuredAt: new Date("2026-01-01T00:00:00.000Z"),
-    }),
-    getTicketDetail: async () => {
-      throw new ProviderError("unsupported-capability", "Not implemented");
-    },
-    updateTicketMetadata: async () => {
-      throw new ProviderError("unsupported-capability", "Not implemented");
-    },
-  };
-
-  return createProviderRegistry([plugin]);
-}
+import {
+  connection,
+  form,
+  key,
+  registry,
+  repository,
+} from "./helpdesk-connections-service-helpers";
 
 describe("helpdesk connection security rules", () => {
-  it("rejects provider key tampering on edit", async () => {
+  it("does not expose or validate another user's personal connection", async () => {
+    const existing = connection();
+    const store = repository([existing]);
+    const providers = registry();
+
+    expect(await store.repo.findForUser("user_2", existing.id)).toBeNull();
+    await expect(
+      validateConnection(
+        store.repo,
+        providers.registry,
+        key,
+        "user_2",
+        existing.workspaceId,
+      ),
+    ).resolves.toMatchObject({
+      ok: false,
+      code: "personal-connection-required",
+    });
+    expect(providers.validateConnection).not.toHaveBeenCalled();
+  });
+
+  it("rejects provider key tampering on workspace edit", async () => {
     const existing = connection();
     const store = repository([existing]);
 
     const result = await updateConnection(
       store.repo,
-      registry(),
+      registry().registry,
       key,
-      "user_1",
-      existing.id,
+      existing.userId,
+      existing.workspaceId,
       form({
         displayName: "Support EU",
         providerKey: "other-provider",
-        baseUrl: "https://93.184.216.34",
+        baseUrl: existing.baseUrl,
         credentialScheme: "basic-auth",
         username: "",
         password: "",
@@ -176,14 +58,13 @@ describe("helpdesk connection security rules", () => {
     expect(store.lastUpdate).toBeNull();
   });
 
-  it("rejects non-active connections as the active selection", async () => {
-    const existing = connection({ status: "auth_failed" });
+  it("does not let a non-member select a workspace", async () => {
+    const existing = connection();
     const store = repository([existing]);
 
     await expect(
-      setActiveConnection(store.repo, "user_1", existing.id),
-    ).resolves.toMatchObject({ ok: false, code: "connection-not-active" });
+      setActiveConnection(store.repo, "user_2", existing.workspaceId),
+    ).resolves.toMatchObject({ ok: false, code: "connection-not-found" });
     expect(store.activeConnectionId).toBeNull();
   });
-
 });

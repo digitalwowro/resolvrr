@@ -42,7 +42,7 @@ function repository(initialRecord: StoredMyStyle | null = null):
 const workspaceInput = {
   activeWorkspaceLabel: "Support",
   canEdit: true,
-  helpdeskConnectionId: "connection-1",
+  workspaceId: "connection-1",
 };
 
 describe("My Style service", () => {
@@ -198,7 +198,7 @@ describe("My Style service", () => {
         role: "Agent",
         tone: "",
       }),
-      helpdeskConnectionId: "connection-1",
+      workspaceId: "connection-1",
       repository: repo,
       userId: "user-1",
     });

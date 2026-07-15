@@ -7,6 +7,8 @@ export type HelpdeskConnectionStatus =
 
 export type HelpdeskConnection = {
   id: string;
+  workspaceId: string;
+  identityVersion: string;
   providerKey: HelpdeskProviderKey;
   displayName: string;
   baseUrl: string;

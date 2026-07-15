@@ -14,7 +14,7 @@ vi.mock("@/config/env", () => ({
 
 vi.mock("@/data/helpdesk-connections-repository", () => ({
   prismaHelpdeskConnectionsRepository: {
-    getActiveConnectionId: vi.fn(),
+    getActiveWorkspaceId: vi.fn(),
   },
 }));
 
@@ -34,7 +34,7 @@ vi.mock("@/features/tickets/service", () => ({
 
 const mockedLoadWorkspaceTicketList = vi.mocked(loadWorkspaceTicketList);
 const mockedGetActiveConnectionId = vi.mocked(
-  prismaHelpdeskConnectionsRepository.getActiveConnectionId,
+  prismaHelpdeskConnectionsRepository.getActiveWorkspaceId,
 );
 const mockedFindSavedView = vi.mocked(prismaSavedViewsRepository.findForUser);
 
@@ -48,6 +48,8 @@ describe("loadWorkspaceTicketListPageAction", () => {
   it("loads the next list page and returns workspace rows only", async () => {
     mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
       status: "available",
+      helpdeskConnectionId: "connection-1",
+      workspaceId: "workspace-1",
       connectionName: "Support",
       communicationCapabilities: { customerReplies: false, internalNotes: false },
       metadataMutationCapabilities: { state: false, priority: false },
@@ -120,6 +122,8 @@ describe("loadWorkspaceTicketListPageAction", () => {
   it("loads a sorted first page with provider-neutral sort input", async () => {
     mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
       status: "available",
+      helpdeskConnectionId: "connection-1",
+      workspaceId: "workspace-1",
       connectionName: "Support",
       communicationCapabilities: { customerReplies: false, internalNotes: false },
       metadataMutationCapabilities: { state: false, priority: false },
@@ -144,6 +148,8 @@ describe("loadWorkspaceTicketListPageAction", () => {
   it("returns provider-neutral grouped workspace buckets", async () => {
     mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
       status: "available",
+      helpdeskConnectionId: "connection-1",
+      workspaceId: "workspace-1",
       connectionName: "Support",
       communicationCapabilities: { customerReplies: false, internalNotes: false },
       metadataMutationCapabilities: { state: false, priority: false },
@@ -203,6 +209,8 @@ describe("loadWorkspaceTicketListPageAction", () => {
   it("loads a specific grouped bucket page with a canonical filter", async () => {
     mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
       status: "available",
+      helpdeskConnectionId: "connection-1",
+      workspaceId: "workspace-1",
       connectionName: "Support",
       communicationCapabilities: { customerReplies: false, internalNotes: false },
       metadataMutationCapabilities: { state: false, priority: false },

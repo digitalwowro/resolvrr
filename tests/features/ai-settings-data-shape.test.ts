@@ -59,7 +59,7 @@ const configuredWorkspace: StoredWorkspaceAiSetting = {
     model: "support-model",
     providerProtocol: "openai-compatible",
   },
-  helpdeskConnectionId: "connection-1",
+  workspaceId: "connection-1",
   policy: "admin-managed",
   userPermissions: {
     canEditAiRephraseStyleOverrides: true,
@@ -111,7 +111,7 @@ describe("workspace AI settings data shape", () => {
       settingsDataForWorkspace(
         repository({
           config: null,
-          helpdeskConnectionId: "connection-1",
+          workspaceId: "connection-1",
           policy: "admin-managed",
           userPermissions: {
             canEditAiRephraseStyleOverrides: false,

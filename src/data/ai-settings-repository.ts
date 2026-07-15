@@ -109,17 +109,17 @@ function userPermissionsData(
 }
 
 export const prismaAiSettingsRepository: AiSettingsRepository = {
-  async deleteUserSettingsForWorkspace(helpdeskConnectionId) {
+  async deleteUserSettingsForWorkspace(workspaceId) {
     await prisma.userWorkspaceAiSetting.deleteMany({
-      where: { helpdeskConnectionId },
+      where: { workspaceId },
     });
   },
 
-  async getUserSetting(userId, helpdeskConnectionId) {
+  async getUserSetting(userId, workspaceId) {
     const setting = await prisma.userWorkspaceAiSetting.findUnique({
       where: {
-        userId_helpdeskConnectionId: {
-          helpdeskConnectionId,
+        userId_workspaceId: {
+          workspaceId,
           userId,
         },
       },
@@ -137,9 +137,9 @@ export const prismaAiSettingsRepository: AiSettingsRepository = {
     };
   },
 
-  async getWorkspaceSetting(helpdeskConnectionId) {
+  async getWorkspaceSetting(workspaceId) {
     const setting = await prisma.workspaceAiSetting.findUnique({
-      where: { helpdeskConnectionId },
+      where: { workspaceId },
     });
     if (!setting) {
       return null;
@@ -147,7 +147,7 @@ export const prismaAiSettingsRepository: AiSettingsRepository = {
 
     return {
       config: configFromRecord(setting),
-      helpdeskConnectionId,
+      workspaceId,
       policy: toPolicy(setting.policy),
       userPermissions: userPermissionsFromRecord(setting),
     };
@@ -156,15 +156,15 @@ export const prismaAiSettingsRepository: AiSettingsRepository = {
   async upsertUserSetting(input) {
     await prisma.userWorkspaceAiSetting.upsert({
       where: {
-        userId_helpdeskConnectionId: {
-          helpdeskConnectionId: input.helpdeskConnectionId,
+        userId_workspaceId: {
+          workspaceId: input.workspaceId,
           userId: input.userId,
         },
       },
       create: {
         baseUrl: input.baseUrl,
         encryptedApiKey: input.encryptedApiKey,
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         keyVersion: input.keyVersion,
         modelName: input.model,
         providerProtocol: toDbProtocol(input.providerProtocol),
@@ -182,10 +182,10 @@ export const prismaAiSettingsRepository: AiSettingsRepository = {
 
   async upsertWorkspaceSetting(input) {
     await prisma.workspaceAiSetting.upsert({
-      where: { helpdeskConnectionId: input.helpdeskConnectionId },
+      where: { workspaceId: input.workspaceId },
       create: {
         ...configData(input),
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         policy: toDbPolicy(input.policy),
         ...userPermissionsData(input),
       },

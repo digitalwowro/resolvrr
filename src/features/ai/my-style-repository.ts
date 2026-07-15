@@ -6,16 +6,16 @@ export type StoredMyStyle = {
 
 export type UpsertMyStyleInput = {
   encryptedStyle: string;
-  helpdeskConnectionId: string;
+  workspaceId: string;
   keyVersion: string;
   userId: string;
 };
 
 export type MyStyleRepository = {
-  deleteMyStyle(userId: string, helpdeskConnectionId: string): Promise<void>;
+  deleteMyStyle(userId: string, workspaceId: string): Promise<void>;
   getMyStyle(
     userId: string,
-    helpdeskConnectionId: string,
+    workspaceId: string,
   ): Promise<StoredMyStyle | null>;
   upsertMyStyle(input: UpsertMyStyleInput): Promise<void>;
 };

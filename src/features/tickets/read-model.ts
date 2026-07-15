@@ -17,6 +17,7 @@ export type TicketReadUnavailableReason =
   | "no-active-connection"
   | "inactive-connection"
   | "missing-credentials"
+  | "personal-connection-required"
   | "unknown-provider"
   | "unsupported-capability"
   | "provider-auth-failed"
@@ -38,6 +39,8 @@ export type TicketReadUnavailable = {
 export type TicketListAvailable = {
   status: "available";
   connectionName: string;
+  helpdeskConnectionId: string;
+  workspaceId: string;
   communicationCapabilities: TicketCommunicationCapabilities;
   metadataMutationCapabilities: TicketMetadataMutationCapabilities;
   queryCapabilities?: TicketListQueryCapabilities;
@@ -53,6 +56,7 @@ export type TicketDetailAvailable = {
   status: "available";
   detail: TicketDetail;
   helpdeskConnectionId?: string;
+  workspaceId?: string;
   resolution?: TicketMergeResolution;
 };
 

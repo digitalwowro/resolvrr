@@ -16,7 +16,7 @@ const passwordSchema = z.string().min(12);
 const membershipSchema = z.object({
   canEditAiRephraseStyleOverrides: z.boolean(),
   canEditMyStyle: z.boolean(),
-  helpdeskConnectionId: z.string().min(1),
+  workspaceId: z.string().min(1),
   role: z.enum(["ADMIN", "AGENT"]),
 });
 

@@ -29,8 +29,8 @@ export async function loadActiveTicketProviderContext(
   operation: TicketReadOperation,
 ): Promise<TicketProviderContextResult> {
   const lookupStart = ticketReadTimingStart();
-  const activeConnectionId = await repository.getActiveConnectionId(userId);
-  if (!activeConnectionId) {
+  const activeWorkspaceId = await repository.getActiveWorkspaceId(userId);
+  if (!activeWorkspaceId) {
     recordTicketReadTiming({
       durationMs: ticketReadTimingDuration(lookupStart),
       operation,
@@ -42,12 +42,25 @@ export async function loadActiveTicketProviderContext(
     return unavailableTicketRead("no-active-connection");
   }
 
-  return loadTicketProviderContextForId(
+  const connection = await repository.findForUserWorkspace(userId, activeWorkspaceId);
+  if (!connection) {
+    recordTicketReadTiming({
+      durationMs: ticketReadTimingDuration(lookupStart),
+      operation,
+      phase: "active-connection-lookup",
+      reason: "personal-connection-required",
+      retryable: false,
+      status: "unavailable",
+    });
+    return unavailableTicketRead("personal-connection-required");
+  }
+
+  return loadTicketProviderContext(
     repository,
     registry,
     encryptionKey,
     userId,
-    activeConnectionId,
+    connection,
     operation,
     lookupStart,
   );
@@ -61,46 +74,37 @@ export async function loadTicketProviderContextForConnection(
   connectionId: string,
   operation: TicketReadOperation,
 ): Promise<TicketProviderContextResult> {
-  return loadTicketProviderContextForId(
+  const lookupStart = ticketReadTimingStart();
+  const connection = await repository.findForUser(userId, connectionId);
+  if (!connection) return unavailableTicketRead("no-active-connection");
+  return loadTicketProviderContext(
     repository,
     registry,
     encryptionKey,
     userId,
-    connectionId,
+    connection,
     operation,
-    ticketReadTimingStart(),
+    lookupStart,
   );
 }
 
-async function loadTicketProviderContextForId(
+async function loadTicketProviderContext(
   repository: HelpdeskConnectionsRepository,
   registry: ProviderRegistry,
   encryptionKey: string,
   userId: string,
-  connectionId: string,
+  connection: NonNullable<Awaited<ReturnType<HelpdeskConnectionsRepository["findForUser"]>>>,
   operation: TicketReadOperation,
   lookupStart: number,
 ): Promise<TicketProviderContextResult> {
-  const connection = await repository.findForUser(userId, connectionId);
-  if (!connection) {
-    recordTicketReadTiming({
-      connectionId,
-      durationMs: ticketReadTimingDuration(lookupStart),
-      operation,
-      phase: "active-connection-lookup",
-      reason: "no-active-connection",
-      retryable: false,
-      status: "unavailable",
-    });
-    return unavailableTicketRead("no-active-connection");
-  }
+  void repository;
   if (connection.status !== "active") {
     recordTicketReadTiming({
       connectionId: connection.id,
       durationMs: ticketReadTimingDuration(lookupStart),
       operation,
       phase: "active-connection-lookup",
-      providerKey: connection.providerKey,
+      providerKey: connection.workspace.providerKey,
       reason: "inactive-connection",
       retryable: false,
       status: "unavailable",
@@ -113,7 +117,7 @@ async function loadTicketProviderContextForId(
       durationMs: ticketReadTimingDuration(lookupStart),
       operation,
       phase: "active-connection-lookup",
-      providerKey: connection.providerKey,
+      providerKey: connection.workspace.providerKey,
       reason: "missing-credentials",
       retryable: false,
       status: "unavailable",
@@ -121,14 +125,14 @@ async function loadTicketProviderContextForId(
     return unavailableTicketRead("missing-credentials");
   }
 
-  const plugin = registry.get(connection.providerKey);
+  const plugin = registry.get(connection.workspace.providerKey);
   if (!plugin) {
     recordTicketReadTiming({
       connectionId: connection.id,
       durationMs: ticketReadTimingDuration(lookupStart),
       operation,
       phase: "active-connection-lookup",
-      providerKey: connection.providerKey,
+      providerKey: connection.workspace.providerKey,
       reason: "unknown-provider",
       retryable: false,
       status: "unavailable",
@@ -140,20 +144,20 @@ async function loadTicketProviderContextForId(
     durationMs: ticketReadTimingDuration(lookupStart),
     operation,
     phase: "active-connection-lookup",
-    providerKey: connection.providerKey,
+    providerKey: connection.workspace.providerKey,
     status: "ok",
   });
 
   let validated: Awaited<ReturnType<typeof validateProviderBaseUrl>>;
   const revalidationStart = ticketReadTimingStart();
   try {
-    validated = await validateProviderBaseUrl(connection.baseUrl);
+    validated = await validateProviderBaseUrl(connection.workspace.baseUrl);
     recordTicketReadTiming({
       connectionId: connection.id,
       durationMs: ticketReadTimingDuration(revalidationStart),
       operation,
       phase: "base-url-security-revalidation",
-      providerKey: connection.providerKey,
+      providerKey: connection.workspace.providerKey,
       status: "ok",
     });
   } catch {
@@ -162,7 +166,7 @@ async function loadTicketProviderContextForId(
       durationMs: ticketReadTimingDuration(revalidationStart),
       operation,
       phase: "base-url-security-revalidation",
-      providerKey: connection.providerKey,
+      providerKey: connection.workspace.providerKey,
       reason: "invalid-connection",
       retryable: false,
       status: "unavailable",
@@ -182,7 +186,7 @@ async function loadTicketProviderContextForId(
       durationMs: ticketReadTimingDuration(decryptStart),
       operation,
       phase: "credential-decrypt",
-      providerKey: connection.providerKey,
+      providerKey: connection.workspace.providerKey,
       reason: "invalid-connection",
       retryable: false,
       status: "unavailable",
@@ -194,7 +198,7 @@ async function loadTicketProviderContextForId(
     durationMs: ticketReadTimingDuration(decryptStart),
     operation,
     phase: "credential-decrypt",
-    providerKey: connection.providerKey,
+    providerKey: connection.workspace.providerKey,
     status: "ok",
   });
 
@@ -205,8 +209,10 @@ async function loadTicketProviderContextForId(
       context: {
         connection: {
           id: connection.id,
-          providerKey: connection.providerKey,
-          displayName: connection.displayName,
+          workspaceId: connection.workspaceId,
+          identityVersion: connection.identityVersion,
+          providerKey: connection.workspace.providerKey,
+          displayName: connection.workspace.displayName,
           baseUrl: validated.canonicalUrl,
           status: connection.status,
         },

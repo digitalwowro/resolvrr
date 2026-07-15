@@ -13,6 +13,9 @@ Resolvrr uses native email/password authentication for the first release.
   role, avatar upload, editable first and last names, and password-change form.
 - Admins can use Workspace Settings > Users to manage global users, reset
   passwords, assign workspace access, and grant workspace-level AI permissions.
+- Workspace membership grants access to shared Resolvrr configuration only.
+  Every member must connect and validate their own helpdesk account before any
+  provider-backed ticket, notification, inline-image, mutation, or AI-source read.
 - Signing out deletes the server-side session and clears the session cookie.
 
 ## Security Behavior
@@ -26,7 +29,10 @@ Resolvrr uses native email/password authentication for the first release.
 - Avatar uploads accept PNG, JPEG, or WebP files under 512 KB and store a
   validated data URL on the user record.
 - Deactivated users cannot sign in. Existing sessions and password login are
-  removed during deactivation.
+  removed during deactivation. Their personal helpdesk connection and encrypted
+  credentials are deleted immediately; metadata-only mutation history remains.
+- Workspace ownership transfer changes only the workspace owner. It never moves,
+  copies, or grants access to a personal helpdesk connection.
 - Removing a user never deletes helpdesk-provider replies or articles. If a
   user has provider mutation history, Resolvrr deactivates and scrubs the local
   user instead of hard-deleting it so mutation audit rows remain accountable.

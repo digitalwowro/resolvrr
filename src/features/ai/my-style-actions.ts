@@ -17,7 +17,7 @@ export async function loadMyStyleAction() {
     activeWorkspaceLabel: workspace?.label,
     canEdit: workspace?.access.canEditMyStyle,
     encryptionKey: env.APP_ENCRYPTION_KEY,
-    helpdeskConnectionId: workspace?.id,
+    workspaceId: workspace?.id,
     repository: prismaMyStyleRepository,
     userId: user.id,
   });
@@ -34,7 +34,7 @@ export async function saveMyStyleAction(formData: FormData) {
     canEdit: workspace?.access.canEditMyStyle,
     encryptionKey: env.APP_ENCRYPTION_KEY,
     formData,
-    helpdeskConnectionId: workspace?.id,
+    workspaceId: workspace?.id,
     repository: prismaMyStyleRepository,
     userId: user.id,
   });
@@ -50,7 +50,7 @@ export async function resetMyStyleAction() {
     activeWorkspaceLabel: workspace?.label,
     canEdit: workspace?.access.canEditMyStyle,
     encryptionKey: env.APP_ENCRYPTION_KEY,
-    helpdeskConnectionId: workspace?.id,
+    workspaceId: workspace?.id,
     repository: prismaMyStyleRepository,
     userId: user.id,
   });

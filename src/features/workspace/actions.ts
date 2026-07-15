@@ -17,15 +17,15 @@ export async function saveWorkspaceOpenTabsStateAction(
   }
 
   const user = await requireCurrentUser();
-  const activeConnectionId =
-    await prismaHelpdeskConnectionsRepository.getActiveConnectionId(user.id);
-  if (!activeConnectionId) {
+  const activeWorkspaceId =
+    await prismaHelpdeskConnectionsRepository.getActiveWorkspaceId(user.id);
+  if (!activeWorkspaceId) {
     return;
   }
 
   await prismaWorkspaceTabsRepository.setForUser(
     user.id,
-    activeConnectionId,
+    activeWorkspaceId,
     parsedState,
   );
 }

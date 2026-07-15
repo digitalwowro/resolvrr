@@ -1,23 +1,6 @@
 import type { HelpdeskConnectionStatus } from "@/core/helpdesk-connections";
 
-export const activeConnectionPreferenceKey = "activeConnectionId";
-
-export type StoredHelpdeskConnection = {
-  id: string;
-  userId: string;
-  providerKey: string;
-  displayName: string;
-  baseUrl: string;
-  status: HelpdeskConnectionStatus;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type StoredProviderCredential = {
-  scheme: string;
-  encryptedPayload: string;
-  keyVersion: string;
-};
+export const activeWorkspacePreferenceKey = "activeWorkspaceId";
 
 export type WorkspaceAccessRole = "ADMIN" | "AGENT";
 
@@ -32,56 +15,95 @@ export type WorkspaceUserAiPermissions = Pick<
   "canEditAiRephraseStyleOverrides" | "canEditMyStyle"
 >;
 
+export type StoredProviderCredential = {
+  scheme: string;
+  encryptedPayload: string;
+  keyVersion: string;
+};
+
+export type StoredWorkspace = {
+  id: string;
+  ownerUserId: string;
+  providerKey: string;
+  displayName: string;
+  baseUrl: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type StoredHelpdeskConnection = {
+  id: string;
+  workspaceId: string;
+  userId: string;
+  status: HelpdeskConnectionStatus;
+  providerIdentityExternalId: string | null;
+  providerIdentityDisplayName: string | null;
+  identityVersion: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type AccessibleWorkspace = StoredWorkspace & {
+  access: WorkspaceAccess;
+  connection: StoredHelpdeskConnection | null;
+};
+
 export type HelpdeskConnectionWithCredential = StoredHelpdeskConnection & {
+  providerKey: string;
+  displayName: string;
+  baseUrl: string;
+  workspace: StoredWorkspace;
   access: WorkspaceAccess;
   credential: StoredProviderCredential | null;
 };
 
-export type CreateHelpdeskConnectionInput = {
+export type CreateWorkspaceConnectionInput = {
   userId: string;
   providerKey: string;
   displayName: string;
   baseUrl: string;
-  status: HelpdeskConnectionStatus;
   credentialScheme: string;
   encryptedCredentialPayload: string;
+  providerIdentityExternalId: string;
+  providerIdentityDisplayName: string;
 };
 
-export type UpdateHelpdeskConnectionInput = {
-  id: string;
+export type UpdatePersonalConnectionInput = {
+  connectionId: string;
   userId: string;
-  displayName: string;
-  baseUrl: string;
-  status?: HelpdeskConnectionStatus;
   credentialScheme?: string;
   encryptedCredentialPayload?: string;
+  providerIdentityExternalId?: string;
+  providerIdentityDisplayName?: string;
+  status?: HelpdeskConnectionStatus;
+  rotateIdentityVersion?: boolean;
+};
+
+export type CreatePersonalConnectionInput = {
+  workspaceId: string;
+  userId: string;
+  credentialScheme: string;
+  encryptedCredentialPayload: string;
+  providerIdentityExternalId: string;
+  providerIdentityDisplayName: string;
 };
 
 export type HelpdeskConnectionsRepository = {
-  getAccess(
-    userId: string,
-    connectionId: string,
-  ): Promise<WorkspaceAccess | null>;
-  listForUser(userId: string): Promise<StoredHelpdeskConnection[]>;
-  findForUser(
-    userId: string,
-    connectionId: string,
-  ): Promise<HelpdeskConnectionWithCredential | null>;
-  create(input: CreateHelpdeskConnectionInput): Promise<StoredHelpdeskConnection>;
-  update(
-    input: UpdateHelpdeskConnectionInput,
-  ): Promise<StoredHelpdeskConnection | null>;
-  updateStatus(
-    userId: string,
-    connectionId: string,
-    status: HelpdeskConnectionStatus,
-  ): Promise<boolean>;
-  updateWorkspaceAgentAiPermissions(
-    connectionId: string,
-    permissions: WorkspaceUserAiPermissions,
-  ): Promise<void>;
+  getAccess(userId: string, workspaceId: string): Promise<WorkspaceAccess | null>;
+  listForUser(userId: string): Promise<AccessibleWorkspace[]>;
+  findWorkspaceForUser(userId: string, workspaceId: string): Promise<AccessibleWorkspace | null>;
+  findForUser(userId: string, connectionId: string): Promise<HelpdeskConnectionWithCredential | null>;
+  findForUserWorkspace(userId: string, workspaceId: string): Promise<HelpdeskConnectionWithCredential | null>;
+  create(input: CreateWorkspaceConnectionInput): Promise<AccessibleWorkspace>;
+  createPersonalConnection(input: CreatePersonalConnectionInput): Promise<HelpdeskConnectionWithCredential | "identity-taken" | null>;
+  updatePersonalConnection(input: UpdatePersonalConnectionInput): Promise<HelpdeskConnectionWithCredential | "identity-taken" | null>;
+  updateWorkspace(input: { userId: string; workspaceId: string; displayName: string; baseUrl: string }): Promise<AccessibleWorkspace | null>;
+  updateStatus(userId: string, connectionId: string, status: HelpdeskConnectionStatus): Promise<boolean>;
   deleteForUser(userId: string, connectionId: string): Promise<boolean>;
-  getActiveConnectionId(userId: string): Promise<string | null>;
-  setActiveConnectionId(userId: string, connectionId: string): Promise<void>;
-  clearActiveConnectionId(userId: string): Promise<void>;
+  getActiveWorkspaceId(userId: string): Promise<string | null>;
+  setActiveWorkspaceId(userId: string, workspaceId: string): Promise<void>;
+  clearActiveWorkspaceId(userId: string): Promise<void>;
+  updateWorkspaceAgentAiPermissions(workspaceId: string, permissions: WorkspaceUserAiPermissions): Promise<void>;
+  /** Transitional test-double compatibility; production code must use the split methods. */
+  update?: (input: Record<string, unknown>) => Promise<HelpdeskConnectionWithCredential | null>;
 };

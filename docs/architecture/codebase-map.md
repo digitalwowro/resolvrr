@@ -15,6 +15,9 @@ added, moved, renamed, or removed.
 - `cache-and-privacy-contract.md` was already above 300 lines and remains one coupled cache/privacy
   threat-boundary contract. Contextual-reply and merged-source changes stay with their cache-key,
   invalidation, and draft-retention rules; the document remains below the 500-line merge blocker.
+- `workspace-ui-contract.md` remains one normative interaction contract. Splitting workspace
+  identity, ticket, settings, and accessibility invariants would make cross-surface behavior harder
+  to review; it remains below the 500-line merge blocker.
 
 ## Root Files
 
@@ -272,7 +275,8 @@ added, moved, renamed, or removed.
       - `actions.ts` (`src/features/auth/actions.ts`): login, register, and logout server actions.
       - `index.ts` (`src/features/auth/index.ts`): auth feature exports.
       - `messages.ts` (`src/features/auth/messages.ts`): auth form error message helpers.
-    - `src/features/helpdesk-connections`: provider-neutral connection management feature.
+    - `src/features/helpdesk-connections`: provider-neutral shared-workspace and personal
+      helpdesk-connection management feature.
       - `actions.ts` (`src/features/helpdesk-connections/actions.ts`): server actions for connection
         create, update, validate, enable/disable, active selection, and local delete.
       - `form-parsing.ts` (`src/features/helpdesk-connections/form-parsing.ts`): provider-neutral
@@ -284,14 +288,16 @@ added, moved, renamed, or removed.
       - `provider-validation.ts` (`src/features/helpdesk-connections/provider-validation.ts`):
         connection validation helper that combines SSRF validation with provider validation, safe
         failure messages, and metadata-only diagnostics.
-      - `repository.ts` (`src/features/helpdesk-connections/repository.ts`): persistence interface
-        and active-connection preference key for connection workflows.
+      - `repository.ts` (`src/features/helpdesk-connections/repository.ts`): shared Workspace,
+        per-user HelpdeskConnection, owner-only credential persistence, and active-workspace
+        preference contracts.
       - `service-listing.ts` (`src/features/helpdesk-connections/service-listing.ts`): connection
         provider option, list, and edit-read use cases.
       - `service-types.ts` (`src/features/helpdesk-connections/service-types.ts`): provider option,
         connection list item, and mutation result shapes.
-      - `service.ts` (`src/features/helpdesk-connections/service.ts`): connection mutation use cases
-        for ownership, encrypted credential handling, SSRF validation, and provider validation.
+      - `service.ts` (`src/features/helpdesk-connections/service.ts`): workspace and personal
+        connection mutation use cases for credential isolation, provider identity binding,
+        duplicate-identity rejection, URL replacement, SSRF validation, and provider validation.
     - `src/features/user-management`: admin-only global user and workspace-access management
       feature.
       - `actions.ts` (`src/features/user-management/actions.ts`): authenticated server actions for
@@ -364,8 +370,8 @@ added, moved, renamed, or removed.
       - `mutation-action-results.ts` (`src/features/tickets/mutation-action-results.ts`): shared
         selected-ticket metadata and communication action result messages.
       - `connection-context.ts` (`src/features/tickets/connection-context.ts`): active connection
-        or explicit member connection lookup, credential decryption, provider lookup, base URL
-        revalidation, and setup timing for ticket reads and metadata mutations.
+        or explicit signed-in-user personal connection lookup, credential decryption, provider
+        lookup, base URL revalidation, and setup timing for ticket reads and metadata mutations.
       - `inline-image-service.ts` (`src/features/tickets/inline-image-service.ts`): authenticated
         provider-neutral inline-image capability dispatch using the article's explicit connection.
       - `date-time-format.ts` (`src/features/tickets/date-time-format.ts`): shared workspace
@@ -909,10 +915,10 @@ added, moved, renamed, or removed.
           ticket/List URL path helper used by local tab navigation and explicit ticket link sharing,
           plus history replacement helpers for local tab navigation.
       - `actions.ts` (`src/features/workspace/actions.ts`): server actions for workspace-owned UI
-        state, including active-connection scoped persisted open tabs.
+        state, including active-workspace scoped persisted open tabs.
       - `index.ts` (`src/features/workspace/index.ts`): workspace feature boundary. UI copy may say
-        workspace, but persisted domain concepts remain helpdesk connections. This barrel exports
-        production workspace UI only.
+        workspace because shared Workspace and personal HelpdeskConnection are distinct persisted
+        concepts. This barrel exports production workspace UI only.
       - `workspace-tab-state.ts` (`src/features/workspace/workspace-tab-state.ts`): provider-neutral
         persisted workspace tab state parser, serializer, cap, and ticket-detail tab adapter
         helpers.
@@ -923,6 +929,8 @@ added, moved, renamed, or removed.
         provider-safe JSON request helper.
       - `credentials.ts` (`src/providers/zammad/credentials.ts`): provider-specific Basic Auth
         credential parsing and header construction.
+      - `connection-identity.ts` (`src/providers/zammad/connection-identity.ts`): Zammad
+        `/users/me` response validation and provider-neutral external identity mapping.
       - `errors.ts` (`src/providers/zammad/errors.ts`): provider HTTP status classification.
       - `index.ts` (`src/providers/zammad/index.ts`): provider plugin export.
       - `mapping.ts` (`src/providers/zammad/mapping.ts`): provider raw value to canonical ticket,
@@ -1109,8 +1117,10 @@ added, moved, renamed, or removed.
   - `auth.prisma` (`prisma/auth.prisma`): user, password login, and session schema.
   - `caches.prisma` (`prisma/caches.prisma`): selected-ticket detail/thread cache and generated AI
     summary cache schema.
-  - `helpdesk-connections.prisma` (`prisma/helpdesk-connections.prisma`): helpdesk connection,
-    workspace membership, provider credential, and provider mutation log schema.
+  - `helpdesk-connections.prisma` (`prisma/helpdesk-connections.prisma`): shared Workspace,
+    per-user HelpdeskConnection, workspace membership, personal provider credential, and
+    metadata-only mutation log schema with durable workspace and optional personal-connection
+    identity.
   - `my-style.prisma` (`prisma/my-style.prisma`): encrypted per-user/per-workspace My Style schema.
   - `prisma/migrations`: database migration history.
     - `prisma/migrations/20260519062146_init`: contains related 20260519062146_init files.
@@ -1130,6 +1140,10 @@ added, moved, renamed, or removed.
       20260605213000_add_ai_summary_cache files.
       - `migration.sql` (`prisma/migrations/20260605213000_add_ai_summary_cache/migration.sql`):
         migration adding encrypted selected-ticket AI summary output cache storage.
+    - `prisma/migrations/20260715142000_separate_workspace_connections`: contains the hand-authored
+      migration that preserves shared workspace data, creates disconnected owner personal
+      connections, retargets owner credentials, clears provider-derived caches and unsafe legacy
+      tabs, preserves metadata-only audits, and renames the active workspace preference.
     - `prisma/migrations/20260606003000_add_workspace_ai_settings`: contains related
       20260606003000_add_workspace_ai_settings files.
       - `migration.sql`
@@ -1247,6 +1261,9 @@ added, moved, renamed, or removed.
       creation.
     - `ai-prompts-test-helpers.ts` (`tests/features/ai-prompts-test-helpers.ts`): shared AI prompt
       and rephrase style repositories, settings, connection, cache, form, and user fixtures.
+    - `ai-prompts-connection-repository.ts`
+      (`tests/features/ai-prompts-connection-repository.ts`): focused shared-workspace connection
+      repository fixture for AI prompt tests.
     - `ai-draft-rewrite-service.test.ts` (`tests/features/ai-draft-rewrite-service.test.ts`):
       verifies draft-only proofread/rephrase prompt composition, My Style inclusion, unavailable
       states, and injected provider behavior.
@@ -1281,6 +1298,9 @@ added, moved, renamed, or removed.
     - `ticket-communication-ai-drafts-workspace.test.tsx`
       (`tests/features/ticket-communication-ai-drafts-workspace.test.tsx`): verifies local inline
       composer draft recovery, proofread suggestion persistence, and suggestion apply behavior.
+    - `ticket-communication-draft-scope.test.ts`
+      (`tests/features/ticket-communication-draft-scope.test.ts`): verifies drafts cannot cross
+      users, workspaces, personal connections, identity versions, or legacy shared scopes.
     - `ticket-communication-workspace-test-utils.tsx`
       (`tests/features/ticket-communication-workspace-test-utils.tsx`): shared test utilities for
       ticket communication workspace.
@@ -1380,6 +1400,9 @@ added, moved, renamed, or removed.
       ticket service test repository, provider, connection, and encryption fixtures.
     - `ticket-service.test.ts` (`tests/features/ticket-service.test.ts`): verifies ticket service
       behavior.
+    - `ticket-personal-connection-boundary.test.ts`
+      (`tests/features/ticket-personal-connection-boundary.test.ts`): proves membership without a
+      personal connection fails before URL validation, provider cache access, or provider reads.
     - `ticket-staged-metadata-edge-workspace.test.tsx`
       (`tests/features/ticket-staged-metadata-edge-workspace.test.tsx`): verifies ticket staged
       metadata edge workspace behavior.
@@ -1487,6 +1510,12 @@ added, moved, renamed, or removed.
     - `ticket-workspace.test.tsx` (`tests/features/ticket-workspace.test.tsx`): verifies
       provider-backed workspace unavailable, table, profile menu, read-only metadata, and list
       controls behavior.
+    - `ticket-workspace-personal-connection.test.tsx`
+      (`tests/features/ticket-workspace-personal-connection.test.tsx`): verifies a selected shared
+      workspace without a personal connection renders only the connection requirement.
+    - `workspace-connection-form-isolation.test.tsx`
+      (`tests/features/workspace-connection-form-isolation.test.tsx`): verifies workspace admins
+      can edit shared metadata independently while agents must supply their own credentials.
     - `workspace-adapter.test.ts` (`tests/features/workspace-adapter.test.ts`): verifies
       ticket-to-workspace adapter display formatting for table/detail/thread date strings.
     - `workspace-notifications-service.test.ts`
@@ -1564,7 +1593,8 @@ added, moved, renamed, or removed.
     - `encryption.test.ts` (`tests/unit/encryption.test.ts`): verifies secret envelope encryption.
     - `global-styles.test.ts` (`tests/unit/global-styles.test.ts`): verifies global styles behavior.
     - `helpdesk-connections-security.test.ts` (`tests/unit/helpdesk-connections-security.test.ts`):
-      verifies connection tamper resistance and active/enable security rules.
+      verifies personal connection ownership, membership-only denial, connection tamper
+      resistance, and active-workspace security rules.
     - `helpdesk-connections-service-create-update.test.ts`
       (`tests/unit/helpdesk-connections-service-create-update.test.ts`): verifies connection
       creation, credential preservation, encryption, and metadata trimming behavior.
@@ -1576,7 +1606,8 @@ added, moved, renamed, or removed.
       clearing for disable/delete lifecycle operations.
     - `helpdesk-connections-service-validation.test.ts`
       (`tests/unit/helpdesk-connections-service-validation.test.ts`): verifies existing-connection
-      provider validation error handling and safe diagnostics.
+      provider identity validation, duplicate identity rejection, error handling, and safe
+      diagnostics.
     - `provider-boundary.test.ts` (`tests/unit/provider-boundary.test.ts`): verifies direct Zammad
       imports and raw Zammad tokens stay out of core, UI, feature, and provider-neutral code.
     - `provider-http-json.test.ts` (`tests/unit/provider-http-json.test.ts`): verifies provider JSON
