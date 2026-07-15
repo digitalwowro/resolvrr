@@ -141,8 +141,8 @@ and bottom update bar remain outside that conversation scroller. Thread
 articles render provider-sanitized rich HTML and use the shared global link color.
 Email presentation tables retain their safe provider layout instead of receiving
 blanket data-table borders, widths, or cell padding. Verified embedded raster
-images render in place through authenticated same-origin URLs; remote images stay
-blocked. Wide email layouts scroll within the article and images remain responsive.
+images render in place through authenticated same-origin URLs and retain safe
+provider dimensions; remote images stay blocked. Wide layouts scroll within the article.
 Public reply-capable articles expose provider-neutral Reply and, for email,
 enabled or disabled Reply all. Internal/system/unsupported articles expose no reply action.
 Article signature collapse is precision-first and language-neutral: explicit
@@ -150,8 +150,8 @@ provider-normalized boundaries, standard signature delimiters, and strongly isol
 compact contact blocks may collapse. Terminal rich-media contact tables require
 multiple images, multiple image links, a displayed contact link, and phone-shaped
 text before they qualify; this keeps ordinary embedded documents and galleries
-visible. Ambiguous text remains visible. Sign-off wording is never used as evidence
-and stays visible when a separate signature block is collapsed.
+visible. A strong image contact block may include a bounded, unstructured terminal
+footer. Ambiguous text remains visible, and sign-off wording is never evidence.
 Public email articles expose Forward independently of Reply eligibility.
 Comment exists only in the ticket footer. Footer Reply and Reply all use the
 newest reply-capable public article; an older article action explicitly overrides

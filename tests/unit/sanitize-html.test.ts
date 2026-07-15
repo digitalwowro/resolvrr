@@ -65,6 +65,17 @@ describe("provider HTML sanitization", () => {
     expect(sanitized).not.toContain("Tracker");
   });
 
+  it("preserves safe absolute image dimensions used by email signatures", () => {
+    const sanitized = sanitizeProviderHtml(
+      '<img src="cid:logo" style="max-width:100%;width:0.9479in;max-height:1.4166in;position:fixed">',
+      { rewriteImageSource: () => "/inline/logo" },
+    );
+
+    expect(sanitized).toContain("width:0.9479in");
+    expect(sanitized).toContain("max-height:1.4166in");
+    expect(sanitized).not.toContain("position");
+  });
+
   it("preserves safe forwarded-email styling but removes active content and tracking images", () => {
     const sanitized = sanitizeForwardedProviderHtml(
       '<div style="color:#125599;position:fixed"><table><tr><td style="padding:10px">Hi</td></tr></table><img src="https://tracker.example/pixel"><script>bad()</script></div>',

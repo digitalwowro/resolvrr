@@ -76,7 +76,7 @@ Article fields include:
 - `createdAt`: provider article timestamp.
 - `sanitizedHtml`: server-sanitized article body. Safe rich-text structure such
   as links, lists, headings, email-layout tables, conservative presentation
-  styles, inline emphasis, and provider-verified inline raster images may be
+  styles and dimensions, inline emphasis, and verified inline raster images may be
   preserved by the sanitizer. Scripts, active/overlay styles, remote images,
   unsafe attributes, and unsafe URL schemes are not part of the contract.
 - `attachments`: metadata only for provider-classified user-visible files.

@@ -43,7 +43,7 @@ const allowedTags = [
 ];
 
 const safeColor = /^(?:#[0-9a-f]{3,8}|rgba?\([\d\s,.%]+\)|[a-z]+)(?:\s*!important)?$/iu;
-const safeLength = /^(?:0|auto|\d+(?:\.\d+)?(?:px|pt|em|rem|%|vh|vw))(?:\s*!important)?$/iu;
+const safeLength = /^(?:0|auto|\d+(?:\.\d+)?(?:px|pt|pc|in|cm|mm|em|rem|%|vh|vw))(?:\s*!important)?$/iu;
 const safeSignedLength = /^(?:0|auto|-?\d+(?:\.\d+)?(?:px|pt|em|rem|%|vh|vw))(?:\s*!important)?$/iu;
 const safeSpacing = /^(?:0|auto|-?\d+(?:\.\d+)?(?:px|pt|em|rem|%))(?:\s+(?:0|auto|-?\d+(?:\.\d+)?(?:px|pt|em|rem|%))){0,3}(?:\s*!important)?$/iu;
 const safeBorder = /^(?:0|none|\d+(?:\.\d+)?(?:px|pt)?|\d+(?:\.\d+)?(?:px|pt)\s+(?:none|solid|dashed|dotted|double)\s+(?:#[0-9a-f]{3,8}|rgba?\([\d\s,.%]+\)|[a-z]+))(?:\s*!important)?$/iu;

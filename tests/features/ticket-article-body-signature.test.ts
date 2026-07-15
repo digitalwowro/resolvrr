@@ -232,4 +232,48 @@ describe("precision-first article signature detection", () => {
     expect(result.visibleHtml).toContain("requested comparison");
     expect(result.visibleHtml).toContain("Browse the catalog");
   });
+
+  it("collapses an image contact block with a trailing plain-text footer", () => {
+    const result = trimArticleBodyHtml(`
+      <div>Hello team,</div>
+      <div><br></div>
+      <div>The account is ready and the requested change is complete.</div>
+      <div><br></div>
+      <div>Arbitrary sign-off</div>
+      <div><br></div>
+      <div>
+        <strong>Example Person | Client Executive</strong><br>
+        <strong>Mobile: +1 (555) 867-5309</strong><br>
+        <strong>person@example.test</strong>
+        <div><img src="/inline/company-mark" style="width:0.9479in;max-height:1.4166in"></div>
+      </div>
+      This communication is intended for the addressed recipient. If it reached another party unintentionally, it should not be read, distributed, retained, or used and should be removed from that system.
+    `);
+
+    expect(result.collapsed).toBe(true);
+    if (!result.collapsed) return;
+    expect(result.hiddenKind).toBe("signature");
+    expect(result.visibleHtml).toContain("requested change is complete");
+    expect(result.visibleHtml).toContain("Arbitrary sign-off");
+    expect(result.visibleHtml).not.toContain("Example Person");
+    expect(result.hiddenHtml).toContain("company-mark");
+    expect(result.hiddenHtml).toContain("intended for the addressed recipient");
+  });
+
+  it("does not absorb structured message content after a contact block", () => {
+    const result = trimArticleBodyHtml(`
+      <div>Please review the following contact before continuing.</div><br><br>
+      <div>
+        <strong>Example Person | Client Executive</strong><br>
+        <strong>Mobile: +1 (555) 867-5309</strong><br>
+        <strong>person@example.test</strong>
+        <div><img src="/inline/company-mark"></div>
+      </div>
+      <p>This subsequent paragraph contains required account instructions and must remain visible to the agent.</p>
+      <p>It is authored message content rather than an unstructured terminal footer.</p>
+    `);
+
+    expect(result.collapsed).toBe(false);
+    expect(result.visibleHtml).toContain("required account instructions");
+  });
 });

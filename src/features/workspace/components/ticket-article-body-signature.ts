@@ -28,6 +28,8 @@ const emailTextPattern =
 const phoneTextPattern = /(?:^|\D)\+?\d[\d\s().-]{6,}\d(?:\D|$)/u;
 const displayedAddressPattern =
   /^(?:https?:\/\/|www\.)?[^\s/]+\.[^\s/]+(?:\/\S*)?$/iu;
+const compoundFooterForbiddenPattern =
+  /<(?:a|address|article|blockquote|code|div|footer|h[1-6]|img|li|ol|p|pre|section|table|ul)\b/iu;
 
 export function findSignatureCandidate(
   html: string,
@@ -87,7 +89,8 @@ function findStructuralCandidate(
     .filter(
       (range) =>
         isTerminalRange(html, range) ||
-        isContactBlockBeforeMarker(html, range, explicitMarkerStart),
+        isContactBlockBeforeMarker(html, range, explicitMarkerStart) ||
+        isContactBlockWithTrailingFooter(html, range),
     )
     .sort((left, right) => left.start - right.start);
   const candidate = ranges[0];
@@ -99,6 +102,31 @@ function findStructuralCandidate(
         htmlStart: candidate.start,
       }
     : null;
+}
+
+function isContactBlockWithTrailingFooter(
+  html: string,
+  range: HtmlBlockRange,
+) {
+  if (range.tagName !== "div" && range.tagName !== "section") return false;
+  const blockHtml = html.slice(range.start, range.end);
+  if (!/<img\b/iu.test(blockHtml)) return false;
+  if (!hasStructuralSeparation(html.slice(0, range.start), range.tagName)) {
+    return false;
+  }
+
+  const trailingHtml = html.slice(range.end);
+  const trailingText = plainTextFromHtml(trailingHtml).trim();
+  const trailingLines = trailingText
+    .split("\n")
+    .map(normalizeLine)
+    .filter(Boolean);
+  return (
+    trailingText.length >= 120 &&
+    trailingText.length <= 1_000 &&
+    trailingLines.length <= 8 &&
+    !compoundFooterForbiddenPattern.test(trailingHtml)
+  );
 }
 
 function isContactBlockBeforeMarker(
