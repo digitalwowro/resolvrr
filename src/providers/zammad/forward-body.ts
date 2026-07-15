@@ -1,4 +1,5 @@
 import { sanitizeForwardedProviderHtml } from "@/security/sanitize-html";
+import { zammadInlineAttachmentIdForSource } from "./article-attachments";
 import type { ZammadArticle } from "./schemas";
 
 function escapeHtml(value: string): string {
@@ -13,14 +14,21 @@ function addressValue(value: string | string[] | null | undefined): string {
   return Array.isArray(value) ? value.join(", ") : value ?? "";
 }
 
-function inlineCidImages(
+function inlineArticleImages(
   html: string,
+  article: ZammadArticle,
   images: Map<string, string>,
 ): string {
-  return html.replace(/cid:([^\s"'<>]+)/giu, (match, rawId: string) => {
-    const id = rawId.replace(/^<|>$/gu, "").toLowerCase();
-    return images.get(id) ?? match;
-  });
+  return html.replace(
+    /(<img\b[^>]*\bsrc\s*=\s*(["']))(.*?)(\2[^>]*>)/giu,
+    (tag, prefix: string, _quote: string, source: string, suffix: string) => {
+      const attachmentId = zammadInlineAttachmentIdForSource(article, source);
+      const dataUrl = attachmentId === undefined
+        ? undefined
+        : images.get(String(attachmentId));
+      return dataUrl ? `${prefix}${dataUrl}${suffix}` : tag;
+    },
+  );
 }
 
 export function zammadForwardBody(input: {
@@ -39,7 +47,7 @@ export function zammadForwardBody(input: {
   }
   const article = input.article;
   const original = sanitizeForwardedProviderHtml(
-    inlineCidImages(article.body ?? "", input.inlineImages),
+    inlineArticleImages(article.body ?? "", article, input.inlineImages),
   );
   const headers = [
     ["Subject", article.subject?.trim() || input.subject],

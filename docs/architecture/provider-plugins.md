@@ -118,7 +118,13 @@ for the selected ticket detail/thread. If the write succeeds but refresh fails,
 callers receive `saved-refresh-failed` so UI can present a non-destructive
 warning and keep provider source-of-truth semantics. Optimistic rendering is
 not used. Forwarded source attachments are revalidated and read only inside the
-provider boundary with bounded binary responses.
+provider boundary with bounded binary responses. Providers expose only their
+user-visible attachment set; body alternatives and referenced inline resources
+remain provider-private. The optional `ticket:inline-images` read capability may
+serve an exact referenced raster image through the authenticated provider-neutral
+media route. Implementations must freshly verify ticket/article ownership,
+provider inline classification, MIME allowlisting, and size bounds before reading
+bytes; arbitrary provider attachment reads are not permitted.
 
 Communication audit logs record only the communication kind, final status,
 provider-neutral failure reason, retryability, and safe connection/provider
@@ -141,9 +147,13 @@ Zammad forwarding is independent of reply derivation. Any public email article
 may expose a provider-neutral forward context, including system-originated mail
 whose From/To/Reply-To values are all managed addresses. The provider freshly
 revalidates the ticket and exact source article, subject, recipients, context
-version, and selected attachment IDs before creating one email article. The
-forward payload intentionally omits `in_reply_to` and `references`; Zammad alone
-performs outbound channel delivery.
+version, and selected attachment IDs before creating one email article. Zammad
+attachment visibility mirrors its `attachmentsWithoutInline` behavior: exact
+raw CID or transformed inline-URL body references are excluded, while filenames,
+image MIME types, and inline disposition alone never hide a file. Hidden inline
+images may be read internally to preserve an included original, but cannot be
+selected as attachments. The forward payload intentionally omits `in_reply_to`
+and `references`; Zammad alone performs outbound channel delivery.
 
 ## Ticket Read Observability
 

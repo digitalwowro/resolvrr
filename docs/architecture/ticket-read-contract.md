@@ -75,14 +75,19 @@ Article fields include:
   `bcc` channel.
 - `createdAt`: provider article timestamp.
 - `sanitizedHtml`: server-sanitized article body. Safe rich-text structure such
-  as links, lists, headings, tables, and inline emphasis may be preserved by the
-  sanitizer; scripts, unsafe attributes, and unsafe URL schemes are not part of
-  the contract.
-- `attachments`: metadata only. The workspace may display provider-neutral
-  filename, content type, and byte size values. Attachment download, proxying,
-  previews, raw provider attachment URLs, and provider auth details are outside
-  this slice and must stay provider-bound until a separate attachment security
-  model is approved.
+  as links, lists, headings, email-layout tables, conservative presentation
+  styles, inline emphasis, and provider-verified inline raster images may be
+  preserved by the sanitizer. Scripts, active/overlay styles, remote images,
+  unsafe attributes, and unsafe URL schemes are not part of the contract.
+- `attachments`: metadata only for provider-classified user-visible files.
+  Message-body alternatives and referenced inline resources stay provider-private.
+  The workspace may display filename, content type, and byte size. Attachment
+  download and preview remain outside this slice.
+
+Inline body images are not attachments. The optional provider-neutral inline-image
+capability rewrites only verified body references to an authenticated same-origin
+URL. It revalidates access, ownership, inline classification, raster MIME, and byte
+bounds; responses are `private, no-store`, with no raw provider URL or credential.
 
 Provider plugins must sanitize provider HTML before returning articles to core
 features. Raw provider article bodies are not part of the contract. UI code
@@ -220,7 +225,9 @@ article payload fields must not escape the provider folder.
 
 Forward creates one public Zammad email article on the same ticket, preserves the
 source subject by default, omits reply-threading headers, and safely handles the
-original plus bounded attachments. Zammad exclusively owns email delivery.
+original plus bounded attachments. Only visible attachments are selectable;
+referenced inline images may be read provider-privately to preserve the original.
+Zammad exclusively owns email delivery.
 
 Mutation results distinguish write failure from refresh failure:
 
@@ -479,19 +486,15 @@ endpoint, while Zammad ticket tag reads and writes remain ticket-scope endpoints
 requiring `ticket.agent` or `admin.tag`. A missing global tag suggestion
 permission must not disable staged freeform tag editing.
 
-Secondary data such as tags, links, subscription, and lookup lists must be added
-as explicit measured phases when they become part of the coordinated read path.
-Optional secondary read failures should not take down an otherwise available
-selected-ticket detail when a provider-neutral fallback is available.
+Secondary data such as tags, links, subscription, and lookups use explicit measured
+phases. Optional failures do not take down otherwise available detail when a
+provider-neutral fallback exists.
 
-Every provider ticket mutation must freshly reject a merged source before the
-first write. A failed lifecycle preflight is fail-closed: no ticket, article,
-tag, link, subscription, or communication write may follow it.
+Every provider ticket mutation freshly rejects a merged source before the first
+write; no ticket, article, tag, link, subscription, or communication write follows.
 
 ## Non-Goals
 
-- Ticket create, merge, and split mutations. Read-time resolution of merges is
-  implemented; Resolvrr never performs the merge itself.
-- Attachment downloads or previews.
-- Provider-backed ticket caching policy.
+- Ticket create, merge, and split; read-time resolution never performs the merge.
+- User-visible attachment downloads/previews or provider-backed cache policy.
 - Saved-view management, background sync, or AI workflows.

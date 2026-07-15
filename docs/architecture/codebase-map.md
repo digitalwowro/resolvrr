@@ -59,6 +59,9 @@ added, moved, renamed, or removed.
         action, internal-note action, and customer-reply action into the real workspace.
       - `workspace-page-helpers.ts` (`src/app/workspace/workspace-page-helpers.ts`): route-local
         saved-view list query helper for the workspace page.
+    - `src/app/api/helpdesk-connections/[connectionId]/tickets/[ticketExternalId]/articles/[articleExternalId]/inline-images/[attachmentExternalId]`:
+      authenticated, private/no-store provider-neutral inline ticket-image route with bounded path
+      validation and safe response headers.
     - `globals.css` (`src/app/globals.css`): global Tailwind import, base document styles, and
       default plain-anchor color.
     - `layout.tsx` (`src/app/layout.tsx`): root document shell and metadata.
@@ -134,6 +137,8 @@ added, moved, renamed, or removed.
       count, grouping, pagination, result contracts, and normalization.
     - `ticket-lookups.ts` (`src/core/ticket-lookups.ts`): provider-neutral lookup option, lookup
       result, and request-scoped lookup cache-policy contracts.
+    - `ticket-inline-images.ts` (`src/core/ticket-inline-images.ts`): provider-neutral inline raster
+      locator, safe MIME, byte result, and same-origin route-path contracts.
     - `ticket-replies.ts` (`src/core/ticket-replies.ts`): focused provider-neutral contextual
       reply intent, channel, recipient, article context, policy, and send-input contracts.
     - `ticket-forwards.ts` (`src/core/ticket-forwards.ts`): provider-neutral public-email forward
@@ -359,8 +364,10 @@ added, moved, renamed, or removed.
       - `mutation-action-results.ts` (`src/features/tickets/mutation-action-results.ts`): shared
         selected-ticket metadata and communication action result messages.
       - `connection-context.ts` (`src/features/tickets/connection-context.ts`): active connection
-        lookup, credential decryption, provider lookup, base URL revalidation, and setup timing for
-        ticket reads and metadata mutations.
+        or explicit member connection lookup, credential decryption, provider lookup, base URL
+        revalidation, and setup timing for ticket reads and metadata mutations.
+      - `inline-image-service.ts` (`src/features/tickets/inline-image-service.ts`): authenticated
+        provider-neutral inline-image capability dispatch using the article's explicit connection.
       - `date-time-format.ts` (`src/features/tickets/date-time-format.ts`): shared workspace
         date/time formatter for provider-backed ticket table, detail, thread, and metadata display
         strings.
@@ -524,7 +531,8 @@ added, moved, renamed, or removed.
           trimming orchestrator used by the article body renderer.
         - `ticket-article-body.tsx`
           (`src/features/workspace/components/ticket-article-body.tsx`): sanitized article HTML
-          renderer with collapsed quote/signature disclosure.
+          renderer with responsive images, neutral email-layout tables, horizontal overflow
+          containment, and collapsed quote/signature disclosure.
         - `ticket-assignment-fields.tsx`
           (`src/features/workspace/components/ticket-assignment-fields.tsx`): owner/group assignment
           sidebar controls that render editable dropdowns only when the provider advertises write
@@ -918,8 +926,12 @@ added, moved, renamed, or removed.
       - `index.ts` (`src/providers/zammad/index.ts`): provider plugin export.
       - `mapping.ts` (`src/providers/zammad/mapping.ts`): provider raw value to canonical ticket,
         article, attachment, state, and priority mapping.
+      - `article-attachments.ts` (`src/providers/zammad/article-attachments.ts`): pure Zammad
+        message-alternative, referenced-inline-resource, and user-visible attachment
+        classification for raw CID and transformed inline-URL article bodies.
       - `article-body.ts` (`src/providers/zammad/article-body.ts`): sanitized Zammad article-body
-        mapping that replaces provider signature markers with a provider-neutral boundary.
+        mapping that replaces provider signature markers with a provider-neutral boundary and
+        accepts provider-owned inline-image source rewriting.
       - `mutation-policy.ts` (`src/providers/zammad/mutation-policy.ts`): Zammad-only state mutation
         availability rules, exposed to core/UI as canonical hidden state keys and pending-date
         requirements.
@@ -942,6 +954,11 @@ added, moved, renamed, or removed.
         eligibility, exact-subject default, and opaque context version derivation.
       - `forward-body.ts` (`src/providers/zammad/forward-body.ts`): provider-local forwarded
         header/original-message assembly with safe inline-image substitution and sanitization.
+      - `forward-attachments.ts` (`src/providers/zammad/forward-attachments.ts`): visible
+        attachment selection revalidation plus bounded provider-private inline-resource reads for
+        included originals.
+      - `ticket-inline-images.ts` (`src/providers/zammad/ticket-inline-images.ts`): fresh
+        ticket/article ownership and inline-resource revalidation plus bounded raster-byte reads.
       - `reply-policy.ts` (`src/providers/zammad/reply-policy.ts`): active Zammad system email
         address lookup with fail-closed optional context behavior.
       - `schemas.ts` (`src/providers/zammad/schemas.ts`): Zammad raw ticket, article, expanded
@@ -1014,8 +1031,8 @@ added, moved, renamed, or removed.
       helper boundary and exports.
     - `safe-log.ts` (`src/security/safe-log.ts`): helper for safe metadata-only logs.
     - `sanitize-html.ts` (`src/security/sanitize-html.ts`): provider HTML sanitization that
-      preserves safe rich-text article structure such as links, lists, headings, tables, and inline
-      emphasis while dropping scripts and unsafe attributes.
+      preserves safe rich-text and conservative email presentation, accepts only caller-verified
+      rewritten images, and drops scripts, remote images, active layout, and unsafe attributes.
   - `src/telemetry`: metadata-only provider operation audit and timing helpers.
     - `ai-generation-timing.ts` (`src/telemetry/ai-generation-timing.ts`): sanitized AI timing
       logger that records only operation phase, protocol family, duration, and outcome metadata.
@@ -1501,6 +1518,9 @@ added, moved, renamed, or removed.
         notifications behavior.
       - `read-assets.test.ts` (`tests/providers/zammad/read-assets.test.ts`): verifies Zammad
         attachment metadata, expanded user, and organization asset mapping for ticket detail.
+      - `article-attachments.test.ts` (`tests/providers/zammad/article-attachments.test.ts`):
+        verifies Zammad-visible attachment parity for body alternatives, raw CID references,
+        transformed inline URLs, and unreferenced inline-disposition files.
       - `read-detail.test.ts` (`tests/providers/zammad/read-detail.test.ts`): verifies Zammad ticket
         detail and article-thread endpoint calls, optional feature defaults, sanitization, and
         detail read timing.

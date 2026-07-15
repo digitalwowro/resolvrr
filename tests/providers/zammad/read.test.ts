@@ -31,6 +31,7 @@ describe("Zammad ticket reads", () => {
       "ticket:group",
       "ticket:group-count",
       "ticket:detail",
+      "ticket:inline-images",
       "ticket:links",
       "ticket:subscription",
       "ticket:update-state",

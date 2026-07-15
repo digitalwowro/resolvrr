@@ -42,10 +42,49 @@ export async function loadActiveTicketProviderContext(
     return unavailableTicketRead("no-active-connection");
   }
 
-  const connection = await repository.findForUser(userId, activeConnectionId);
+  return loadTicketProviderContextForId(
+    repository,
+    registry,
+    encryptionKey,
+    userId,
+    activeConnectionId,
+    operation,
+    lookupStart,
+  );
+}
+
+export async function loadTicketProviderContextForConnection(
+  repository: HelpdeskConnectionsRepository,
+  registry: ProviderRegistry,
+  encryptionKey: string,
+  userId: string,
+  connectionId: string,
+  operation: TicketReadOperation,
+): Promise<TicketProviderContextResult> {
+  return loadTicketProviderContextForId(
+    repository,
+    registry,
+    encryptionKey,
+    userId,
+    connectionId,
+    operation,
+    ticketReadTimingStart(),
+  );
+}
+
+async function loadTicketProviderContextForId(
+  repository: HelpdeskConnectionsRepository,
+  registry: ProviderRegistry,
+  encryptionKey: string,
+  userId: string,
+  connectionId: string,
+  operation: TicketReadOperation,
+  lookupStart: number,
+): Promise<TicketProviderContextResult> {
+  const connection = await repository.findForUser(userId, connectionId);
   if (!connection) {
     recordTicketReadTiming({
-      connectionId: activeConnectionId,
+      connectionId,
       durationMs: ticketReadTimingDuration(lookupStart),
       operation,
       phase: "active-connection-lookup",

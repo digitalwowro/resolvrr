@@ -106,6 +106,7 @@ export async function zammadGetBytes(
   context: ProviderContext,
   path: string,
   maxResponseBytes: number,
+  tooLargeDiagnosticCode = "provider-binary-too-large",
 ): Promise<Uint8Array> {
   const baseUrl = zammadBaseUrl(context);
   let response;
@@ -127,7 +128,7 @@ export async function zammadGetBytes(
         "The selected helpdesk attachment is too large.",
         false,
         undefined,
-        "forward-attachments-too-large",
+        tooLargeDiagnosticCode,
       );
     }
     throw new ProviderError(

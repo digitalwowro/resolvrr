@@ -133,7 +133,9 @@ export async function getZammadTicketDetail(
         tags: secondary.tags,
       };
       const mappedArticles = rawArticlePayload.articles.map((article) => {
-        const mappedArticle = mapArticle(article, assets);
+        const mappedArticle = mapArticle(article, assets, {
+          helpdeskConnectionId: context.connection.id,
+        });
         const forwardContext = zammadForwardContext(article, mappedTicket.title);
         const replyContext = managedAddresses
           ? zammadReplyContext({

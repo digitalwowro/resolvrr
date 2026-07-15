@@ -35,6 +35,36 @@ describe("provider HTML sanitization", () => {
     expect(sanitized).toContain("<table><tr><th>A</th></tr><tr><td>B</td></tr></table>");
   });
 
+  it("preserves conservative email presentation while blocking unsafe layout", () => {
+    const sanitized = sanitizeProviderHtml(
+      '<table border="0" cellpadding="8" cellspacing="0" width="100%" style="width:100%;border-collapse:collapse;position:fixed"><tr style="background-color:#f5f5f5"><td align="center" style="padding:10px 20px;border:0;z-index:99">Invoice</td></tr></table>',
+    );
+
+    expect(sanitized).toContain('border="0"');
+    expect(sanitized).toContain('cellpadding="8"');
+    expect(sanitized).toContain("width:100%");
+    expect(sanitized).toContain("padding:10px 20px");
+    expect(sanitized).not.toContain("position");
+    expect(sanitized).not.toContain("z-index");
+  });
+
+  it("keeps only inline images approved and rewritten by the provider", () => {
+    const sanitized = sanitizeProviderHtml(
+      '<p>Invoice</p><img src="cid:quote" alt="Quote"><img src="https://tracker.example/pixel" alt="Tracker">',
+      {
+        rewriteImageSource: (source) =>
+          source === "cid:quote" ? "/api/helpdesk-connections/1/inline-image/2" : undefined,
+      },
+    );
+
+    expect(sanitized).toContain(
+      'src="/api/helpdesk-connections/1/inline-image/2"',
+    );
+    expect(sanitized).toContain('alt="Quote"');
+    expect(sanitized).not.toContain("tracker.example");
+    expect(sanitized).not.toContain("Tracker");
+  });
+
   it("preserves safe forwarded-email styling but removes active content and tracking images", () => {
     const sanitized = sanitizeForwardedProviderHtml(
       '<div style="color:#125599;position:fixed"><table><tr><td style="padding:10px">Hi</td></tr></table><img src="https://tracker.example/pixel"><script>bad()</script></div>',

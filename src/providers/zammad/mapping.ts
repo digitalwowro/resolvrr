@@ -10,6 +10,7 @@ import type {
   TicketPriority,
   TicketState,
 } from "@/core/tickets";
+import { ticketInlineImagePath } from "@/core/ticket-inline-images";
 import { sanitizeZammadArticleBody } from "./article-body";
 import {
   articleAuthor,
@@ -21,6 +22,11 @@ import {
 } from "./participants";
 import { zammadMetadataMutationConstraints } from "./mutation-policy";
 import type { ZammadArticle, ZammadAssets, ZammadTicket } from "./schemas";
+import {
+  classifyZammadArticleAttachments,
+  zammadAttachmentContentType,
+  zammadInlineAttachmentIdForSource,
+} from "./article-attachments";
 
 const stateMap = new Map<string, TicketState>([
   ["new", "new"],
@@ -141,28 +147,14 @@ function recipients(
   ];
 }
 
-function isContentAlternativeAttachment(
-  attachment: ZammadArticle["attachments"][number],
-): boolean {
-  return attachment.preferences?.["content-alternative"] === true;
-}
-
 function attachments(article: ZammadArticle): TicketAttachment[] {
-  return article.attachments
-    .filter((attachment) => !isContentAlternativeAttachment(attachment))
+  return classifyZammadArticleAttachments(article).visible
     .map((attachment) => ({
       externalId: String(attachment.id),
       fileName: attachment.filename ?? attachment.name ?? "attachment",
-      contentType: attachmentContentType(attachment.preferences),
+      contentType: zammadAttachmentContentType(attachment),
       byteSize: attachmentByteSize(attachment.size),
     }));
-}
-
-function attachmentContentType(
-  preferences: ZammadArticle["attachments"][number]["preferences"],
-): string | undefined {
-  const value = preferences?.["Content-Type"] ?? preferences?.["Mime-Type"];
-  return typeof value === "string" ? value : undefined;
 }
 
 function attachmentByteSize(
@@ -251,9 +243,22 @@ export function mapTicketListItem(
 export function mapArticle(
   article: ZammadArticle,
   assets?: ZammadAssets,
+  options?: { helpdeskConnectionId?: string },
 ): TicketArticle {
   const direction = articleDirection(article);
-  const sanitizedHtml = sanitizeZammadArticleBody(article.body ?? "");
+  const sanitizedHtml = sanitizeZammadArticleBody(article.body ?? "", {
+    rewriteImageSource: (source) => {
+      const attachmentId = zammadInlineAttachmentIdForSource(article, source);
+      if (attachmentId === undefined || !options?.helpdeskConnectionId) {
+        return undefined;
+      }
+      return ticketInlineImagePath(options.helpdeskConnectionId, {
+        articleExternalId: String(article.id),
+        attachmentExternalId: String(attachmentId),
+        ticketExternalId: String(article.ticket_id),
+      });
+    },
+  });
   const role = participantRole(direction);
 
   return {

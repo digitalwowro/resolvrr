@@ -102,6 +102,69 @@ describe("Zammad customer email forwarding", () => {
     }]);
   });
 
+  it("keeps inline images provider-private while preserving them in the forwarded original", async () => {
+    const source = article({
+      body: [
+        '<p>Original</p><img src="cid:logo@example">',
+        '<img src="/api/v1/ticket_attachment/42/500/92?view=inline">',
+      ].join(""),
+      attachments: [{
+        id: 92, filename: "image1.jpeg", size: 3,
+        preferences: {
+          "Content-Disposition": "inline",
+          "Content-ID": "<logo@example>",
+          "Content-Type": "image/jpeg",
+        },
+      }],
+    });
+    arrange(source);
+    mockedBytes.mockResolvedValueOnce({
+      data: new Uint8Array([1, 2, 3]), headers: new Headers(), status: 200,
+    });
+    mockedJson.mockResolvedValueOnce({
+      status: 201, headers: new Headers(), data: { ...source, id: 501 },
+    });
+    const context = zammadForwardContext(source, ticket.title)!;
+
+    await zammadProviderPlugin.forwardTicketEmail?.(providerContext(), "42", {
+      attachmentExternalIds: [], body: "Please review", cc: [],
+      contextVersion: context.contextVersion, includeOriginal: true,
+      sourceArticleExternalId: "500", subject: context.subject,
+      to: ["customer@example.com"],
+    });
+
+    const request = JSON.parse(String(mockedJson.mock.calls[2]?.[1]?.body));
+    expect(request.attachments).toEqual([]);
+    expect(request.body).toContain("data:image/jpeg;base64,AQID");
+    expect(request.body).not.toContain("cid:logo@example");
+    expect(request.body).not.toContain("ticket_attachment");
+  });
+
+  it("rejects a hidden inline resource submitted as a visible forward attachment", async () => {
+    const source = article({
+      body: '<img src="/api/v1/ticket_attachment/42/500/92?view=inline">',
+      attachments: [{
+        id: 92, filename: "image1.jpeg", size: 3,
+        preferences: {
+          "Content-Disposition": "inline",
+          "Content-ID": "<logo@example>",
+          "Content-Type": "image/jpeg",
+        },
+      }],
+    });
+    arrange(source);
+    const context = zammadForwardContext(source, ticket.title)!;
+
+    await expect(zammadProviderPlugin.forwardTicketEmail?.(providerContext(), "42", {
+      attachmentExternalIds: ["92"], body: "Please review", cc: [],
+      contextVersion: context.contextVersion, includeOriginal: false,
+      sourceArticleExternalId: "500", subject: context.subject,
+      to: ["customer@example.com"],
+    })).rejects.toMatchObject({ diagnosticCode: "invalid-forward-attachment" });
+    expect(mockedBytes).not.toHaveBeenCalled();
+    expect(mockedJson.mock.calls.some((call) => call[1]?.method === "POST")).toBe(false);
+  });
+
   it("versions reviewed attachment metadata canonically", () => {
     const reviewed = article({
       attachments: [{

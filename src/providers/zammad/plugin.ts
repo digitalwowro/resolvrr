@@ -30,6 +30,7 @@ import {
   listZammadNotifications,
   markZammadNotificationsRead,
 } from "./notifications";
+import { getZammadTicketInlineImage } from "./ticket-inline-images";
 
 const defaultValidationTimeoutMs = 5000;
 const zammadValidationUserAgent = "Resolvrr/1.0";
@@ -103,6 +104,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "ticket:group",
     "ticket:group-count",
     "ticket:detail",
+    "ticket:inline-images",
     "ticket:links",
     "ticket:subscription",
     "ticket:update-state",
@@ -142,6 +144,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   validateConnection: validateBasicAuth,
   listTickets: listZammadTickets,
   getTicketDetail: getZammadTicketDetail,
+  getTicketInlineImage: getZammadTicketInlineImage,
   updateTicketMetadata: updateZammadTicketMetadata,
   addTicketInternalNote: addZammadTicketInternalNote,
   addTicketCustomerReply: addZammadTicketCustomerReply,

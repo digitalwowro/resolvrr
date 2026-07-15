@@ -18,14 +18,14 @@ const hiddenLabel: Record<ArticleBodyHiddenKind, string> = {
 };
 
 const articleBodyClassName = cn(
-  "mt-2 max-w-none text-sm leading-5 text-slate-900",
+  "mt-2 flow-root max-w-none overflow-x-auto text-sm leading-5 text-slate-900",
   "whitespace-normal break-words",
   "[&_a]:font-medium [&_a]:underline-offset-2 [&_a:hover]:underline",
   "[&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-slate-300 [&_blockquote]:pl-3 [&_blockquote]:text-slate-700",
   "[&_br]:block [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.85em]",
   "[&_h1]:mb-2 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:font-semibold",
   "[&_li]:my-0.5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_pre]:my-3 [&_pre]:overflow-auto [&_pre]:rounded [&_pre]:bg-slate-950 [&_pre]:p-3 [&_pre]:text-slate-50 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6",
-  "[&_strong]:font-semibold [&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-200 [&_td]:p-2 [&_th]:border [&_th]:border-slate-200 [&_th]:bg-slate-50 [&_th]:p-2 [&_th]:text-left [&_th]:font-semibold",
+  "[&_img]:!h-auto [&_img]:!max-w-full [&_strong]:font-semibold [&_table]:max-w-full",
 );
 
 export function TicketArticleBody({ html }: TicketArticleBodyProps) {

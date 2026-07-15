@@ -138,9 +138,13 @@ Selected ticket detail keeps the approved dense layout. The ticket title,
 summary metadata, and article thread live inside one bordered conversation
 section, and that section owns its own vertical scrollbar. The metadata sidebar
 and bottom update bar remain outside that conversation scroller. Thread
-articles render provider-sanitized rich HTML and use the shared global link color. Public
-reply-capable articles expose provider-neutral Reply and, for email, enabled or
-disabled Reply all. Internal/system/unsupported articles expose no reply action.
+articles render provider-sanitized rich HTML and use the shared global link color.
+Email presentation tables retain their safe provider layout instead of receiving
+blanket data-table borders, widths, or cell padding. Verified embedded raster
+images render in place through authenticated same-origin URLs; remote images stay
+blocked. Wide email layouts scroll within the article and images remain responsive.
+Public reply-capable articles expose provider-neutral Reply and, for email,
+enabled or disabled Reply all. Internal/system/unsupported articles expose no reply action.
 Article signature collapse is precision-first and language-neutral: explicit
 provider-normalized boundaries, standard signature delimiters, and strongly isolated
 compact contact blocks may collapse, while ambiguous text remains visible. Sign-off
@@ -154,9 +158,11 @@ above the newest article, so the thread never implies nested replies.
 
 Forward opens the same ticket-level composer with editable To/Cc and Subject.
 Recipients start empty, the subject defaults exactly to the source subject, and
-the agent can include or omit the original message and each source attachment.
-The original preview is read-only; only the agent introduction is editable and
-eligible for proofread/rephrase. No Bcc control is available.
+the agent can include or omit the original message and each provider-classified
+visible source attachment. Inline body resources and message alternatives never
+appear as attachment rows or choices. The original preview is read-only; only
+the agent introduction is editable and eligible for proofread/rephrase. No Bcc
+control is available.
 
 The reply composer shows editable To and Cc chips and never Bcc. It validates
 plain email additions, deduplicates across fields with To precedence, requires at

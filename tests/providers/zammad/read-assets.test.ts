@@ -76,6 +76,68 @@ describe("Zammad ticket read assets", () => {
     ]);
   });
 
+  it("matches Zammad's visible attachment list for transformed inline images", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: rawTicket,
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [{
+          ...rawArticle,
+          body: [
+            '<table border="0" cellpadding="4" style="width:100%;border-collapse:collapse"><tr><td>Quote</td></tr></table>',
+            '<img alt="Embedded quote" src="/api/v1/ticket_attachment/42/500/503?view=inline">',
+            '<img src="https://tracker.example/pixel">',
+          ].join(""),
+          attachments: [
+            {
+              id: 503,
+              filename: "image1.jpeg",
+              size: "22528",
+              preferences: {
+                "Content-Disposition": "inline",
+                "Content-ID": "<logo@example>",
+                "Content-Type": "image/jpeg",
+              },
+            },
+            {
+              id: 504,
+              filename: "customer-photo.jpeg",
+              size: "4096",
+              preferences: {
+                "Content-Disposition": "inline",
+                "Content-ID": "<unreferenced@example>",
+                "Content-Type": "image/jpeg",
+              },
+            },
+          ],
+        }],
+      });
+
+    const result = normalTicketDetail(
+      await zammadProviderPlugin.getTicketDetail?.(providerContext(), "42"),
+    );
+
+    expect(result.thread.articles[0]?.attachments).toEqual([{
+      byteSize: 4096,
+      contentType: "image/jpeg",
+      externalId: "504",
+      fileName: "customer-photo.jpeg",
+    }]);
+    expect(result.thread.articles[0]?.sanitizedHtml).toContain(
+      'src="/api/helpdesk-connections/connection-1/tickets/42/articles/500/inline-images/503"',
+    );
+    expect(result.thread.articles[0]?.sanitizedHtml).toContain('border="0"');
+    expect(result.thread.articles[0]?.sanitizedHtml).toContain("width:100%");
+    expect(result.thread.articles[0]?.sanitizedHtml).not.toContain(
+      "tracker.example",
+    );
+  });
+
   it("prefers expanded Zammad user display names over email labels", async () => {
     mockedSafeProviderJson
       .mockResolvedValueOnce({

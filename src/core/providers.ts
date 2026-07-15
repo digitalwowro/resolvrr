@@ -15,6 +15,10 @@ import type {
 } from "./tickets";
 import type { TicketCustomerReplyInput } from "./ticket-replies";
 import type {
+  TicketInlineImage,
+  TicketInlineImageLocator,
+} from "./ticket-inline-images";
+import type {
   TicketListFilter,
   TicketListQuery,
   TicketListResult,
@@ -43,6 +47,7 @@ export type ProviderCapability =
   | "ticket:group"
   | "ticket:group-count"
   | "ticket:detail"
+  | "ticket:inline-images"
   | "ticket:links"
   | "ticket:subscription"
   | "ticket:update-state"
@@ -146,6 +151,10 @@ export type HelpdeskProviderPlugin = {
     context: ProviderContext,
     ticketExternalId: TicketExternalId,
   ): Promise<TicketDetailProviderResult>;
+  getTicketInlineImage?(
+    context: ProviderContext,
+    input: TicketInlineImageLocator,
+  ): Promise<TicketInlineImage>;
   updateTicketMetadata?(
     context: ProviderContext,
     ticketExternalId: TicketExternalId,

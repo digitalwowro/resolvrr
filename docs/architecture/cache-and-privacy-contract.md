@@ -127,13 +127,18 @@ Thread snapshots may contain provider-neutral article records:
 - article kind, visibility, direction, author, recipients, and timestamp;
 - sanitized article HTML or derived plain text if the future implementation
   needs it for display or prompt preparation;
-- attachment metadata only: filename, content type, and byte size;
+- provider-classified visible attachment metadata only: filename, content type,
+  and byte size; provider-internal inline resources and message alternatives are
+  excluded;
 - thread `fetchedAt`, `expiresAt`, and `sourceVersion`.
 
 Thread snapshots must not contain raw article bodies, unsanitized HTML, raw
 provider attachment URLs, attachment bytes, provider auth details, or provider
-response bodies. If sanitized customer content is persisted later, the cache
-implementation must treat it as sensitive content and encrypt it at rest.
+response bodies. Sanitized HTML may contain authenticated same-origin inline-image
+paths, but inline-image responses are fetched on demand with `private, no-store`
+and are never written to the ticket cache. If sanitized customer content is
+persisted later, the cache implementation must treat it as sensitive content and
+encrypt it at rest.
 
 ### Lookup Data
 
