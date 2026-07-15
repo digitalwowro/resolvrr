@@ -97,7 +97,7 @@ describe("AI rephrase style overrides", () => {
     await expect(
       resolveEffectiveAiRephraseStyle({
         encryptionKey,
-        helpdeskConnectionId: "connection-1",
+        workspaceId: "connection-1",
         styleId: style.id,
         styleRepository: styles,
         userId: "user-1",
@@ -129,7 +129,7 @@ describe("AI rephrase style overrides", () => {
     await expect(
       resolveEffectiveAiRephraseStyle({
         encryptionKey,
-        helpdeskConnectionId: "connection-1",
+        workspaceId: "connection-1",
         styleId: style.id,
         styleRepository: styles,
         userId: "user-1",

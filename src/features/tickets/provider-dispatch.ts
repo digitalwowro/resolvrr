@@ -107,6 +107,8 @@ export async function dispatchTicketListRead(
         providerContext.plugin.capabilities,
       ),
       connectionName: providerContext.context.connection.displayName,
+      helpdeskConnectionId: providerContext.context.connection.id,
+      workspaceId: providerContext.context.connection.workspaceId,
       metadataMutationCapabilities: ticketMetadataMutationCapabilities(
         providerContext.plugin.capabilities,
       ),

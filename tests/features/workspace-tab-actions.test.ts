@@ -11,7 +11,7 @@ vi.mock("@/auth/current-user", () => ({
 
 vi.mock("@/data/helpdesk-connections-repository", () => ({
   prismaHelpdeskConnectionsRepository: {
-    getActiveConnectionId: vi.fn(),
+    getActiveWorkspaceId: vi.fn(),
   },
 }));
 
@@ -22,7 +22,7 @@ vi.mock("@/data/workspace-tabs-repository", () => ({
 }));
 
 const mockedGetActiveConnectionId = vi.mocked(
-  prismaHelpdeskConnectionsRepository.getActiveConnectionId,
+  prismaHelpdeskConnectionsRepository.getActiveWorkspaceId,
 );
 const mockedSetForUser = vi.mocked(prismaWorkspaceTabsRepository.setForUser);
 

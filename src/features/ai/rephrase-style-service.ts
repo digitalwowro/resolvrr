@@ -100,7 +100,7 @@ export async function userStyleOverrideViews(input: {
   const [styles, overrides] = await Promise.all([
     input.styleRepository.listWorkspaceStyles(input.workspace.id),
     input.styleRepository.listUserStyleOverrides({
-      helpdeskConnectionId: input.workspace.id,
+      workspaceId: input.workspace.id,
       userId: input.userId,
     }),
   ]);
@@ -127,7 +127,7 @@ export async function userStyleOverrideViews(input: {
 
 export async function resolveEffectiveAiRephraseStyle(input: {
   encryptionKey: string;
-  helpdeskConnectionId: string;
+  workspaceId: string;
   styleId: string | undefined;
   styleRepository: AiRephraseStyleRepository;
   userId: string;
@@ -137,7 +137,7 @@ export async function resolveEffectiveAiRephraseStyle(input: {
     return null;
   }
   const style = await input.styleRepository.getWorkspaceStyle({
-    helpdeskConnectionId: input.helpdeskConnectionId,
+    workspaceId: input.workspaceId,
     styleId: input.styleId,
   });
   if (!style?.isEnabled) {
@@ -148,7 +148,7 @@ export async function resolveEffectiveAiRephraseStyle(input: {
     ? decryptPrompt(
         (
           await input.styleRepository.getUserStyleOverride({
-            helpdeskConnectionId: input.helpdeskConnectionId,
+            workspaceId: input.workspaceId,
             styleId: style.id,
             userId: input.userId,
           })

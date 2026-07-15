@@ -11,7 +11,7 @@ export type SavedViewPreference = {
 
 export type StoredSavedView = SavedView & {
   ownerUserId: string;
-  helpdeskConnectionId?: string;
+  workspaceId?: string;
   seedKey?: string;
   isSystem: boolean;
   createdAt: Date;
@@ -21,7 +21,7 @@ export type StoredSavedView = SavedView & {
 
 export type CreateSavedViewInput = {
   ownerUserId: string;
-  helpdeskConnectionId?: string;
+  workspaceId?: string;
   name: string;
   visibility: SavedViewVisibility;
   iconName?: string;
@@ -35,48 +35,48 @@ export type CreateSavedViewInput = {
 export type SavedViewsRepository = {
   listForUser(
     userId: string,
-    helpdeskConnectionId?: string,
+    workspaceId?: string,
   ): Promise<StoredSavedView[]>;
   findForUser(
     userId: string,
     savedViewId: string,
-    helpdeskConnectionId?: string,
+    workspaceId?: string,
   ): Promise<StoredSavedView | null>;
   create(input: CreateSavedViewInput): Promise<StoredSavedView>;
   update(
     userId: string,
     savedViewId: string,
-    helpdeskConnectionId: string,
-    input: Omit<CreateSavedViewInput, "helpdeskConnectionId" | "preference" | "seedKey" | "isSystem">,
+    workspaceId: string,
+    input: Omit<CreateSavedViewInput, "workspaceId" | "preference" | "seedKey" | "isSystem">,
   ): Promise<StoredSavedView | null>;
   deleteForUser(
     userId: string,
     savedViewId: string,
-    helpdeskConnectionId: string,
+    workspaceId: string,
   ): Promise<StoredSavedView | null>;
   setDefaultForUser(
     userId: string,
     savedViewId: string,
-    helpdeskConnectionId: string,
+    workspaceId: string,
   ): Promise<boolean>;
   reorderForUser(
     userId: string,
-    helpdeskConnectionId: string,
+    workspaceId: string,
     savedViewIds: string[],
   ): Promise<StoredSavedView[]>;
   findSeedForUser(
     userId: string,
-    helpdeskConnectionId: string,
+    workspaceId: string,
     seedKey: string,
   ): Promise<StoredSavedView | null>;
   isSeedDismissed(
     userId: string,
-    helpdeskConnectionId: string,
+    workspaceId: string,
     seedKey: string,
   ): Promise<boolean>;
   dismissSeed(
     userId: string,
-    helpdeskConnectionId: string,
+    workspaceId: string,
     seedKey: string,
   ): Promise<void>;
 };

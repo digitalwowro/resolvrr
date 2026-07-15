@@ -4,6 +4,8 @@ const unavailableMessages: Record<TicketReadUnavailableReason, string> = {
   "no-active-connection": "No active helpdesk workspace is connected.",
   "inactive-connection": "The active helpdesk workspace is not validated.",
   "missing-credentials": "The active helpdesk workspace is missing credentials.",
+  "personal-connection-required":
+    "Connect your own helpdesk account to use this workspace.",
   "unknown-provider": "The active helpdesk workspace is not available.",
   "unsupported-capability": "The active helpdesk workspace cannot load tickets yet.",
   "provider-auth-failed": "The helpdesk workspace rejected the stored credentials.",

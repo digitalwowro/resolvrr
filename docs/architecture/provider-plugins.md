@@ -42,6 +42,25 @@ revalidated address set and reject private or changed DNS results at request
 time. Validation requests must avoid automatic redirects so credentials are not
 sent to an unvalidated redirect target.
 
+The provider-neutral Workspace owns the provider key and canonical shared URL.
+Each workspace member owns a separate HelpdeskConnection and encrypted
+credential. Provider validation returns only a normalized external identity ID
+and display label. Zammad derives that identity from `/api/v1/users/me` inside
+`src/providers/zammad/**`; raw fields never cross the provider boundary.
+
+Connection lookup is always constrained by the signed-in user before a
+credential can be returned or decrypted. Workspace membership, ADMIN role,
+global administration, and workspace ownership are insufficient. A missing
+personal connection returns `personal-connection-required` before cache or
+provider access. Within one workspace, one provider identity may be linked to
+only one Resolvrr user; changing identities requires explicit disconnect and
+reconnect.
+
+Changing the shared provider URL is destructive: all personal credentials and
+validated identities are removed, identity versions rotate, provider-derived
+caches are cleared, and every member must reconnect. Ownership transfer never
+moves a personal connection.
+
 ## Ticket Request Security
 
 Provider-backed ticket reads and controlled metadata writes must use the

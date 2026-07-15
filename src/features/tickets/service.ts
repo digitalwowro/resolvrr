@@ -210,6 +210,7 @@ export async function loadWorkspaceTicketDetail(
   return {
     status: "available",
     helpdeskConnectionId: providerContext.value.context.connection.id,
+    workspaceId: providerContext.value.context.connection.workspaceId,
     resolution: result.resolution,
     detail: {
       ...result.detail,

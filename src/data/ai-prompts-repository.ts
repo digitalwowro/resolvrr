@@ -22,7 +22,7 @@ export const prismaAiPromptRepository: AiPromptRepository = {
   async deleteWorkspacePrompt(input) {
     await prisma.workspaceAiPrompt.deleteMany({
       where: {
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         promptKey: input.promptKey,
       },
     });
@@ -31,8 +31,8 @@ export const prismaAiPromptRepository: AiPromptRepository = {
   async getWorkspacePrompt(input) {
     const record = await prisma.workspaceAiPrompt.findUnique({
       where: {
-        helpdeskConnectionId_promptKey: {
-          helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId_promptKey: {
+          workspaceId: input.workspaceId,
           promptKey: input.promptKey,
         },
       },
@@ -40,9 +40,9 @@ export const prismaAiPromptRepository: AiPromptRepository = {
     return record ? promptRecord(record) : null;
   },
 
-  async listWorkspacePrompts(helpdeskConnectionId) {
+  async listWorkspacePrompts(workspaceId) {
     const records = await prisma.workspaceAiPrompt.findMany({
-      where: { helpdeskConnectionId },
+      where: { workspaceId },
     });
     return records.map(promptRecord);
   },
@@ -50,14 +50,14 @@ export const prismaAiPromptRepository: AiPromptRepository = {
   async upsertWorkspacePrompt(input: UpsertWorkspaceAiPromptInput) {
     await prisma.workspaceAiPrompt.upsert({
       where: {
-        helpdeskConnectionId_promptKey: {
-          helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId_promptKey: {
+          workspaceId: input.workspaceId,
           promptKey: input.promptKey,
         },
       },
       create: {
         encryptedPrompt: input.encryptedPrompt,
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         keyVersion: input.keyVersion,
         promptKey: input.promptKey,
       },

@@ -44,7 +44,7 @@ export type AiSummaryCacheConnectionInvalidateInput = {
 };
 
 export type AiSummaryCacheWorkspaceInvalidateInput = {
-  helpdeskConnectionId: string;
+  workspaceId: string;
 };
 
 export type AiSummaryCacheRepository = {

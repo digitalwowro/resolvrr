@@ -11,6 +11,7 @@ import { readCachedTicketSummary } from "./ticket-summary-cache";
 type InitialTicketAiSummaryInput = {
   detail: TicketDetail;
   helpdeskConnectionId: string;
+  workspaceId: string;
   ticketExternalId: string;
   userId: string;
 };
@@ -19,6 +20,7 @@ type InitialTicketAiSummaryInput = {
 export async function loadInitialTicketAiSummary({
   detail,
   helpdeskConnectionId,
+  workspaceId,
   ticketExternalId,
   userId,
 }: InitialTicketAiSummaryInput) {
@@ -26,7 +28,7 @@ export async function loadInitialTicketAiSummary({
     prismaAiSettingsRepository,
     env.APP_ENCRYPTION_KEY,
     userId,
-    helpdeskConnectionId,
+    workspaceId,
   );
   if (aiConfig.status !== "available") {
     return undefined;
@@ -42,7 +44,7 @@ export async function loadInitialTicketAiSummary({
     },
     await resolveEffectiveAiPrompt({
       encryptionKey: env.APP_ENCRYPTION_KEY,
-      helpdeskConnectionId,
+      workspaceId,
       promptKey: ticketSummaryPromptKey,
       promptRepository: prismaAiPromptRepository,
       settingsRepository: prismaAiSettingsRepository,

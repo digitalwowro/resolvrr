@@ -24,6 +24,10 @@ export type WorkspaceMenuConnection = {
   providerLabel?: string;
   baseUrl?: string;
   status?: WorkspaceSettingsConnection["status"];
+  connectionId?: string | null;
+  connectedAs?: string | null;
+  identityVersion?: string | null;
+  access?: WorkspaceSettingsConnection["access"];
 };
 
 type WorkspaceHeaderProps = {

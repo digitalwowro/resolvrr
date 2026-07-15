@@ -29,6 +29,9 @@ export function WorkspaceConnectionForm({
   providers: ConnectionProviderOption[];
 }) {
   const editing = Boolean(connection);
+  const hasPersonalConnection = Boolean(connection?.connectionId);
+  const canEditWorkspace = connection?.access?.role !== "AGENT";
+  const credentialsRequired = !editing || (!hasPersonalConnection && !canEditWorkspace);
   const initialProviderKey = connection?.providerKey ?? providers[0]?.key ?? "";
   const [providerKey, setProviderKey] = useState(initialProviderKey);
   const selectedProvider =
@@ -58,6 +61,7 @@ export function WorkspaceConnectionForm({
           <input
             className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             defaultValue={connection?.label}
+            readOnly={editing && !canEditWorkspace}
             name="displayName"
             required
           />
@@ -80,6 +84,7 @@ export function WorkspaceConnectionForm({
           <input
             className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             defaultValue={connection?.baseUrl}
+            readOnly={editing && !canEditWorkspace}
             name="baseUrl"
             placeholder="https://helpdesk.example.com"
             required
@@ -94,7 +99,7 @@ export function WorkspaceConnectionForm({
             {selectedScheme.label}
           </legend>
           <input name="credentialScheme" type="hidden" value={selectedScheme.key} />
-          {editing ? (
+          {editing && hasPersonalConnection ? (
             <p className="mt-1 text-sm text-slate-500">
               Credential fields are blank for security. Leave all blank to keep
               the current encrypted credentials.
@@ -110,7 +115,7 @@ export function WorkspaceConnectionForm({
                   autoComplete="off"
                   className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                   name={field.name}
-                  required={!editing && field.required}
+                  required={credentialsRequired && field.required}
                   type={field.type === "password" ? "password" : "text"}
                 />
               </label>
@@ -123,12 +128,26 @@ export function WorkspaceConnectionForm({
         </p>
       )}
 
+      {editing && canEditWorkspace ? (
+        <label className="mt-4 flex items-start gap-2 text-sm text-slate-600">
+          <input className="mt-0.5" name="confirmBaseUrlChange" type="checkbox" value="yes" />
+          <span>
+            If I changed the helpdesk URL, disconnect every member and require
+            everyone to connect again.
+          </span>
+        </label>
+      ) : null}
+
       <div className="mt-6 flex justify-end gap-2">
         <Button disabled={pending} onClick={onCancel} type="button">
           Cancel
         </Button>
         <Button disabled={!canSubmit} loading={pending} type="submit" variant="primary">
-          {editing ? "Save workspace" : "Connect workspace"}
+          {editing && (hasPersonalConnection || canEditWorkspace)
+            ? "Save workspace"
+            : editing
+              ? "Connect my account"
+              : "Connect workspace"}
         </Button>
       </div>
     </form>

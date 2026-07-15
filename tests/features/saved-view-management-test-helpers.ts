@@ -11,7 +11,7 @@ export function storedView(
   return {
     id: "view-1",
     ownerUserId: "user-1",
-    helpdeskConnectionId: "connection-1",
+    workspaceId: "connection-1",
     name: "My work",
     visibility: "personal",
     filter: { states: ["open"] },
@@ -38,7 +38,7 @@ export function repository(initialViews: StoredSavedView[] = []) {
     const view = storedView({
       id: `view-${views.length + 1}`,
       ownerUserId: input.ownerUserId,
-      helpdeskConnectionId: input.helpdeskConnectionId,
+      workspaceId: input.workspaceId,
       name: input.name,
       visibility: input.visibility,
       filter: input.query.filter,
@@ -53,7 +53,7 @@ export function repository(initialViews: StoredSavedView[] = []) {
     async (
       _userId: string,
       savedViewId: string,
-      _helpdeskConnectionId: string,
+      _workspaceId: string,
       input: Parameters<SavedViewsRepository["update"]>[3],
     ) => {
       const view = views.find((item) => item.id === savedViewId);

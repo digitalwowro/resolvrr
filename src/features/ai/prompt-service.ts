@@ -171,7 +171,7 @@ export async function loadAiPromptCenter(input: {
 
 export async function resolveEffectiveAiPrompt(input: {
   encryptionKey: string;
-  helpdeskConnectionId: string;
+  workspaceId: string;
   promptKey: AiPromptKey;
   promptRepository: AiPromptRepository;
   settingsRepository: AiSettingsRepository;
@@ -183,7 +183,7 @@ export async function resolveEffectiveAiPrompt(input: {
   }
 
   const workspacePrompt = await input.promptRepository.getWorkspacePrompt({
-    helpdeskConnectionId: input.helpdeskConnectionId,
+    workspaceId: input.workspaceId,
     promptKey: input.promptKey,
   });
   const workspaceText = decryptPrompt(workspacePrompt, input.encryptionKey);

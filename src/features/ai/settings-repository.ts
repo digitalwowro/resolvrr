@@ -14,31 +14,31 @@ export type StoredAiProviderConfig = {
 
 export type StoredWorkspaceAiSetting = {
   config: StoredAiProviderConfig | null;
-  helpdeskConnectionId: string;
+  workspaceId: string;
   policy: WorkspaceAiPolicy;
   userPermissions: WorkspaceAiUserPermissions;
 };
 
 export type UpsertWorkspaceAiSettingInput = {
   config?: StoredAiProviderConfig | null;
-  helpdeskConnectionId: string;
+  workspaceId: string;
   policy: WorkspaceAiPolicy;
   userPermissions: WorkspaceAiUserPermissions;
 };
 
 export type UpsertUserWorkspaceAiSettingInput = StoredAiProviderConfig & {
-  helpdeskConnectionId: string;
+  workspaceId: string;
   userId: string;
 };
 
 export type AiSettingsRepository = {
-  deleteUserSettingsForWorkspace(helpdeskConnectionId: string): Promise<void>;
+  deleteUserSettingsForWorkspace(workspaceId: string): Promise<void>;
   getUserSetting(
     userId: string,
-    helpdeskConnectionId: string,
+    workspaceId: string,
   ): Promise<StoredAiProviderConfig | null>;
   getWorkspaceSetting(
-    helpdeskConnectionId: string,
+    workspaceId: string,
   ): Promise<StoredWorkspaceAiSetting | null>;
   upsertUserSetting(input: UpsertUserWorkspaceAiSettingInput): Promise<void>;
   upsertWorkspaceSetting(input: UpsertWorkspaceAiSettingInput): Promise<void>;

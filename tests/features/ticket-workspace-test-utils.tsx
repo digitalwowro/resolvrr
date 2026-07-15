@@ -17,6 +17,8 @@ export async function noopMutationAction() {
 
 export const availableList = {
   status: "available",
+  helpdeskConnectionId: "connection-1",
+  workspaceId: "workspace-1",
   connectionName: "Support",
   communicationCapabilities: { customerReplies: false, internalNotes: false },
   metadataMutationCapabilities: { state: false, priority: false },

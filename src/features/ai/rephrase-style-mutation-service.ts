@@ -51,7 +51,7 @@ export async function saveWorkspaceAiRephraseStyle(
     );
     await input.rephraseStyleRepository.createWorkspaceStyle({
       encryptedPrompt: encryptedStylePrompt(prompt, input.encryptionKey),
-      helpdeskConnectionId: workspace.id,
+      workspaceId: workspace.id,
       keyVersion: aiRephraseStyleKeyVersion,
       label,
       sortOrder: Math.max(0, ...styles.map((style) => style.sortOrder)) + 10,
@@ -65,7 +65,7 @@ export async function saveWorkspaceAiRephraseStyle(
 
   const saved = await input.rephraseStyleRepository.updateWorkspaceStyle({
     encryptedPrompt: encryptedStylePrompt(prompt, input.encryptionKey),
-    helpdeskConnectionId: workspace.id,
+    workspaceId: workspace.id,
     isEnabled: styleEnabledFromForm(input.formData),
     keyVersion: aiRephraseStyleKeyVersion,
     label,
@@ -95,7 +95,7 @@ export async function deleteWorkspaceAiRephraseStyle(
     return actionResult("invalid-ai-rephrase-style", data, false);
   }
   await input.rephraseStyleRepository.deleteWorkspaceStyle({
-    helpdeskConnectionId: workspace.id,
+    workspaceId: workspace.id,
     styleId: input.styleId,
   });
   return actionResult(
@@ -135,7 +135,7 @@ export async function moveWorkspaceAiRephraseStyle(
     orderedStyleIds[currentIndex],
   ];
   await input.rephraseStyleRepository.updateWorkspaceStyleOrder({
-    helpdeskConnectionId: workspace.id,
+    workspaceId: workspace.id,
     orderedStyleIds,
   });
   return actionResult(
@@ -161,7 +161,7 @@ export async function saveUserAiRephraseStyleOverride(
     return actionResult("invalid-ai-rephrase-style", data, false);
   }
   const style = await input.rephraseStyleRepository.getWorkspaceStyle({
-    helpdeskConnectionId: workspace.id,
+    workspaceId: workspace.id,
     styleId,
   });
   if (!style?.isEnabled) {
@@ -170,7 +170,7 @@ export async function saveUserAiRephraseStyleOverride(
 
   await input.rephraseStyleRepository.upsertUserStyleOverride({
     encryptedPrompt: encryptedStylePrompt(prompt, input.encryptionKey),
-    helpdeskConnectionId: workspace.id,
+    workspaceId: workspace.id,
     keyVersion: aiRephraseStyleKeyVersion,
     styleId,
     userId: input.user.id,
@@ -197,7 +197,7 @@ export async function resetUserAiRephraseStyleOverride(
   }
 
   await input.rephraseStyleRepository.deleteUserStyleOverride({
-    helpdeskConnectionId: workspace.id,
+    workspaceId: workspace.id,
     styleId: input.styleId,
     userId: input.user.id,
   });

@@ -7,11 +7,13 @@ export function useCommunicationDraftScope(
   ticketExternalId: string,
   userId?: string,
   workspaceId?: string,
+  helpdeskConnectionId?: string,
+  identityVersion?: string,
 ): CommunicationDraftPersistenceScope | undefined {
   return useMemo(
-    () => userId && workspaceId
-      ? { ticketExternalId, userId, workspaceId }
+    () => userId && workspaceId && helpdeskConnectionId && identityVersion
+      ? { ticketExternalId, userId, workspaceId, helpdeskConnectionId, identityVersion }
       : undefined,
-    [ticketExternalId, userId, workspaceId],
+    [helpdeskConnectionId, identityVersion, ticketExternalId, userId, workspaceId],
   );
 }

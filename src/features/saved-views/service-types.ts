@@ -51,7 +51,7 @@ export type SavedViewMutationResult =
 
 export type SaveSavedViewInput = {
   userId: string;
-  helpdeskConnectionId?: string;
+  workspaceId?: string;
   name: string;
   visibility?: SavedViewVisibility;
   iconName?: string;

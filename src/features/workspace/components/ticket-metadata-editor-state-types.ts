@@ -34,4 +34,6 @@ export type TicketMetadataEditorStateProps = {
   ): Promise<TicketMetadataMutationActionState>;
   userId?: string;
   workspaceId?: string;
+  helpdeskConnectionId?: string;
+  identityVersion?: string;
 };

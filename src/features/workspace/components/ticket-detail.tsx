@@ -45,6 +45,8 @@ type TicketDetailProps = {
   ): Promise<TicketMetadataMutationActionState>;
   userId?: string;
   workspaceId?: string;
+  helpdeskConnectionId?: string;
+  identityVersion?: string;
 };
 
 export function TicketDetail({
@@ -65,6 +67,8 @@ export function TicketDetail({
   updateTicketMetadataAction,
   userId,
   workspaceId,
+  helpdeskConnectionId,
+  identityVersion,
 }: TicketDetailProps) {
   return (
     <TicketMetadataEditor
@@ -92,6 +96,8 @@ export function TicketDetail({
       updateTicketMetadataAction={updateTicketMetadataAction}
       userId={userId}
       workspaceId={workspaceId}
+      helpdeskConnectionId={helpdeskConnectionId}
+      identityVersion={identityVersion}
     />
   );
 }

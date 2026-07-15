@@ -127,7 +127,7 @@ export const prismaAiSummaryCacheRepository: AiSummaryCacheRepository = {
   async invalidateWorkspace(input) {
     await prisma.aiSummaryCache.deleteMany({
       where: {
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        helpdeskConnection: { workspaceId: input.workspaceId },
       },
     });
   },

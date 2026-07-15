@@ -28,7 +28,7 @@ describe("helpdesk connection service validation", () => {
       providers.registry,
       key,
       "user_1",
-      existing.id,
+      existing.workspaceId,
     );
 
     expect(result).toMatchObject({
@@ -80,7 +80,7 @@ describe("helpdesk connection service validation", () => {
       providers.registry,
       key,
       "user_1",
-      existing.id,
+      existing.workspaceId,
     );
 
     expect(result).toMatchObject({
@@ -95,6 +95,25 @@ describe("helpdesk connection service validation", () => {
       }),
     );
     expect(JSON.stringify(warn.mock.calls)).not.toContain("secret");
+  });
+
+  it("rejects a provider identity already linked to another workspace member", async () => {
+    const existing = connection({ providerIdentityExternalId: null });
+    const store = repository([existing], { personalUpdateResult: "identity-taken" });
+    const providers = registry();
+
+    const result = await validateConnection(
+      store.repo,
+      providers.registry,
+      key,
+      existing.userId,
+      existing.workspaceId,
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: "provider-identity-already-linked",
+    });
   });
 
   it.each([
@@ -125,7 +144,7 @@ describe("helpdesk connection service validation", () => {
       providers.registry,
       key,
       "user_1",
-      existing.id,
+      existing.workspaceId,
     );
 
     expect(result).toMatchObject({ ok: false, code });

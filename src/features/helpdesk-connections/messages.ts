@@ -12,6 +12,10 @@ export type HelpdeskConnectionMessageCode =
   | "credential-required"
   | "connection-not-found"
   | "connection-not-active"
+  | "personal-connection-required"
+  | "provider-identity-already-linked"
+  | "identity-change-requires-reconnect"
+  | "base-url-change-confirmation-required"
   | "invalid-base-url"
   | "provider-validation-failed"
   | "provider-auth-failed"
@@ -34,6 +38,13 @@ const messages: Record<HelpdeskConnectionMessageCode, string> = {
   "credential-required": "Enter all credential fields or leave them all blank.",
   "connection-not-found": "Workspace was not found.",
   "connection-not-active": "Validate this workspace before setting it active.",
+  "personal-connection-required": "Connect your own helpdesk account to use this workspace.",
+  "provider-identity-already-linked":
+    "This helpdesk identity is already connected to another Resolvrr user in this workspace.",
+  "identity-change-requires-reconnect":
+    "Disconnect first before connecting a different helpdesk identity.",
+  "base-url-change-confirmation-required":
+    "Confirm the helpdesk URL change. Every workspace member will need to reconnect.",
   "invalid-base-url": "Enter a public HTTPS helpdesk URL.",
   "provider-validation-failed": "The helpdesk provider could not validate this connection.",
   "provider-auth-failed": "The helpdesk credentials were rejected.",

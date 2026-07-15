@@ -35,9 +35,19 @@ later feature explicitly adds a separate audit timestamp affordance.
 
 ## Workspace Selection
 
-The UI may call connected helpdesk instances workspaces. Workspace selection
-lives in the avatar/profile menu. Code, database, and domain docs should use
-explicit terms such as helpdesk connection.
+Workspace selection lives in the avatar/profile menu. A workspace is shared
+Resolvrr configuration: provider type, canonical helpdesk URL, membership,
+views, AI configuration, and UI preferences. Every member separately connects
+their own helpdesk account to that workspace. Selecting a workspace without a
+valid personal connection remains possible so the member can reach Settings,
+but provider-backed functionality renders `Personal connection required`.
+
+Settings shows the signed-in user `Connected as …` after provider validation.
+Admins may see connection status for other members, but never their provider
+identity, credential fields, validation controls, or an act-as affordance.
+Adding a member never copies credentials. Changing the shared provider URL
+requires explicit destructive confirmation and disconnects every member.
+Workspace ownership transfer never transfers a connection or credential.
 
 ## Saved Views
 
@@ -76,10 +86,10 @@ not add single, split, or compare mode selectors unless that workflow is approve
 later.
 
 Open ticket tabs are long-lived user UI state. The workspace stores them under
-the active helpdesk connection in `UiPreference` as `workspace.openTabs`,
+the active workspace in `UiPreference` as `workspace.openTabs`,
 including open tabs, recent tabs, active pane (`list` or ticket ID), tab
 orientation, and an update timestamp. This state is user-scoped and
-connection-scoped so it survives browser restarts and syncs across devices.
+workspace-scoped so it survives browser restarts and syncs across devices.
 The stored tab list is capped to the supported workspace limit and latest
 server write wins.
 Persisted tabs without a valid selectable state key are removed individually;
@@ -296,8 +306,10 @@ does not allow `canEditMyStyle`.
 ## Production Data Boundary
 
 The real `/workspace` route must not mix synthetic tickets with provider-backed
-tickets. Without an active helpdesk connection, it renders a disconnected state
-with a path to connection management.
+tickets. Without an active workspace it renders a disconnected state. Without
+the signed-in user's active personal connection, it renders a personal
+connection requirement with a path to workspace connection management and does
+not read provider caches or call the provider.
 
 Production workspace components live under `src/features/workspace/components`
 and must not import provider services, repositories, server actions, or provider

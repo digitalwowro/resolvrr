@@ -50,6 +50,8 @@ export function renderWorkspace({
   providerManagedAddresses,
   userId,
   workspaceId = "connection-1",
+  helpdeskConnectionId = "personal-connection-1",
+  identityVersion = "identity-v1",
 }: {
   articles?: WorkspaceArticle[];
   customerReplies?: boolean;
@@ -62,6 +64,8 @@ export function renderWorkspace({
   updateTicketMetadataAction?: MutationAction;
   userId?: string;
   workspaceId?: string;
+  helpdeskConnectionId?: string;
+  identityVersion?: string;
 } = {}) {
   const detailProps = selectedDetailProps();
   const detail = {
@@ -75,7 +79,13 @@ export function renderWorkspace({
   render(
     <TicketWorkspace
       columns={defaultWorkspaceTicketColumns}
-      connections={[{ id: workspaceId, label: "Support", active: true }]}
+      connections={[{
+        id: workspaceId,
+        label: "Support",
+        active: true,
+        connectionId: helpdeskConnectionId,
+        identityVersion,
+      }]}
       detail={detail}
       detailResult={{ status: "available", detail }}
       listResult={{

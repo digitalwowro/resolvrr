@@ -9,21 +9,21 @@ import {
 export type WorkspaceTabsRepository = {
   getForUser(
     userId: string,
-    helpdeskConnectionId: string,
+    workspaceId: string,
   ): Promise<WorkspaceOpenTabsState | undefined>;
   setForUser(
     userId: string,
-    helpdeskConnectionId: string,
+    workspaceId: string,
     state: WorkspaceOpenTabsState,
   ): Promise<void>;
 };
 
 export const prismaWorkspaceTabsRepository: WorkspaceTabsRepository = {
-  async getForUser(userId, helpdeskConnectionId) {
+  async getForUser(userId, workspaceId) {
     const preference = await prisma.uiPreference.findFirst({
       where: {
         userId,
-        helpdeskConnectionId,
+        workspaceId,
         key: workspaceOpenTabsPreferenceKey,
       },
       select: { valueJson: true },
@@ -32,20 +32,20 @@ export const prismaWorkspaceTabsRepository: WorkspaceTabsRepository = {
     return workspaceOpenTabsStateFromStorage(preference?.valueJson);
   },
 
-  async setForUser(userId, helpdeskConnectionId, state) {
+  async setForUser(userId, workspaceId, state) {
     const valueJson = workspaceOpenTabsStateToStorage(state);
 
     await prisma.uiPreference.upsert({
       where: {
-        userId_helpdeskConnectionId_key: {
+        userId_workspaceId_key: {
           userId,
-          helpdeskConnectionId,
+          workspaceId,
           key: workspaceOpenTabsPreferenceKey,
         },
       },
       create: {
         userId,
-        helpdeskConnectionId,
+        workspaceId,
         key: workspaceOpenTabsPreferenceKey,
         valueJson,
       },

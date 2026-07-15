@@ -134,7 +134,7 @@ export function isBlockedProviderAddress(address: string): boolean {
   return true;
 }
 
-function normalizeBaseUrl(input: string): string {
+export function normalizeProviderBaseUrl(input: string): string {
   let parsed: URL;
   try {
     parsed = new URL(input);
@@ -161,7 +161,7 @@ function normalizeBaseUrl(input: string): string {
 export async function validateProviderBaseUrl(
   input: string,
 ): Promise<ValidatedBaseUrl> {
-  const canonicalUrl = normalizeBaseUrl(input);
+  const canonicalUrl = normalizeProviderBaseUrl(input);
   const host = new URL(canonicalUrl).hostname.replace(/^\[|\]$/gu, "");
 
   if (host === "localhost" || host.endsWith(".localhost")) {

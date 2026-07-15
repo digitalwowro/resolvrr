@@ -54,8 +54,8 @@ export async function createSavedView(
     name: input.name,
     visibility: input.visibility ?? "personal",
     query: savedViewQueryFromInput(input.query),
-    ...(input.helpdeskConnectionId
-      ? { helpdeskConnectionId: input.helpdeskConnectionId }
+    ...(input.workspaceId
+      ? { workspaceId: input.workspaceId }
       : {}),
     ...(input.iconName ? { iconName: input.iconName } : {}),
     ...(input.colorName ? { colorName: input.colorName } : {}),
@@ -74,21 +74,21 @@ export async function ensureMyWorkSavedViewResult(
   repository: SavedViewsRepository,
   providerCapabilities: ProviderCapability[],
   userId: string,
-  helpdeskConnectionId: string,
+  workspaceId: string,
   currentUser?: ProviderLookupOption,
 ): Promise<EnsureMyWorkSavedViewResult> {
   const [existingViews, existingSeed, dismissed] = await Promise.all([
-    repository.listForUser(userId, helpdeskConnectionId),
-    repository.findSeedForUser(userId, helpdeskConnectionId, myWorkSavedViewSeedKey),
-    repository.isSeedDismissed(userId, helpdeskConnectionId, myWorkSavedViewSeedKey),
+    repository.listForUser(userId, workspaceId),
+    repository.findSeedForUser(userId, workspaceId, myWorkSavedViewSeedKey),
+    repository.isSeedDismissed(userId, workspaceId, myWorkSavedViewSeedKey),
   ]);
 
   if (existingSeed) {
     if (!existingViews.some((view) => view.preference?.isDefault)) {
-      await repository.setDefaultForUser(userId, existingSeed.id, helpdeskConnectionId);
+      await repository.setDefaultForUser(userId, existingSeed.id, workspaceId);
       return {
         status: "available",
-        views: await repository.listForUser(userId, helpdeskConnectionId),
+        views: await repository.listForUser(userId, workspaceId),
       };
     }
     return { status: "available", views: existingViews };
@@ -119,7 +119,7 @@ export async function ensureMyWorkSavedViewResult(
 
   await repository.create({
     ownerUserId: userId,
-    helpdeskConnectionId,
+    workspaceId,
     name: "My work",
     visibility: "personal",
     iconName: "briefcase-business",
@@ -131,7 +131,7 @@ export async function ensureMyWorkSavedViewResult(
 
   return {
     status: "available",
-    views: await repository.listForUser(userId, helpdeskConnectionId),
+    views: await repository.listForUser(userId, workspaceId),
   };
 }
 
@@ -139,14 +139,14 @@ export async function ensureMyWorkSavedView(
   repository: SavedViewsRepository,
   providerCapabilities: ProviderCapability[],
   userId: string,
-  helpdeskConnectionId: string,
+  workspaceId: string,
   currentUser?: ProviderLookupOption,
 ): Promise<StoredSavedView[]> {
   const result = await ensureMyWorkSavedViewResult(
     repository,
     providerCapabilities,
     userId,
-    helpdeskConnectionId,
+    workspaceId,
     currentUser,
   );
   return result.views;

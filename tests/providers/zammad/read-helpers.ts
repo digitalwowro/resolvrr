@@ -14,6 +14,8 @@ export function providerContext(): ProviderContext {
   return {
     connection: {
       id: "connection-1",
+      workspaceId: "workspace-1",
+      identityVersion: "identity-v1",
       providerKey: "zammad",
       displayName: "Support",
       baseUrl: "https://helpdesk.example.com",

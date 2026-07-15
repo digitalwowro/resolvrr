@@ -69,13 +69,13 @@ export async function saveWorkspaceAiPrompt(
 
   await input.promptRepository.upsertWorkspacePrompt({
     encryptedPrompt: encryptSecret(prompt, input.encryptionKey),
-    helpdeskConnectionId: workspace.id,
+    workspaceId: workspace.id,
     keyVersion: promptSecretKeyVersion,
     promptKey: definition.key,
   });
   await invalidateAiSummaryWorkspaceCache({
     cacheRepository: input.aiSummaryCacheRepository,
-    helpdeskConnectionId: workspace.id,
+    workspaceId: workspace.id,
   });
   return actionResult(
     "ai-prompt-saved",
@@ -104,12 +104,12 @@ export async function resetWorkspaceAiPrompt(
   }
 
   await input.promptRepository.deleteWorkspacePrompt({
-    helpdeskConnectionId: workspace.id,
+    workspaceId: workspace.id,
     promptKey: definition.key,
   });
   await invalidateAiSummaryWorkspaceCache({
     cacheRepository: input.aiSummaryCacheRepository,
-    helpdeskConnectionId: workspace.id,
+    workspaceId: workspace.id,
   });
   return actionResult(
     "ai-prompt-reset",

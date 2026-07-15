@@ -19,14 +19,15 @@ const userSelect = {
     select: {
       canEditAiRephraseStyleOverrides: true,
       canEditMyStyle: true,
-      helpdeskConnectionId: true,
+      workspaceId: true,
       role: true,
     },
     orderBy: { createdAt: "asc" },
   },
   helpdeskConnections: {
-    select: { id: true },
+    select: { workspaceId: true, status: true },
   },
+  ownedWorkspaces: { select: { id: true } },
   _count: {
     select: { providerMutationLogs: true },
   },
@@ -41,13 +42,17 @@ function isUniqueConstraintError(error: unknown): boolean {
 
 function toMembership(
   membership: ManagedUserMembership,
+  connectionStatus?: "ACTIVE" | "AUTH_FAILED" | "DISCONNECTED",
 ): ManagedUserMembership {
   return {
     canEditAiRephraseStyleOverrides:
       membership.canEditAiRephraseStyleOverrides,
     canEditMyStyle: membership.canEditMyStyle,
-    helpdeskConnectionId: membership.helpdeskConnectionId,
+    workspaceId: membership.workspaceId,
     role: membership.role,
+    connectionStatus: connectionStatus
+      ? connectionStatus.toLowerCase() as "active" | "auth_failed" | "disconnected"
+      : "not-connected",
   };
 }
 
@@ -60,8 +65,15 @@ function toManagedUserRecord(user: Prisma.UserGetPayload<{ select: typeof userSe
     hasProviderMutations: user._count.providerMutationLogs > 0,
     id: user.id,
     lastName: user.lastName,
-    memberships: user.workspaceMemberships.map(toMembership),
-    ownedWorkspaceIds: user.helpdeskConnections.map((connection) => connection.id),
+    memberships: user.workspaceMemberships.map((membership) =>
+      toMembership(
+        membership,
+        user.helpdeskConnections.find(
+          (connection) => connection.workspaceId === membership.workspaceId,
+        )?.status,
+      ),
+    ),
+    ownedWorkspaceIds: user.ownedWorkspaces.map((workspace) => workspace.id),
     role: user.role,
   };
 }
@@ -71,6 +83,15 @@ async function replaceMemberships(
   userId: string,
   memberships: ManagedUserMembership[],
 ) {
+  const workspaceIds = memberships.map((membership) => membership.workspaceId);
+  await transaction.helpdeskConnection.deleteMany({
+    where: {
+      userId,
+      ...(workspaceIds.length > 0
+        ? { workspaceId: { notIn: workspaceIds } }
+        : {}),
+    },
+  });
   await transaction.workspaceMembership.deleteMany({ where: { userId } });
   if (memberships.length === 0) {
     return;
@@ -80,7 +101,7 @@ async function replaceMemberships(
       canEditAiRephraseStyleOverrides:
         membership.canEditAiRephraseStyleOverrides,
       canEditMyStyle: membership.canEditMyStyle,
-      helpdeskConnectionId: membership.helpdeskConnectionId,
+      workspaceId: membership.workspaceId,
       role: membership.role,
       userId,
     })),
@@ -124,6 +145,7 @@ export const prismaUserManagementRepository: UserManagementRepository = {
       prisma.passwordLogin.deleteMany({ where: { userId } }),
       prisma.session.deleteMany({ where: { userId } }),
       prisma.workspaceMembership.deleteMany({ where: { userId } }),
+      prisma.helpdeskConnection.deleteMany({ where: { userId } }),
       prisma.userWorkspaceAiSetting.deleteMany({ where: { userId } }),
       prisma.workspaceMyStyle.deleteMany({ where: { userId } }),
       prisma.userAiRephraseStyleOverride.deleteMany({ where: { userId } }),
@@ -153,14 +175,14 @@ export const prismaUserManagementRepository: UserManagementRepository = {
   },
 
   async listWorkspaces(): Promise<ManagedWorkspaceOption[]> {
-    const workspaces = await prisma.helpdeskConnection.findMany({
+    const workspaces = await prisma.workspace.findMany({
       orderBy: [{ displayName: "asc" }, { createdAt: "asc" }],
-      select: { displayName: true, id: true, userId: true },
+      select: { displayName: true, id: true, ownerUserId: true },
     });
     return workspaces.map((workspace) => ({
       id: workspace.id,
       label: workspace.displayName,
-      ownerUserId: workspace.userId,
+      ownerUserId: workspace.ownerUserId,
     }));
   },
 
@@ -199,8 +221,8 @@ export const prismaUserManagementRepository: UserManagementRepository = {
   },
 
   async transferOwnedWorkspaces(input) {
-    const owned = await prisma.helpdeskConnection.findMany({
-      where: { userId: input.ownerUserId },
+    const owned = await prisma.workspace.findMany({
+      where: { ownerUserId: input.ownerUserId },
       select: { id: true },
     });
     if (owned.length === 0) {
@@ -222,12 +244,23 @@ export const prismaUserManagementRepository: UserManagementRepository = {
       return "not-found";
     }
     await prisma.$transaction(
-      owned.map((workspace) =>
-        prisma.helpdeskConnection.update({
+      owned.flatMap((workspace) => {
+        const replacementUserId = input.replacements[workspace.id];
+        return [
+        prisma.workspace.update({
           where: { id: workspace.id },
-          data: { userId: input.replacements[workspace.id] },
+          data: { ownerUserId: replacementUserId },
         }),
-      ),
+        prisma.workspaceMembership.upsert({
+          where: { userId_workspaceId: { userId: replacementUserId, workspaceId: workspace.id } },
+          create: {
+            userId: replacementUserId, workspaceId: workspace.id, role: "ADMIN",
+            canEditAiRephraseStyleOverrides: true, canEditMyStyle: true,
+          },
+          update: { role: "ADMIN" },
+        }),
+        ];
+      }),
     );
     return "transferred";
   },

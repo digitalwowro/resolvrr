@@ -9,7 +9,7 @@ import type { SavedViewPreference, StoredSavedView } from "@/features/saved-view
 export const savedViewSelect = {
   id: true,
   ownerUserId: true,
-  helpdeskConnectionId: true,
+  workspaceId: true,
   name: true,
   visibility: true,
   iconName: true,
@@ -50,7 +50,7 @@ export function toStoredSavedView(
   view: {
     id: string;
     ownerUserId: string;
-    helpdeskConnectionId: string | null;
+    workspaceId: string | null;
     name: string;
     visibility: DbSavedViewVisibility;
     iconName: string | null;
@@ -68,8 +68,8 @@ export function toStoredSavedView(
   return {
     id: view.id,
     ownerUserId: view.ownerUserId,
-    ...(view.helpdeskConnectionId
-      ? { helpdeskConnectionId: view.helpdeskConnectionId }
+    ...(view.workspaceId
+      ? { workspaceId: view.workspaceId }
       : {}),
     name: view.name,
     visibility: toDomainVisibility(view.visibility),
@@ -91,10 +91,10 @@ export function toStoredSavedView(
 
 export function visibleViewWhere(
   userId: string,
-  helpdeskConnectionId: string | undefined,
+  workspaceId: string | undefined,
 ): Prisma.SavedViewWhereInput {
   return {
-    helpdeskConnectionId: helpdeskConnectionId ?? "__missing-connection__",
+    workspaceId: workspaceId ?? "__missing-connection__",
     OR: [
       { ownerUserId: userId },
       { visibility: DbSavedViewVisibility.SHARED },

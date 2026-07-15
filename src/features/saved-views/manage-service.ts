@@ -50,12 +50,12 @@ function defaultSavedViewId(views: StoredSavedView[]): string | undefined {
 async function viewsResult(
   repository: SavedViewsRepository,
   userId: string,
-  helpdeskConnectionId: string,
+  workspaceId: string,
   code: SavedViewMutationCode,
   ok: boolean,
   rejection?: TicketListQueryRejection,
 ): Promise<SavedViewMutationResult> {
-  const views = await repository.listForUser(userId, helpdeskConnectionId);
+  const views = await repository.listForUser(userId, workspaceId);
   return {
     ok,
     code,
@@ -70,23 +70,23 @@ export async function saveManagedSavedView(
   providerCapabilities: ProviderCapability[],
   userId: string,
   userRole: AuthUserRole,
-  helpdeskConnectionId: string,
+  workspaceId: string,
   currentUser: ProviderLookupOption | undefined,
   input: SavedViewManageInput,
 ): Promise<SavedViewMutationResult> {
-  const visibleViews = await repository.listForUser(userId, helpdeskConnectionId);
+  const visibleViews = await repository.listForUser(userId, workspaceId);
   const title = normalizeTitle(input.name);
   if (!title) {
-    return viewsResult(repository, userId, helpdeskConnectionId, "invalid-title", false);
+    return viewsResult(repository, userId, workspaceId, "invalid-title", false);
   }
   if (visibleTitleConflict(visibleViews, title, input.id)) {
-    return viewsResult(repository, userId, helpdeskConnectionId, "duplicate-title", false);
+    return viewsResult(repository, userId, workspaceId, "duplicate-title", false);
   }
   if (input.visibility === "shared" && !hasRoleSharedPermission(userRole)) {
     return viewsResult(
       repository,
       userId,
-      helpdeskConnectionId,
+      workspaceId,
       "permission-denied",
       false,
     );
@@ -97,7 +97,7 @@ export async function saveManagedSavedView(
     return viewsResult(
       repository,
       userId,
-      helpdeskConnectionId,
+      workspaceId,
       "invalid-conditions",
       false,
     );
@@ -107,7 +107,7 @@ export async function saveManagedSavedView(
     return viewsResult(
       repository,
       userId,
-      helpdeskConnectionId,
+      workspaceId,
       "invalid-conditions",
       false,
     );
@@ -117,7 +117,7 @@ export async function saveManagedSavedView(
     return viewsResult(
       repository,
       userId,
-      helpdeskConnectionId,
+      workspaceId,
       guardrail.reason,
       false,
       guardrail.rejection,
@@ -132,7 +132,7 @@ export async function saveManagedSavedView(
     return viewsResult(
       repository,
       userId,
-      helpdeskConnectionId,
+      workspaceId,
       "invalid-appearance",
       false,
     );
@@ -142,9 +142,9 @@ export async function saveManagedSavedView(
   if (input.id) {
     const existing = visibleViews.find((view) => view.id === input.id);
     if (!existing || (existing.visibility === "shared" && userRole !== "ADMIN")) {
-      return viewsResult(repository, userId, helpdeskConnectionId, "not-found", false);
+      return viewsResult(repository, userId, workspaceId, "not-found", false);
     }
-    savedView = await repository.update(userId, input.id, helpdeskConnectionId, {
+    savedView = await repository.update(userId, input.id, workspaceId, {
       ownerUserId: userId,
       name: title,
       visibility: input.visibility,
@@ -155,7 +155,7 @@ export async function saveManagedSavedView(
   } else {
     savedView = await repository.create({
       ownerUserId: userId,
-      helpdeskConnectionId,
+      workspaceId,
       name: title,
       visibility: input.visibility,
       query,
@@ -169,32 +169,32 @@ export async function saveManagedSavedView(
   }
 
   if (!savedView) {
-    return viewsResult(repository, userId, helpdeskConnectionId, "not-found", false);
+    return viewsResult(repository, userId, workspaceId, "not-found", false);
   }
   if (input.makeDefault) {
-    await repository.setDefaultForUser(userId, savedView.id, helpdeskConnectionId);
+    await repository.setDefaultForUser(userId, savedView.id, workspaceId);
   }
 
-  return viewsResult(repository, userId, helpdeskConnectionId, "saved", true);
+  return viewsResult(repository, userId, workspaceId, "saved", true);
 }
 
 export async function deleteManagedSavedView(
   repository: SavedViewsRepository,
   userId: string,
   userRole: AuthUserRole,
-  helpdeskConnectionId: string,
+  workspaceId: string,
   savedViewId: string,
 ): Promise<SavedViewMutationResult> {
-  const views = await repository.listForUser(userId, helpdeskConnectionId);
+  const views = await repository.listForUser(userId, workspaceId);
   const view = views.find((item) => item.id === savedViewId);
   if (!view || (view.visibility === "shared" && userRole !== "ADMIN")) {
-    return viewsResult(repository, userId, helpdeskConnectionId, "not-found", false);
+    return viewsResult(repository, userId, workspaceId, "not-found", false);
   }
   if (view.preference?.isDefault) {
     return viewsResult(
       repository,
       userId,
-      helpdeskConnectionId,
+      workspaceId,
       "default-delete-blocked",
       false,
     );
@@ -203,33 +203,33 @@ export async function deleteManagedSavedView(
   const deleted = await repository.deleteForUser(
     userId,
     savedViewId,
-    helpdeskConnectionId,
+    workspaceId,
   );
   if (!deleted) {
-    return viewsResult(repository, userId, helpdeskConnectionId, "not-found", false);
+    return viewsResult(repository, userId, workspaceId, "not-found", false);
   }
   if (deleted.seedKey) {
-    await repository.dismissSeed(userId, helpdeskConnectionId, deleted.seedKey);
+    await repository.dismissSeed(userId, workspaceId, deleted.seedKey);
   }
 
-  return viewsResult(repository, userId, helpdeskConnectionId, "deleted", true);
+  return viewsResult(repository, userId, workspaceId, "deleted", true);
 }
 
 export async function setDefaultManagedSavedView(
   repository: SavedViewsRepository,
   userId: string,
-  helpdeskConnectionId: string,
+  workspaceId: string,
   savedViewId: string,
 ): Promise<SavedViewMutationResult> {
   const ok = await repository.setDefaultForUser(
     userId,
     savedViewId,
-    helpdeskConnectionId,
+    workspaceId,
   );
   return viewsResult(
     repository,
     userId,
-    helpdeskConnectionId,
+    workspaceId,
     ok ? "default-set" : "not-found",
     ok,
   );
@@ -238,12 +238,12 @@ export async function setDefaultManagedSavedView(
 export async function reorderManagedSavedViews(
   repository: SavedViewsRepository,
   userId: string,
-  helpdeskConnectionId: string,
+  workspaceId: string,
   savedViewIds: string[],
 ): Promise<SavedViewMutationResult> {
   const views = await repository.reorderForUser(
     userId,
-    helpdeskConnectionId,
+    workspaceId,
     savedViewIds,
   );
   return {

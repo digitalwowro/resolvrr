@@ -34,7 +34,7 @@ describe("workspace AI user settings service", () => {
     const repository = aiSettingsRepository();
     repository.workspaceSetting = {
       config: null,
-      helpdeskConnectionId: "connection-1",
+      workspaceId: "connection-1",
       policy: "user-provided",
       userPermissions: {
         canEditAiRephraseStyleOverrides: false,

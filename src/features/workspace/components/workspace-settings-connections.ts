@@ -12,5 +12,13 @@ export function workspaceSettingsConnectionFromMenu(
     baseUrl: connection.baseUrl ?? "",
     status: connection.status ?? "disconnected",
     active: connection.active,
+    connectionId: connection.connectionId ?? null,
+    connectedAs: connection.connectedAs ?? null,
+    identityVersion: connection.identityVersion ?? null,
+    access: connection.access ?? {
+      role: "AGENT",
+      canEditAiRephraseStyleOverrides: false,
+      canEditMyStyle: false,
+    },
   };
 }

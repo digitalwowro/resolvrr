@@ -46,14 +46,27 @@ export function connection(
 ): HelpdeskConnectionWithCredential {
   return {
     id: "connection-1",
+    workspaceId: "workspace-1",
     userId: "user-1",
     providerKey: "test-provider",
     displayName: "Support",
     baseUrl: "https://helpdesk.example.com",
     status: "active",
+    providerIdentityExternalId: "agent-1",
+    providerIdentityDisplayName: "Agent One",
+    identityVersion: "identity-v1",
     createdAt: new Date("2026-05-24T00:00:00Z"),
     updatedAt: new Date("2026-05-24T00:00:00Z"),
     access: defaultWorkspaceAccess,
+    workspace: {
+      id: "workspace-1",
+      ownerUserId: "user-1",
+      providerKey: "test-provider",
+      displayName: "Support",
+      baseUrl: "https://helpdesk.example.com",
+      createdAt: new Date("2026-05-24T00:00:00Z"),
+      updatedAt: new Date("2026-05-24T00:00:00Z"),
+    },
     credential: credential(),
     ...overrides,
   };
@@ -66,16 +79,24 @@ export function repository(input: {
   return {
     listForUser: async () => [],
     findForUser: async () => input.connection ?? null,
+    findForUserWorkspace: async () => input.connection ?? null,
+    findWorkspaceForUser: async () => {
+      const value = input.connection;
+      return value ? { ...value.workspace, access: value.access, connection: value } : null;
+    },
     getAccess: async () => input.connection?.access ?? null,
     create: async () => {
       throw new Error("not implemented");
     },
+    createPersonalConnection: async () => null,
+    updatePersonalConnection: async () => null,
+    updateWorkspace: async () => null,
     update: async () => null,
     updateStatus: async () => false,
     deleteForUser: async () => false,
-    getActiveConnectionId: async () => input.activeConnectionId ?? null,
-    setActiveConnectionId: async () => undefined,
-    clearActiveConnectionId: async () => undefined,
+    getActiveWorkspaceId: async () => input.activeConnectionId ?? null,
+    setActiveWorkspaceId: async () => undefined,
+    clearActiveWorkspaceId: async () => undefined,
     updateWorkspaceAgentAiPermissions: async () => undefined,
   };
 }
@@ -88,7 +109,7 @@ export function provider(
     label: "Test Provider",
     capabilities: ["ticket:list", "ticket:detail"],
     credentialSchemes: [],
-    validateConnection: async () => undefined,
+    validateConnection: async () => ({ externalId: "agent-1", displayName: "Agent One" }),
     listTickets: async () => ({
       tickets: [
         {

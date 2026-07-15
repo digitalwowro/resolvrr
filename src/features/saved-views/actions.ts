@@ -34,9 +34,9 @@ function emptySettingsData(canManageShared: boolean): SavedViewSettingsData {
 }
 
 async function activeSavedViewContext(userId: string) {
-  const activeConnectionId =
-    await prismaHelpdeskConnectionsRepository.getActiveConnectionId(userId);
-  if (!activeConnectionId) {
+  const activeWorkspaceId =
+    await prismaHelpdeskConnectionsRepository.getActiveWorkspaceId(userId);
+  if (!activeWorkspaceId) {
     return undefined;
   }
 
@@ -49,13 +49,13 @@ async function activeSavedViewContext(userId: string) {
   );
   if (providerContext.status === "unavailable") {
     return {
-      helpdeskConnectionId: activeConnectionId,
+      workspaceId: activeWorkspaceId,
       providerCapabilities: [] as const,
     };
   }
 
   return {
-    helpdeskConnectionId: activeConnectionId,
+    workspaceId: activeWorkspaceId,
     providerCapabilities: providerContext.value.plugin.capabilities,
     providerContext: providerContext.value,
   };
@@ -70,7 +70,7 @@ async function loadSettingsDataForUser(): Promise<SavedViewSettingsData> {
   }
 
   const [views, lookupData, currentUserLookup] = await Promise.all([
-    prismaSavedViewsRepository.listForUser(user.id, context.helpdeskConnectionId),
+    prismaSavedViewsRepository.listForUser(user.id, context.workspaceId),
     context.providerContext
       ? dispatchTicketLookupDataRead(context.providerContext)
       : undefined,
@@ -134,7 +134,7 @@ export async function saveWorkspaceSavedViewAction(
     [...context.providerCapabilities],
     user.id,
     user.role,
-    context.helpdeskConnectionId,
+    context.workspaceId,
     currentUser,
     input,
   );
@@ -159,7 +159,7 @@ export async function deleteWorkspaceSavedViewAction(
     prismaSavedViewsRepository,
     user.id,
     user.role,
-    context.helpdeskConnectionId,
+    context.workspaceId,
     savedViewId,
   );
 
@@ -182,7 +182,7 @@ export async function setDefaultWorkspaceSavedViewAction(
   const result = await setDefaultManagedSavedView(
     prismaSavedViewsRepository,
     user.id,
-    context.helpdeskConnectionId,
+    context.workspaceId,
     savedViewId,
   );
 
@@ -205,7 +205,7 @@ export async function reorderWorkspaceSavedViewsAction(
   const result = await reorderManagedSavedViews(
     prismaSavedViewsRepository,
     user.id,
-    context.helpdeskConnectionId,
+    context.workspaceId,
     savedViewIds,
   );
 

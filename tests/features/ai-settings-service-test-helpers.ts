@@ -49,7 +49,7 @@ export function connectionRepository(
 ): HelpdeskConnectionsRepository {
   const updateWorkspaceAgentAiPermissions = vi.fn(async () => undefined);
   return {
-    async clearActiveConnectionId() {},
+    async clearActiveWorkspaceId() {},
     async create() {
       throw new Error("not used");
     },
@@ -64,23 +64,68 @@ export function connectionRepository(
         credential: null,
         displayName: "Support",
         id: connectionId,
+        workspaceId: connectionId,
+        identityVersion: "identity-v1",
+        providerIdentityExternalId: "agent-1",
+        providerIdentityDisplayName: "Agent One",
         providerKey: "example",
         status: "active",
         updatedAt: new Date("2026-06-01T00:00:00Z"),
         userId,
+        workspace: {
+          id: connectionId,
+          ownerUserId: userId,
+          providerKey: "example",
+          displayName: "Support",
+          baseUrl: "https://helpdesk.example.com",
+          createdAt: new Date("2026-06-01T00:00:00Z"),
+          updatedAt: new Date("2026-06-01T00:00:00Z"),
+        },
+      };
+    },
+    async findForUserWorkspace(userId, workspaceId) {
+      return this.findForUser(userId, workspaceId);
+    },
+    async findWorkspaceForUser(userId, workspaceId) {
+      return {
+        id: workspaceId,
+        ownerUserId: userId,
+        providerKey: "example",
+        displayName: "Support",
+        baseUrl: "https://helpdesk.example.com",
+        createdAt: new Date("2026-06-01T00:00:00Z"),
+        updatedAt: new Date("2026-06-01T00:00:00Z"),
+        access,
+        connection: {
+          createdAt: new Date("2026-06-01T00:00:00Z"),
+          id: "connection-1",
+          identityVersion: "identity-v1",
+          providerIdentityDisplayName: "Agent One",
+          providerIdentityExternalId: "agent-1",
+          status: "active",
+          updatedAt: new Date("2026-06-01T00:00:00Z"),
+          userId,
+          workspaceId,
+        },
       };
     },
     async getAccess() {
       return access;
     },
-    async getActiveConnectionId() {
+    async getActiveWorkspaceId() {
       return "connection-1";
     },
     async listForUser() {
       return [];
     },
-    async setActiveConnectionId() {},
-    async update() {
+    async setActiveWorkspaceId() {},
+    async createPersonalConnection() {
+      return null;
+    },
+    async updatePersonalConnection() {
+      return null;
+    },
+    async updateWorkspace() {
       return null;
     },
     async updateStatus() {
@@ -118,7 +163,7 @@ export function aiSettingsRepository(): AiSettingsRepository & {
     async upsertWorkspaceSetting(input) {
       this.workspaceSetting = {
         config: input.config ?? null,
-        helpdeskConnectionId: input.helpdeskConnectionId,
+        workspaceId: input.workspaceId,
         policy: input.policy,
         userPermissions: input.userPermissions,
       };

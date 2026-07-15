@@ -1,4 +1,8 @@
-import { ProviderError, type HelpdeskProviderPlugin } from "@/core/providers";
+import {
+  ProviderError,
+  type HelpdeskProviderPlugin,
+  type ProviderConnectionIdentity,
+} from "@/core/providers";
 import type { HelpdeskConnectionStatus } from "@/core/helpdesk-connections";
 import { validateProviderBaseUrl } from "@/security/base-url-validation";
 import { safeLogMetadata } from "@/security/safe-log";
@@ -81,19 +85,22 @@ export async function validateWithProvider(
     credentialScheme: string;
     credentialPayload: unknown;
   },
-): Promise<string | HelpdeskConnectionMessageCode> {
+): Promise<
+  | { baseUrl: string; identity: ProviderConnectionIdentity }
+  | HelpdeskConnectionMessageCode
+> {
   let canonicalUrl = input.baseUrl;
   try {
     const validated = await validateProviderBaseUrl(input.baseUrl);
     canonicalUrl = validated.canonicalUrl;
-    await plugin.validateConnection({
+    const identity = await plugin.validateConnection({
       baseUrl: validated.canonicalUrl,
       validatedAddresses: validated.addresses,
       credentialScheme: input.credentialScheme,
       credentialPayload: input.credentialPayload,
       timeoutMs: validationTimeoutMs,
     });
-    return validated.canonicalUrl;
+    return { baseUrl: validated.canonicalUrl, identity };
   } catch (error) {
     if (error instanceof ProviderError) {
       logProviderValidationFailure(plugin, error, {
@@ -113,9 +120,9 @@ export async function validateExistingProviderConnection(
     credentialScheme: string;
     credentialPayload: unknown;
   },
-): Promise<string> {
+): Promise<{ baseUrl: string; identity: ProviderConnectionIdentity }> {
   const validated = await validateProviderBaseUrl(input.baseUrl);
-  await plugin.validateConnection({
+  const identity = await plugin.validateConnection({
     baseUrl: validated.canonicalUrl,
     validatedAddresses: validated.addresses,
     credentialScheme: input.credentialScheme,
@@ -123,5 +130,5 @@ export async function validateExistingProviderConnection(
     timeoutMs: validationTimeoutMs,
   });
 
-  return validated.canonicalUrl;
+  return { baseUrl: validated.canonicalUrl, identity };
 }

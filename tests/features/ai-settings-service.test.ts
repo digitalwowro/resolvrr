@@ -50,7 +50,7 @@ describe("workspace AI settings service", () => {
         model: "support-model",
         providerProtocol: "openai-compatible",
       },
-      helpdeskConnectionId: "connection-1",
+      workspaceId: "connection-1",
       policy: "admin-managed",
       userPermissions: {
         canEditAiRephraseStyleOverrides: false,
@@ -71,7 +71,7 @@ describe("workspace AI settings service", () => {
 
     repository.workspaceSetting = {
       config: null,
-      helpdeskConnectionId: "connection-1",
+      workspaceId: "connection-1",
       policy: "user-provided",
       userPermissions: {
         canEditAiRephraseStyleOverrides: false,
@@ -116,7 +116,7 @@ describe("workspace AI settings service", () => {
     expect(result.ok).toBe(true);
     expect(generateAiText).toHaveBeenCalledOnce();
     expect(cache.invalidateWorkspace).toHaveBeenCalledWith({
-      helpdeskConnectionId: "connection-1",
+      workspaceId: "connection-1",
     });
     expect(repository.workspaceSetting?.policy).toBe("admin-managed");
     expect(repository.workspaceSetting?.userPermissions).toEqual({

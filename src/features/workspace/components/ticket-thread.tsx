@@ -74,7 +74,7 @@ export function TicketThread({
   useEffect(() => {
     let cancelled = false;
     const scopeKey = draftPersistenceScope
-      ? `${draftPersistenceScope.userId}:${draftPersistenceScope.workspaceId}:${draftPersistenceScope.ticketExternalId}`
+      ? `${draftPersistenceScope.userId}:${draftPersistenceScope.workspaceId}:${draftPersistenceScope.helpdeskConnectionId}:${draftPersistenceScope.identityVersion}:${draftPersistenceScope.ticketExternalId}`
       : "";
     if (!scopeKey || restoredScopeRef.current === scopeKey) return;
     restoredScopeRef.current = scopeKey;

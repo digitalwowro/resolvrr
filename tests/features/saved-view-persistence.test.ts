@@ -17,8 +17,8 @@ function repository(onCreate: (input: CreateSavedViewInput) => void) {
     return {
       id: "view-1",
       ownerUserId: input.ownerUserId,
-      ...(input.helpdeskConnectionId
-        ? { helpdeskConnectionId: input.helpdeskConnectionId }
+      ...(input.workspaceId
+        ? { workspaceId: input.workspaceId }
         : {}),
       name: input.name,
       visibility: input.visibility,
@@ -62,7 +62,7 @@ describe("saved view persistence", () => {
       ["ticket:list", "ticket:sort", "ticket:group", "search:full-text"],
       {
         userId: "user-1",
-        helpdeskConnectionId: "connection-1",
+        workspaceId: "connection-1",
         name: "Open high priority",
         query: {
           cursor: "provider-cursor",
@@ -84,7 +84,7 @@ describe("saved view persistence", () => {
     expect(result.status).toBe("saved");
     expect(captured).toMatchObject({
       ownerUserId: "user-1",
-      helpdeskConnectionId: "connection-1",
+      workspaceId: "connection-1",
       name: "Open high priority",
       preference: { position: 2, isDefault: true },
       query: {

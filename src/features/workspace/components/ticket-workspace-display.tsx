@@ -63,6 +63,8 @@ export function TicketWorkspaceDisplay({
   userFirstName,
   userId,
   workspaceId,
+  helpdeskConnectionId,
+  identityVersion,
   userLastName,
 }: TicketWorkspaceDisplayProps) {
   const [workspaceSearchQuery, setWorkspaceSearchQuery] = useState("");
@@ -177,11 +179,13 @@ export function TicketWorkspaceDisplay({
   }
 
   function handleCloseTicket(ticketId: string) {
-    if (userId && workspaceId) {
+    if (userId && workspaceId && helpdeskConnectionId && identityVersion) {
       void clearPersistedCommunicationDrafts({
         ticketExternalId: ticketId,
         userId,
         workspaceId,
+        helpdeskConnectionId,
+        identityVersion,
       });
     }
     closeTicket(ticketId);
@@ -213,6 +217,8 @@ export function TicketWorkspaceDisplay({
       updateTicketMetadataAction={updateTicketMetadataAction}
       userId={userId}
       workspaceId={workspaceId}
+      helpdeskConnectionId={helpdeskConnectionId}
+      identityVersion={identityVersion}
     />
   );
 

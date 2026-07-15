@@ -19,9 +19,9 @@ import {
 } from "./saved-views-repository-mappers";
 
 export const prismaSavedViewsRepository: SavedViewsRepository = {
-  async listForUser(userId, helpdeskConnectionId) {
+  async listForUser(userId, workspaceId) {
     const views = await prisma.savedView.findMany({
-      where: visibleViewWhere(userId, helpdeskConnectionId),
+      where: visibleViewWhere(userId, workspaceId),
       select: {
         ...savedViewSelect,
         preferences: {
@@ -35,9 +35,9 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
     return sortedViews(views.map(toStoredSavedView));
   },
 
-  async findForUser(userId, savedViewId, helpdeskConnectionId) {
+  async findForUser(userId, savedViewId, workspaceId) {
     const view = await prisma.savedView.findFirst({
-      where: { id: savedViewId, ...visibleViewWhere(userId, helpdeskConnectionId) },
+      where: { id: savedViewId, ...visibleViewWhere(userId, workspaceId) },
       select: {
         ...savedViewSelect,
         preferences: {
@@ -56,7 +56,7 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
       client.savedView.create({
         data: {
           ownerUserId: input.ownerUserId,
-          helpdeskConnectionId: input.helpdeskConnectionId,
+          workspaceId: input.workspaceId,
           name: input.name,
           visibility: toDbVisibility(input.visibility),
           iconName: input.iconName,
@@ -96,7 +96,7 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
           userId: input.ownerUserId,
           isDefault: true,
           savedView: {
-            helpdeskConnectionId: input.helpdeskConnectionId,
+            workspaceId: input.workspaceId,
           },
         },
         data: { isDefault: false },
@@ -106,11 +106,11 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
     });
   },
 
-  async update(userId, savedViewId, helpdeskConnectionId, input) {
+  async update(userId, savedViewId, workspaceId, input) {
     const view = await prisma.savedView.findFirst({
       where: {
         id: savedViewId,
-        helpdeskConnectionId,
+        workspaceId,
         OR: [
           { ownerUserId: userId },
           { visibility: DbSavedViewVisibility.SHARED },
@@ -147,11 +147,11 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
     return toStoredSavedView(updated);
   },
 
-  async deleteForUser(userId, savedViewId, helpdeskConnectionId) {
+  async deleteForUser(userId, savedViewId, workspaceId) {
     const view = await prisma.savedView.findFirst({
       where: {
         id: savedViewId,
-        helpdeskConnectionId,
+        workspaceId,
         OR: [
           { ownerUserId: userId },
           { visibility: DbSavedViewVisibility.SHARED },
@@ -174,11 +174,11 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
     return toStoredSavedView(view);
   },
 
-  async setDefaultForUser(userId, savedViewId, helpdeskConnectionId) {
+  async setDefaultForUser(userId, savedViewId, workspaceId) {
     const view = await prisma.savedView.findFirst({
       where: {
         id: savedViewId,
-        helpdeskConnectionId,
+        workspaceId,
         OR: [
           { ownerUserId: userId },
           { visibility: DbSavedViewVisibility.SHARED },
@@ -195,7 +195,7 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
         where: {
           userId,
           isDefault: true,
-          savedView: { helpdeskConnectionId },
+          savedView: { workspaceId },
         },
         data: { isDefault: false },
       }),
@@ -209,8 +209,8 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
     return true;
   },
 
-  async reorderForUser(userId, helpdeskConnectionId, savedViewIds) {
-    const visibleViews = await this.listForUser(userId, helpdeskConnectionId);
+  async reorderForUser(userId, workspaceId, savedViewIds) {
+    const visibleViews = await this.listForUser(userId, workspaceId);
     const visibleById = new Map(visibleViews.map((view) => [view.id, view]));
     const orderedIds = [
       ...savedViewIds.filter((id) => visibleById.has(id)),
@@ -229,13 +229,13 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
       ),
     );
 
-    return this.listForUser(userId, helpdeskConnectionId);
+    return this.listForUser(userId, workspaceId);
   },
 
-  async findSeedForUser(userId, helpdeskConnectionId, seedKey) {
+  async findSeedForUser(userId, workspaceId, seedKey) {
     const view = await prisma.savedView.findFirst({
       where: {
-        helpdeskConnectionId,
+        workspaceId,
         seedKey,
         ownerUserId: userId,
       },
@@ -252,12 +252,12 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
     return view ? toStoredSavedView(view) : null;
   },
 
-  async isSeedDismissed(userId, helpdeskConnectionId, seedKey) {
+  async isSeedDismissed(userId, workspaceId, seedKey) {
     const preference = await prisma.uiPreference.findUnique({
       where: {
-        userId_helpdeskConnectionId_key: {
+        userId_workspaceId_key: {
           userId,
-          helpdeskConnectionId,
+          workspaceId,
           key: savedViewSeedDismissalPreferenceKey,
         },
       },
@@ -267,12 +267,12 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
     return dismissedSeedKeys(preference?.valueJson).includes(seedKey);
   },
 
-  async dismissSeed(userId, helpdeskConnectionId, seedKey) {
+  async dismissSeed(userId, workspaceId, seedKey) {
     const preference = await prisma.uiPreference.findUnique({
       where: {
-        userId_helpdeskConnectionId_key: {
+        userId_workspaceId_key: {
           userId,
-          helpdeskConnectionId,
+          workspaceId,
           key: savedViewSeedDismissalPreferenceKey,
         },
       },
@@ -282,15 +282,15 @@ export const prismaSavedViewsRepository: SavedViewsRepository = {
 
     await prisma.uiPreference.upsert({
       where: {
-        userId_helpdeskConnectionId_key: {
+        userId_workspaceId_key: {
           userId,
-          helpdeskConnectionId,
+          workspaceId,
           key: savedViewSeedDismissalPreferenceKey,
         },
       },
       create: {
         userId,
-        helpdeskConnectionId,
+        workspaceId,
         key: savedViewSeedDismissalPreferenceKey,
         valueJson: { seedKeys },
       },
