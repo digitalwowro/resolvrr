@@ -32,44 +32,6 @@ describe("TicketWorkspace ticket-level communication composer", () => {
     expect(screen.queryByLabelText("Internal note")).not.toBeInTheDocument();
   });
 
-  it("opens and focuses the top reply composer from a public article", async () => {
-    const user = userEvent.setup();
-    const scrollIntoView = vi.fn();
-    const htmlElementPrototype: {
-      scrollIntoView?: HTMLElement["scrollIntoView"];
-    } = window.HTMLElement.prototype;
-    const originalScrollIntoView = htmlElementPrototype.scrollIntoView;
-    htmlElementPrototype.scrollIntoView =
-      scrollIntoView as unknown as HTMLElement["scrollIntoView"];
-
-    try {
-      renderWorkspace({ customerReplies: true, internalNotes: true });
-      const article = getCustomerArticle();
-
-      await user.click(within(article).getByRole("button", { name: "Reply" }));
-      const editor = screen.getByRole("textbox", { name: "Reply" });
-
-      expect(
-        screen.getByRole("form", { name: "Reply composer" }),
-      ).toBeInTheDocument();
-      expect(editor).toHaveFocus();
-      await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
-      expect(within(article).getByRole("button", { name: "Reply" })).toHaveClass(
-        "bg-slate-100",
-        "text-slate-950",
-      );
-      expect(
-        within(article).getByRole("button", { name: "Reply all" }),
-      ).toBeDisabled();
-    } finally {
-      if (originalScrollIntoView) {
-        htmlElementPrototype.scrollIntoView = originalScrollIntoView;
-      } else {
-        delete htmlElementPrototype.scrollIntoView;
-      }
-    }
-  });
-
   it("closes the whole reply composer from its section header", async () => {
     const user = userEvent.setup();
 

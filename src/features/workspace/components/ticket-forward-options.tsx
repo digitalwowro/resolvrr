@@ -16,19 +16,23 @@ export function TicketForwardOptions({
   onChange(draft: TicketCustomerForwardDraft): void;
 }) {
   return (
-    <div className="space-y-3 border-b border-indigo-100 px-4 pb-3">
-      <label className="grid grid-cols-[4rem_1fr] items-center gap-2 text-xs font-semibold text-slate-600">
+    <div
+      aria-label="Forward options"
+      className="w-full space-y-3"
+      role="group"
+    >
+      <label className="grid w-full min-w-0 grid-cols-[4rem_minmax(0,1fr)] items-center gap-2 text-xs font-semibold text-slate-600">
         Subject
         <input
           aria-label="Forward subject"
-          className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm font-normal text-slate-900 outline-none focus:border-indigo-500"
+          className="h-8 min-w-0 w-full rounded-md border border-slate-200 bg-white px-2 text-sm font-normal text-slate-900 outline-none focus:border-indigo-500"
           disabled={disabled}
           maxLength={500}
           onChange={(event) => onChange({ ...draft, subject: event.currentTarget.value })}
           value={draft.subject}
         />
       </label>
-      <label className="flex items-center gap-2 text-xs font-medium text-slate-700">
+      <label className="flex w-full items-center gap-2 text-xs font-medium text-slate-700">
         <input
           checked={draft.includeOriginal}
           disabled={disabled}
@@ -59,7 +63,7 @@ export function TicketForwardOptions({
         </fieldset>
       ) : null}
       {draft.includeOriginal && article ? (
-        <details className="rounded-md border border-slate-200 bg-white px-3 py-2">
+        <details className="w-full rounded-md border border-slate-200 bg-white px-3 py-2">
           <summary className="cursor-pointer text-xs font-medium text-slate-600">
             Preview original message
           </summary>

@@ -227,7 +227,7 @@ export function TicketThread({
           />
         </div>
       ) : null}
-      <div className="divide-y divide-slate-200">
+      <div>
         {articles.map((article, index) => (
           <div key={article.id} ref={index === 0 ? latestArticleRef : undefined}>
             <TicketThreadArticle

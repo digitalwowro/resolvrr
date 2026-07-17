@@ -41,8 +41,12 @@ describe("outbound signature preview", () => {
 
     await user.click(within(getCustomerArticle()).getByRole("button", { name: "Reply" }));
     await user.type(screen.getByRole("textbox", { name: "Reply" }), "Hello");
+    const editorShell = screen.getByRole("textbox", { name: "Reply" })
+      .parentElement?.parentElement;
     expect(screen.getByRole("button", { name: "Update" })).toBeDisabled();
-    expect(screen.getByText("Loading signature preview…")).toBeInTheDocument();
+    expect(editorShell).toContainElement(
+      screen.getByText("Loading signature preview…"),
+    );
 
     preview.resolve({
       signature: {
@@ -55,13 +59,17 @@ describe("outbound signature preview", () => {
     const signatureToggle = await screen.findByRole("button", {
       name: "Signature from Zammad",
     });
+    expect(editorShell).toContainElement(signatureToggle);
     expect(signatureToggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByText("Read-only")).toBeInTheDocument();
     expect(screen.queryByText("Agent signature")).not.toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole("button", { name: "Update" })).toBeEnabled());
-
     await user.click(signatureToggle);
     expect(signatureToggle).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText("Agent signature")).toBeInTheDocument();
+    expect(
+      screen.getByText("Agent signature").closest("[contenteditable='true']"),
+    ).toBeNull();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Update" })).toBeEnabled());
 
     await user.click(signatureToggle);
     expect(signatureToggle).toHaveAttribute("aria-expanded", "false");

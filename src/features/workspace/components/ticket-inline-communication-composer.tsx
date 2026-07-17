@@ -177,6 +177,16 @@ export function TicketInlineCommunicationComposer({
       styles={rephraseStyleOptions}
     />
   );
+  const signatureFooter =
+    mode !== "comment" && signaturePreview && onRetrySignaturePreview ? (
+      <TicketSignaturePreview
+        key={signaturePreview.status === "available"
+          ? signaturePreview.signature.contextVersion
+          : signaturePreview.status}
+        onRetry={onRetrySignaturePreview}
+        preview={signaturePreview}
+      />
+    ) : undefined;
 
   return (
     <div
@@ -197,18 +207,10 @@ export function TicketInlineCommunicationComposer({
         placeholder={mode === "comment"
           ? "Write a comment..."
           : mode === "forward" ? "Add a message..." : "Write a reply..."}
+        readOnlyFooter={signatureFooter}
         value={body}
         ref={editorRef}
       />
-      {mode !== "comment" && signaturePreview && onRetrySignaturePreview ? (
-        <TicketSignaturePreview
-          key={signaturePreview.status === "available"
-            ? signaturePreview.signature.contextVersion
-            : signaturePreview.status}
-          onRetry={onRetrySignaturePreview}
-          preview={signaturePreview}
-        />
-      ) : null}
       {message ? (
         <p className="mt-2 text-xs text-slate-600" role="status">
           {message}

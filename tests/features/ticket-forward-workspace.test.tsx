@@ -38,6 +38,48 @@ describe("TicketWorkspace email forwarding", () => {
     expect(screen.getByRole("textbox", { name: "Forward subject" })).toHaveValue("Cannot log in");
     expect(screen.getByRole("checkbox", { name: "Include original message" })).toBeChecked();
     expect(screen.getByRole("checkbox", { name: /report.pdf/u })).toBeChecked();
+    const options = screen.getByRole("group", { name: "Forward options" });
+    expect(options).toHaveClass("w-full");
+    expect(options).not.toHaveClass("border-b", "px-4");
+    expect(screen.getByRole("textbox", { name: "Forward subject" }))
+      .toHaveClass("w-full");
+    expect(screen.getByText("Preview original message").closest("details"))
+      .toHaveClass("w-full");
+  });
+
+  it("scrolls only the conversation when opening the Forward composer", async () => {
+    const user = userEvent.setup();
+    const scrollIntoView = vi.fn();
+    const scrollTo = vi.fn();
+    const prototype = window.HTMLElement.prototype as {
+      scrollIntoView?: HTMLElement["scrollIntoView"];
+      scrollTo?: HTMLElement["scrollTo"];
+    };
+    const originalScrollIntoView = prototype.scrollIntoView;
+    const originalScrollTo = prototype.scrollTo;
+    prototype.scrollIntoView =
+      scrollIntoView as unknown as HTMLElement["scrollIntoView"];
+    prototype.scrollTo = scrollTo as unknown as HTMLElement["scrollTo"];
+
+    try {
+      renderWorkspace({
+        articles: [forwardableArticle()],
+        customerForwards: true,
+      });
+      await user.click(
+        within(screen.getByRole("article")).getByRole("button", {
+          name: "Forward",
+        }),
+      );
+
+      await waitFor(() => expect(scrollTo).toHaveBeenCalled());
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    } finally {
+      if (originalScrollIntoView) prototype.scrollIntoView = originalScrollIntoView;
+      else delete prototype.scrollIntoView;
+      if (originalScrollTo) prototype.scrollTo = originalScrollTo;
+      else delete prototype.scrollTo;
+    }
   });
 
   it("submits reviewed recipients, exact subject, source context, and attachment selection", async () => {

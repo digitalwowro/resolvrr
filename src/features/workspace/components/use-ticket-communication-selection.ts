@@ -33,8 +33,21 @@ function sameSelection(
 function focusComposer() {
   requestAnimationFrame(() => {
     const composer = document.getElementById(composerId);
-    composer?.scrollIntoView?.({ behavior: "smooth", block: "start" });
-    composer?.querySelector<HTMLElement>("[contenteditable='true']")?.focus();
+    const scroller = composer?.closest<HTMLElement>(".ticket-detail-scroll");
+    if (composer && scroller && typeof scroller.scrollTo === "function") {
+      const composerRect = composer.getBoundingClientRect();
+      const scrollerRect = scroller.getBoundingClientRect();
+      scroller.scrollTo({
+        behavior: "smooth",
+        top: Math.max(
+          0,
+          scroller.scrollTop + composerRect.top - scrollerRect.top,
+        ),
+      });
+    }
+    composer
+      ?.querySelector<HTMLElement>("[contenteditable='true']")
+      ?.focus({ preventScroll: true });
   });
 }
 

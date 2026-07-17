@@ -45,6 +45,7 @@ type TicketRichTextEditorProps = {
   onChange(value: string): void;
   onRewriteSelectionChange?(active: boolean): void;
   placeholder: string;
+  readOnlyFooter?: ReactNode;
   value: string;
   contentKind?: "communication" | "signature";
 };
@@ -60,6 +61,7 @@ export const TicketRichTextEditor = forwardRef<TicketRichTextEditorHandle, Ticke
   onChange,
   onRewriteSelectionChange,
   placeholder,
+  readOnlyFooter,
   value,
   contentKind = "communication",
 }, ref) {
@@ -121,13 +123,6 @@ export const TicketRichTextEditor = forwardRef<TicketRichTextEditorHandle, Ticke
 
     setDefaultParagraphSeparator();
     editor.focus({ preventScroll: true });
-    if (typeof editor.scrollIntoView === "function") {
-      editor.scrollIntoView({
-        block: "center",
-        inline: "nearest",
-        behavior: "smooth",
-      });
-    }
   }, [autoFocus]);
 
   useEffect(() => {
@@ -294,6 +289,7 @@ export const TicketRichTextEditor = forwardRef<TicketRichTextEditorHandle, Ticke
         />
         {mentions.popup}
       </div>
+      {readOnlyFooter}
     </div>
   );
 });

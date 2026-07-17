@@ -35,6 +35,35 @@ function articles(): WorkspaceArticle[] {
 }
 
 describe("TicketWorkspace contextual replies", () => {
+  it("separates articles with thin direction rails and explicit item boundaries", () => {
+    const [latest, older] = articles();
+    renderWorkspace({
+      articles: [
+        latest!,
+        {
+          ...older!,
+          author: "Agent Smith",
+          direction: "outbound",
+        },
+      ],
+      customerReplies: true,
+    });
+
+    const inbound = screen.getByRole("article", {
+      name: "Customer reply from Maya Patel",
+    });
+    const outbound = screen.getByRole("article", {
+      name: "Agent reply from Agent Smith",
+    });
+
+    expect(inbound).toHaveClass("border-b", "border-slate-200");
+    expect(outbound).toHaveClass("border-b", "border-slate-200");
+    expect(inbound.querySelector("[data-article-rail]"))
+      .toHaveClass("w-px", "bg-indigo-500");
+    expect(outbound.querySelector("[data-article-rail]"))
+      .toHaveClass("w-px", "bg-slate-500");
+  });
+
   it("uses only the newest eligible source in the footer", () => {
     renderWorkspace({ articles: articles(), customerReplies: true });
     const footer = screen.getByRole("group", { name: "Ticket actions" });

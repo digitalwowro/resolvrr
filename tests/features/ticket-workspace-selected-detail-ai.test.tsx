@@ -75,6 +75,8 @@ describe("TicketWorkspace selected detail AI summary", () => {
     expect(await screen.findByText("AI summary")).toBeInTheDocument();
     expect(await screen.findByText(/Situation: Login issue/u)).toBeInTheDocument();
     expect(screen.getByText("Generated 2m ago")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "AI summary" }).parentElement)
+      .toHaveClass("pl-4", "pr-4");
     expect(
       screen.queryByText("AI can make mistakes. Please verify important details."),
     ).toBeNull();
