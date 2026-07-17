@@ -42,7 +42,12 @@ describe("TicketWorkspace selected detail AI summary", () => {
     render(
       <TicketWorkspace
         columns={defaultWorkspaceTicketColumns}
-        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        connections={[{
+          id: "workspace-1",
+          connectionId: "connection-1",
+          label: "Support",
+          active: true,
+        }]}
         detail={detailProps.detail}
         detailResult={detailProps.detailResult}
         listResult={availableList}
@@ -63,7 +68,9 @@ describe("TicketWorkspace selected detail AI summary", () => {
     await user.click(screen.getByRole("button", { name: "Generate AI summary" }));
 
     expect(summarizeTicketAction).toHaveBeenCalledWith({
+      helpdeskConnectionId: "connection-1",
       ticketExternalId: "ticket-1",
+      workspaceId: "workspace-1",
     });
     expect(await screen.findByText("AI summary")).toBeInTheDocument();
     expect(await screen.findByText(/Situation: Login issue/u)).toBeInTheDocument();
@@ -90,7 +97,12 @@ describe("TicketWorkspace selected detail AI summary", () => {
     render(
       <TicketWorkspace
         columns={defaultWorkspaceTicketColumns}
-        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        connections={[{
+          id: "workspace-1",
+          connectionId: "connection-1",
+          label: "Support",
+          active: true,
+        }]}
         detail={detailProps.detail}
         detailResult={detailProps.detailResult}
         initialTicketAiSummary={{
@@ -127,7 +139,9 @@ describe("TicketWorkspace selected detail AI summary", () => {
 
     expect(summarizeTicketAction).toHaveBeenCalledWith({
       forceRefresh: true,
+      helpdeskConnectionId: "connection-1",
       ticketExternalId: "ticket-1",
+      workspaceId: "workspace-1",
     });
   });
 
@@ -145,7 +159,11 @@ describe("TicketWorkspace selected detail AI summary", () => {
       },
       summary: "Situation: Ticket A only summary",
     }));
-    const loadTicketDetailAction = vi.fn(async () => secondDetail.detailResult);
+    const loadTicketDetailAction = vi.fn(async (ticketId: string) =>
+      ticketId === "ticket-1"
+        ? firstDetail.detailResult
+        : secondDetail.detailResult
+    );
     const initialWorkspaceOpenTabsState = {
       activePane: "ticket-1",
       openTabs: [row, highRow],
@@ -158,7 +176,12 @@ describe("TicketWorkspace selected detail AI summary", () => {
     render(
       <TicketWorkspace
         columns={defaultWorkspaceTicketColumns}
-        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        connections={[{
+          id: "workspace-1",
+          connectionId: "connection-1",
+          label: "Support",
+          active: true,
+        }]}
         detail={firstDetail.detail}
         detailResult={firstDetail.detailResult}
         initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
@@ -186,6 +209,16 @@ describe("TicketWorkspace selected detail AI summary", () => {
       .not.toBeInTheDocument();
     expect(screen.queryByText("No summary generated")).toBeNull();
     expect(screen.getByRole("button", { name: "Generate AI summary" }))
+      .toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: /#1001/u }));
+
+    expect(await screen.findByText(/Situation: Ticket A only summary/u))
+      .toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Refresh ticket" }));
+
+    expect(await screen.findByText(/Situation: Ticket A only summary/u))
       .toBeInTheDocument();
   });
 });

@@ -102,16 +102,60 @@ export async function zammadGetJson(
   return response.data;
 }
 
-export async function zammadGetBytes(
+export async function zammadPostJsonRead(
+  context: ProviderContext,
+  path: string,
+  body: unknown,
+): Promise<unknown> {
+  const baseUrl = zammadBaseUrl(context);
+  let response;
+  try {
+    response = await safeProviderJson(`${baseUrl}${path}`, {
+      allowedAddresses: context.requestSecurity.validatedAddresses,
+      body: JSON.stringify(body),
+      headers: {
+        Authorization: authHeader(context),
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": zammadUserAgent,
+      },
+      method: "POST",
+      signal: AbortSignal.timeout(defaultReadTimeoutMs),
+      maxResponseBytes: maxReadResponseBytes,
+    });
+  } catch (error) {
+    if (error instanceof ProviderJsonBodyError) {
+      throw new ProviderError(
+        "provider-data-mismatch",
+        "The helpdesk provider returned an unexpected response.",
+        false,
+        undefined,
+        error.reason,
+      );
+    }
+    throw new ProviderError(
+      "temporary-provider-failure",
+      "The helpdesk provider could not be reached.",
+      true,
+      undefined,
+      diagnosticCode(error),
+    );
+  }
+  if (response.status < 200 || response.status >= 300) {
+    throw classifyZammadResponse(response.status);
+  }
+  return response.data;
+}
+
+export async function zammadGetBinary(
   context: ProviderContext,
   path: string,
   maxResponseBytes: number,
   tooLargeDiagnosticCode = "provider-binary-too-large",
-): Promise<Uint8Array> {
+) {
   const baseUrl = zammadBaseUrl(context);
-  let response;
   try {
-    response = await safeProviderBytes(`${baseUrl}${path}`, {
+    const response = await safeProviderBytes(`${baseUrl}${path}`, {
       allowedAddresses: context.requestSecurity.validatedAddresses,
       headers: {
         Authorization: authHeader(context),
@@ -121,7 +165,12 @@ export async function zammadGetBytes(
       signal: AbortSignal.timeout(defaultReadTimeoutMs),
       maxResponseBytes,
     });
+    if (response.status < 200 || response.status >= 300) {
+      throw classifyZammadResponse(response.status);
+    }
+    return response;
   } catch (error) {
+    if (error instanceof ProviderError) throw error;
     if (error instanceof ProviderBinaryBodyError) {
       throw new ProviderError(
         "validation-failure",
@@ -139,10 +188,17 @@ export async function zammadGetBytes(
       diagnosticCode(error),
     );
   }
-  if (response.status < 200 || response.status >= 300) {
-    throw classifyZammadResponse(response.status);
-  }
-  return response.data;
+}
+
+export async function zammadGetBytes(
+  context: ProviderContext,
+  path: string,
+  maxResponseBytes: number,
+  tooLargeDiagnosticCode = "provider-binary-too-large",
+): Promise<Uint8Array> {
+  return (await zammadGetBinary(
+    context, path, maxResponseBytes, tooLargeDiagnosticCode,
+  )).data;
 }
 
 export async function zammadSendJson(

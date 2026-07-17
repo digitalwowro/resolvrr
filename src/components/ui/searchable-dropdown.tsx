@@ -39,6 +39,7 @@ type SearchableDropdownProps = {
   className?: string;
   triggerClassName?: string;
   menuClassName?: string;
+  selectedDisplay?: DropdownOption;
 };
 
 function initialHighlightIndex(options: VisibleOption[]): number {
@@ -58,6 +59,7 @@ export function SearchableDropdown({
   className,
   triggerClassName,
   menuClassName,
+  selectedDisplay,
 }: SearchableDropdownProps) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -65,7 +67,8 @@ export function SearchableDropdown({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const selected = options.find((option) => option.value === value);
+  const selected = options.find((option) => option.value === value) ??
+    (selectedDisplay?.value === value ? selectedDisplay : undefined);
 
   const visibleOptions = useMemo(
     () => visibleOptionsFor(options, query),

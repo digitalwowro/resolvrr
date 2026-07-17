@@ -91,6 +91,82 @@ describe("Zammad notifications", () => {
     ]);
   });
 
+  it("accepts Zammad's direct ticket response during notification enrichment", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [
+          {
+            id: 7,
+            object: "Ticket",
+            o_id: 42,
+            seen: false,
+            type: "update",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: rawTicket,
+      });
+
+    await expect(
+      zammadProviderPlugin.listNotifications?.(providerContext()),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        id: "7",
+        ticketExternalId: "42",
+        ticketNumber: "42042",
+        ticketTitle: "Cannot log in",
+      }),
+    ]);
+  });
+
+  it("keeps valid notifications when another ticket is unavailable", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [
+          {
+            id: 6,
+            object: "Ticket",
+            o_id: 41,
+            seen: false,
+            type: "update",
+          },
+          {
+            id: 7,
+            object: "Ticket",
+            o_id: 42,
+            seen: false,
+            type: "update",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        status: 404,
+        headers: new Headers(),
+        data: {},
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: rawTicket,
+      });
+
+    await expect(
+      zammadProviderPlugin.listNotifications?.(providerContext()),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        id: "7",
+        ticketExternalId: "42",
+      }),
+    ]);
+  });
+
   it("marks individual notifications and all notifications read", async () => {
     mockedSafeProviderJson.mockResolvedValue({
       status: 200,

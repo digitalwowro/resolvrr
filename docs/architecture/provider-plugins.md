@@ -174,6 +174,19 @@ images may be read internally to preserve an included original, but cannot be
 selected as attachments. The forward payload intentionally omits `in_reply_to`
 and `references`; Zammad alone performs outbound channel delivery.
 
+Outbound signatures use a provider-neutral reviewed signature context. A workspace
+admin selects no signature, a Resolvrr template, or provider-managed rendering.
+For provider-managed rendering, Zammad alone resolves the current group/user
+signature. The provider adapter uses the form-updater signature field on current
+Zammad versions and the dedicated ticket-signature query on Zammad 6.5 when that
+field is absent. Raw signature IDs, GraphQL fields, endpoints, and attachment
+paths remain in the provider. Signature images are either bounded,
+MIME-checked provider reads or bounded provider-rendered image data, and are
+inlined only into the reviewed article body. At submit, Resolvrr resolves the
+signature again and rejects a stale context before posting the article to
+Zammad. Resolvrr never delivers email; Zammad remains solely responsible for
+delivery.
+
 ## Ticket Read Observability
 
 Provider read and write implementations should measure their own upstream
@@ -188,6 +201,54 @@ those calls must be orchestrated in the provider/read service layer and added as
 explicit measured phases. Lookup lists are request-scoped reads; the app may
 reuse them only through the existing active-session selected-ticket detail
 cache. UI components must not introduce provider fetch fan-out.
+
+## Ticket Taskbar Synchronization
+
+`ticket-taskbar:sync` is an optional provider capability. Core exposes only an
+ordered set of ticket external IDs, active-selection reliability, a positively
+identified active ticket, an opaque contract version, and idempotent
+open/close/activate/reorder commands.
+Provider task IDs, callback names, parameter fields, endpoint paths, and
+non-ticket task types never cross the plugin boundary.
+
+The Zammad implementation pins and validates its undocumented REST taskbar
+contract. Connection validation performs a best-effort compatibility probe;
+runtime validation is authoritative and disables synchronization without
+affecting ticket access when the contract is incompatible. Basic Auth cannot
+authenticate Zammad's session-cookie taskbar subscription, so the workspace
+reconciles every 60 seconds and when the browser regains focus.
+
+Selecting List is an explicit provider-neutral `deactivate` intent. It shares
+the durable active-selection outbox key with ticket activation, so the latest
+local selection wins and retries safely. Zammad maps it to `active: false` only
+for currently active ticket taskbar records; non-ticket taskbar records remain
+untouched. While activation/deactivation is pending, remote active-ticket state
+cannot replace the local pane.
+
+Resolvrr persists each explicit local taskbar action before attempting a
+provider write. Open, close, activate, and reorder operations are idempotent,
+remain marked unsynchronized after failure, and are retried. State and pending
+operations are scoped to the signed-in user's personal connection and reset on
+identity-version change; membership never grants access to another user's
+taskbar or credentials.
+Per-connection provider synchronization is serialized with a PostgreSQL
+advisory lock so multiple Resolvrr windows cannot race provider writes. The
+outbox uses that locked transaction's database client, avoiding pool starvation
+from lock waiters. Browser retries stop once the server reports the action as
+durably staged; later reconciliation processes the outbox without reclassifying
+an old retry as a newer explicit action.
+Activation idempotently creates a missing ticket task before selecting it.
+It deactivates other ticket tasks before activating the target, avoiding a
+transient multiple-active state. Every provider command is reread and verified
+before its durable outbox entry is confirmed; an unconfirmed write remains
+retryable.
+Closing the active tab durably selects its local successor or deactivates ticket
+selection when none remains. Normal in-flight commands are not presented as
+failures; only a rejected or durably pending command shows synchronization
+status. Requests carry the originating personal connection through the server
+boundary together with its identity version and are ownership-checked there, so
+a queued action cannot drift to a newly selected workspace or reconnected
+identity. An incompatible runtime contract clears its disabled outbox.
 
 ## Zammad Boundary
 
@@ -206,8 +267,22 @@ advertises `ticket:list`,
 `ticket:update-link-relations`, `ticket:update-subscription`,
 `ticket:add-internal-note`, `ticket:add-customer-reply`,
 `ticket:forward-customer-email`,
-`lookup:link-targets`, `lookup:assignable-users`, `lookup:groups`, and
-`lookup:tags`.
+`lookup:link-targets`, `lookup:assignable-users`, `lookup:groups`,
+`lookup:tags`, `lookup:mentionable-users`, and `ticket-taskbar:sync`.
+Assignable-owner lookup is contextual: core supplies only provider-neutral
+group and optional user external IDs. Zammad maps that intent to
+`ticket.agent` users with `full` access to any requested group, paginates the
+provider search rather than truncating at 50 records, and repeats the same
+check against fresh ticket state before an owner/group mutation. Raw Zammad
+access names and query parameters stay provider-owned.
+Zammad may mask `group_ids` in otherwise valid user-search results, so the
+provider treats the server-side full-access search constraint as authoritative
+instead of incorrectly post-filtering on optional response associations.
+Mention lookup is a separate contextual capability. Zammad resolves only active
+agents with read access to the staged ticket group. Resolvrr keeps mention
+tokens provider-neutral until the final article write; Zammad then validates the
+native article mention, creates the notification, and subscribes the mentioned
+agent. Resolvrr does not call a second mention or subscription mutation.
 Subscription fields still use the stable empty canonical shapes documented in
 the ticket contract when their provider-neutral capabilities are not advertised.
 Zammad global tag suggestions use the admin-only global tag list endpoint;
@@ -218,11 +293,22 @@ still be denied by instance policy at mutation time; that surfaces through the
 provider-safe metadata mutation error path.
 Zammad-backed sorting is implemented through the provider's ticket search
 endpoint with provider-neutral sort keys translated to Zammad sort fields.
+Relationship display fields are the exception: Zammad's `owner_id`,
+`customer_id`, and `group_id` order opaque IDs rather than visible labels, so
+the provider rejects those sort keys. The workspace retrieves the complete
+filtered result without a relationship sort and applies provider-neutral
+display-label ordering before paginating the visible in-memory window.
 Every normal Zammad ticket collection uses the search endpoint with a
 provider-owned exclusion for the protected `merged` state, including otherwise
 unfiltered lists. The same visibility rule applies to buckets, link targets,
 related links, and notification ticket results before they cross the provider
 boundary.
+Notification enrichment accepts both Zammad's expanded asset envelope and its
+validated direct ticket-object response. Ticket references are resolved
+independently: an individually deleted or inaccessible ticket is omitted
+without suppressing valid notifications, while authentication, transport, and
+schema failures still fail the notification read instead of producing a
+misleading empty list.
 Zammad-backed total counts and state/priority grouped bucket counts use the
 documented search `with_total_count=true` response and map only
 provider-neutral `totalCount` and bucket metadata out of the provider layer.

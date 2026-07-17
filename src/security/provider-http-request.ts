@@ -11,6 +11,7 @@ export type SafeProviderFetchOptions = {
 };
 
 export type SafeProviderJsonOptions = SafeProviderFetchOptions & {
+  captureErrorJson?: boolean;
   maxResponseBytes: number;
 };
 
@@ -19,6 +20,7 @@ export type SafeProviderJsonResult = {
   statusText?: string;
   headers: Headers;
   data?: unknown;
+  errorData?: unknown;
 };
 
 export type ProviderJsonBodyErrorReason = "invalid-json" | "size-limit";
@@ -151,9 +153,49 @@ export function requestPinnedJsonAddress(
         const status = response.statusCode ?? 0;
         const headers = headersFromIncoming(response.headers);
         if (status < 200 || status >= 300) {
-          response.resume();
+          if (!options.captureErrorJson) {
+            response.resume();
+            response.on("end", () => {
+              resolve({ status, statusText: response.statusMessage, headers });
+            });
+            response.on("error", reject);
+            return;
+          }
+          const chunks: Buffer[] = [];
+          const errorResponseLimit = Math.min(
+            options.maxResponseBytes,
+            16 * 1024,
+          );
+          let receivedBytes = 0;
+          let exceededLimit = false;
+          response.on("data", (chunk: Buffer | string) => {
+            if (exceededLimit) {
+              return;
+            }
+            const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+            receivedBytes += buffer.byteLength;
+            if (receivedBytes > errorResponseLimit) {
+              exceededLimit = true;
+              chunks.length = 0;
+              return;
+            }
+            chunks.push(buffer);
+          });
           response.on("end", () => {
-            resolve({ status, statusText: response.statusMessage, headers });
+            let errorData: unknown;
+            if (!exceededLimit && chunks.length > 0) {
+              try {
+                errorData = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+              } catch {
+                // Provider error bodies are optional and may be plain text.
+              }
+            }
+            resolve({
+              status,
+              statusText: response.statusMessage,
+              headers,
+              errorData,
+            });
           });
           response.on("error", reject);
           return;

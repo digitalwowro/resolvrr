@@ -7,6 +7,7 @@ import type {
   TicketSort,
   TicketSortKey,
 } from "@/core/providers";
+import { isCompleteResultTicketSortKey } from "@/core/ticket-list-query";
 import { ticketPriorities, ticketStates } from "@/core/tickets";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
@@ -105,9 +106,12 @@ function ticketListQuery(
 
   return {
     ...(request.cursor ? { cursor: request.cursor } : {}),
-    ...(request.sort
+    ...(request.sort && !isCompleteResultTicketSortKey(
+      workspaceSortKeyMap[request.sort.key],
+    )
       ? { sort: ticketListSort(request.sort) }
-      : savedView?.query.sort
+      : savedView?.query.sort &&
+          !isCompleteResultTicketSortKey(savedView.query.sort.key)
         ? { sort: savedView.query.sort }
         : {}),
     ...(providerGroup && !request.bucketValue
@@ -186,6 +190,14 @@ export async function loadWorkspaceTicketListPageAction(
     groups: workspaceTicketListGroups(result.buckets),
     appliedGroupBy: request.group ?? savedView?.query.group?.key,
     appliedSavedViewId: request.savedViewId ?? allTicketsSavedViewId,
-    appliedSort: request.sort ?? workspaceSort(savedView?.query.sort),
+    appliedSort:
+      request.sort && !isCompleteResultTicketSortKey(
+        workspaceSortKeyMap[request.sort.key],
+      )
+        ? request.sort
+        : savedView?.query.sort &&
+            !isCompleteResultTicketSortKey(savedView.query.sort.key)
+          ? workspaceSort(savedView.query.sort)
+          : undefined,
   };
 }

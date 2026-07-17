@@ -25,6 +25,7 @@ export type TicketCommunicationCapabilities = {
 export type TicketCommunicationErrorReason =
   | TicketReadUnavailableReason
   | "invalid-input"
+  | "invalid-mention"
   | "invalid-recipient"
   | "forward-context-stale"
   | "forward-context-unavailable"
@@ -33,6 +34,8 @@ export type TicketCommunicationErrorReason =
   | "invalid-forward-subject"
   | "reply-context-stale"
   | "reply-context-unavailable"
+  | "signature-context-stale"
+  | "signature-context-unavailable"
   | "delivery-uncertain"
   | "unsupported-reply-intent";
 

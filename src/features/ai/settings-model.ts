@@ -44,6 +44,7 @@ export type WorkspaceAiSettingsActionCode =
   | "not-admin"
   | "provider-auth-failed"
   | "provider-rate-limited"
+  | "provider-request-rejected"
   | "provider-temporary-failure"
   | "user-ai-not-required";
 

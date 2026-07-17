@@ -39,6 +39,8 @@ added, moved, renamed, or removed.
 - `eslint.config.mjs`: flat ESLint configuration for TypeScript and Next.
 - `next-env.d.ts`: Next-maintained TypeScript references.
 - `next.config.ts`: Next configuration, including browser-facing dev origin handling.
+- `playwright.config.ts`: opt-in, Chromium-only browser verification with serial execution,
+  gitignored local authentication state, bounded artifacts, and no automatic server startup.
 - `package-lock.json`: npm dependency lockfile, created by `npm install`.
 - `package.json`: npm scripts and pinned application dependencies.
 - `postcss.config.mjs`: Tailwind CSS PostCSS integration.
@@ -138,8 +140,11 @@ added, moved, renamed, or removed.
       query defaults, storage helpers, and metadata.
     - `ticket-list-query.ts` (`src/core/ticket-list-query.ts`): provider-neutral list query, sort,
       count, grouping, pagination, result contracts, and normalization.
-    - `ticket-lookups.ts` (`src/core/ticket-lookups.ts`): provider-neutral lookup option, lookup
-      result, and request-scoped lookup cache-policy contracts.
+    - `ticket-lookups.ts` (`src/core/ticket-lookups.ts`): provider-neutral lookup option,
+      contextual assignable-user input, lookup result, and request-scoped lookup cache-policy
+      contracts.
+    - `ticket-mentions.ts` (`src/core/ticket-mentions.ts`): provider-neutral group-scoped
+      mention lookup input and option contracts.
     - `ticket-inline-images.ts` (`src/core/ticket-inline-images.ts`): provider-neutral inline raster
       locator, safe MIME, byte result, and same-origin route-path contracts.
     - `ticket-replies.ts` (`src/core/ticket-replies.ts`): focused provider-neutral contextual
@@ -148,6 +153,10 @@ added, moved, renamed, or removed.
       context and reviewed forward input contracts.
     - `ticket-lifecycle.ts` (`src/core/ticket-lifecycle.ts`): observable, selectable, and mutable
       ticket state types plus provider-neutral merged replacement/retirement contracts.
+    - `ticket-taskbar.ts` (`src/core/ticket-taskbar.ts`): provider-neutral ordered ticket taskbar
+      snapshot, idempotent command, and synchronization result contracts.
+    - `ticket-signatures.ts` (`src/core/ticket-signatures.ts`): provider-neutral signature source,
+      reviewed context, provider request/result, and resolved signature contracts.
     - `tickets.ts` (`src/core/tickets.ts`): canonical ticket values and provider-neutral
       ticket/thread/link/subscription/mutation/communication types.
   - `src/data`: server-only database access boundaries.
@@ -174,9 +183,15 @@ added, moved, renamed, or removed.
       views repository mappers runtime module.
     - `saved-views-repository.ts` (`src/data/saved-views-repository.ts`): Prisma-backed saved
       view/preference repository and seeded-view dismissal persistence.
+    - `saved-view-selection-repository.ts` (`src/data/saved-view-selection-repository.ts`):
+      Prisma-backed per-user/per-workspace active saved-view UI preference repository.
     - `ticket-detail-cache-repository.ts` (`src/data/ticket-detail-cache-repository.ts`):
       Prisma-backed selected-ticket detail cache repository that encrypts normalized detail/thread
       payloads and keeps cache identity/freshness metadata scoped to user and connection.
+    - `taskbar-sync-repository.ts` (`src/data/taskbar-sync-repository.ts`): Prisma-backed
+      personal-connection taskbar compatibility state and deduplicated retryable local intent.
+    - `taskbar-sync-lock.ts` (`src/data/taskbar-sync-lock.ts`): PostgreSQL advisory lock that
+      serializes taskbar provider reconciliation per personal connection across app processes.
     - `user-management-repository.ts` (`src/data/user-management-repository.ts`): Prisma-backed
       admin user-management repository for listing users, workspace memberships, password reset,
       owner transfer, hard delete, and deactivate/scrub workflows.
@@ -233,7 +248,9 @@ added, moved, renamed, or removed.
       - `rephrase-style-service.ts` (`src/features/ai/rephrase-style-service.ts`): rephrase style
         listing, prompt decryption, effective style resolution, validation, and permission helpers.
       - `provider-config.ts` (`src/features/ai/provider-config.ts`): provider-neutral runtime AI
-        provider configuration result types.
+        provider configuration result types, including the optional opaque configuration version.
+      - `provider-error-metadata.ts` (`src/features/ai/provider-error-metadata.ts`): extracts only
+        bounded provider error code/type tokens from opt-in error JSON for metadata-only telemetry.
       - `settings-actions.ts` (`src/features/ai/settings-actions.ts`): authenticated server actions
         for loading and saving active-workspace AI settings.
       - `settings-form.ts` (`src/features/ai/settings-form.ts`): FormData parsing and HTTPS base URL
@@ -262,13 +279,17 @@ added, moved, renamed, or removed.
         Completions and Anthropic-compatible Messages HTTP adapters for single text generation
         requests, with pinned-address provider HTTP, safe error mapping, and no prompt/output
         logging.
+      - `text-generation-errors.ts` (`src/features/ai/text-generation-errors.ts`): provider-neutral
+        AI HTTP status classification that distinguishes authentication from request rejection.
       - `ticket-summary-actions.ts` (`src/features/ai/ticket-summary-actions.ts`): authenticated
-        server action that reloads selected-ticket detail server-side before summary generation.
+        server action that validates the originating workspace/personal connection, reloads
+        selected-ticket detail, and performs one controlled auth-recovery retry.
       - `ticket-summary-context.ts` (`src/features/ai/ticket-summary-context.ts`): prompt-context
         builder that converts provider-neutral ticket detail and sanitized article HTML into
         bounded plain text.
       - `ticket-summary-hydration.ts` (`src/features/ai/ticket-summary-hydration.ts`): server-side
-        initial selected-ticket summary cache hydration for route loads without AI generation.
+        selected-ticket summary cache hydration for coordinated detail loads without AI
+        generation.
       - `ticket-summary-service.ts` (`src/features/ai/ticket-summary-service.ts`): read-only
         selected-ticket summary orchestration over AI runtime config and prompt context.
     - `src/features/auth`: auth server actions and form messages.
@@ -326,10 +347,17 @@ added, moved, renamed, or removed.
         normalized Lucide icon-name validation for saved-view appearance.
       - `manage-service.ts` (`src/features/saved-views/manage-service.ts`): manage service feature
         module.
+      - `owner-group-compatibility.ts`
+        (`src/features/saved-views/owner-group-compatibility.ts`): positive-group scope derivation
+        and fail-closed owner-access validation shared by the View editor and server action.
       - `query-service.ts` (`src/features/saved-views/query-service.ts`): query service feature
         module.
       - `repository.ts` (`src/features/saved-views/repository.ts`): saved view repository contract
         and stored view/preference shapes.
+      - `selection-actions.ts` (`src/features/saved-views/selection-actions.ts`): validates and
+        persists the current user's active workspace saved-view selection.
+      - `selection-preference.ts` (`src/features/saved-views/selection-preference.ts`): versioned,
+        provider-neutral selected-view UI preference contract and storage normalization.
       - `service-types.ts` (`src/features/saved-views/service-types.ts`): type contracts for
         service.
       - `service.ts` (`src/features/saved-views/service.ts`): saved view query sanitization,
@@ -337,9 +365,11 @@ added, moved, renamed, or removed.
       - `settings-model.ts` (`src/features/saved-views/settings-model.ts`): serializable Settings
         Views data and action result contracts.
       - `workspace.ts` (`src/features/saved-views/workspace.ts`): workspace saved-view option
-        mapping and unsupported-view flagging.
+        mapping, unsupported-view flagging, and persisted-selection fallback rules.
     - `src/features/settings`: settings feature boundary.
       - `index.ts` (`src/features/settings/index.ts`): settings feature boundary.
+    - `src/features/signatures`: workspace signature policy, encrypted template management,
+      variable rendering, preview actions, and stale-context revalidation.
     - `src/features/tickets`: provider-neutral ticket read, lookup, metadata mutation,
       communication, and adapter workflows.
       - `actions.ts` (`src/features/tickets/actions.ts`): server action for staged selected-ticket
@@ -405,6 +435,8 @@ added, moved, renamed, or removed.
       - `list-query-guardrails.ts` (`src/features/tickets/list-query-guardrails.ts`):
         provider-neutral list query capability derivation and guardrail checks for unsupported or
         expensive query requests before provider dispatch.
+      - `lookup-actions.ts` (`src/features/tickets/lookup-actions.ts`): authenticated, strictly
+        normalized contextual assignable-owner and mentionable-agent server actions.
       - `metadata-action-input-values.ts` (`src/features/tickets/metadata-action-input-values.ts`):
         metadata action input values feature module.
       - `metadata-action-input.ts` (`src/features/tickets/metadata-action-input.ts`): server-side
@@ -424,10 +456,11 @@ added, moved, renamed, or removed.
         mutation capabilities, selected-ticket update payload shape, allowed update payload/slice
         keys, pending-date validation, result/error model, and action state types.
       - `provider-dispatch.ts` (`src/features/tickets/provider-dispatch.ts`): capability-gated
-        ticket read, lookup, and metadata mutation dispatch plus provider error to unavailable-state
-        mapping.
+        ticket read and metadata mutation dispatch plus provider error to unavailable-state mapping.
       - `provider-lookup-dispatch.ts` (`src/features/tickets/provider-lookup-dispatch.ts`): provider
         lookup dispatch feature module.
+      - `ticket-lookup-service.ts` (`src/features/tickets/ticket-lookup-service.ts`): capability-
+        gated contextual owner, mentionable-agent, and supporting ticket lookup coordination.
       - `read-model.ts` (`src/features/tickets/read-model.ts`): provider-neutral ticket read result,
         unavailable-state, metadata mutation and communication capability exposure, and default list
         query types.
@@ -444,6 +477,13 @@ added, moved, renamed, or removed.
       - `workspace-adapter.ts` (`src/features/tickets/workspace-adapter.ts`): canonical
         ticket/detail to workspace render model adapter, including formatted and ISO pending-time
         values for selected-ticket metadata drafts.
+    - `src/features/taskbar-sync`: provider-neutral durable taskbar synchronization workflow.
+      - `actions.ts` (`src/features/taskbar-sync/actions.ts`): authenticated strict taskbar sync
+        server action with originating personal-connection validation.
+      - `model.ts` (`src/features/taskbar-sync/model.ts`): strict local action input and
+        serializable synchronization result contracts.
+      - `service.ts` (`src/features/taskbar-sync/service.ts`): personal provider-context loading,
+        durable outbox processing, compatibility handling, retry state, and snapshot mapping.
     - `src/features/workspace`: workspace feature entrypoint, actions, and client-side state
       boundaries.
       - `src/features/workspace/components`: workspace UI composition and local client state
@@ -542,8 +582,8 @@ added, moved, renamed, or removed.
           containment, and collapsed quote/signature disclosure.
         - `ticket-assignment-fields.tsx`
           (`src/features/workspace/components/ticket-assignment-fields.tsx`): owner/group assignment
-          sidebar controls that render editable dropdowns only when the provider advertises write
-          capabilities and lookup options are available.
+          sidebar controls with group-dependent full-access owner lookup and staged compatibility
+          feedback.
         - `ticket-column-visibility-action.tsx`
           (`src/features/workspace/components/ticket-column-visibility-action.tsx`): reusable column
           visibility menu used by the list toolbar.
@@ -552,7 +592,8 @@ added, moved, renamed, or removed.
           loading shell workspace UI component.
         - `ticket-detail-header.tsx`
           (`src/features/workspace/components/ticket-detail-header.tsx`): selected-ticket header
-          with priority, state, customer identity, ticket link, refresh, and summary controls.
+          with priority, state, customer identity, ticket link, refresh, and summary controls that
+          preserve generated results in the client detail cache.
         - `ticket-detail-sidebar.tsx`
           (`src/features/workspace/components/ticket-detail-sidebar.tsx`): production metadata
           sidebar shell for selected-ticket subscription, tags, links, and editor-provided metadata
@@ -562,8 +603,22 @@ added, moved, renamed, or removed.
         - `ticket-inline-communication-composer.tsx`
           (`src/features/workspace/components/ticket-inline-communication-composer.tsx`):
           ticket-level Reply/Forward/Comment rich-text composer above the newest article. It
-          stages text in the selected-ticket draft, exposes draft-only proofread/rephrase controls,
-          and has no local Send/Cancel footer.
+          keeps outbound signature previews read-only and separate from the authored body, stages
+          text in the selected-ticket draft, exposes draft-only proofread/rephrase controls, and
+          has no local Send/Cancel footer.
+        - `ticket-ai-editor-toolbar.tsx`
+          (`src/features/workspace/components/ticket-ai-editor-toolbar.tsx`): right-aligned
+          Proofread, configured-style Rephrase menu, and inert AI Reply placeholder for the
+          ticket communication editor.
+        - `use-ticket-mention-suggestions.tsx`
+          (`src/features/workspace/components/use-ticket-mention-suggestions.tsx`):
+          staged-group-aware `@@` detection, debounced mention lookup, accessible option
+          navigation, and provider-neutral non-editable mention insertion.
+        - `ticket-signature-preview.tsx` and `use-ticket-signature-preview.ts`: exact reviewed
+          signature preview, collapsed accessible disclosure, group-change refresh, retry state,
+          and Update readiness coordination.
+        - `workspace-settings-signatures-section.tsx`: admin signature-source selection and
+          Resolvrr default/group template editor with safe variables and bounded images.
         - `ticket-communication-draft-persistence.ts`
           (`src/features/workspace/components/ticket-communication-draft-persistence.ts`):
           versioned browser-local IndexedDB persistence for one contextual communication draft and
@@ -580,6 +635,12 @@ added, moved, renamed, or removed.
         - `ticket-list-pager-rows.ts`
           (`src/features/workspace/components/ticket-list-pager-rows.ts`): list pager request,
           identity, row append, and refreshed-baseline merge helpers.
+        - `ticket-list-first-page-load.ts`
+          (`src/features/workspace/components/ticket-list-first-page-load.ts`): safe first-page and
+          generic list-page action wrappers used by the workspace pager.
+        - `ticket-list-pager-complete-values.ts`
+          (`src/features/workspace/components/ticket-list-pager-complete-values.ts`): derives the
+          active rows, counts, and incremental-window controls for complete-result display sorts.
         - `ticket-list-authoritative-refresh.ts`
           (`src/features/workspace/components/ticket-list-authoritative-refresh.ts`): replaces
           stale saved-view rows through one coordinated provider refresh while re-fetching every
@@ -619,6 +680,8 @@ added, moved, renamed, or removed.
         - `ticket-pending-date-time-selector.tsx`
           (`src/features/workspace/components/ticket-pending-date-time-selector.tsx`): ticket
           pending date time selector workspace UI component.
+        - `ticket-pending-date-presets.ts` and `ticket-pending-date-preset-row.tsx`:
+          local-calendar preset arithmetic and the compact pending-date quick-select row.
         - `ticket-pending-date-time.ts`
           (`src/features/workspace/components/ticket-pending-date-time.ts`): pending date/time
           parsing, formatting, default, and future-date helpers.
@@ -675,6 +738,9 @@ added, moved, renamed, or removed.
         - `ticket-tab-metadata.ts` (`src/features/workspace/components/ticket-tab-metadata.ts`):
           small helper for patching open ticket tab display metadata after successful staged
           updates.
+        - `taskbar-sync-notice.tsx`
+          (`src/features/workspace/components/taskbar-sync-notice.tsx`): incompatible-contract and
+          unsaved-draft remote-close conflict notices.
         - `ticket-table-cells.tsx` (`src/features/workspace/components/ticket-table-cells.tsx`):
           production state and priority display cells driven by canonical ticket labels and keys.
         - `ticket-table-grid.tsx` (`src/features/workspace/components/ticket-table-grid.tsx`):
@@ -760,6 +826,9 @@ added, moved, renamed, or removed.
           workspace-only state for active pane, open ticket tabs, recently viewed tabs, tab metadata
           patches after successful staged updates, tab orientation, visible columns, row selection,
           grouping, sorting, merged-ticket replacement/notice coordination, and route navigation.
+        - `ticket-workspace-tab-reconciliation.ts`
+          (`src/features/workspace/components/ticket-workspace-tab-reconciliation.ts`): pure
+          provider-order, protected-local-tab, active fallback, and local reorder helpers.
         - `ticket-merge-notice.tsx`
           (`src/features/workspace/components/ticket-merge-notice.tsx`): non-modal merged-source to
           survivor workspace notice.
@@ -775,11 +844,15 @@ added, moved, renamed, or removed.
           capabilities into approved production workspace components.
         - `use-ticket-detail-loader.ts`
           (`src/features/workspace/components/use-ticket-detail-loader.ts`): in-memory
-          per-workspace-session selected-ticket detail cache and client detail loader for
-          post-hydration row opens.
+          per-workspace-session selected-ticket detail and AI-summary cache plus client detail
+          loader for post-hydration row opens.
         - `use-ticket-list-group-loader.ts`
           (`src/features/workspace/components/use-ticket-list-group-loader.ts`): use ticket list
           group loader workspace helper module.
+        - `use-complete-ticket-list-sort.ts`
+          (`src/features/workspace/components/use-complete-ticket-list-sort.ts`): loads every
+          matching provider page for relationship display-name sorts, orders the complete result,
+          and exposes it through the existing incremental list window.
         - `use-ticket-list-pager.ts` (`src/features/workspace/components/use-ticket-list-pager.ts`):
           in-memory active-workspace list pager for appending provider-backed ungrouped list pages
           and reloading page 1 for provider-backed sort changes or state/priority grouped buckets
@@ -788,6 +861,10 @@ added, moved, renamed, or removed.
         - `use-ticket-list-silent-refresh.ts`
           (`src/features/workspace/components/use-ticket-list-silent-refresh.ts`): use ticket list
           silent refresh workspace helper module.
+        - `use-ticket-list-server-sync.ts`
+          (`src/features/workspace/components/use-ticket-list-server-sync.ts`): reconciles incoming
+          server list snapshots while preserving active provider sort and requesting an
+          authoritative sorted refresh.
         - `use-ticket-workspace-auto-refresh.ts`
           (`src/features/workspace/components/use-ticket-workspace-auto-refresh.ts`): use ticket
           workspace auto refresh workspace helper module.
@@ -800,6 +877,42 @@ added, moved, renamed, or removed.
         - `use-ticket-workspace-tabs-state.ts`
           (`src/features/workspace/components/use-ticket-workspace-tabs-state.ts`): use ticket
           workspace tabs state workspace helper module.
+        - `use-ticket-taskbar-sync.ts`
+          (`src/features/workspace/components/use-ticket-taskbar-sync.ts`): 60-second/focus
+          reconciliation, coalesced focus work, latest-intent queueing, active propagation, draft
+          protection, personal-connection binding, and pending status client hook.
+        - `use-ticket-taskbar-polling.ts`
+          (`src/features/workspace/components/use-ticket-taskbar-polling.ts`): focused visible-page
+          interval and browser-focus reconciliation lifecycle.
+        - `ticket-taskbar-hydration.ts`
+          (`src/features/workspace/components/ticket-taskbar-hydration.ts`): remote ticket-task
+          hydration, merged-source replacement mapping, and phased provider correction commands.
+        - `ticket-taskbar-runtime.ts`
+          (`src/features/workspace/components/ticket-taskbar-runtime.ts`): isolated per-user,
+          workspace, personal-connection, and identity-version queues and merge-correction state.
+        - `ticket-communication-draft-runtime.ts`
+          (`src/features/workspace/components/ticket-communication-draft-runtime.ts`): synchronous
+          per-scope draft presence and ordered IndexedDB work used to close the remote-tab/draft
+          persistence race.
+        - `ticket-taskbar-sync-requests.ts`
+          (`src/features/workspace/components/ticket-taskbar-sync-requests.ts`): focused local
+          request deduplication, retry-state, ticket-ID, and active-tab cap rules.
+        - `ticket-taskbar-sync-types.ts`
+          (`src/features/workspace/components/ticket-taskbar-sync-types.ts`): client taskbar action
+          and hook option contracts with mandatory personal-connection and identity arguments.
+        - `use-synchronized-ticket-workspace-actions.ts`
+          (`src/features/workspace/components/use-synchronized-ticket-workspace-actions.ts`):
+          focused controller that pairs local open/close/activate/reorder behavior with durable
+          taskbar commands.
+        - `use-saved-view-settings-data.ts`
+          (`src/features/workspace/components/use-saved-view-settings-data.ts`): one-time Views
+          provider lookup enrichment over immediately available saved-view definitions.
+        - `use-saved-view-owner-compatibility.ts`
+          (`src/features/workspace/components/use-saved-view-owner-compatibility.ts`): positive
+          group-dependent owner option loading and incompatible View-condition feedback.
+        - `use-ticket-owner-lookup.ts`
+          (`src/features/workspace/components/use-ticket-owner-lookup.ts`): race-safe owner lookup
+          state for staged ticket Group changes.
         - `workspace-connection-form.tsx`
           (`src/features/workspace/components/workspace-connection-form.tsx`): workspace connection
           form workspace UI component.
@@ -916,6 +1029,11 @@ added, moved, renamed, or removed.
           plus history replacement helpers for local tab navigation.
       - `actions.ts` (`src/features/workspace/actions.ts`): server actions for workspace-owned UI
         state, including active-workspace scoped persisted open tabs.
+      - `ticket-detail-hydration-action.ts`
+        (`src/features/workspace/ticket-detail-hydration-action.ts`): authenticated coordinated
+        detail and cache-only AI summary hydration for tickets opened after the initial route.
+      - `ticket-detail-hydration.ts` (`src/features/workspace/ticket-detail-hydration.ts`):
+        client-safe coordinated detail hydration result and action contracts.
       - `index.ts` (`src/features/workspace/index.ts`): workspace feature boundary. UI copy may say
         workspace because shared Workspace and personal HelpdeskConnection are distinct persisted
         concepts. This barrel exports production workspace UI only.
@@ -948,13 +1066,18 @@ added, moved, renamed, or removed.
         group, tag, link, and subscription metadata write orchestration, pending-time payload
         construction, state-transition guard, and endpoint call implementation.
       - `notifications.ts` (`src/providers/zammad/notifications.ts`): Zammad provider notifications
-        module.
+        module, including validated expanded/direct ticket enrichment and isolation of stale
+        inaccessible ticket references.
       - `participant-values.ts` (`src/providers/zammad/participant-values.ts`): Zammad relation-id,
         named-reference, user display-name, email, and organization normalization helpers.
       - `participants.ts` (`src/providers/zammad/participants.ts`): Zammad user/participant
         display-name, email fallback, recipient, and expanded asset mapping helpers.
       - `plugin.ts` (`src/providers/zammad/plugin.ts`): provider plugin object, capabilities, and
         connection validation boundary.
+      - `taskbar-schema.ts` (`src/providers/zammad/taskbar-schema.ts`): pinned Zammad taskbar DTO
+        validation and strict ticket-task recognition.
+      - `taskbar-sync.ts` (`src/providers/zammad/taskbar-sync.ts`): provider-local taskbar REST
+        reads and idempotent ticket open, close, activation, and relative-order writes.
       - `reply-addresses.ts` (`src/providers/zammad/reply-addresses.ts`): server-only RFC address
         list parsing, normalization, managed-address cleanup, and To/Cc deduplication.
       - `reply-context.ts` (`src/providers/zammad/reply-context.ts`): pure Zammad-native Reply and
@@ -981,6 +1104,9 @@ added, moved, renamed, or removed.
       - `ticket-forward-mutation.ts` (`src/providers/zammad/ticket-forward-mutation.ts`): fresh
         forward source/attachment revalidation, bounded provider attachment reads, Zammad article
         creation without reply-threading headers, and uncertain-delivery mapping.
+      - `ticket-signature.ts` and `outbound-signature.ts`: version-compatible Zammad
+        form-updater/dedicated-query signature rendering, bounded attachment inlining, and
+        reviewed signature insertion into Zammad article payloads.
       - `ticket-detail-payload.ts` (`src/providers/zammad/ticket-detail-payload.ts`): focused
         expanded/full detail payload, user lookup, and asset merge helpers.
       - `ticket-groups.ts` (`src/providers/zammad/ticket-groups.ts`): Zammad provider-owned
@@ -997,13 +1123,17 @@ added, moved, renamed, or removed.
         provider-owned ticket history parsing and authoritative merged destination mapping.
       - `ticket-mutation-preflight.ts` (`src/providers/zammad/ticket-mutation-preflight.ts`):
         shared fresh-ticket merged-state rejection before ticket or article writes.
+      - `owner-assignment.ts` (`src/providers/zammad/owner-assignment.ts`): fresh final owner/group
+        compatibility revalidation before Zammad ticket writes.
       - `ticket-list.ts` (`src/providers/zammad/ticket-list.ts`): Zammad ticket list endpoint reads,
         search query composition, pagination, grouped-list dispatch, and read-phase timing.
       - `ticket-list-payload.ts` (`src/providers/zammad/ticket-list-payload.ts`): Zammad ticket list
         payload parsing, missing user/state/priority lookup, organization backfill, and canonical
         row mapping.
-      - `ticket-lookups.ts` (`src/providers/zammad/ticket-lookups.ts`): Zammad assignable-user,
-        group, and global tag suggestion lookup reads mapped to provider-neutral lookup options.
+      - `ticket-lookups.ts` (`src/providers/zammad/ticket-lookups.ts`): paginated Zammad group and
+        agent lookup reads, including full-access group scoping, mapped to provider-neutral options.
+      - `ticket-mentions.ts` (`src/providers/zammad/ticket-mentions.ts`): Zammad group-scoped
+        mention suggestions plus final neutral-token conversion and write-error mapping.
       - `ticket-search-query.ts` (`src/providers/zammad/ticket-search-query.ts`): Zammad ticket
         search path, sort, state/priority filter, merged-source exclusion, and state/priority bucket
         query construction.
@@ -1122,6 +1252,10 @@ added, moved, renamed, or removed.
     metadata-only mutation log schema with durable workspace and optional personal-connection
     identity.
   - `my-style.prisma` (`prisma/my-style.prisma`): encrypted per-user/per-workspace My Style schema.
+  - `taskbar-sync.prisma` (`prisma/taskbar-sync.prisma`): per-personal-connection taskbar
+    compatibility state and retryable deduplicated local operation schema.
+  - `workspace-signatures.prisma` (`prisma/workspace-signatures.prisma`): encrypted workspace
+    default/group signature templates and immutable revision snapshots.
   - `prisma/migrations`: database migration history.
     - `prisma/migrations/20260519062146_init`: contains related 20260519062146_init files.
       - `migration.sql` (`prisma/migrations/20260519062146_init/migration.sql`): initial SQL schema
@@ -1144,6 +1278,10 @@ added, moved, renamed, or removed.
       migration that preserves shared workspace data, creates disconnected owner personal
       connections, retargets owner credentials, clears provider-derived caches and unsafe legacy
       tabs, preserves metadata-only audits, and renames the active workspace preference.
+    - `prisma/migrations/20260715190000_add_ticket_taskbar_sync`: contains the hand-authored
+      migration for personal taskbar compatibility state and retryable operation outbox.
+    - `prisma/migrations/20260717090000_add_taskbar_deactivate`: extends the durable taskbar
+      operation kind with explicit List/ticket-deactivation intent.
     - `prisma/migrations/20260606003000_add_workspace_ai_settings`: contains related
       20260606003000_add_workspace_ai_settings files.
       - `migration.sql`
@@ -1207,7 +1345,8 @@ added, moved, renamed, or removed.
   - `zammad-boundary-audit.mjs` (`scripts/zammad-boundary-audit.mjs`): scans current source/docs or
     PR history for direct Zammad imports and raw Zammad token leakage outside the provider boundary
     allowlist.
-- `tests`: Vitest unit, component, provider, and feature tests.
+- `tests`: Vitest unit, component, provider, and feature tests plus explicitly invoked
+  Playwright files under `tests/e2e/*.pw.ts`.
   - `tests/components`: shared UI primitive and component tests.
     - `dropdowns.test.tsx` (`tests/components/dropdowns.test.tsx`): verifies searchable and
       non-searchable dropdown keyboard and close behavior.
@@ -1224,9 +1363,41 @@ added, moved, renamed, or removed.
     - `tooltip.test.tsx` (`tests/components/tooltip.test.tsx`): verifies tooltip hover,
       keyboard-visible focus, viewport positioning, portal rendering, and close behavior.
   - `tests/features`: feature workflow, workspace behavior, saved-view, and ticket-service tests.
+    - `taskbar-sync-model.test.ts` (`tests/features/taskbar-sync-model.test.ts`): verifies strict,
+      bounded provider-neutral taskbar command parsing.
+    - `ticket-taskbar-reconciliation.test.tsx`
+      (`tests/features/ticket-taskbar-reconciliation.test.tsx`): verifies tab caps, transport
+      retry visibility, stale-active suppression during local activation, and unchanged-state
+      reuse.
+    - `ticket-taskbar-draft-protection.test.tsx`
+      (`tests/features/ticket-taskbar-draft-protection.test.tsx`): verifies initial provider
+      replacement preserves both persisted and not-yet-persisted identity-scoped drafts as
+      conflicts.
+    - `ticket-communication-draft-runtime.test.ts`
+      (`tests/features/ticket-communication-draft-runtime.test.ts`): verifies exact-scope
+      synchronous draft presence and ordered IndexedDB work.
+    - `ticket-taskbar-sync-races.test.tsx`
+      (`tests/features/ticket-taskbar-sync-races.test.tsx`): verifies stale-result suppression,
+      retry-on-focus, focus coalescing, active-tab retention at the cap, and latest rapid
+      selection behavior.
+    - `ticket-taskbar-sync-scope.test.tsx`
+      (`tests/features/ticket-taskbar-sync-scope.test.tsx`): verifies unreliable active values
+      remain local, unscoped work is suppressed, and queued work stays bound to its originating
+      personal connection.
+    - `ticket-taskbar-test-scope.ts`
+      (`tests/features/ticket-taskbar-test-scope.ts`): shared complete personal-connection scope
+      and strict server-action argument helper for taskbar client tests.
+    - `ticket-taskbar-merged-sync.test.tsx`
+      (`tests/features/ticket-taskbar-merged-sync.test.tsx`): verifies phased normalization of a
+      stale merged-source provider task to its surviving ticket.
+    - `taskbar-sync-service.test.ts` (`tests/features/taskbar-sync-service.test.ts`): verifies
+      explicit personal-connection provider loading and provider active-reliability mapping.
     - `ai-ticket-summary-action.test.ts` (`tests/features/ai-ticket-summary-action.test.ts`):
-      verifies the selected-ticket AI summary action reloads provider-neutral ticket detail
-      server-side and rejects blank ticket requests without provider reads.
+      verifies scoped selected-ticket detail reload, blank-request rejection, and the single
+      configuration re-read/auth-recovery retry.
+    - `ticket-detail-connection-scope.test.ts`
+      (`tests/features/ticket-detail-connection-scope.test.ts`): verifies explicit personal
+      connection detail reads and fail-closed workspace-scope mismatches.
     - `ai-ticket-summary-cache.test.ts` (`tests/features/ai-ticket-summary-cache.test.ts`):
       verifies generated selected-ticket AI summary output cache hit and write behavior without
       prompt persistence.
@@ -1359,6 +1530,9 @@ added, moved, renamed, or removed.
       (`tests/features/ticket-metadata-mutation-workspace.test.tsx`): verifies workspace metadata
       mutation submit, hidden state options, pending date/time input, error, and staged
       non-optimistic UI behavior.
+    - `ticket-pending-date-presets.test.tsx`
+      (`tests/features/ticket-pending-date-presets.test.tsx`): verifies compact preset interaction,
+      time preservation, visible-month movement, DST-safe day offsets, and month-end clamping.
     - `ticket-overdue-pending-priority-update.test.tsx`
       (`tests/features/ticket-overdue-pending-priority-update.test.tsx`): verifies overdue pending
       tickets can still submit priority-only staged metadata updates without resubmitting stale
@@ -1372,6 +1546,9 @@ added, moved, renamed, or removed.
     - `ticket-owner-group-metadata-workspace.test.tsx`
       (`tests/features/ticket-owner-group-metadata-workspace.test.tsx`): verifies owner and group
       staged metadata controls submit through the shared Update action.
+    - `saved-view-owner-group-compatibility.test.ts`
+      (`tests/features/saved-view-owner-group-compatibility.test.ts`): verifies positive group union,
+      negative-group behavior, current-user resolution, and fail-closed owner validation.
     - `ticket-post-update-navigation-workspace.test.tsx`
       (`tests/features/ticket-post-update-navigation-workspace.test.tsx`): verifies ticket post
       update navigation workspace behavior.
@@ -1432,7 +1609,11 @@ added, moved, renamed, or removed.
       (`tests/features/ticket-workspace-horizontal-tab-reorder.test.tsx`): verifies ticket workspace
       horizontal tab reorder behavior.
     - `ticket-workspace-horizontal-tab-click.test.tsx`
-      (`tests/features/ticket-workspace-horizontal-tab-click.test.tsx`): verifies horizontal tab
+      (`tests/features/ticket-workspace-horizontal-tab-click.test.tsx`): verifies scoped taskbar
+      activation, List selection, and active-tab successor synchronization without selection
+      bounce.
+    - `ticket-workspace-horizontal-tab-pointer.test.tsx`
+      (`tests/features/ticket-workspace-horizontal-tab-pointer.test.tsx`): verifies horizontal tab
       activation still works after minor pointer jitter.
     - `ticket-workspace-horizontal-tabs-helpers.ts`
       (`tests/features/ticket-workspace-horizontal-tabs-helpers.ts`): shared test helpers for ticket
@@ -1460,6 +1641,15 @@ added, moved, renamed, or removed.
       (`tests/features/ticket-workspace-paging-sort.test.tsx`): verifies post-hydration ungrouped
       list page loading, refreshed baseline row merging, provider-backed sorting, and grouped reload
       behavior.
+    - `ticket-workspace-complete-name-sort.test.tsx`
+      (`tests/features/ticket-workspace-complete-name-sort.test.tsx`): verifies Owner display-name
+      sorting loads and orders the complete matching ticket result before showing its first window.
+    - `ticket-table-display-sort.test.ts`
+      (`tests/features/ticket-table-display-sort.test.ts`): verifies natural relationship-label
+      ordering and stable placement of unassigned values.
+    - `ticket-workspace-sorted-server-refresh.test.tsx`
+      (`tests/features/ticket-workspace-sorted-server-refresh.test.tsx`): verifies ticket-removing
+      server refreshes retain and reapply the active provider sort.
     - `ticket-workspace-saved-views.test.tsx`
       (`tests/features/ticket-workspace-saved-views.test.tsx`): verifies workspace saved-view
       selection and unsupported options.
@@ -1536,7 +1726,8 @@ added, moved, renamed, or removed.
         internal note and customer reply article payloads and provider-safe request usage.
       - `link-targets.test.ts` (`tests/providers/zammad/link-targets.test.ts`): verifies link
         targets behavior.
-      - `lookups.test.ts` (`tests/providers/zammad/lookups.test.ts`): verifies lookups behavior.
+      - `lookups.test.ts` (`tests/providers/zammad/lookups.test.ts`): verifies group, owner, and
+        group-scoped mention lookup behavior.
       - `mapping.test.ts` (`tests/providers/zammad/mapping.test.ts`): verifies provider-specific raw
         state and priority mapping to canonical ticket keys.
       - `mutation-policy.test.ts` (`tests/providers/zammad/mutation-policy.test.ts`): verifies
@@ -1574,6 +1765,10 @@ added, moved, renamed, or removed.
         malformed responses.
       - `subscription-mutations.test.ts` (`tests/providers/zammad/subscription-mutations.test.ts`):
         verifies subscription mutations behavior.
+      - `taskbar-sync.test.ts` (`tests/providers/zammad/taskbar-sync.test.ts`): verifies pinned
+        taskbar parsing, ticket-only exposure, idempotent create/close, access preflight, and
+        ticket-relative ordering without moving non-ticket tasks, post-write confirmation, and
+        deactivate-before-activate ordering.
       - `ticket-search-query.test.ts` (`tests/providers/zammad/ticket-search-query.test.ts`):
         verifies Zammad-owned compilation of provider-neutral saved-view filters, including negative
         filters, into Zammad search syntax.

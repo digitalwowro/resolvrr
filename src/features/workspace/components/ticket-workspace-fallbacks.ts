@@ -1,9 +1,9 @@
 import type { LoadWorkspaceNotificationsAction, MarkWorkspaceNotificationsReadAction } from "@/features/notifications";
 import type { SummarizeWorkspaceTicketAction } from "@/features/ai";
-import type { LoadWorkspaceTicketDetailAction } from "@/features/tickets/detail-action-result";
+import type { LoadWorkspaceTicketDetailHydrationAction } from "@/features/workspace/ticket-detail-hydration";
 import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
 
-export const unavailableTicketDetailAction: LoadWorkspaceTicketDetailAction =
+export const unavailableTicketDetailAction: LoadWorkspaceTicketDetailHydrationAction =
   async () => ({
     status: "unavailable",
     reason: "provider-temporary-failure",

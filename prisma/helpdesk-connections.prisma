@@ -1,45 +1,49 @@
 model Workspace {
-  id                   String                   @id @default(cuid())
-  ownerUserId          String
-  providerKey          String
-  displayName          String
-  baseUrl              String
-  createdAt            DateTime                 @default(now())
-  updatedAt            DateTime                 @updatedAt
-  owner                User                     @relation("WorkspaceOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
-  memberships          WorkspaceMembership[]
-  helpdeskConnections  HelpdeskConnection[]
-  savedViews           SavedView[]
-  workspaceAiSetting   WorkspaceAiSetting?
-  userAiSettings       UserWorkspaceAiSetting[]
-  workspaceAiPrompts   WorkspaceAiPrompt[]
-  aiRephraseStyles     WorkspaceAiRephraseStyle[]
+  id                       String                        @id @default(cuid())
+  ownerUserId              String
+  providerKey              String
+  displayName              String
+  baseUrl                  String
+  createdAt                DateTime                      @default(now())
+  updatedAt                DateTime                      @updatedAt
+  signatureSource          WorkspaceSignatureSource      @default(NONE)
+  signatureVersion         String                        @default(cuid())
+  owner                    User                          @relation("WorkspaceOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  memberships              WorkspaceMembership[]
+  helpdeskConnections      HelpdeskConnection[]
+  savedViews               SavedView[]
+  workspaceAiSetting       WorkspaceAiSetting?
+  userAiSettings           UserWorkspaceAiSetting[]
+  workspaceAiPrompts       WorkspaceAiPrompt[]
+  aiRephraseStyles         WorkspaceAiRephraseStyle[]
   aiRephraseStyleOverrides UserAiRephraseStyleOverride[]
-  myStyles             WorkspaceMyStyle[]
-  uiPreferences        UiPreference[]
-  providerMutationLogs ProviderMutationLog[]
+  myStyles                 WorkspaceMyStyle[]
+  uiPreferences            UiPreference[]
+  providerMutationLogs     ProviderMutationLog[]
+  signatureTemplates       WorkspaceSignatureTemplate[]
 
   @@index([ownerUserId])
   @@index([providerKey])
 }
 
 model HelpdeskConnection {
-  id                              String                   @id @default(cuid())
-  workspaceId                     String
-  userId                          String
-  status                          HelpdeskConnectionStatus @default(DISCONNECTED)
-  providerIdentityExternalId      String?
-  providerIdentityDisplayName     String?
-  identityVersion                 String                   @default(cuid())
-  createdAt                       DateTime                 @default(now())
-  updatedAt                       DateTime                 @updatedAt
-  workspace                       Workspace                @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user                            User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  credentials                     ProviderCredential[]
-  ticketSnapshotCaches            TicketSnapshotCache[]
-  threadSnapshotCaches            ThreadSnapshotCache[]
-  aiSummaryCaches                 AiSummaryCache[]
-  providerMutationLogs            ProviderMutationLog[]
+  id                          String                   @id @default(cuid())
+  workspaceId                 String
+  userId                      String
+  status                      HelpdeskConnectionStatus @default(DISCONNECTED)
+  providerIdentityExternalId  String?
+  providerIdentityDisplayName String?
+  identityVersion             String                   @default(cuid())
+  createdAt                   DateTime                 @default(now())
+  updatedAt                   DateTime                 @updatedAt
+  workspace                   Workspace                @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user                        User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentials                 ProviderCredential[]
+  ticketSnapshotCaches        TicketSnapshotCache[]
+  threadSnapshotCaches        ThreadSnapshotCache[]
+  aiSummaryCaches             AiSummaryCache[]
+  providerMutationLogs        ProviderMutationLog[]
+  taskbarSyncState            TaskbarSyncState?
 
   @@unique([workspaceId, userId])
   @@unique([workspaceId, providerIdentityExternalId])
@@ -48,16 +52,16 @@ model HelpdeskConnection {
 }
 
 model WorkspaceMembership {
-  id                                String                  @id @default(cuid())
-  userId                            String
-  workspaceId                       String
-  role                              WorkspaceMembershipRole @default(AGENT)
-  canEditMyStyle                    Boolean                 @default(false)
-  canEditAiRephraseStyleOverrides   Boolean                 @default(false)
-  createdAt                         DateTime                @default(now())
-  updatedAt                         DateTime                @updatedAt
-  user                              User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workspace                         Workspace                @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id                              String                  @id @default(cuid())
+  userId                          String
+  workspaceId                     String
+  role                            WorkspaceMembershipRole @default(AGENT)
+  canEditMyStyle                  Boolean                 @default(false)
+  canEditAiRephraseStyleOverrides Boolean                 @default(false)
+  createdAt                       DateTime                @default(now())
+  updatedAt                       DateTime                @updatedAt
+  user                            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace                       Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([userId, workspaceId])
   @@index([workspaceId])
@@ -77,7 +81,7 @@ model ProviderCredential {
 }
 
 model ProviderMutationLog {
-  id                   String             @id @default(cuid())
+  id                   String              @id @default(cuid())
   userId               String
   workspaceId          String
   helpdeskConnectionId String?
@@ -87,9 +91,9 @@ model ProviderMutationLog {
   status               String
   errorKind            String?
   durationMs           Int?
-  createdAt            DateTime           @default(now())
-  user                 User               @relation(fields: [userId], references: [id], onDelete: Restrict)
-  workspace            Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  createdAt            DateTime            @default(now())
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  workspace            Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
   helpdeskConnection   HelpdeskConnection? @relation(fields: [helpdeskConnectionId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])

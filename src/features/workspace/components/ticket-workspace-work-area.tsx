@@ -11,6 +11,7 @@ import type {
 } from "@/features/ai";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type { TicketAiSummaryResult } from "@/features/ai";
+import type { InitialTicketAiSummary } from "@/features/workspace/ticket-detail-hydration";
 import type {
   SelectedTicketUpdatePayload,
   TicketMetadataMutationActionState,
@@ -47,6 +48,12 @@ export type TicketWorkspaceListAreaProps = {
   allSelected: boolean;
   canLoadMore: boolean;
   columns: WorkspaceTicketColumn[];
+  completeSortError?: boolean;
+  completeSortProgress?: {
+    loadedCount: number;
+    sortKey: WorkspaceTicketSortKey;
+    totalCount?: number;
+  };
   emptyMessage?: string;
   groupBy: WorkspaceTicketGroupKey;
   groupedRows?: TicketTableGroup[];
@@ -83,6 +90,8 @@ export function TicketWorkspaceListArea({
   allSelected,
   canLoadMore,
   columns,
+  completeSortError,
+  completeSortProgress,
   emptyMessage,
   groupBy,
   groupedRows,
@@ -128,6 +137,18 @@ export function TicketWorkspaceListArea({
         selectedSavedViewId={selectedSavedViewId}
         visibleColumns={visibleColumns}
       />
+      {completeSortProgress ? (
+        <p className="border-x border-slate-200 bg-indigo-50 px-3 py-2 text-sm text-indigo-800" role="status">
+          Loading all tickets to sort by {completeSortProgress.sortKey === "owner" ? "Owner" : "Customer"}… {completeSortProgress.loadedCount}
+          {completeSortProgress.totalCount !== undefined
+            ? ` of ${completeSortProgress.totalCount}`
+            : ""}
+        </p>
+      ) : completeSortError ? (
+        <p className="border-x border-slate-200 bg-amber-50 px-3 py-2 text-sm text-amber-800" role="alert">
+          The complete ticket list could not be loaded, so the requested sort was not applied.
+        </p>
+      ) : null}
       <TicketTable
         activeTicketId={activeTicketId}
         allSelected={allSelected}
@@ -167,6 +188,10 @@ export type TicketWorkspaceDetailAreaProps = {
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   onMetadataSaved: Parameters<typeof TicketDetail>[0]["onMetadataSaved"];
   onMetadataSavedDetailRefresh(ticketId: string): void;
+  onTicketAiSummaryAvailable(
+    ticketId: string,
+    summary: InitialTicketAiSummary,
+  ): void;
   onRefresh(): void;
   onReturnToListAfterUpdate(): void;
   recentlyViewedLinkTargets: WorkspaceTicketLinkTarget[];
@@ -197,6 +222,7 @@ export function TicketWorkspaceDetailArea({
   metadataMutationCapabilities,
   onMetadataSaved,
   onMetadataSavedDetailRefresh,
+  onTicketAiSummaryAvailable,
   onRefresh,
   onReturnToListAfterUpdate,
   recentlyViewedLinkTargets,
@@ -230,6 +256,7 @@ export function TicketWorkspaceDetailArea({
         metadataMutationCapabilities={metadataMutationCapabilities}
         onMetadataSaved={onMetadataSaved}
         onMetadataSavedDetailRefresh={onMetadataSavedDetailRefresh}
+        onTicketAiSummaryAvailable={onTicketAiSummaryAvailable}
         onRefresh={onRefresh}
         onReturnToListAfterUpdate={onReturnToListAfterUpdate}
         recentlyViewedLinkTargets={recentlyViewedLinkTargets}

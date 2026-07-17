@@ -23,11 +23,13 @@ communication.
 - Rendering, route loading, background refresh, and local state changes must not
   trigger AI requests.
 
-The selected-ticket summary action accepts only the ticket external ID from the
-client. It reloads the current user's active selected-ticket detail on the
-server through the existing provider-neutral ticket read service, then builds
-the prompt from normalized data. The summary cache is checked only after this
-provider-source detail reload and prompt-context construction.
+The selected-ticket summary action accepts the ticket external ID plus the
+workspace and personal helpdesk connection that rendered it. The server
+ownership-checks that scope and rejects mismatches instead of resolving the
+user's potentially newer globally active workspace. It then reloads the ticket
+through the provider-neutral ticket read service and builds the prompt from
+normalized data. The summary cache is checked only after this provider-source
+detail reload and prompt-context construction.
 
 ## Prompt Data
 
@@ -107,12 +109,18 @@ configuration, invalid saved configuration, provider auth failure, rate limit,
 temporary provider failure, or ticket-unavailable states without exposing raw
 provider responses. Failed AI calls must not alter the selected-ticket draft,
 ticket metadata, thread, open tabs, saved views, or helpdesk provider state.
+After one authentication rejection, the summary action re-reads the scoped
+configuration and makes at most one delayed retry. Only a second authentication
+rejection is returned as a credential failure; other retry outcomes retain
+their own failure classification.
 
 ## Telemetry
 
 AI telemetry is metadata-only. It may record the operation, phase, provider
 protocol family, cache data kind, cache event, freshness age bucket, duration,
-status, unavailable reason, and retryability. It must not record prompts,
+numeric provider HTTP status, a bounded opaque configuration version, safe
+provider error code/type tokens, status, unavailable reason, and retryability.
+It must not record prompts,
 generated summaries, provider request bodies, provider response bodies,
 provider credentials, model names, ticket IDs, article IDs, customer names,
 email addresses, or ticket/thread content.
@@ -126,17 +134,22 @@ fingerprint/freshness, sanitization version, user, and active helpdesk
 connection. Prompt text, raw provider payloads, model names, and generated
 summaries must not be logged.
 
-Route loading may read an existing cached summary after selected-ticket detail,
-workspace AI config, and effective prompt identity are known. This hydration is
-cache-only: it must not call the AI provider, generate text, or write a new
-cache entry. The explicit summary action remains the only path that may generate
-AI output and store a new summary cache entry. Its default Generate behavior may
-reuse a valid cache hit, while Regenerate must force a provider call and
-overwrite the cached summary after successful generation.
+Every coordinated selected-ticket detail load may read an existing cached
+summary after ticket detail, workspace AI config, and effective prompt identity
+are known. This hydration is cache-only: it must not call the AI provider,
+generate text, or write a new cache entry. The client detail cache retains a
+hydrated or newly generated summary while its ticket remains loaded, so tab
+switching does not discard it. The explicit summary action remains the only
+path that may generate AI output and store a new summary cache entry. Its
+default Generate behavior may reuse a valid cache hit, while Regenerate must
+force a provider call and overwrite the cached summary after successful
+generation.
 
 Tab switching, background refresh, and local state changes must not trigger AI
-provider calls. They may reuse already-loaded client state only unless a future
-contract explicitly adds cache-only hydration for those flows.
+provider calls. A detail refresh may perform the same cache-only hydration. A
+temporary summary-cache read failure must not block otherwise available ticket
+detail or erase a summary already retained by the client; a confirmed cache
+miss remains authoritative.
 
 Generated summary cache entries are invalidated when confirmed provider writes
 change the selected ticket/thread source, when the helpdesk connection is

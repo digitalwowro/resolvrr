@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ProviderError, type ProviderContext } from "@/core/providers";
-import type { TicketCustomerReplyInput } from "@/core/ticket-replies";
+import type { ProviderTicketCustomerReplyInput } from "@/core/ticket-replies";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
 import { participantFromReference, relationId } from "./participants";
 import { zammadGetJson, zammadSendJson, zammadBaseUrl } from "./client";
@@ -18,6 +18,11 @@ import {
   assertZammadTicketNotMerged,
   zammadTicketPayload,
 } from "./ticket-mutation-preflight";
+import { zammadOutboundBody } from "./outbound-signature";
+import {
+  rethrowZammadMentionWriteError,
+  zammadMentionHtml,
+} from "./ticket-mentions";
 
 const recipientSchema = z.string().trim().toLowerCase().max(254).email();
 
@@ -60,7 +65,7 @@ async function customerForTicket(
   });
 }
 
-function normalizedRecipients(input: TicketCustomerReplyInput) {
+function normalizedRecipients(input: ProviderTicketCustomerReplyInput) {
   const seen = new Set<string>();
   const unique = (values: string[]) => values.flatMap((value) => {
     const parsed = recipientSchema.safeParse(value);
@@ -136,7 +141,7 @@ async function freshReplyContext(
 export async function addZammadTicketCustomerReply(
   context: ProviderContext,
   ticketExternalId: string,
-  input: TicketCustomerReplyInput,
+  input: ProviderTicketCustomerReplyInput,
 ): Promise<void> {
   if (!input.body.trim()) {
     throw new ProviderError("validation-failure", "Customer reply body is required.");
@@ -161,6 +166,11 @@ export async function addZammadTicketCustomerReply(
   if (!fresh.replyContext.availableIntents.includes(input.intent)) {
     throw providerMismatch("unsupported-reply-intent");
   }
+  const outboundBody = zammadOutboundBody({
+    body: input.body,
+    bodyFormat: input.bodyFormat,
+    signature: input.resolvedSignature,
+  });
 
   let response: unknown;
   try {
@@ -176,8 +186,12 @@ export async function addZammadTicketCustomerReply(
         to: recipients.to.join(", "),
         cc: recipients.cc.join(", "),
         subject: fresh.article.subject?.trim() || fresh.ticket.title,
-        body: input.body.trim(),
-        content_type: input.bodyFormat === "html" ? "text/html" : "text/plain",
+        body: zammadMentionHtml(
+          context,
+          outboundBody.body,
+          outboundBody.contentType === "text/html" ? "html" : "plain",
+        ),
+        content_type: outboundBody.contentType,
         type: "email",
         internal: false,
         sender: "Agent",
@@ -187,6 +201,9 @@ export async function addZammadTicketCustomerReply(
       }),
     );
   } catch (error) {
+    if (error instanceof ProviderError && error.statusCode === 422) {
+      rethrowZammadMentionWriteError(error, input.body);
+    }
     if (error instanceof ProviderError && error.kind === "temporary-provider-failure") {
       throw new ProviderError(
         error.kind,

@@ -2,20 +2,21 @@
 
 import type { DraftRewriteOperation } from "@/features/ai";
 import type { TicketReplyIntent } from "@/core/ticket-replies";
+import type { TicketSignatureSelection } from "@/core/ticket-signatures";
+import {
+  enqueueCommunicationDraftStorage,
+  setCurrentCommunicationDraftPresence,
+  type CommunicationDraftPersistenceScope,
+} from "./ticket-communication-draft-runtime";
+export type {
+  CommunicationDraftPersistenceScope,
+} from "./ticket-communication-draft-runtime";
 
 const databaseName = "resolvrr-workspace-drafts";
 const storeName = "communicationDrafts";
-const databaseVersion = 4;
+const databaseVersion = 5;
 export const communicationDraftRetentionMs = 7 * 24 * 60 * 60 * 1_000;
 export const maxPersistedAiSuggestions = 3;
-
-export type CommunicationDraftPersistenceScope = {
-  ticketExternalId: string;
-  userId: string;
-  workspaceId: string;
-  helpdeskConnectionId: string;
-  identityVersion: string;
-};
 
 export type PersistedDraftAiSuggestion = {
   generatedAt: string;
@@ -41,6 +42,7 @@ export type PersistedCommunicationDraft = {
   scope: CommunicationDraftPersistenceScope;
   sourceArticleExternalId?: string;
   suggestions: PersistedDraftAiSuggestion[];
+  signatureContext?: TicketSignatureSelection;
   subject?: string;
   to?: string[];
   updatedAt: number;
@@ -52,7 +54,7 @@ function storageAvailable() {
 
 function draftId(scope: CommunicationDraftPersistenceScope): string {
   return [
-    "v4",
+    "v5",
     scope.userId,
     scope.workspaceId,
     scope.helpdeskConnectionId,
@@ -84,11 +86,29 @@ async function withStore<T>(
   if (!database) return null;
   return new Promise((resolve) => {
     const transaction = database.transaction(storeName, mode);
-    const request = callback(transaction.objectStore(storeName));
-    request.onerror = () => resolve(null);
-    request.onsuccess = () => resolve(request.result);
-    transaction.oncomplete = () => database.close();
-    transaction.onerror = () => database.close();
+    let requestResult: T | null = null;
+    let settled = false;
+    const finish = (result: T | null) => {
+      if (settled) return;
+      settled = true;
+      database.close();
+      resolve(result);
+    };
+    try {
+      const request = callback(transaction.objectStore(storeName));
+      request.onsuccess = () => {
+        requestResult = request.result;
+      };
+      request.onerror = () => {
+        requestResult = null;
+      };
+      transaction.oncomplete = () => finish(requestResult);
+      transaction.onerror = () => finish(null);
+      transaction.onabort = () => finish(null);
+    } catch {
+      transaction.abort();
+      finish(null);
+    }
   });
 }
 
@@ -109,9 +129,11 @@ export async function loadPersistedCommunicationDrafts(
   scope: CommunicationDraftPersistenceScope | undefined,
 ): Promise<PersistedCommunicationDraft[]> {
   if (!scope) return [];
-  const records = await withStore<PersistedCommunicationDraft[]>(
-    "readonly",
-    (store) => store.getAll(),
+  const records = await enqueueCommunicationDraftStorage(() =>
+    withStore<PersistedCommunicationDraft[]>(
+      "readonly",
+      (store) => store.getAll(),
+    )
   );
   const now = Date.now();
   const matching = (records ?? []).filter(
@@ -135,55 +157,69 @@ export async function savePersistedCommunicationDraft(input: {
   recipientEdited?: boolean;
   scope: CommunicationDraftPersistenceScope | undefined;
   suggestions: PersistedDraftAiSuggestion[];
+  signatureContext?: TicketSignatureSelection;
   subject?: string;
   to?: string[];
 }): Promise<void> {
   const scope = input.scope;
   if (!scope) return;
   const suggestions = input.suggestions.slice(0, maxPersistedAiSuggestions);
-  if (!input.bodyHtml.trim() && suggestions.length === 0 && !input.recipientEdited) {
-    await clearPersistedCommunicationDrafts(scope);
+  const present = Boolean(
+    input.bodyHtml.trim() ||
+    suggestions.length > 0 ||
+    input.recipientEdited,
+  );
+  setCurrentCommunicationDraftPresence(scope, present);
+  if (!present) {
+    await enqueueCommunicationDraftStorage(() =>
+      withStore("readwrite", (store) => store.delete(draftId(scope)))
+    );
     return;
   }
   const now = Date.now();
-  await withStore("readwrite", (store) => store.put({
-    bodyHtml: input.bodyHtml,
-    attachmentExternalIds: input.attachmentExternalIds,
-    cc: input.cc,
-    contextVersion: input.contextVersion,
-    expiresAt: now + communicationDraftRetentionMs,
-    id: draftId(scope),
-    intent: input.intent,
-    includeOriginal: input.includeOriginal,
-    kind: input.kind,
-    scope,
-    sourceArticleExternalId: input.articleId,
-    suggestions,
-    subject: input.subject,
-    to: input.to,
-    updatedAt: now,
-  } satisfies PersistedCommunicationDraft));
+  await enqueueCommunicationDraftStorage(() =>
+    withStore("readwrite", (store) => store.put({
+      bodyHtml: input.bodyHtml,
+      attachmentExternalIds: input.attachmentExternalIds,
+      cc: input.cc,
+      contextVersion: input.contextVersion,
+      expiresAt: now + communicationDraftRetentionMs,
+      id: draftId(scope),
+      intent: input.intent,
+      includeOriginal: input.includeOriginal,
+      kind: input.kind,
+      scope,
+      sourceArticleExternalId: input.articleId,
+      suggestions,
+      signatureContext: input.signatureContext,
+      subject: input.subject,
+      to: input.to,
+      updatedAt: now,
+    } satisfies PersistedCommunicationDraft))
+  );
 }
 
 export async function clearPersistedCommunicationDrafts(
   scope: CommunicationDraftPersistenceScope | undefined,
 ): Promise<void> {
   if (!scope) return;
-  const records = await loadPersistedCommunicationDrafts(scope);
-  await Promise.all(
-    records.map((record) => withStore("readwrite", (store) => store.delete(record.id))),
+  setCurrentCommunicationDraftPresence(scope, false);
+  await enqueueCommunicationDraftStorage(
+    () => withStore("readwrite", (store) => store.delete(draftId(scope))),
   );
 }
 
 export async function pruneExpiredCommunicationDrafts(): Promise<void> {
-  const records = await withStore<PersistedCommunicationDraft[]>(
-    "readonly",
-    (store) => store.getAll(),
-  );
-  const now = Date.now();
-  await Promise.all(
-    (records ?? [])
-      .filter((record) => record.expiresAt <= now)
-      .map((record) => withStore("readwrite", (store) => store.delete(record.id))),
-  );
+  await enqueueCommunicationDraftStorage(async () => {
+    const records = await withStore<PersistedCommunicationDraft[]>(
+      "readonly",
+      (store) => store.getAll(),
+    );
+    const now = Date.now();
+    await Promise.all(
+      (records ?? [])
+        .filter((record) => record.expiresAt <= now)
+        .map((record) => withStore("readwrite", (store) => store.delete(record.id))),
+    );
+  });
 }

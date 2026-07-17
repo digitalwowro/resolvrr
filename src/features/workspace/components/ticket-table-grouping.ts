@@ -5,6 +5,7 @@ import type {
   WorkspaceTicketRow,
   WorkspaceTicketSortKey,
 } from "@/features/tickets/workspace-adapter";
+import { isCompleteResultTicketSortKey } from "@/core/ticket-list-query";
 import type { TicketTableGroup } from "./ticket-table";
 
 const priorityOrder = ["high", "medium", "low"];
@@ -15,6 +16,16 @@ const stateOrder = [
   "pending_close",
   "closed",
 ];
+const displayCollator = new Intl.Collator("en", {
+  numeric: true,
+  sensitivity: "base",
+});
+
+export function isCompleteListSortKey(
+  key: WorkspaceTicketSortKey,
+): key is "customer" | "owner" {
+  return key !== "pendingTill" && isCompleteResultTicketSortKey(key);
+}
 
 const localTicketGroupOptions: DropdownOption[] = [
   { value: "none", label: "No grouping" },
@@ -51,6 +62,14 @@ function rowSortValue(row: WorkspaceTicketRow, sortKey: WorkspaceTicketSortKey) 
   return row[sortKey];
 }
 
+function rowSortValueMissing(
+  row: WorkspaceTicketRow,
+  sortKey: WorkspaceTicketSortKey,
+) {
+  return (sortKey === "owner" && !row.ownerExternalId) ||
+    (sortKey === "customer" && !row.customerExternalId);
+}
+
 export function sortTicketRows(
   rows: WorkspaceTicketRow[],
   sortKey: WorkspaceTicketSortKey,
@@ -59,14 +78,24 @@ export function sortTicketRows(
   const sign = direction === "ascending" ? 1 : -1;
 
   return [...rows].sort((first, second) => {
+    const firstMissing = rowSortValueMissing(first, sortKey);
+    const secondMissing = rowSortValueMissing(second, sortKey);
+    if (firstMissing !== secondMissing) {
+      return firstMissing ? 1 : -1;
+    }
     const firstValue = rowSortValue(first, sortKey);
     const secondValue = rowSortValue(second, sortKey);
 
     if (typeof firstValue === "number" && typeof secondValue === "number") {
-      return (firstValue - secondValue) * sign;
+      const compared = (firstValue - secondValue) * sign;
+      return compared || displayCollator.compare(first.number, second.number);
     }
 
-    return String(firstValue).localeCompare(String(secondValue)) * sign;
+    const compared = displayCollator.compare(
+      String(firstValue),
+      String(secondValue),
+    ) * sign;
+    return compared || displayCollator.compare(first.number, second.number);
   });
 }
 

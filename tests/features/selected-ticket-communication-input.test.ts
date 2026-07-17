@@ -66,6 +66,23 @@ describe("selected ticket communication input", () => {
     expect(result.communication?.body).not.toContain("<script");
   });
 
+  it("preserves only canonical provider-neutral mention markers", () => {
+    const result = ticketMetadataMutationActionInput({
+      communication: {
+        bodyFormat: "html",
+        body:
+          '<p><span onclick="steal()" data-resolvrr-mention-id="4">Manuela Duma</span> and <span data-resolvrr-mention-id="../../bad">Unknown</span></p>',
+        kind: "internal-comment",
+      },
+      ticketExternalId: "ticket-1",
+    });
+    expect(result.status).toBe("valid");
+    if (result.status !== "valid") throw new Error("Expected valid input");
+    expect(result.communication?.body).toBe(
+      '<p><span contenteditable="false" data-resolvrr-mention-id="4">Manuela Duma</span> and Unknown</p>',
+    );
+  });
+
   it("parses a forward with empty introduction but reviewed provider-neutral context", () => {
     expect(ticketMetadataMutationActionInput({
       communication: {

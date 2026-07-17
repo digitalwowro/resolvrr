@@ -194,6 +194,12 @@ export function validateMetadataDraft(
   dirtyFields: TicketMetadataDraftDirtyFields,
   draft: SelectedTicketDraft,
 ): TicketMetadataDraftValidation {
+  if (dirtyFields.owner && !draft.metadata.ownerExternalId) {
+    return {
+      message: "Select an owner with full access to the selected group.",
+      valid: false,
+    };
+  }
   if (
     dirtyFields.communication &&
     draft.communication?.kind !== "internal-comment" &&

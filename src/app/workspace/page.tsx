@@ -4,7 +4,6 @@ import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections
 import { prismaAiRephraseStyleRepository } from "@/data/ai-rephrase-styles-repository";
 import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
 import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
-import { prismaWorkspaceTabsRepository } from "@/data/workspace-tabs-repository";
 import {
   changePasswordAction,
   logoutAction,
@@ -53,15 +52,13 @@ import {
 } from "@/features/tickets";
 import { updateTicketMetadataAction } from "@/features/tickets/actions";
 import { loadActiveTicketProviderContext } from "@/features/tickets/connection-context";
-import { loadWorkspaceTicketDetailAction } from "@/features/tickets/detail-actions";
+import { loadWorkspaceTicketDetailHydrationAction } from "@/features/workspace/ticket-detail-hydration-action";
 import { loadWorkspaceTicketListPageAction } from "@/features/tickets/list-actions";
 import { searchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-actions";
-import { dispatchCurrentHelpdeskUserRead } from "@/features/tickets/provider-dispatch";
-import {
-  loadWorkspaceNotificationsAction,
-  markWorkspaceNotificationsReadAction,
-} from "@/features/notifications";
+import { dispatchCurrentHelpdeskUserRead } from "@/features/tickets/ticket-lookup-service";
+import { loadWorkspaceNotificationsAction, markWorkspaceNotificationsReadAction } from "@/features/notifications";
 import { saveWorkspaceOpenTabsStateAction } from "@/features/workspace/actions";
+import { synchronizeWorkspaceTaskbarAction } from "@/features/taskbar-sync/actions";
 import {
   ensureMyWorkSavedViewResult,
   initialWorkspaceSavedViewSelection,
@@ -79,6 +76,7 @@ import {
   saveWorkspaceSavedViewAction,
   setDefaultWorkspaceSavedViewAction,
 } from "@/features/saved-views/actions";
+import { saveWorkspaceSelectedSavedViewAction } from "@/features/saved-views/selection-actions";
 import {
   deleteManagedUserAction,
   loadUserManagementAction,
@@ -87,17 +85,16 @@ import {
 } from "@/features/user-management";
 import { savedViewSettingsDataFromStored } from "@/features/saved-views/settings-model";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
+import * as workspaceSignatureActions from "@/features/signatures";
+import { WorkspaceSignatureActionsProvider } from "@/features/workspace/components/ticket-signature-preview-action-context";
 import { providerRegistry } from "@/providers";
 import {
   savedViewTicketListQuery,
   workspaceDetailSeed,
   workspaceMenuConnections,
+  workspaceUiPreferenceSeed,
 } from "./workspace-page-helpers";
-
-type WorkspacePageProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
-
+type WorkspacePageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 export default async function WorkspacePage({ searchParams }: WorkspacePageProps) {
   const user = await requireCurrentUser();
   const params = await searchParams;
@@ -107,12 +104,12 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     user.id,
   );
   const activeConnection = connections.find((connection) => connection.active);
-  const initialWorkspaceOpenTabsState = activeConnection
-    ? await prismaWorkspaceTabsRepository.getForUser(user.id, activeConnection.id)
-    : undefined;
+  const [initialWorkspaceOpenTabsState, preferredSavedViewId] =
+    activeConnection
+      ? await workspaceUiPreferenceSeed(user.id, activeConnection.id)
+      : [undefined, undefined];
   const activeProvider = activeConnection
-    ? providerRegistry.get(activeConnection.providerKey)
-    : undefined;
+    ? providerRegistry.get(activeConnection.providerKey) : undefined;
   const activeQueryCapabilities = activeProvider
     ? ticketListQueryCapabilities(activeProvider.capabilities)
     : undefined;
@@ -150,6 +147,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
   const savedViewSelection = initialWorkspaceSavedViewSelection({
     savedViews,
     capabilities: activeQueryCapabilities,
+    preferredSavedViewId,
     blockUnfilteredFallback:
       savedViewSeedResult.status === "unavailable" &&
       savedViewSeedResult.reason === "current-user-unavailable",
@@ -169,7 +167,6 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           user.id,
           savedViewTicketListQuery(savedViewSelection.selectedSavedView),
         ));
-
   const rows =
     listResult.status === "available"
       ? workspaceTicketRows(listResult.tickets)
@@ -204,8 +201,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     styleRepository: prismaAiRephraseStyleRepository,
     userId: user.id,
   });
-
   return (
+    <WorkspaceSignatureActionsProvider actions={{ ...workspaceSignatureActions }}>
     <TicketWorkspace
       changePasswordAction={changePasswordAction}
       columns={defaultWorkspaceTicketColumns}
@@ -224,7 +221,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       loadMyStyleAction={loadMyStyleAction}
       loadUserManagementAction={loadUserManagementAction}
       loadWorkspaceAiSettingsAction={loadWorkspaceAiSettingsAction}
-      loadTicketDetailAction={loadWorkspaceTicketDetailAction}
+      loadTicketDetailAction={loadWorkspaceTicketDetailHydrationAction}
       loadTicketListPageAction={loadWorkspaceTicketListPageAction}
       loadWorkspaceNotificationsAction={loadWorkspaceNotificationsAction}
       loadSavedViewsSettingsAction={loadWorkspaceSavedViewsSettingsAction}
@@ -264,6 +261,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       saveMyStyleAction={saveMyStyleAction}
       moveWorkspaceAiRephraseStyleAction={moveWorkspaceAiRephraseStyleAction}
       saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
+      saveWorkspaceSelectedSavedViewAction={saveWorkspaceSelectedSavedViewAction}
       saveSavedViewAction={saveWorkspaceSavedViewAction}
       saveUserWorkspaceAiSettingsAction={saveUserWorkspaceAiSettingsAction}
       saveUserAiRephraseStyleOverrideAction={saveUserAiRephraseStyleOverrideAction}
@@ -272,6 +270,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       saveWorkspaceAiPromptAction={saveWorkspaceAiPromptAction}
       searchTicketLinkTargetsAction={searchWorkspaceTicketLinkTargetsAction}
       summarizeTicketAction={summarizeWorkspaceTicketAction}
+      synchronizeWorkspaceTaskbarAction={synchronizeWorkspaceTaskbarAction}
       savedViews={workspaceSavedViews(
         savedViews,
         listResult.status === "available"
@@ -296,5 +295,6 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       userRole={user.role}
       validateConnectionAction={validateHelpdeskConnectionAction}
     />
+    </WorkspaceSignatureActionsProvider>
   );
 }

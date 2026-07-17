@@ -13,21 +13,18 @@ import {
   aiGenerationTimingStart,
   recordAiGenerationTiming,
 } from "@/telemetry/ai-generation-timing";
-
-type AiTextUnavailableReason =
-  | "provider-auth-failed"
-  | "provider-rate-limited"
-  | "provider-temporary-failure";
+import {
+  aiProviderFailureForStatus,
+  temporaryAiProviderFailure,
+  type AiTextUnavailableResult,
+} from "./text-generation-errors";
+import { providerErrorMetadata } from "./provider-error-metadata";
 
 const maxAiProviderResponseBytes = 256 * 1024;
 
 export type AiTextGenerationResult =
   | { status: "available"; text: string }
-  | {
-      status: "unavailable";
-      reason: AiTextUnavailableReason;
-      retryable: boolean;
-    };
+  | AiTextUnavailableResult;
 
 export type AiTextGenerationRequest = {
   maxOutputTokens: number;
@@ -45,36 +42,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function unavailableForStatus(status: number): AiTextGenerationResult {
-  if (status === 401 || status === 403) {
-    return {
-      status: "unavailable",
-      reason: "provider-auth-failed",
-      retryable: false,
-    };
-  }
-  if (status === 429) {
-    return {
-      status: "unavailable",
-      reason: "provider-rate-limited",
-      retryable: true,
-    };
-  }
-  return {
-    status: "unavailable",
-    reason: "provider-temporary-failure",
-    retryable: status === 408 || status >= 500,
-  };
-}
-
-function temporaryProviderFailure(): AiTextGenerationResult {
-  return {
-    status: "unavailable",
-    reason: "provider-temporary-failure",
-    retryable: true,
-  };
-}
-
 async function postJson(
   baseUrl: string,
   path: string,
@@ -88,13 +55,14 @@ async function postJson(
     return await safeProviderJson(endpoint(validated.canonicalUrl, path), {
       allowedAddresses: validated.addresses,
       body: JSON.stringify(body),
+      captureErrorJson: true,
       headers: { "Content-Type": "application/json", ...headers },
       maxResponseBytes: maxAiProviderResponseBytes,
       method: "POST",
       signal: controller.signal,
     });
   } catch {
-    return temporaryProviderFailure();
+    return temporaryAiProviderFailure();
   } finally {
     clearTimeout(timeout);
   }
@@ -146,6 +114,12 @@ function recordProviderRequestTiming(
   providerProtocol: AiGenerationProviderProtocol,
   start: number,
   result: AiTextGenerationResult,
+  metadata: {
+    configurationVersion?: string;
+    providerErrorCode?: string;
+    providerErrorType?: string;
+    providerStatusCode?: number;
+  } = {},
 ): void {
   if (!operation) {
     return;
@@ -153,9 +127,13 @@ function recordProviderRequestTiming(
 
   recordAiGenerationTiming({
     durationMs: aiGenerationTimingDuration(start),
+    configurationVersion: metadata.configurationVersion,
     operation,
     phase: "provider-request",
     providerProtocol,
+    providerErrorCode: metadata.providerErrorCode,
+    providerErrorType: metadata.providerErrorType,
+    providerStatusCode: metadata.providerStatusCode,
     reason: result.status === "unavailable" ? result.reason : undefined,
     retryable: result.status === "unavailable" ? result.retryable : undefined,
     status: result.status === "available" ? "ok" : "unavailable",
@@ -186,39 +164,49 @@ async function openAiCompatibleText(
       config.provider,
       start,
       response,
+      { configurationVersion: config.configurationVersion },
     );
     return response;
   }
   if (response.status < 200 || response.status >= 300) {
-    const unavailable = unavailableForStatus(response.status);
+    const unavailable = aiProviderFailureForStatus(response.status);
+    const errorMetadata = providerErrorMetadata(response.errorData);
     recordProviderRequestTiming(
       request.telemetryOperation,
       config.provider,
       start,
       unavailable,
+      {
+        configurationVersion: config.configurationVersion,
+        providerErrorCode: errorMetadata.code,
+        providerErrorType: errorMetadata.type,
+        providerStatusCode: response.status,
+      },
     );
     return unavailable;
   }
   const payload = response.data;
   if (payload === undefined) {
-    const unavailable = temporaryProviderFailure();
+    const unavailable = temporaryAiProviderFailure();
     recordProviderRequestTiming(
       request.telemetryOperation,
       config.provider,
       start,
       unavailable,
+      { configurationVersion: config.configurationVersion },
     );
     return unavailable;
   }
   const text = extractOpenAiText(payload);
   const result = text
     ? { status: "available" as const, text }
-    : temporaryProviderFailure();
+    : temporaryAiProviderFailure();
   recordProviderRequestTiming(
     request.telemetryOperation,
     config.provider,
     start,
     result,
+    { configurationVersion: config.configurationVersion },
   );
   return result;
 }
@@ -248,39 +236,49 @@ async function anthropicCompatibleText(
       config.provider,
       start,
       response,
+      { configurationVersion: config.configurationVersion },
     );
     return response;
   }
   if (response.status < 200 || response.status >= 300) {
-    const unavailable = unavailableForStatus(response.status);
+    const unavailable = aiProviderFailureForStatus(response.status);
+    const errorMetadata = providerErrorMetadata(response.errorData);
     recordProviderRequestTiming(
       request.telemetryOperation,
       config.provider,
       start,
       unavailable,
+      {
+        configurationVersion: config.configurationVersion,
+        providerErrorCode: errorMetadata.code,
+        providerErrorType: errorMetadata.type,
+        providerStatusCode: response.status,
+      },
     );
     return unavailable;
   }
   const payload = response.data;
   if (payload === undefined) {
-    const unavailable = temporaryProviderFailure();
+    const unavailable = temporaryAiProviderFailure();
     recordProviderRequestTiming(
       request.telemetryOperation,
       config.provider,
       start,
       unavailable,
+      { configurationVersion: config.configurationVersion },
     );
     return unavailable;
   }
   const text = extractAnthropicText(payload);
   const result = text
     ? { status: "available" as const, text }
-    : temporaryProviderFailure();
+    : temporaryAiProviderFailure();
   recordProviderRequestTiming(
     request.telemetryOperation,
     config.provider,
     start,
     result,
+    { configurationVersion: config.configurationVersion },
   );
   return result;
 }

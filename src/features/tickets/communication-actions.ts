@@ -6,6 +6,7 @@ import { env } from "@/config/env";
 import { prismaAiSummaryCacheRepository } from "@/data/ai-summary-cache-repository";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
+import { prismaWorkspaceSignatureRepository } from "@/data/workspace-signature-repository";
 import { providerRegistry } from "@/providers";
 import {
   ticketCustomerReplyActionInput,
@@ -74,6 +75,12 @@ function replyErrorMessage(reason: TicketCommunicationErrorReason): string {
   }
   if (reason === "reply-context-unavailable") {
     return "The selected message can no longer be used for a reply.";
+  }
+  if (reason === "signature-context-stale") {
+    return "The signature changed. Review the refreshed signature before sending.";
+  }
+  if (reason === "signature-context-unavailable") {
+    return "The configured signature could not be loaded. Retry before sending.";
   }
   if (reason === "unsupported-reply-intent") {
     return "Reply all is no longer available for the selected message.";
@@ -199,6 +206,7 @@ export async function addTicketCustomerReplyAction(
     actionInput.input,
     prismaTicketDetailCacheRepository,
     prismaAiSummaryCacheRepository,
+    { signatureRepository: prismaWorkspaceSignatureRepository },
   );
 
   if (result.status === "saved" || result.status === "saved-refresh-failed") {

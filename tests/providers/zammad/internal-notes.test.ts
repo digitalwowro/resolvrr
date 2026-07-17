@@ -114,6 +114,93 @@ describe("Zammad ticket article mutations", () => {
     );
   });
 
+  it("submits structured user mentions inside the Zammad article", async () => {
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers(),
+      data: rawTicket,
+    }).mockResolvedValueOnce({
+      status: 201,
+      headers: new Headers(),
+      data: {
+        id: 77,
+        ticket_id: 42,
+        type: "note",
+        sender: "Agent",
+        internal: true,
+        body: "Mentioned Manuela.",
+        attachments: [],
+      },
+    });
+
+    await zammadProviderPlugin.addTicketInternalNote?.(
+      providerContext(),
+      "42",
+      {
+        body:
+          '<p><span contenteditable="false" data-resolvrr-mention-id="4">Manuela Duma</span> please review.</p>',
+        bodyFormat: "html",
+      },
+    );
+
+    const request = JSON.parse(
+      String(mockedSafeProviderJson.mock.calls[1]?.[1]?.body),
+    );
+    expect(request.body).toBe(
+      '<p><a href="https://helpdesk.example.com/#user/profile/4" data-mention-user-id="4">Manuela Duma</a> please review.</p>',
+    );
+  });
+
+  it("rejects malformed mention references before creating an article", async () => {
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers(),
+      data: rawTicket,
+    });
+
+    await expect(
+      zammadProviderPlugin.addTicketInternalNote?.(
+        providerContext(),
+        "42",
+        {
+          body:
+            '<span data-resolvrr-mention-id="not-a-user">Unknown</span>',
+          bodyFormat: "html",
+        },
+      ),
+    ).rejects.toMatchObject({ diagnosticCode: "invalid-mention" });
+    expect(mockedSafeProviderJson).toHaveBeenCalledTimes(1);
+  });
+
+  it("maps Zammad's stale mention rejection to a safe validation error", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: rawTicket,
+      })
+      .mockResolvedValueOnce({
+        status: 422,
+        headers: new Headers(),
+        data: {},
+      });
+
+    await expect(
+      zammadProviderPlugin.addTicketInternalNote?.(
+        providerContext(),
+        "42",
+        {
+          body:
+            '<span data-resolvrr-mention-id="4">Manuela Duma</span> review this.',
+          bodyFormat: "html",
+        },
+      ),
+    ).rejects.toMatchObject({
+      kind: "validation-failure",
+      diagnosticCode: "invalid-mention",
+    });
+  });
+
   it("rejects invalid ticket references before provider I/O", async () => {
     await expect(
       zammadProviderPlugin.addTicketInternalNote?.(

@@ -3,6 +3,7 @@ export type AiRuntimeConfig =
       status: "available";
       apiKey: string;
       baseUrl: string;
+      configurationVersion?: string;
       model: string;
       provider: "openai-compatible";
     }
@@ -10,6 +11,7 @@ export type AiRuntimeConfig =
       status: "available";
       apiKey: string;
       baseUrl: string;
+      configurationVersion?: string;
       model: string;
       provider: "anthropic-compatible";
     }

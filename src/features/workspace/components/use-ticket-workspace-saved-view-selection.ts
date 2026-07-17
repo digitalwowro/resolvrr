@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 import type { WorkspaceSavedView } from "@/features/saved-views/workspace";
+import type { SaveWorkspaceSelectedSavedViewAction } from "@/features/saved-views/selection-preference";
 import type { WorkspaceTicketGroupKey } from "@/features/tickets/workspace-adapter";
 import {
   activeWorkspaceSavedView,
@@ -20,11 +21,13 @@ export function useTicketWorkspaceSavedViewSelection({
   clearRowSelection,
   handleGroupByChange,
   listPager,
+  saveWorkspaceSelectedSavedViewAction,
   savedViews,
 }: {
   clearRowSelection(): void;
   handleGroupByChange(groupBy: WorkspaceTicketGroupKey): void;
   listPager: SavedViewListPager;
+  saveWorkspaceSelectedSavedViewAction?: SaveWorkspaceSelectedSavedViewAction;
   savedViews: WorkspaceSavedView[];
 }) {
   const handleSavedViewChange = useCallback(async (nextSavedViewId: string) => {
@@ -32,9 +35,17 @@ export function useTicketWorkspaceSavedViewSelection({
     if (result.status !== "available") {
       return;
     }
+    if (saveWorkspaceSelectedSavedViewAction) {
+      await saveWorkspaceSelectedSavedViewAction(nextSavedViewId);
+    }
     clearRowSelection();
     handleGroupByChange(result.groupBy ?? "none");
-  }, [clearRowSelection, handleGroupByChange, listPager]);
+  }, [
+    clearRowSelection,
+    handleGroupByChange,
+    listPager,
+    saveWorkspaceSelectedSavedViewAction,
+  ]);
 
   useEffect(() => {
     if (savedViews.some((savedView) => savedView.id === listPager.savedViewId)) {

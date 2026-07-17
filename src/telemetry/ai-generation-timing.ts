@@ -33,11 +33,15 @@ export type AiGenerationProviderProtocol =
 export type AiGenerationTimingInput = {
   cacheDataKind?: AiGenerationCacheDataKind;
   cacheEvent?: AiGenerationCacheEvent;
+  configurationVersion?: string;
   durationMs: number;
   freshnessAgeBucket?: string;
   operation: AiGenerationOperation;
   phase: AiGenerationPhase;
   providerProtocol?: AiGenerationProviderProtocol;
+  providerErrorCode?: string;
+  providerErrorType?: string;
+  providerStatusCode?: number;
   reason?: string;
   retryable?: boolean;
   status: AiGenerationStatus;
@@ -57,11 +61,15 @@ export function recordAiGenerationTiming(input: AiGenerationTimingInput): void {
     safeLogMetadata({
       cacheDataKind: input.cacheDataKind,
       cacheEvent: input.cacheEvent,
+      configurationVersion: input.configurationVersion,
       durationMs: input.durationMs,
       freshnessAgeBucket: input.freshnessAgeBucket,
       operation: input.operation,
       phase: input.phase,
       providerProtocol: input.providerProtocol,
+      providerErrorCode: input.providerErrorCode,
+      providerErrorType: input.providerErrorType,
+      providerStatusCode: input.providerStatusCode,
       reason: input.reason,
       retryable: input.retryable,
       status: input.status,

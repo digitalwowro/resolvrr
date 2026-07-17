@@ -78,6 +78,69 @@ describe("workspace saved-view performance rules", () => {
     expect(selected).toBe("grouped-view");
   });
 
+  it("restores a supported selected view before the default view", () => {
+    expect(
+      initialWorkspaceSavedViewSelection({
+        savedViews: [
+          savedView({
+            id: "my-work",
+            preference: { position: 0, isDefault: true },
+          }),
+          savedView({ id: "channel", name: "Channel" }),
+        ],
+        capabilities: baseCapabilities,
+        preferredSavedViewId: "channel",
+      }),
+    ).toMatchObject({
+      status: "selected",
+      selectedSavedViewId: "channel",
+      selectedSavedView: { id: "channel" },
+    });
+  });
+
+  it("falls back when the selected view is missing or unsupported", () => {
+    const views = [
+      savedView({
+        id: "my-work",
+        preference: { position: 0, isDefault: true },
+      }),
+      savedView({
+        id: "channel",
+        query: { filter: { searchText: "email" } },
+      }),
+    ];
+
+    expect(
+      initialWorkspaceSavedViewSelection({
+        savedViews: views,
+        capabilities: { ...baseCapabilities, fullTextSearch: false },
+        preferredSavedViewId: "channel",
+      }),
+    ).toMatchObject({ selectedSavedViewId: "my-work" });
+    expect(
+      initialWorkspaceSavedViewSelection({
+        savedViews: views,
+        capabilities: baseCapabilities,
+        preferredSavedViewId: "deleted-view",
+      }),
+    ).toMatchObject({ selectedSavedViewId: "my-work" });
+  });
+
+  it("restores an explicit All tickets selection", () => {
+    expect(
+      initialWorkspaceSavedViewSelection({
+        savedViews: [
+          savedView({
+            id: "my-work",
+            preference: { position: 0, isDefault: true },
+          }),
+        ],
+        capabilities: baseCapabilities,
+        preferredSavedViewId: allTicketsSavedViewId,
+      }),
+    ).toMatchObject({ selectedSavedViewId: allTicketsSavedViewId });
+  });
+
   it("returns provider-neutral disabled labels for unsupported saved views", () => {
     expect(
       workspaceSavedViews(

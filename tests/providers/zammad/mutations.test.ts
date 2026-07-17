@@ -108,6 +108,19 @@ describe("Zammad ticket metadata mutations", () => {
     mockedSafeProviderJson.mockResolvedValueOnce({
       status: 200,
       headers: new Headers(),
+      data: [
+        {
+          id: 3,
+          firstname: "Agent",
+          lastname: "Smith",
+          active: true,
+          group_ids: { "7": ["full"] },
+        },
+      ],
+    });
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 200,
+      headers: new Headers(),
       data: { id: 42 },
     });
 
@@ -116,7 +129,7 @@ describe("Zammad ticket metadata mutations", () => {
       groupExternalId: "7",
     });
 
-    expect(mockedSafeProviderJson).toHaveBeenCalledTimes(2);
+    expect(mockedSafeProviderJson).toHaveBeenCalledTimes(3);
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
       "https://helpdesk.example.com/api/v1/tickets/42",
       expect.objectContaining({
@@ -127,6 +140,35 @@ describe("Zammad ticket metadata mutations", () => {
         method: "PUT",
       }),
     );
+  });
+
+  it("rejects an owner without full group access before the ticket write", async () => {
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: rawTicket,
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [],
+      });
+
+    await expect(
+      zammadProviderPlugin.updateTicketMetadata?.(providerContext(), "42", {
+        ownerExternalId: "3",
+        groupExternalId: "7",
+      }),
+    ).rejects.toMatchObject({
+      diagnosticCode: "owner-group-mismatch",
+      kind: "validation-failure",
+    });
+    expect(mockedSafeProviderJson).toHaveBeenCalledTimes(2);
+    expect(mockedSafeProviderJson.mock.calls).not.toContainEqual([
+      expect.any(String),
+      expect.objectContaining({ method: "PUT" }),
+    ]);
   });
 
   it("rejects non-numeric Zammad assignment IDs before provider I/O", async () => {

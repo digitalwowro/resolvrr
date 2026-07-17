@@ -1,8 +1,17 @@
 import type { TicketListQueryInput } from "@/core/providers";
+import { prismaSavedViewSelectionRepository } from "@/data/saved-view-selection-repository";
+import { prismaWorkspaceTabsRepository } from "@/data/workspace-tabs-repository";
 import type { StoredSavedView } from "@/features/saved-views";
 import type { ConnectionListItem } from "@/features/helpdesk-connections/service-types";
 import type { TicketDetailReadResult } from "@/features/tickets/read-model";
 import { workspaceTicketDetail } from "@/features/tickets/workspace-adapter";
+
+export function workspaceUiPreferenceSeed(userId: string, workspaceId: string) {
+  return Promise.all([
+    prismaWorkspaceTabsRepository.getForUser(userId, workspaceId),
+    prismaSavedViewSelectionRepository.getForUser(userId, workspaceId),
+  ]);
+}
 
 export function workspaceDetailSeed(
   result: TicketDetailReadResult | undefined,

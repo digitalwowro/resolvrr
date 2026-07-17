@@ -38,6 +38,7 @@ export function restoredCommunicationDraft(
       includeOriginal: record.includeOriginal ?? true,
       kind,
       sourceArticleExternalId: context.sourceArticleExternalId,
+      signatureContext: record.signatureContext,
       subject: record.subject ?? context.subject,
       to: record.to ?? [],
     };
@@ -62,6 +63,7 @@ export function restoredCommunicationDraft(
     intent,
     kind,
     sourceArticleExternalId: context.sourceArticleExternalId,
+    signatureContext: record.signatureContext,
     to: record.contextVersion ? record.to ?? defaultTo : defaultTo,
   };
 }

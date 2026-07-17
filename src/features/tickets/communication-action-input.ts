@@ -3,6 +3,7 @@ import type { TicketCustomerReplyInput } from "@/core/ticket-replies";
 import { sanitizeComposerHtml } from "@/security/sanitize-html";
 import { isTicketCommunicationBodyFormat, normalizedCommunicationBody } from "./communication-body";
 import { customerReplyInput } from "./reply-input";
+import { ticketSignatureSources } from "@/core/ticket-signatures";
 
 export type TicketInternalNoteActionInput =
   | {
@@ -50,6 +51,17 @@ function hasUnsupportedKeys(
   allowedKeys: readonly string[],
 ): boolean {
   return Object.keys(record).some((key) => !allowedKeys.includes(key));
+}
+
+function parsedSignatureContext(record: Record<string, unknown>) {
+  if (record.signatureContext === undefined) return undefined;
+  const value = objectValue(record.signatureContext);
+  if (!value || hasUnsupportedKeys(value, ["contextVersion", "source"])) return null;
+  const contextVersion = textValue(value, "contextVersion").trim();
+  const source = textValue(value, "source");
+  return contextVersion && ticketSignatureSources.includes(source as never)
+    ? { contextVersion, source: source as (typeof ticketSignatureSources)[number] }
+    : null;
 }
 
 function ticketBodyActionInput(
@@ -105,6 +117,7 @@ export function ticketCustomerReplyActionInput(
       "contextVersion",
       "intent",
       "sourceArticleExternalId",
+      "signatureContext",
       "ticketExternalId",
       "to",
     ])
@@ -118,6 +131,8 @@ export function ticketCustomerReplyActionInput(
   }
   const bodyFormat = bodyFormatValue === "html" ? "html" : "plain";
   const rawBody = textValue(record, "body");
+  const signatureContext = parsedSignatureContext(record);
+  if (signatureContext === null) return { status: "invalid" };
   const input = customerReplyInput({
     body: normalizedCommunicationBody(
       bodyFormat === "html" ? sanitizeComposerHtml(rawBody) : rawBody,
@@ -127,6 +142,7 @@ export function ticketCustomerReplyActionInput(
     contextVersion: textValue(record, "contextVersion"),
     intent: textValue(record, "intent"),
     sourceArticleExternalId: textValue(record, "sourceArticleExternalId"),
+    signatureContext,
     to: stringListValue(record, "to") ?? [],
   });
   return ticketExternalId && input

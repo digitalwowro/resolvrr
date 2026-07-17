@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { TicketCustomerForwardInput } from "@/core/ticket-forwards";
 import type { TicketCommunicationBodyFormat } from "@/core/tickets";
+import type { TicketSignatureSelection } from "@/core/ticket-signatures";
 import { normalizedReplyRecipients } from "./reply-input";
 
 const subjectSchema = z.string().trim().min(1).max(500).refine(
@@ -15,6 +16,7 @@ export function customerForwardInput(input: {
   contextVersion: string;
   includeOriginal: boolean;
   sourceArticleExternalId: string;
+  signatureContext?: TicketSignatureSelection;
   subject: string;
   to: string[];
 }): TicketCustomerForwardInput | undefined {
@@ -35,6 +37,7 @@ export function customerForwardInput(input: {
     contextVersion,
     includeOriginal: input.includeOriginal,
     sourceArticleExternalId,
+    signatureContext: input.signatureContext,
     subject: subject.data,
     to: recipients.to,
   };

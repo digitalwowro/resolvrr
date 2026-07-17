@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { prisma } from "@/data/prisma";
 import {
   workspaceOpenTabsPreferenceKey,
@@ -34,22 +35,30 @@ export const prismaWorkspaceTabsRepository: WorkspaceTabsRepository = {
 
   async setForUser(userId, workspaceId, state) {
     const valueJson = workspaceOpenTabsStateToStorage(state);
+    const serialized = JSON.stringify(valueJson);
 
-    await prisma.uiPreference.upsert({
-      where: {
-        userId_workspaceId_key: {
-          userId,
-          workspaceId,
-          key: workspaceOpenTabsPreferenceKey,
-        },
-      },
-      create: {
-        userId,
-        workspaceId,
-        key: workspaceOpenTabsPreferenceKey,
-        valueJson,
-      },
-      update: { valueJson },
-    });
+    await prisma.$executeRaw`
+      INSERT INTO "UiPreference" (
+        "id", "userId", "workspaceId", "key", "valueJson", "createdAt", "updatedAt"
+      )
+      VALUES (
+        ${randomUUID()},
+        ${userId},
+        ${workspaceId},
+        ${workspaceOpenTabsPreferenceKey},
+        CAST(${serialized} AS JSONB),
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+      )
+      ON CONFLICT ("userId", "workspaceId", "key") DO UPDATE
+      SET
+        "valueJson" = EXCLUDED."valueJson",
+        "updatedAt" = CURRENT_TIMESTAMP
+      WHERE
+        COALESCE("UiPreference"."valueJson" ->> 'updatedAt', '') !~
+          '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$'
+        OR ("UiPreference"."valueJson" ->> 'updatedAt') <=
+          (EXCLUDED."valueJson" ->> 'updatedAt')
+    `;
   },
 };

@@ -71,6 +71,7 @@ export function metadataDraftUpdatePayload(
           contextVersion: draft.communication.contextVersion,
           intent: draft.communication.intent,
           sourceArticleExternalId: draft.communication.sourceArticleExternalId,
+          signatureContext: draft.communication.signatureContext,
           to: draft.communication.to,
         }
       : {
@@ -82,6 +83,7 @@ export function metadataDraftUpdatePayload(
           includeOriginal: draft.communication.includeOriginal,
           kind: draft.communication.kind,
           sourceArticleExternalId: draft.communication.sourceArticleExternalId,
+          signatureContext: draft.communication.signatureContext,
           subject: draft.communication.subject,
           to: draft.communication.to,
         }

@@ -56,6 +56,11 @@ Saved views are workspace-scoped ticket list queries managed from
 switcher: it must not expose create, edit, delete, or reorder controls. Changing
 the selected view reloads the ticket list for that view and clears the current
 bulk row selection. Open ticket tabs are unchanged by view selection.
+The last successfully loaded selection is stored per user and workspace. Server
+refreshes, ticket-detail navigation, and post-update return-to-list behavior
+restore that selection; the configured default is only a fallback when the
+stored view was deleted, became inaccessible, or is unsupported by the active
+provider.
 
 New workspace users get one personal seeded view, `My work`, when the active
 provider can resolve the current helpdesk user. `My work` means `Owner is
@@ -70,6 +75,19 @@ page or independently expanded group page currently loaded by the agent. The
 refreshed window replaces those rows atomically, so tickets that no longer match
 the view—such as a ticket closed from `My work`—do not linger. A failed page
 refresh leaves the prior loaded window intact.
+When a server refresh follows a ticket update or close, it must not replace an
+active provider-sorted list with the server page's default ordering. The client
+retains the applied sort and immediately reconciles the refreshed page window
+through the provider using that same sort.
+
+Sorting always applies to the complete matching result, never only to the rows
+currently visible. Provider-native scalar fields remain sorted upstream before
+pagination. Relationship labels such as Owner and Customer must not be sorted
+by opaque provider IDs: Resolvrr loads every matching page, shows progress,
+sorts the complete set by its display labels, and then exposes it through the
+normal incremental list window. Unassigned relationship values remain last in
+both directions. A failed complete load leaves the prior list intact and says
+that the requested sort was not applied.
 
 The Views settings section owns personal/shared visibility, title, appearance,
 condition editing, default selection, ordering, and deletion. Agents can manage
@@ -78,6 +96,16 @@ personal views. Conditions remain provider-neutral: fields are Owner, State,
 Priority, and Group; operators are `is` and `is not`; values within one
 condition are OR alternatives and separate conditions are ANDed. `All owners`
 acts as no owner filter and is not persisted as a condition.
+
+The server-rendered view definitions do not imply that provider lookups are
+loaded. Opening Views performs one current personal-connection lookup refresh
+so Group and assignable Owner condition values reflect the signed-in user's
+helpdesk access. A positive Group condition narrows Owner values to agents with
+full access to any selected group; a negative-only Group condition does not.
+Existing incompatible owner chips remain visible while editing, but the editor
+blocks Save until current provider access can be verified or the values are
+corrected. `Myself` is subject to the same group-access validation and
+`Unassigned` remains valid.
 
 ## Ticket Tabs
 
@@ -90,10 +118,66 @@ the active workspace in `UiPreference` as `workspace.openTabs`,
 including open tabs, recent tabs, active pane (`list` or ticket ID), tab
 orientation, and an update timestamp. This state is user-scoped and
 workspace-scoped so it survives browser restarts and syncs across devices.
-The stored tab list is capped to the supported workspace limit and latest
-server write wins.
+The stored tab list is capped to the supported workspace limit. Every save is
+bound to the workspace that originated it, and an older asynchronous save
+cannot overwrite a newer local tab action.
 Persisted tabs without a valid selectable state key are removed individually;
 legacy `Unknown` merged tabs do not invalidate otherwise valid preferences.
+
+When the active provider supports ticket taskbar synchronization, Zammad's
+ticket tasks are the initial source of truth for open tabs and ordering.
+Resolvrr then sends every explicit local open, close, activation, and reorder
+immediately. Failed writes keep the local action, show `Not synchronized` on
+affected tabs, and retry during the 60-second/focus reconciliation. Once the
+server confirms that an action is durably staged, the browser stops resending
+that explicit action and polls the server outbox instead, so an old retry cannot
+overwrite a newer action from another window. Only ticket tasks participate;
+other provider taskbar item types are untouched.
+When the affected tab is no longer visible, such as after a failed close,
+Resolvrr shows one global pending-change notice instead of silently hiding the
+retry state.
+Opening a new local ticket stages independent durable open and active intents;
+selecting an existing tab sends only the idempotent activation. This preserves
+every newly opened tab while rapid selection keeps only the latest active
+intent. The provider also creates a missing ticket task defensively before
+activating it. Older asynchronous provider snapshots cannot replace a newer
+local action. Closing the active tab also synchronizes
+the selected successor, or List when no successor remains. Ordinary in-flight
+commands do not show warning dots or banners. The existing workspace open-tab
+cap still bounds hydration and rendering, but always retains a positively
+identified active ticket and any local draft-protected conflict. Opening beyond
+the cap synchronizes the resulting local eviction as a provider close. Repeated
+focus events are coalesced, rapid selections send only the latest active intent,
+and separate in-memory queues are bound to the full user, workspace, personal
+connection, and identity-version scope. Old-scope responses cannot update the
+current workspace. Polling and explicit synchronization stay disabled until
+that complete personal scope is available; the client never submits an
+unscoped taskbar request.
+Opening a ticket from notifications preserves the notification-first local
+position in the provider; pending reorder intent executes after pending
+open/close work so it cannot be applied before the referenced task exists.
+Notification reads remain available when one stale notification references a
+ticket that was deleted or is no longer accessible. Only that item is omitted;
+provider authentication, connectivity, and contract failures continue to show
+the notification error state.
+
+Provider absence closes a clean local tab unless a newer local open remains
+pending. A tab with an unsaved communication draft stays open and displays a
+conflict offering only `Close in Resolvrr`; accepting retains the browser draft
+for later restoration. Draft presence is published synchronously before its
+ordered IndexedDB write settles, so reconciliation cannot close the tab during
+the brief save interval. This rule also overrides initial provider replacement.
+A positively identified provider active ticket switches every visible Resolvrr
+session on its next reconciliation. Missing, multiple, or indeterminate active
+values never force Resolvrr to List. An active non-ticket Zammad task also makes
+ticket selection indeterminate rather than allowing a stale ticket-active flag
+to switch Resolvrr.
+
+If a stale provider task points to a merged source ticket, Resolvrr resolves it
+through the normal provider-neutral merge contract, ensures the surviving
+ticket task exists and is active when required, and only then closes the source
+task. The workspace renders and selects the surviving ticket without exposing a
+nested or editable merged source.
 
 Horizontal ticket tabs sit directly above the list toolbar or selected-ticket
 pane. The List tab starts the tab strip; horizontal tabs stay constrained to the
@@ -133,6 +217,12 @@ available in the saved open-tab set, the workspace falls back to List.
 The browser URL is kept aligned with the active ticket or List view. The ticket
 detail header also exposes an icon-only copy-link control that writes the
 current ticket's direct `/workspace?ticket=ID` URL to the clipboard.
+
+With ticket taskbar synchronization enabled, selecting List is a synchronized
+active-pane action rather than a browser-only state. Resolvrr immediately keeps
+List selected, clears active ticket tasks through the provider, and retries a
+failed deactivation without allowing an older remote active ticket to bounce the
+workspace back during mount, interval, or focus reconciliation.
 
 An old URL or tab for a merged source resolves to the final surviving ticket
 before editable detail is rendered. The source tab is replaced and deduplicated,
@@ -182,9 +272,32 @@ least one recipient, and warns without blocking when a provider-managed address
 is manually added. Switching mode, source, or intent with body text or recipient
 edits requires confirmation. The editor toolbar is scoped to basic formatting:
 bold, italic, underline, ordered list, unordered list, and link, with undo/redo
-controls in the toolbar chrome. Staged communication HTML is part of the
-selected-ticket draft and is sent by the main workspace `Update` action
-alongside metadata.
+controls on the left. Proofread, Rephrase, and the non-functional AI Reply
+placeholder align on the right at 14px. Rephrase opens the configured style
+menu and selecting one style immediately prepares that rephrase request.
+Staged communication HTML is part of the selected-ticket draft and is sent by
+the main workspace `Update` action alongside metadata.
+Typing `@@` followed by a query opens a keyboard-accessible mention picker for
+active helpdesk agents with read access to the staged ticket group. Selecting an
+agent inserts a provider-neutral, non-editable mention token into the same
+scoped browser draft. Suggestions must contain the normalized query in their
+visible label, rank prefix matches first, and float from the live insertion
+caret inside the editor rather than from the editor boundary. The provider
+converts and validates that token only as part of the final article write;
+there is no separate notification or subscription write. If the group or agent
+access changed, Update fails closed, retains the communication draft, and
+reports the invalid mention.
+Reply and Forward show a read-only signature preview directly below the editable
+body. An available signature is collapsed by default behind a compact,
+keyboard-accessible disclosure and expands on the same composer background
+without becoming part of the editable body. Update remains disabled while that
+preview is loading, unavailable, or no
+longer matches the draft's reviewed context. A staged Group change refreshes the
+preview before submission. Workspace admins choose Zammad-managed,
+Resolvrr-managed, or no signature in Settings > Signatures; existing workspaces
+default to no signature. Resolvrr templates support a workspace default plus
+group overrides, safe variables, and bounded managed images. Agents always see
+the exact rendered signature—or the explicit absence of one—before Update.
 After a successful communication update, the ticket-level editor closes and the
 thread scrolls to the refreshed newest article.
 Article metadata prefers display names over email addresses, exposes email as
@@ -197,8 +310,11 @@ matching mutation capability. It starts at the top of the selected-ticket pane,
 aligned beside the ticket detail header and thread. Editable metadata controls
 and provider-required pending date/time controls live in the local
 selected-ticket draft: changing a value does not call the provider until the
-agent clicks `Update`. Each `Update` click submits one provider-neutral
-selected-ticket payload. Tags render as a chip combobox with removable chips,
+agent clicks `Update`. The pending selector includes one compact preset row for
+Tomorrow, 1 week, 2 weeks, and 1 month. Presets preserve the staged time, keep
+the selector open, and move the visible calendar to the selected local-calendar
+date; calendar-month selection clamps safely at month end. Each `Update` click
+submits one provider-neutral selected-ticket payload. Tags render as a chip combobox with removable chips,
 a visible inline add-tag entry, and provider-neutral suggestions when the active
 provider can supply them. The tag suggestion menu stays hidden on focus and only
 shows suggestions that contain the typed query after the agent enters text;
@@ -231,7 +347,11 @@ open, return to list, or return to list when the final canonical state is
 closed. Provider-supplied hidden state options are omitted from the state
 dropdown. If a provider lacks the capability, the field renders as ordinary
 read-only metadata; owner and group editing also require available lookup
-options for the matching field.
+options for the matching field. Owner options are scoped to the selected group
+and require full ticket access. Changing Group clears a staged assigned owner,
+loads the new eligible owner set, and requires an eligible selection before
+Update. The provider freshly revalidates the final owner/group pair before any
+ticket write.
 `Merged` never appears as a state label, badge, row, group, count, filter,
 saved-view value, link candidate, related-ticket entry, or notification.
 

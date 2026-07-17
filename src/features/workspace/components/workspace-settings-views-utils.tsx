@@ -81,6 +81,8 @@ export const savedViewMutationMessages: Record<string, string> = {
   "invalid-visibility": "This view visibility is not available.",
   "invalid-appearance": "Choose a valid Lucide icon and color.",
   "invalid-conditions": "Complete every condition row before saving.",
+  "owner-group-mismatch":
+    "Every selected owner must have full access to the selected group.",
   "unsupported-query": "The active provider does not support this view.",
   "query-too-expensive": "This view is too expensive for the active provider.",
   "permission-denied": "You cannot manage this view.",

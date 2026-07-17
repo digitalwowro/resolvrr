@@ -121,6 +121,27 @@ describe("AI ticket summary output cache", () => {
     expect(cache.storeSummary).not.toHaveBeenCalled();
   });
 
+  it("can expose cache read failures to coordinated hydration", async () => {
+    const cacheError = new Error("cache unavailable");
+    const cache = aiCacheRepository({
+      readSummary: vi.fn(async () => {
+        throw cacheError;
+      }),
+    });
+
+    await expect(
+      readCachedTicketSummary(openAiConfig, ticketDetail(), {
+        cacheRepository: cache,
+        encryptionKey: "test encryption key long enough",
+        throwOnReadError: true,
+        scope: cacheScope,
+      }),
+    ).rejects.toBe(cacheError);
+
+    expect(safeProviderJson).not.toHaveBeenCalled();
+    expect(cache.storeSummary).not.toHaveBeenCalled();
+  });
+
   it("force refreshes by bypassing a valid cache hit and storing the new summary", async () => {
     vi.mocked(safeProviderJson).mockResolvedValueOnce({
       data: {

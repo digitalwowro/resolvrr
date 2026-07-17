@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ProviderError, type ProviderContext } from "@/core/providers";
-import type { TicketCustomerForwardInput } from "@/core/ticket-forwards";
+import type { ProviderTicketCustomerForwardInput } from "@/core/ticket-forwards";
 import { sanitizeComposerHtml } from "@/security/sanitize-html";
 import { zammadGetJson, zammadSendJson } from "./client";
 import { prepareZammadForwardAttachments } from "./forward-attachments";
@@ -12,6 +12,10 @@ import {
   assertZammadTicketNotMerged,
   zammadTicketPayload,
 } from "./ticket-mutation-preflight";
+import {
+  rethrowZammadMentionWriteError,
+  zammadMentionHtml,
+} from "./ticket-mentions";
 
 const recipientSchema = z.string().trim().toLowerCase().max(254).email();
 
@@ -25,7 +29,7 @@ function mismatch(code: string): ProviderError {
   );
 }
 
-function recipients(input: TicketCustomerForwardInput) {
+function recipients(input: ProviderTicketCustomerForwardInput) {
   const seen = new Set<string>();
   const unique = (values: string[]) => values.flatMap((value) => {
     const parsed = recipientSchema.safeParse(value);
@@ -49,7 +53,7 @@ function validSubject(subject: string): string | undefined {
 export async function forwardZammadTicketEmail(
   context: ProviderContext,
   ticketExternalId: string,
-  input: TicketCustomerForwardInput,
+  input: ProviderTicketCustomerForwardInput,
 ): Promise<void> {
   const ticketId = zammadTicketId(ticketExternalId);
   const articleId = zammadTicketId(input.sourceArticleExternalId);
@@ -87,6 +91,7 @@ export async function forwardZammadTicketEmail(
     bodyFormat: input.bodyFormat === "html" ? "html" : "plain",
     includeOriginal: input.includeOriginal,
     inlineImages,
+    signature: input.resolvedSignature,
     subject,
   });
   let response: unknown;
@@ -96,7 +101,7 @@ export async function forwardZammadTicketEmail(
       to: normalizedRecipients.to.join(", "),
       cc: normalizedRecipients.cc.join(", "),
       subject,
-      body: body.body,
+      body: zammadMentionHtml(context, body.body, "html"),
       content_type: body.contentType,
       type: "email",
       internal: false,
@@ -104,6 +109,9 @@ export async function forwardZammadTicketEmail(
       attachments,
     });
   } catch (error) {
+    if (error instanceof ProviderError && error.statusCode === 422) {
+      rethrowZammadMentionWriteError(error, input.body);
+    }
     if (error instanceof ProviderError && error.kind === "temporary-provider-failure") {
       throw new ProviderError(error.kind, error.message, false, error.statusCode, "delivery-uncertain");
     }

@@ -3,11 +3,6 @@ import {
   type ProviderCapability,
   type TicketListQuery,
 } from "@/core/providers";
-import {
-  unsupportedTicketLookupData,
-  type TicketLookupData,
-  type TicketLookupList,
-} from "@/core/ticket-lookups";
 import type {
   TicketExternalId,
   TicketLinkTarget,
@@ -16,7 +11,6 @@ import type {
 } from "@/core/tickets";
 import type { TicketProviderContext } from "./connection-context";
 import { readUnavailableForProviderError } from "./connection-context";
-import { dispatchLookupListRead } from "./provider-lookup-dispatch";
 import { ticketCommunicationCapabilities } from "./communication-model";
 import { ticketListQueryCapabilities } from "./list-query-guardrails";
 import {
@@ -167,63 +161,6 @@ export async function dispatchTicketDetailRead(
   }
 }
 
-export async function dispatchTicketLookupDataRead(
-  providerContext: TicketProviderContext,
-): Promise<TicketLookupData> {
-  const canListAssignableUsers = hasCapability(
-    providerContext,
-    "lookup:assignable-users",
-  );
-  const canGetCurrentUser = hasCapability(providerContext, "lookup:current-user");
-  const canListGroups = hasCapability(providerContext, "lookup:groups");
-  const canListTags = hasCapability(providerContext, "lookup:tags");
-  if (!canListAssignableUsers && !canGetCurrentUser && !canListGroups && !canListTags) {
-    return unsupportedTicketLookupData();
-  }
-
-  const [assignableUsers, currentUser, groups, tags] = await Promise.all([
-    dispatchLookupListRead({
-      read: canListAssignableUsers && providerContext.plugin.listAssignableUsers
-        ? () => providerContext.plugin.listAssignableUsers!(
-            providerContext.context,
-          )
-        : undefined,
-    }),
-    dispatchLookupListRead({
-      read: canGetCurrentUser && providerContext.plugin.getCurrentUser
-        ? async () => [await providerContext.plugin.getCurrentUser!(
-            providerContext.context,
-          )]
-        : undefined,
-    }),
-    dispatchLookupListRead({
-      read: canListGroups && providerContext.plugin.listGroups
-        ? () => providerContext.plugin.listGroups!(providerContext.context)
-        : undefined,
-    }),
-    dispatchLookupListRead({
-      read: canListTags && providerContext.plugin.listTags
-        ? () => providerContext.plugin.listTags!(providerContext.context)
-        : undefined,
-    }),
-  ]);
-
-  return { assignableUsers, currentUser, groups, tags };
-}
-
-export async function dispatchCurrentHelpdeskUserRead(
-  providerContext: TicketProviderContext,
-): Promise<TicketLookupList> {
-  const canGetCurrentUser = hasCapability(providerContext, "lookup:current-user");
-  return dispatchLookupListRead({
-    read: canGetCurrentUser && providerContext.plugin.getCurrentUser
-      ? async () => [await providerContext.plugin.getCurrentUser!(
-          providerContext.context,
-        )]
-      : undefined,
-  });
-}
-
 export async function dispatchTicketMetadataMutation(
   providerContext: TicketProviderContext,
   ticketExternalId: TicketExternalId,
@@ -269,7 +206,9 @@ export async function dispatchTicketMetadataMutation(
     if (error instanceof ProviderError && error.kind === "validation-failure") {
       return {
         status: "failed",
-        reason: "unavailable-transition",
+        reason: error.diagnosticCode === "owner-group-mismatch"
+          ? "owner-group-mismatch"
+          : "unavailable-transition",
         retryable: false,
       };
     }

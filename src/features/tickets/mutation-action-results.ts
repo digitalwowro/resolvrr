@@ -9,6 +9,8 @@ export function metadataMutationErrorMessage(reason: TicketMetadataMutationError
   const messages: Partial<Record<TicketMetadataMutationErrorReason, string>> = {
     "invalid-input": "Choose a metadata value to save.",
     "unsupported-capability": "This workspace cannot update that field.",
+    "owner-group-mismatch":
+      "The selected owner does not have full access to the selected group.",
     "unavailable-transition": "That state change is not available for this ticket.",
     "provider-auth-failed": "The helpdesk rejected the saved credentials.",
     "provider-permission-denied": "The helpdesk account does not have permission to update this ticket.",
@@ -25,10 +27,14 @@ export function metadataMutationErrorMessage(reason: TicketMetadataMutationError
 function communicationErrorMessage(reason: TicketMetadataMutationErrorReason): string {
   const messages: Partial<Record<TicketMetadataMutationErrorReason, string>> = {
     "invalid-input": "Enter a reply, forward, or comment before updating.",
+    "invalid-mention":
+      "A mentioned Zammad agent no longer has access to this ticket. Review the mentions and try again.",
     "unsupported-capability": "This workspace cannot add that message.",
     "invalid-recipient": "Review the To and Cc recipients before updating.",
     "reply-context-stale": "The reply context changed. Reload the ticket and review recipients again.",
     "reply-context-unavailable": "The selected message can no longer be used for a reply.",
+    "signature-context-stale": "The signature changed. Review the refreshed signature before updating.",
+    "signature-context-unavailable": "The configured signature could not be loaded. Retry before updating.",
     "forward-context-stale": "The source message changed. Reload the ticket and review the forward again.",
     "forward-context-unavailable": "The selected message can no longer be forwarded.",
     "invalid-forward-attachment": "One of the selected attachments is no longer available.",

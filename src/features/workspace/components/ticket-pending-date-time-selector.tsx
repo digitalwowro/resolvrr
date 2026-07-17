@@ -38,6 +38,7 @@ import {
   pendingTimeMinutes,
   startOfPendingDay,
 } from "./ticket-pending-date-time-selector-utils";
+import { TicketPendingDatePresetRow } from "./ticket-pending-date-preset-row";
 
 type TicketPendingDateTimeSelectorProps = {
   anchorRef: RefObject<HTMLDivElement | null>;
@@ -138,6 +139,11 @@ export function TicketPendingDateTimeSelector({
         date: localDateValue(date),
       }),
     );
+  }
+
+  function selectPresetDate(date: Date) {
+    setVisibleMonth(date);
+    selectDate(date);
   }
 
   function selectHour(hour: number) {
@@ -267,6 +273,11 @@ export function TicketPendingDateTimeSelector({
           tooltip="Minute"
         />
       </div>
+      <TicketPendingDatePresetRow
+        now={now}
+        selectedDateValue={selectedDateValue}
+        onSelect={selectPresetDate}
+      />
     </div>
   );
 

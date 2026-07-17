@@ -124,6 +124,7 @@ export function sanitizeProviderHtml(
       tr: ["align", "bgcolor", "valign"],
     },
     allowedSchemes: ["http", "https", "mailto"],
+    allowedSchemesByTag: { img: ["http", "https", "data"] },
     allowedStyles: emailAllowedStyles,
     exclusiveFilter: (frame) => frame.tag === "img" && !frame.attribs.src,
     transformTags: {
@@ -147,9 +148,12 @@ export function sanitizeProviderHtml(
 
 function sanitizedComposerHtml(html: string): string {
   return sanitizeHtml(html, {
-    allowedTags: ["a", "br", "b", "em", "i", "li", "ol", "p", "strong", "u", "ul"],
+    allowedTags: [
+      "a", "br", "b", "em", "i", "li", "ol", "p", "span", "strong", "u", "ul",
+    ],
     allowedAttributes: {
       a: ["href", "rel", "target"],
+      span: ["contenteditable", "data-resolvrr-mention-id"],
     },
     allowedSchemes: ["http", "https", "mailto"],
     transformTags: {
@@ -158,8 +162,24 @@ function sanitizedComposerHtml(html: string): string {
         target: "_blank",
       }),
       div: "p",
+      span: (tagName, attributes) => {
+        const mentionId = attributes["data-resolvrr-mention-id"];
+        const attribs: Record<string, string> =
+          mentionId && /^[a-z0-9._:-]{1,128}$/iu.test(mentionId)
+            ? {
+                contenteditable: "false",
+                "data-resolvrr-mention-id": mentionId,
+              }
+            : {};
+        return {
+          tagName,
+          attribs,
+        };
+      },
     },
-  }).replace(/<a(?![^>]*\shref=)[^>]*>(.*?)<\/a>/giu, "$1");
+  })
+    .replace(/<a(?![^>]*\shref=)[^>]*>(.*?)<\/a>/giu, "$1")
+    .replace(/<span>([\s\S]*?)<\/span>/giu, "$1");
 }
 
 export function sanitizeComposerHtml(html: string): string {
@@ -168,6 +188,46 @@ export function sanitizeComposerHtml(html: string): string {
 
 export function sanitizeComposerEditorHtml(html: string): string {
   return sanitizedComposerHtml(html);
+}
+
+const signatureDataImage = /^data:image\/(?:gif|jpeg|png|webp);base64,[a-z0-9+/=]+$/iu;
+
+export function sanitizeSignatureTemplateHtml(html: string): string {
+  return sanitizeHtml(html, {
+    allowedTags: ["a", "br", "b", "div", "em", "i", "img", "li", "ol", "p", "span", "strong", "u", "ul"],
+    allowedAttributes: {
+      a: ["href", "rel", "target"],
+      img: ["alt", "height", "src", "title", "width"],
+      span: ["style"],
+      div: ["style"],
+      p: ["style"],
+    },
+    allowedSchemes: ["http", "https", "mailto"],
+    allowedSchemesByTag: { img: ["data"] },
+    allowedStyles: emailAllowedStyles,
+    exclusiveFilter: (frame) => frame.tag === "img" && !frame.attribs.src,
+    transformTags: {
+      a: sanitizeHtml.simpleTransform("a", {
+        rel: "noreferrer noopener",
+        target: "_blank",
+      }),
+      img: (tagName, attributes) => {
+        const source = attributes.src ?? "";
+        const safeSource = signatureDataImage.test(source) ? source : undefined;
+        const attribs: Record<string, string> = safeSource
+          ? Object.fromEntries(
+              Object.entries({ ...attributes, src: safeSource }).filter(
+                (entry): entry is [string, string] => typeof entry[1] === "string",
+              ),
+            )
+          : { alt: attributes.alt ?? "" };
+        return {
+          tagName,
+          attribs,
+        };
+      },
+    },
+  }).trim();
 }
 
 export function sanitizeForwardedProviderHtml(html: string): string {

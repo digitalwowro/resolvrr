@@ -51,6 +51,14 @@ export {
   type InitialWorkspaceSavedViewSelection,
   type WorkspaceSavedView,
 } from "./workspace";
+export {
+  workspaceSelectedSavedViewPreferenceFromStorage,
+  workspaceSelectedSavedViewPreferenceKey,
+  workspaceSelectedSavedViewPreferenceToStorage,
+  workspaceSelectedSavedViewPreferenceVersion,
+  type SaveWorkspaceSelectedSavedViewAction,
+  type WorkspaceSelectedSavedViewPreference,
+} from "./selection-preference";
 export type {
   CreateSavedViewInput,
   SavedViewPreference,

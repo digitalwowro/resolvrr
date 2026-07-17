@@ -122,6 +122,29 @@ describe("safe provider JSON reads", () => {
 
     expect(response.status).toBe(401);
     expect(response).not.toHaveProperty("data");
+    expect(response).not.toHaveProperty("errorData");
+  });
+
+  it("captures bounded provider error JSON only when explicitly requested", async () => {
+    mockedLookup.mockResolvedValueOnce(dnsResult("93.184.216.34", 4));
+    mockJsonRequest({
+      status: 401,
+      body: "{\"error\":{\"type\":\"authentication_error\",\"message\":\"private\"}}",
+    });
+
+    const response = await safeProviderJson(
+      "https://helpdesk.example.com/provider/tickets",
+      {
+        allowedAddresses: ["93.184.216.34"],
+        captureErrorJson: true,
+        maxResponseBytes: 128,
+      },
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.errorData).toEqual({
+      error: { type: "authentication_error", message: "private" },
+    });
   });
 
   it("sends bounded JSON writes through the pinned address helper", async () => {

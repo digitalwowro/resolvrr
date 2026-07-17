@@ -18,6 +18,8 @@ import { WorkspaceSettingsUsersSection } from "./workspace-settings-users-sectio
 import type { WorkspaceSettingsDialogProps } from "./workspace-settings-dialog-types";
 import type { WorkspaceSettingsSection } from "./workspace-settings-types";
 import { ViewsSection } from "./workspace-settings-views-section";
+import { useSavedViewSettingsData } from "./use-saved-view-settings-data";
+import { WorkspaceSettingsSignaturesSection } from "./workspace-settings-signatures-section";
 
 export type { WorkspaceSettingsSection } from "./workspace-settings-types";
 
@@ -93,7 +95,12 @@ export function WorkspaceSettingsDialog({
   const [connections, setConnections] = useState(initialConnections);
   const [aiSettingsData, setAiSettingsData] = useState(initialAiSettingsData);
   const [promptCenterData, setPromptCenterData] = useState<AiPromptCenterData>();
-  const [savedViewData, setSavedViewData] = useState(initialSavedViewData);
+  const [savedViewData, setSavedViewData] = useSavedViewSettingsData({
+    initialData: initialSavedViewData,
+    loadAction: loadSavedViewsSettingsAction,
+    onDataChange: onSavedViewDataChange,
+    section,
+  });
   const myStyleAvailable = Boolean(
     aiSettingsData && aiSettingsData.policy !== "disabled",
   );
@@ -106,16 +113,6 @@ export function WorkspaceSettingsDialog({
       restoreFocusRef.current?.focus();
     };
   }, []);
-
-  useEffect(() => {
-    if (section !== "views" || savedViewData || !loadSavedViewsSettingsAction) {
-      return;
-    }
-    void loadSavedViewsSettingsAction().then((data) => {
-      setSavedViewData(data);
-      onSavedViewDataChange?.(data);
-    });
-  }, [loadSavedViewsSettingsAction, onSavedViewDataChange, savedViewData, section]);
 
   useEffect(() => {
     if (section !== "prompts" || promptCenterData || !loadAiPromptCenterAction) {
@@ -259,6 +256,8 @@ export function WorkspaceSettingsDialog({
               setDefaultSavedViewAction={setDefaultSavedViewAction}
               userRole={userRole}
             />
+          ) : section === "signatures" ? (
+            <WorkspaceSettingsSignaturesSection />
           ) : section === "prompts" ? (
             <AiPromptsSection
               data={promptCenterData}

@@ -5,6 +5,10 @@ import { zammadSendJson } from "./client";
 import { zammadArticleSchema } from "./schemas";
 import { zammadTicketId } from "./ticket-id";
 import { readZammadTicketForMutation } from "./ticket-mutation-preflight";
+import {
+  rethrowZammadMentionWriteError,
+  zammadMentionHtml,
+} from "./ticket-mentions";
 
 export async function addZammadTicketInternalNote(
   context: ProviderContext,
@@ -25,24 +29,29 @@ export async function addZammadTicketInternalNote(
     () => readZammadTicketForMutation(context, ticketExternalId),
   );
 
-  const response = await measureTicketReadPhase(
-    "provider-metadata-mutation-request",
-    {
-      connectionId: context.connection.id,
-      operation: "mutation",
-      providerKey: context.connection.providerKey,
-    },
-    () =>
-      zammadSendJson(context, "/api/v1/ticket_articles", "POST", {
-        ticket_id: zammadTicketId(ticketExternalId),
-        subject: "Internal note",
-        body: input.body.trim(),
-        content_type: input.bodyFormat === "html" ? "text/html" : "text/plain",
-        type: "note",
-        internal: true,
-        sender: "Agent",
-      }),
-  );
+  let response: unknown;
+  try {
+    response = await measureTicketReadPhase(
+      "provider-metadata-mutation-request",
+      {
+        connectionId: context.connection.id,
+        operation: "mutation",
+        providerKey: context.connection.providerKey,
+      },
+      () =>
+        zammadSendJson(context, "/api/v1/ticket_articles", "POST", {
+          ticket_id: zammadTicketId(ticketExternalId),
+          subject: "Internal note",
+          body: zammadMentionHtml(context, input.body.trim(), input.bodyFormat),
+          content_type: input.bodyFormat === "html" ? "text/html" : "text/plain",
+          type: "note",
+          internal: true,
+          sender: "Agent",
+        }),
+    );
+  } catch (error) {
+    rethrowZammadMentionWriteError(error, input.body);
+  }
 
   if (!zammadArticleSchema.safeParse(response).success) {
     throw new ProviderError(

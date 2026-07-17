@@ -81,6 +81,7 @@ describe("TicketWorkspace horizontal tabs", () => {
           activePane: "list",
           openTabs: [expect.objectContaining({ id: "ticket-1" })],
         }),
+        "connection-1",
       ),
     );
 
@@ -91,6 +92,7 @@ describe("TicketWorkspace horizontal tabs", () => {
           activePane: "ticket-1",
           openTabs: [expect.objectContaining({ id: "ticket-1" })],
         }),
+        "connection-1",
       ),
     );
 
@@ -102,6 +104,7 @@ describe("TicketWorkspace horizontal tabs", () => {
           activePane: "list",
           tabOrientation: "vertical",
         }),
+        "connection-1",
       ),
     );
 
@@ -112,6 +115,7 @@ describe("TicketWorkspace horizontal tabs", () => {
           activePane: "list",
           openTabs: [],
         }),
+        "connection-1",
       ),
     );
   });
@@ -201,6 +205,7 @@ describe("TicketWorkspace horizontal tabs", () => {
             expect.objectContaining({ id: "ticket-1" }),
           ],
         }),
+        "connection-1",
       ),
     );
   });

@@ -109,6 +109,7 @@ type WorkspaceTabsChromeProps = {
   orientation: TicketTabOrientation;
   savedViewLabel: string;
   tabs: WorkspaceTicketTab[];
+  unsynchronizedTicketIds?: string[];
 };
 
 export function WorkspaceTabsChrome({
@@ -121,6 +122,7 @@ export function WorkspaceTabsChrome({
   orientation,
   savedViewLabel,
   tabs,
+  unsynchronizedTicketIds,
 }: WorkspaceTabsChromeProps) {
   return (
     <TicketTabsPanel
@@ -134,6 +136,7 @@ export function WorkspaceTabsChrome({
       orientation={orientation}
       savedViewLabel={savedViewLabel}
       tabs={tabs}
+      unsynchronizedTicketIds={unsynchronizedTicketIds}
     />
   );
 }

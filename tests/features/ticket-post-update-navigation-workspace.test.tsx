@@ -56,6 +56,8 @@ function renderWorkspace({
       }}
       logoutAction={noopAction}
       rows={[ticket]}
+      savedViews={[{ id: "channel", label: "Channel" }]}
+      selectedSavedViewId="channel"
       selectedTicketId={ticket.id}
       setActiveConnectionAction={noopAction}
       tabs={[ticket]}
@@ -160,7 +162,7 @@ describe("TicketWorkspace post-update navigation", () => {
     expect(replaceState).toHaveBeenLastCalledWith(null, "", "/workspace");
     expect(screen.queryByLabelText("Ticket detail #1001")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("tab", { name: "Return to list: All tickets" }),
+      screen.getByRole("tab", { name: "Return to list: Channel" }),
     ).toHaveAttribute("aria-selected", "true");
   });
 
@@ -178,6 +180,9 @@ describe("TicketWorkspace post-update navigation", () => {
     expect(routerPush).not.toHaveBeenCalled();
     expect(replaceState).toHaveBeenLastCalledWith(null, "", "/workspace");
     expect(screen.queryByLabelText("Ticket detail #1001")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: "Return to list: Channel" }),
+    ).toHaveAttribute("aria-selected", "true");
   });
 
   it("does not return to list for non-closed final state", async () => {

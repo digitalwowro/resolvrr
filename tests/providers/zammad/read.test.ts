@@ -47,11 +47,13 @@ describe("Zammad ticket reads", () => {
       "ticket:forward-customer-email",
       "lookup:link-targets",
       "lookup:assignable-users",
+      "lookup:mentionable-users",
       "lookup:current-user",
       "lookup:groups",
       "lookup:tags",
       "notifications:list",
       "notifications:mark-read",
+      "ticket-taskbar:sync",
     ]);
   });
 

@@ -31,10 +31,38 @@ import {
   type TicketMutationFinalizationOptions,
 } from "./mutation-finalization-service";
 import type {
+  CommunicationFailedResult,
+} from "./communication-service-audit";
+import type {
   TicketCustomerForwardResult,
   TicketCustomerReplyResult,
   TicketInternalNoteResult,
 } from "./communication-model";
+import { ProviderError } from "@/core/providers";
+import {
+  assertReviewedTicketSignature,
+  resolveWorkspaceTicketSignature,
+} from "@/features/signatures/service";
+import {
+  noWorkspaceSignatureRepository,
+  type WorkspaceSignatureRepository,
+} from "@/features/signatures/repository";
+
+type CommunicationServiceOptions = TicketMutationFinalizationOptions & {
+  signatureRepository?: WorkspaceSignatureRepository;
+};
+
+function signatureFailure(error: unknown): CommunicationFailedResult {
+  if (error instanceof ProviderError) {
+    if (error.diagnosticCode === "signature-context-stale") {
+      return { status: "failed", reason: "signature-context-stale", retryable: false };
+    }
+    if (error.diagnosticCode === "signature-context-unavailable") {
+      return { status: "failed", reason: "signature-context-unavailable", retryable: error.retryable };
+    }
+  }
+  return { status: "failed", reason: "provider-temporary-failure", retryable: true };
+}
 
 export async function addWorkspaceTicketInternalNote(
   repository: HelpdeskConnectionsRepository,
@@ -45,7 +73,7 @@ export async function addWorkspaceTicketInternalNote(
   input: TicketInternalNoteInput,
   cacheRepository: TicketDetailCacheRepository = noTicketDetailCacheRepository,
   aiSummaryCacheRepository: AiSummaryCacheRepository = noAiSummaryCacheRepository,
-  options: TicketMutationFinalizationOptions = {},
+  options: CommunicationServiceOptions = {},
 ): Promise<TicketInternalNoteResult> {
   if (!ticketExternalId.trim() || !input.body.trim()) {
     recordFailedCommunicationAudit(
@@ -103,7 +131,7 @@ export async function addWorkspaceTicketCustomerReply(
   input: TicketCustomerReplyInput,
   cacheRepository: TicketDetailCacheRepository = noTicketDetailCacheRepository,
   aiSummaryCacheRepository: AiSummaryCacheRepository = noAiSummaryCacheRepository,
-  options: TicketMutationFinalizationOptions = {},
+  options: CommunicationServiceOptions = {},
 ): Promise<TicketCustomerReplyResult> {
   if (!ticketExternalId.trim() || !input.body.trim()) {
     recordFailedCommunicationAudit(
@@ -128,10 +156,23 @@ export async function addWorkspaceTicketCustomerReply(
     return result;
   }
 
+  let resolvedSignature;
+  try {
+    resolvedSignature = await resolveWorkspaceTicketSignature({
+      encryptionKey,
+      providerContext: providerContext.value,
+      repository: options.signatureRepository ?? noWorkspaceSignatureRepository,
+      ticketExternalId,
+      userId,
+    });
+    assertReviewedTicketSignature(input.signatureContext, resolvedSignature);
+  } catch (error) {
+    const result = signatureFailure(error);
+    recordFailedCommunicationAudit("customer-reply", auditContext, result);
+    return result;
+  }
   const result = await dispatchTicketCustomerReply(
-    providerContext.value,
-    ticketExternalId,
-    input,
+    providerContext.value, ticketExternalId, input, resolvedSignature,
   );
   if (result.status !== "saved") {
     recordFailedCommunicationAudit("customer-reply", auditContext, result);
@@ -161,7 +202,7 @@ export async function forwardWorkspaceTicketEmail(
   input: TicketCustomerForwardInput,
   cacheRepository: TicketDetailCacheRepository = noTicketDetailCacheRepository,
   aiSummaryCacheRepository: AiSummaryCacheRepository = noAiSummaryCacheRepository,
-  options: TicketMutationFinalizationOptions = {},
+  options: CommunicationServiceOptions = {},
 ): Promise<TicketCustomerForwardResult> {
   if (!ticketExternalId.trim() || !input.subject.trim()) {
     const result = { reason: "invalid-input", retryable: false } as const;
@@ -177,8 +218,23 @@ export async function forwardWorkspaceTicketEmail(
     recordFailedCommunicationAudit("customer-forward", auditContext, result);
     return result;
   }
+  let resolvedSignature;
+  try {
+    resolvedSignature = await resolveWorkspaceTicketSignature({
+      encryptionKey,
+      providerContext: providerContext.value,
+      repository: options.signatureRepository ?? noWorkspaceSignatureRepository,
+      ticketExternalId,
+      userId,
+    });
+    assertReviewedTicketSignature(input.signatureContext, resolvedSignature);
+  } catch (error) {
+    const result = signatureFailure(error);
+    recordFailedCommunicationAudit("customer-forward", auditContext, result);
+    return result;
+  }
   const result = await dispatchTicketCustomerForward(
-    providerContext.value, ticketExternalId, input,
+    providerContext.value, ticketExternalId, input, resolvedSignature,
   );
   if (result.status !== "saved") {
     recordFailedCommunicationAudit("customer-forward", auditContext, result);

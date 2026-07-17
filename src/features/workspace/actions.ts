@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { requireCurrentUser } from "@/auth/current-user";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { prismaWorkspaceTabsRepository } from "@/data/workspace-tabs-repository";
@@ -10,22 +11,28 @@ import {
 
 export async function saveWorkspaceOpenTabsStateAction(
   state: WorkspaceOpenTabsState,
+  rawWorkspaceId: string,
 ): Promise<void> {
   const parsedState = workspaceOpenTabsStateFromStorage(state);
-  if (!parsedState) {
+  const workspaceId = z.string().trim().min(1).max(128).safeParse(
+    rawWorkspaceId,
+  );
+  if (!parsedState || !workspaceId.success) {
     return;
   }
 
   const user = await requireCurrentUser();
-  const activeWorkspaceId =
-    await prismaHelpdeskConnectionsRepository.getActiveWorkspaceId(user.id);
-  if (!activeWorkspaceId) {
+  const workspace = await prismaHelpdeskConnectionsRepository.findWorkspaceForUser(
+    user.id,
+    workspaceId.data,
+  );
+  if (!workspace) {
     return;
   }
 
   await prismaWorkspaceTabsRepository.setForUser(
     user.id,
-    activeWorkspaceId,
+    workspace.id,
     parsedState,
   );
 }

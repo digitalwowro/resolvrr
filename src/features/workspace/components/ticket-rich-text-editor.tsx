@@ -1,19 +1,15 @@
 "use client";
 
 import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type ClipboardEvent,
-  type KeyboardEvent,
-  type ReactNode,
+  useCallback, useEffect, useRef, useState,
+  type ClipboardEvent, type KeyboardEvent, type ReactNode,
 } from "react";
 import { cn } from "@/components/ui/classnames";
 import { communicationBodyHasText } from "@/features/tickets/communication-body";
 import {
   sanitizeComposerEditorHtml,
   sanitizeComposerHtml,
+  sanitizeSignatureTemplateHtml,
 } from "@/security/sanitize-html";
 import {
   commandState,
@@ -32,9 +28,8 @@ import {
   type ActiveToolbarState,
   type EditorCommand,
 } from "./ticket-rich-text-editor-dom";
-import {
-  TicketRichTextEditorToolbarRow,
-} from "./ticket-rich-text-editor-toolbar-row";
+import { TicketRichTextEditorToolbarRow } from "./ticket-rich-text-editor-toolbar-row";
+import { useTicketMentionSuggestions } from "./use-ticket-mention-suggestions";
 
 type TicketRichTextEditorProps = {
   autoFocus?: boolean;
@@ -43,9 +38,11 @@ type TicketRichTextEditorProps = {
   extraToolbarControls?: ReactNode;
   id: string;
   label: string;
+  mentionGroupExternalId?: string;
   onChange(value: string): void;
   placeholder: string;
   value: string;
+  contentKind?: "communication" | "signature";
 };
 
 export function TicketRichTextEditor({
@@ -55,15 +52,21 @@ export function TicketRichTextEditor({
   extraToolbarControls,
   id,
   label,
+  mentionGroupExternalId,
   onChange,
   placeholder,
   value,
+  contentKind = "communication",
 }: TicketRichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const editorFocusedRef = useRef(false);
   const [activeToolbarState, setActiveToolbarState] =
     useState<ActiveToolbarState>(inactiveToolbarState);
-  const empty = !communicationBodyHasText(value);
+  const empty = !communicationBodyHasText(value) &&
+    !(contentKind === "signature" && /<img\b/iu.test(value));
+  const sanitizeEditorHtml = contentKind === "signature"
+    ? sanitizeSignatureTemplateHtml
+    : sanitizeComposerEditorHtml;
 
   const updateActiveToolbarState = useCallback(() => {
     const editor = editorRef.current;
@@ -82,17 +85,23 @@ export function TicketRichTextEditor({
       unorderedList: commandState("insertUnorderedList"),
     });
   }, []);
+  const mentions = useTicketMentionSuggestions({
+    disabled: disabled || contentKind !== "communication",
+    editorRef,
+    groupExternalId: mentionGroupExternalId,
+    onInserted: emitChange,
+  });
 
   useEffect(() => {
     const editor = editorRef.current;
     if (editor && editorFocusedRef.current) {
       return;
     }
-    const safeValue = normalizeEditorStructure(sanitizeComposerEditorHtml(value));
+    const safeValue = normalizeEditorStructure(sanitizeEditorHtml(value));
     if (editor && editor.innerHTML !== safeValue) {
       editor.innerHTML = safeValue;
     }
-  }, [value]);
+  }, [sanitizeEditorHtml, value]);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -126,7 +135,7 @@ export function TicketRichTextEditor({
     }
 
     const normalizedHtml = normalizeEditorStructure(
-      sanitizeComposerEditorHtml(editor.innerHTML),
+      sanitizeEditorHtml(editor.innerHTML),
     );
     if (editor.innerHTML !== normalizedHtml) {
       editor.innerHTML = normalizedHtml;
@@ -204,8 +213,10 @@ export function TicketRichTextEditor({
       return;
     }
 
-    const html = sanitizeComposerHtml(event.clipboardData.getData("text/html"));
-    if (html && communicationBodyHasText(html)) {
+    const html = contentKind === "signature"
+      ? sanitizeSignatureTemplateHtml(event.clipboardData.getData("text/html"))
+      : sanitizeComposerHtml(event.clipboardData.getData("text/html"));
+    if (html && (communicationBodyHasText(html) || /<img\b/iu.test(html))) {
       insertEditorContent(editor, html, true);
       emitChange();
       return;
@@ -220,6 +231,9 @@ export function TicketRichTextEditor({
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (mentions.handleKeyDown(event)) {
+      return;
+    }
     if (event.key !== "Enter") {
       return;
     }
@@ -239,7 +253,7 @@ export function TicketRichTextEditor({
   }
 
   return (
-    <div className={cn("overflow-hidden rounded-md border bg-white", className)}>
+    <div className={cn("rounded-md border bg-white", className)}>
       <label className="sr-only" htmlFor={id}>
         {label}
       </label>
@@ -257,19 +271,19 @@ export function TicketRichTextEditor({
           </div>
         ) : null}
         <div
+          {...mentions.editorAria}
           aria-disabled={disabled}
           aria-label={label}
           aria-multiline="true"
-          className="min-h-24 w-full px-3 py-2 text-sm leading-5 text-slate-900 outline-none focus:ring-0 [&_a]:font-medium [&_a]:text-indigo-600 [&_a]:underline [&_a]:underline-offset-2 [&_br]:block [&_li]:my-0.5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6"
+          className="min-h-24 w-full px-3 py-2 text-sm leading-5 text-slate-900 outline-none focus:ring-0 [&_[data-resolvrr-mention-id]]:rounded [&_[data-resolvrr-mention-id]]:bg-indigo-100 [&_[data-resolvrr-mention-id]]:px-1 [&_[data-resolvrr-mention-id]]:font-medium [&_[data-resolvrr-mention-id]]:text-indigo-800 [&_a]:font-medium [&_a]:text-indigo-600 [&_a]:underline [&_a]:underline-offset-2 [&_br]:block [&_li]:my-0.5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6"
           contentEditable={!disabled}
           id={id}
-          onBlur={() => {
-            editorFocusedRef.current = false;
+          onBlur={() => { editorFocusedRef.current = false; }}
+          onFocus={() => { editorFocusedRef.current = true; }}
+          onInput={() => {
+            mentions.updateFromSelection();
+            emitChange();
           }}
-          onFocus={() => {
-            editorFocusedRef.current = true;
-          }}
-          onInput={emitChange}
           onKeyDown={handleKeyDown}
           onKeyUp={updateActiveToolbarState}
           onMouseUp={updateActiveToolbarState}
@@ -278,6 +292,7 @@ export function TicketRichTextEditor({
           role="textbox"
           suppressContentEditableWarning
         />
+        {mentions.popup}
       </div>
     </div>
   );

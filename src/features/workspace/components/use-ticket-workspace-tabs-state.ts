@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type {
   WorkspaceTicketDetail,
   WorkspaceTicketTab,
@@ -8,7 +8,6 @@ import type {
 import {
   cappedWorkspaceTabs,
   workspaceTabFromDetail,
-  workspaceOpenTabsStateVersion,
   type SaveWorkspaceOpenTabsStateAction,
   type WorkspaceOpenTabsState,
 } from "@/features/workspace/workspace-tab-state";
@@ -22,6 +21,14 @@ import {
 } from "./ticket-workspace-persisted-tabs";
 import type { ActiveWorkspacePane } from "./ticket-workspace-state-types";
 import { replaceWorkspaceUrl } from "./workspace-url";
+import {
+  reconciledActiveTicketId,
+  reconciledTicketTabs,
+  reorderedTicketTabs,
+  sameTicketTabs,
+  ticketTabsWithOpenedTicket,
+} from "./ticket-workspace-tab-reconciliation";
+import { useWorkspaceTabsPersistence } from "./use-workspace-tabs-persistence";
 
 type UseTicketWorkspaceTabsStateOptions = {
   cacheSelectedDetail(): void;
@@ -31,6 +38,7 @@ type UseTicketWorkspaceTabsStateOptions = {
   saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
   selectedTicketId?: string;
   ticketTabs: WorkspaceTicketTab[];
+  workspaceId?: string;
 };
 
 export function useTicketWorkspaceTabsState({
@@ -41,6 +49,7 @@ export function useTicketWorkspaceTabsState({
   saveWorkspaceOpenTabsStateAction,
   selectedTicketId,
   ticketTabs,
+  workspaceId,
 }: UseTicketWorkspaceTabsStateOptions) {
   const [tabOrientation, setTabOrientation] =
     useState<TicketTabOrientation>(
@@ -72,31 +81,20 @@ export function useTicketWorkspaceTabsState({
         selectedTicketId,
       }),
     );
-
   const activeTicketId =
     activeWorkspacePane === "list" ? undefined : activeWorkspacePane.ticketId;
   const listActive = activeWorkspacePane === "list";
 
-  useEffect(() => {
-    if (!saveWorkspaceOpenTabsStateAction) {
-      return;
-    }
-
-    void saveWorkspaceOpenTabsStateAction({
-      activePane: activeTicketId ?? "list",
-      openTabs: cappedWorkspaceTabs(openTicketTabs),
-      recentTabs: cappedWorkspaceTabs(recentTicketTabs),
-      tabOrientation,
-      updatedAt: new Date().toISOString(),
-      version: workspaceOpenTabsStateVersion,
-    }).catch(() => undefined);
-  }, [
+  useWorkspaceTabsPersistence({
     activeTicketId,
+    initialState: initialWorkspaceOpenTabsState,
     openTicketTabs,
     recentTicketTabs,
-    saveWorkspaceOpenTabsStateAction,
+    saveAction: saveWorkspaceOpenTabsStateAction,
+    selectedTicketId,
     tabOrientation,
-  ]);
+    workspaceId,
+  });
 
   function updateOpenTicketTabMetadata(patch: TicketMetadataSavedPatch) {
     setOpenTicketTabs((current) => patchTicketTabMetadata(current, patch));
@@ -152,7 +150,7 @@ export function useTicketWorkspaceTabsState({
     setOpenTicketTabs((current) =>
       current.some((currentTab) => currentTab.id === ticketId)
         ? current
-        : [...current, tab],
+        : ticketTabsWithOpenedTicket(current, tab),
     );
     setRecentTicketTabs((current) =>
       [tab, ...current.filter((currentTab) => currentTab.id !== ticketId)].slice(
@@ -243,19 +241,32 @@ export function useTicketWorkspaceTabsState({
   }
 
   function reorderOpenTicketTabs(sourceTicketId: string, targetIndex: number) {
-    setOpenTicketTabs((current) => {
-      const sourceIndex = current.findIndex((tab) => tab.id === sourceTicketId);
-      if (sourceIndex === -1) {
-        return current;
-      }
+    setOpenTicketTabs((current) => reorderedTicketTabs(current, sourceTicketId, targetIndex));
+  }
 
-      const next = current.filter((tab) => tab.id !== sourceTicketId);
-      const clampedTargetIndex = Math.max(0, Math.min(targetIndex, next.length));
-      next.splice(clampedTargetIndex, 0, current[sourceIndex]);
-      return next.every((tab, index) => tab.id === current[index]?.id)
-        ? current
-        : next;
+  function reconcileOpenTicketTabs(
+    synchronizedTabs: WorkspaceTicketTab[],
+    protectedTicketIds: string[],
+    synchronizedActiveTicketId?: string,
+  ) {
+    const next = reconciledTicketTabs(
+      synchronizedTabs,
+      openTicketTabs,
+      protectedTicketIds,
+      synchronizedActiveTicketId,
+    );
+    setOpenTicketTabs(next);
+    setRecentTicketTabs((current) => {
+      const reconciled = cappedWorkspaceTabs([...synchronizedTabs, ...current]);
+      return sameTicketTabs(current, reconciled) ? current : reconciled;
     });
+    const nextActiveId = reconciledActiveTicketId(
+      next, activeTicketId, synchronizedActiveTicketId,
+    );
+    if (nextActiveId === undefined) return;
+    setActiveWorkspacePane(nextActiveId ? { ticketId: nextActiveId } : "list");
+    replaceWorkspaceUrl(nextActiveId ?? undefined);
+    if (nextActiveId === synchronizedActiveTicketId) ensureTicketDetail(nextActiveId);
   }
 
   return {
@@ -264,6 +275,7 @@ export function useTicketWorkspaceTabsState({
     listActive,
     openTicketTabs,
     recentTicketTabs,
+    reconcileOpenTicketTabs,
     replaceMergedTicket,
     reorderOpenTicketTabs,
     returnActiveTicketToList,

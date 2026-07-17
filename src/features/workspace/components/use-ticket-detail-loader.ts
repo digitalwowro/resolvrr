@@ -2,23 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 import type {
-  LoadWorkspaceTicketDetailAction,
-  WorkspaceTicketDetailLoadResult,
-} from "@/features/tickets/detail-action-result";
+  InitialTicketAiSummary,
+  LoadWorkspaceTicketDetailHydrationAction,
+  WorkspaceTicketDetailHydrationResult,
+} from "@/features/workspace/ticket-detail-hydration";
 
-type TicketDetailCacheEntry = WorkspaceTicketDetailLoadResult | { status: "loading" };
+type TicketDetailCacheEntry = WorkspaceTicketDetailHydrationResult | { status: "loading" };
 
 type TicketDetailCache = Record<string, TicketDetailCacheEntry>;
 
 type TicketDetailLoadedAtCache = Record<string, number>;
 
 type TicketDetailLoaderProps = {
-  initialDetailResult?: WorkspaceTicketDetailLoadResult;
-  loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
+  initialDetailResult?: WorkspaceTicketDetailHydrationResult;
+  loadTicketDetailAction: LoadWorkspaceTicketDetailHydrationAction;
   selectedTicketId?: string;
 };
 
-const clientLoadFailure: WorkspaceTicketDetailLoadResult = {
+const clientLoadFailure: WorkspaceTicketDetailHydrationResult = {
   status: "unavailable",
   reason: "provider-temporary-failure",
   retryable: true,
@@ -28,7 +29,7 @@ function initialDetailCache({
   initialDetailResult,
   selectedTicketId,
 }: {
-  initialDetailResult?: WorkspaceTicketDetailLoadResult;
+  initialDetailResult?: WorkspaceTicketDetailHydrationResult;
   selectedTicketId?: string;
 }): TicketDetailCache {
   if (!selectedTicketId || !initialDetailResult) {
@@ -73,7 +74,29 @@ export function useTicketDetailLoader({
     }
 
     setDetailCacheState((current) => {
-      if (current[selectedTicketId] === initialDetailResult) {
+      const existing = current[selectedTicketId];
+      if (
+        existing?.status === "available" &&
+        initialDetailResult.status === "available"
+      ) {
+        const next = {
+          ...initialDetailResult,
+          initialTicketAiSummary:
+            existing.initialTicketAiSummary ??
+            initialDetailResult.initialTicketAiSummary,
+          summaryHydrated:
+            existing.summaryHydrated ?? initialDetailResult.summaryHydrated,
+        };
+        if (
+          existing.detail === next.detail &&
+          existing.initialTicketAiSummary === next.initialTicketAiSummary &&
+          existing.summaryHydrated === next.summaryHydrated
+        ) {
+          return current;
+        }
+        return { ...current, [selectedTicketId]: next };
+      }
+      if (existing?.status === "available") {
         return current;
       }
 
@@ -132,10 +155,20 @@ export function useTicketDetailLoader({
           ...detailLoadedAtRef.current,
           [ticketId]: Date.now(),
         };
-        setDetailCacheState((current) => ({
-          ...current,
-          [ticketId]: result,
-        }));
+        setDetailCacheState((current) => {
+          const existing = current[ticketId];
+          const next =
+            result.status === "available" &&
+            result.summaryHydrated !== true &&
+            existing?.status === "available" &&
+            existing.initialTicketAiSummary
+              ? {
+                  ...result,
+                  initialTicketAiSummary: existing.initialTicketAiSummary,
+                }
+              : result;
+          return { ...current, [ticketId]: next };
+        });
       })
       .catch(() => {
         setDetailCacheState((current) => {
@@ -179,10 +212,28 @@ export function useTicketDetailLoader({
     return loadedAt === undefined || Date.now() - loadedAt >= staleMs;
   }
 
+  function setTicketAiSummary(
+    ticketId: string,
+    summary: InitialTicketAiSummary,
+  ) {
+    setDetailCacheState((current) => {
+      const entry = current[ticketId];
+      if (!entry || entry.status !== "available") return current;
+      return {
+        ...current,
+        [ticketId]: {
+          ...entry,
+          initialTicketAiSummary: summary,
+          summaryHydrated: true,
+        },
+      };
+    });
+  }
+
   function adoptResolvedDetail(
     sourceTicketIds: string[],
     targetTicketId: string,
-    result: WorkspaceTicketDetailLoadResult,
+    result: WorkspaceTicketDetailHydrationResult,
   ) {
     const loadedAt = Date.now();
     detailLoadedAtRef.current = {
@@ -209,5 +260,6 @@ export function useTicketDetailLoader({
     isTicketDetailRefreshing,
     isTicketDetailStale,
     refreshTicketDetail,
+    setTicketAiSummary,
   };
 }

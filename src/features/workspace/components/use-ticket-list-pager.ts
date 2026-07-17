@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type {
   WorkspaceTicketListPageLoadResult,
   WorkspaceTicketListSort,
@@ -9,13 +9,19 @@ import type { TicketReadUnavailableReason } from "@/features/tickets/read-model"
 import type { WorkspaceTicketGroupKey } from "@/features/tickets/workspace-adapter";
 import {
   appendUniqueRows,
-  mergeRefreshedBaselineRows,
   savedViewListRequest,
   ticketListIdentity,
 } from "./ticket-list-pager-rows";
 import type { TicketListPagerProps } from "./ticket-list-pager-types";
 import { useTicketListGroupLoader } from "./use-ticket-list-group-loader";
 import { useTicketListSilentRefresh } from "./use-ticket-list-silent-refresh";
+import { useTicketListServerSync } from "./use-ticket-list-server-sync";
+import { useCompleteTicketListSort } from "./use-complete-ticket-list-sort";
+import { useTicketListPagerCompleteValues } from "./ticket-list-pager-complete-values";
+import {
+  loadFirstTicketListPage,
+  loadTicketListPageSafely,
+} from "./ticket-list-first-page-load";
 export function useTicketListPager({
   initialSavedViewId,
   initialGroups,
@@ -67,42 +73,44 @@ export function useTicketListPager({
       setTotalCount,
       sort,
     });
-
-  useEffect(() => {
-    lastRefreshedAtRef.current ??= Date.now();
-    const nextIdentity = ticketListIdentity(initialRows);
-    const sameListIdentity = baselineIdentity.current === nextIdentity;
-    baselineIdentity.current = nextIdentity;
-
-    if (!sameListIdentity) {
-      setRows(initialRows);
-      setSavedViewId(initialSavedViewId);
-      setGroups(initialGroups);
-      setGroupBy(initialGroups?.[0]?.key);
-      setNextCursor(initialNextCursor);
-      setTotalCount(initialTotalCount);
-      setErrorReason(undefined);
-      setLoading(false);
-      hasClientLoadedRowsRef.current = false;
-      loadedPageCountRef.current = 1;
-      groupPageCountsRef.current = new Map(
-        (initialGroups ?? []).map((group) => [group.id, 1]),
-      );
+  const completeSort = useCompleteTicketListSort({
+    initialPageSize: initialRows.length || 25,
+    loadAction: loadTicketListPageAction,
+    onLoaded: () => {
       lastRefreshedAtRef.current = Date.now();
-      return;
-    }
-
-    setRows((current) => mergeRefreshedBaselineRows(current, initialRows));
-    setNextCursor((current) => hasClientLoadedRowsRef.current ? current : initialNextCursor);
-    setTotalCount(initialTotalCount);
-    lastRefreshedAtRef.current = Date.now();
-  }, [
+    },
+    savedViewId,
+    sourceNextCursor: nextCursor,
+    sourceRows: rows,
+    sourceTotalCount: totalCount,
+  });
+  useTicketListServerSync({
+    activeCompleteSort: completeSort.sort,
+    activeGroupBy: groupBy,
+    activeSavedViewId: savedViewId,
+    activeSort: sort,
+    baselineIdentityRef: baselineIdentity,
+    groupPageCountsRef,
+    hasClientLoadedRowsRef,
     initialGroups,
-    initialRows,
     initialNextCursor,
+    initialRows,
     initialSavedViewId,
     initialTotalCount,
-  ]);
+    lastRefreshedAtRef,
+    loadTicketListPageAction,
+    loadedPageCountRef,
+    refreshCompleteSort: completeSort.refresh,
+    setErrorReason,
+    setGroupBy,
+    setGroups,
+    setLoading,
+    setNextCursor,
+    setRows,
+    setSavedViewId,
+    setTotalCount,
+    silentRefreshCurrentPage,
+  });
 
   async function loadMore() {
     if (!nextCursor || loading || !loadTicketListPageAction) {
@@ -142,20 +150,15 @@ export function useTicketListPager({
     if (loading || !loadTicketListPageAction) {
       return;
     }
+    completeSort.clear();
 
     setLoading(true);
     setErrorReason(undefined);
-    let result;
-    try {
-      result = await loadTicketListPageAction({
-        ...savedViewListRequest(savedViewId),
-        ...(nextSort ? { sort: nextSort } : {}),
-      });
-    } catch {
-      setLoading(false);
-      setErrorReason("provider-temporary-failure");
-      return;
-    }
+    const result = await loadFirstTicketListPage(
+      loadTicketListPageAction,
+      savedViewId,
+      nextSort,
+    );
     setLoading(false);
 
     if (result.status === "unavailable") {
@@ -180,21 +183,15 @@ export function useTicketListPager({
     if (loading || !loadTicketListPageAction) {
       return;
     }
+    completeSort.clear();
 
     setLoading(true);
     setErrorReason(undefined);
     setGroupError(undefined);
-    let result;
-    try {
-      result = await loadTicketListPageAction({
-        group: nextGroupBy,
-        ...savedViewListRequest(savedViewId),
-      });
-    } catch {
-      setLoading(false);
-      setErrorReason("provider-temporary-failure");
-      return;
-    }
+    const result = await loadTicketListPageSafely(loadTicketListPageAction, {
+      group: nextGroupBy,
+      ...savedViewListRequest(savedViewId),
+    });
     setLoading(false);
 
     if (result.status === "unavailable") {
@@ -226,24 +223,15 @@ export function useTicketListPager({
         retryable: true,
       };
     }
+    completeSort.clear();
 
     setLoading(true);
     setErrorReason(undefined);
     setGroupError(undefined);
-    let result;
-    try {
-      result = await loadTicketListPageAction({
-        ...savedViewListRequest(nextSavedViewId),
-      });
-    } catch {
-      setLoading(false);
-      setErrorReason("provider-temporary-failure");
-      return {
-        status: "unavailable",
-        reason: "provider-temporary-failure",
-        retryable: true,
-      };
-    }
+    const result = await loadTicketListPageSafely(
+      loadTicketListPageAction,
+      savedViewListRequest(nextSavedViewId),
+    );
     setLoading(false);
 
     if (result.status === "unavailable") {
@@ -274,27 +262,37 @@ export function useTicketListPager({
     return { status: "available", groupBy: result.appliedGroupBy };
   }
 
+  const completeValues = useTicketListPagerCompleteValues({
+    completeSort,
+    fallback: {
+      canLoadMore: Boolean(nextCursor && loadTicketListPageAction),
+      hasMorePages: Boolean(nextCursor),
+      loadedCount: rows.length,
+      loading,
+      loadMore,
+      rows,
+      silentRefreshCurrentPage,
+      silentRefreshing,
+      sort,
+      totalCount,
+    },
+  });
+
   return {
-    canLoadMore: Boolean(nextCursor && loadTicketListPageAction),
+    applyCompleteListSort: completeSort.apply,
+    completeSortProgress: completeSort.progress,
+    completeSortError: completeSort.error,
     errorReason,
     groupBy,
     groupError,
     groups,
-    hasMorePages: Boolean(nextCursor),
-    loadedCount: rows.length,
-    loading,
     loadMoreGroup,
-    loadMore,
     loadingGroupId,
     reloadGroupedFirstPage,
     reloadFirstPage,
     reloadSavedView,
-    rows,
     savedViewId,
-    silentRefreshCurrentPage,
-    silentRefreshing,
     isListStale,
-    sort,
-    totalCount,
+    ...completeValues,
   };
 }

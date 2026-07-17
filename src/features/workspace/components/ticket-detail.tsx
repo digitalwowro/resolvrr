@@ -17,6 +17,7 @@ import type {
   TicketAiSummaryResult,
 } from "@/features/ai";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
+import type { InitialTicketAiSummary } from "@/features/workspace/ticket-detail-hydration";
 import type { TicketMetadataSavedPatch } from "./metadata-draft";
 import { TicketMetadataEditor } from "./ticket-metadata-editor";
 import { TicketDetailHeader } from "./ticket-detail-header";
@@ -28,6 +29,10 @@ type TicketDetailProps = {
   metadataMutationCapabilities?: TicketMetadataMutationCapabilities;
   onMetadataSaved(metadata: TicketMetadataSavedPatch): void;
   onMetadataSavedDetailRefresh(ticketId: string): void;
+  onTicketAiSummaryAvailable(
+    ticketId: string,
+    summary: InitialTicketAiSummary,
+  ): void;
   onRefresh(): void;
   onReturnToListAfterUpdate(): void;
   recentlyViewedLinkTargets: WorkspaceTicketLinkTarget[];
@@ -55,6 +60,7 @@ export function TicketDetail({
   metadataMutationCapabilities,
   onMetadataSaved,
   onMetadataSavedDetailRefresh,
+  onTicketAiSummaryAvailable,
   onRefresh,
   onReturnToListAfterUpdate,
   recentlyViewedLinkTargets,
@@ -77,10 +83,13 @@ export function TicketDetail({
       header={
         <TicketDetailHeader
           detail={detail}
+          helpdeskConnectionId={helpdeskConnectionId}
           initialTicketAiSummary={initialTicketAiSummary}
           onRefresh={onRefresh}
+          onTicketAiSummaryAvailable={onTicketAiSummaryAvailable}
           refreshing={refreshing}
           summarizeTicketAction={summarizeTicketAction}
+          workspaceId={workspaceId}
         />
       }
       metadataMutationCapabilities={

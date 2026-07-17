@@ -123,6 +123,7 @@ describe("TicketWorkspace ticket-level communication composer", () => {
         contextVersion: "context-ticket-1",
         intent: "reply",
         kind: "customer-reply",
+        signatureContext: { contextVersion: "signature-disabled", source: "none" },
         sourceArticleExternalId: "article-ticket-1",
         to: ["maya@example.com"],
       },

@@ -76,6 +76,8 @@ export function TicketWorkspaceDisplayWorkArea({
           !searchActive && !providerGroupedActive && listPager.canLoadMore
         }
         columns={columns}
+        completeSortError={listPager.completeSortError}
+        completeSortProgress={listPager.completeSortProgress}
         emptyMessage={
           searchActive ? "No loaded tickets match this filter." : undefined
         }
@@ -103,13 +105,25 @@ export function TicketWorkspaceDisplayWorkArea({
         savedViewOptions={savedViewOptions}
         selectedRowIds={displayState.selectedRowIds}
         selectedSavedViewId={listPager.savedViewId}
-        sortingEnabled={displayState.sortingEnabled && !providerGroupedActive}
+        sortingEnabled={
+          displayState.sortingEnabled &&
+          !providerGroupedActive &&
+          !listPager.loading
+        }
         sortDirectionFor={displayState.sortDirectionFor}
         totalCount={searchActive ? undefined : listPager.totalCount}
         visibleColumns={displayState.visibleColumnSet}
       />
     );
   }
+
+  const hydratedInitialTicketAiSummary =
+    displayState.activeDetail?.status === "available"
+      ? displayState.activeDetail.initialTicketAiSummary ??
+        (displayState.activeDetail.summaryHydrated
+          ? undefined
+          : initialTicketAiSummary)
+      : initialTicketAiSummary;
 
   return (
     <TicketWorkspaceDetailArea
@@ -128,7 +142,8 @@ export function TicketWorkspaceDisplayWorkArea({
       searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
       rewriteDraftAction={rewriteDraftAction}
       summarizeTicketAction={summarizeTicketAction}
-      initialTicketAiSummary={initialTicketAiSummary}
+      initialTicketAiSummary={hydratedInitialTicketAiSummary}
+      onTicketAiSummaryAvailable={displayState.setTicketAiSummary}
       refreshing={displayState.ticketDetailRefreshing}
       updateTicketMetadataAction={updateTicketMetadataAction}
       userId={userId}

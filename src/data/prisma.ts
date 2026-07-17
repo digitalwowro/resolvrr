@@ -4,12 +4,15 @@ import { env } from "@/config/env";
 
 const globalForPrisma = globalThis as typeof globalThis & {
   prisma?: PrismaClient;
+  prismaSchemaRevision?: string;
 };
+const prismaSchemaRevision = "20260717090000-add-taskbar-deactivate";
 
-function hasPromptModelDelegates(
+function isCurrentPrismaClient(
   client: PrismaClient | undefined,
 ): client is PrismaClient {
   return Boolean(
+    globalForPrisma.prismaSchemaRevision === prismaSchemaRevision &&
     client?.workspaceAiPrompt &&
       client.workspaceAiRephraseStyle &&
       client.userAiRephraseStyleOverride &&
@@ -20,7 +23,7 @@ function hasPromptModelDelegates(
 
 function prismaClient() {
   // Next dev hot reload can keep a global client from an older generated schema.
-  if (hasPromptModelDelegates(globalForPrisma.prisma)) {
+  if (isCurrentPrismaClient(globalForPrisma.prisma)) {
     return globalForPrisma.prisma;
   }
 
@@ -34,4 +37,5 @@ export const prisma = prismaClient();
 
 if (env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
+  globalForPrisma.prismaSchemaRevision = prismaSchemaRevision;
 }

@@ -23,6 +23,9 @@ import { useTicketWorkspaceSavedViewSelection } from "./use-ticket-workspace-sav
 import { clearPersistedCommunicationDrafts } from "./ticket-communication-draft-persistence";
 import { TicketWorkspaceDisplayWorkArea } from "./ticket-workspace-display-work-area";
 import { TicketMergeNotice } from "./ticket-merge-notice";
+import { hiddenTaskbarSyncCount, TaskbarSyncNotice } from "./taskbar-sync-notice";
+import { useSynchronizedTicketWorkspaceActions } from "./use-synchronized-ticket-workspace-actions";
+import { isCompleteListSortKey } from "./ticket-table-grouping";
 
 export function TicketWorkspaceDisplay({
   connections,
@@ -48,9 +51,11 @@ export function TicketWorkspaceDisplay({
   rewriteDraftAction,
   savedViews,
   summarizeTicketAction,
+  synchronizeWorkspaceTaskbarAction,
   initialTicketAiSummary,
   initialWorkspaceOpenTabsState,
   saveWorkspaceOpenTabsStateAction,
+  saveWorkspaceSelectedSavedViewAction,
   selectedSavedViewId,
   selectedTicketId,
   setActiveConnectionAction,
@@ -90,13 +95,20 @@ export function TicketWorkspaceDisplay({
     [listPager.groups, normalizedSearchQuery],
   );
   const searchActive = normalizedSearchQuery.length > 0;
+  function handleListSortChange(sort: Parameters<typeof listPager.reloadFirstPage>[0]) {
+    if (sort && isCompleteListSortKey(sort.key)) {
+      void listPager.applyCompleteListSort(sort);
+      return;
+    }
+    void listPager.reloadFirstPage(sort);
+  }
   const displayState = useTicketWorkspaceDisplayState({
     columns,
     detail,
     detailResult,
     localSortEnabled: !providerSortEnabled && !listPager.hasMorePages,
     loadTicketDetailAction,
-    onProviderSortChange: listPager.reloadFirstPage,
+    onProviderSortChange: handleListSortChange,
     providerSortEnabled,
     refreshTicketDetailAfterMetadataSave,
     rows: searchFilteredRows,
@@ -104,6 +116,7 @@ export function TicketWorkspaceDisplay({
     saveWorkspaceOpenTabsStateAction,
     selectedTicketId,
     ticketTabs: pagedTicketTabs,
+    workspaceId,
   });
   const {
     activeTicketId,
@@ -119,11 +132,7 @@ export function TicketWorkspaceDisplay({
     refreshActiveTicketDetail,
     refreshTicketDetailById,
     refreshList,
-    reorderOpenTicketTabs,
     setTabOrientation,
-    showList,
-    showNotificationTicket,
-    showOpenTicket,
     sortedRows,
     tabOrientation,
   } = displayState;
@@ -146,6 +155,7 @@ export function TicketWorkspaceDisplay({
     clearRowSelection,
     handleGroupByChange,
     listPager,
+    saveWorkspaceSelectedSavedViewAction,
     savedViews,
   });
 
@@ -191,12 +201,22 @@ export function TicketWorkspaceDisplay({
     closeTicket(ticketId);
   }
 
+  const synchronized = useSynchronizedTicketWorkspaceActions({
+    action: synchronizeWorkspaceTaskbarAction,
+    displayState,
+    loadTicketDetailAction,
+    onExplicitClose: handleCloseTicket,
+    scope: userId && workspaceId && helpdeskConnectionId && identityVersion
+      ? { userId, workspaceId, helpdeskConnectionId, identityVersion }
+      : undefined,
+    ticketTabs: pagedTicketTabs,
+  });
   const workArea = (
     <TicketWorkspaceDisplayWorkArea
       activeTicketSummary={activeTicketSummary}
       columns={columns}
       communicationCapabilities={communicationCapabilities}
-      displayState={displayState}
+      displayState={synchronized.displayState}
       handleRefreshList={handleRefreshList}
       handleSavedViewChange={handleSavedViewChange}
       handleWorkspaceGroupByChange={handleWorkspaceGroupByChange}
@@ -226,26 +246,34 @@ export function TicketWorkspaceDisplay({
     <WorkspaceTabsChrome
       activeTicketId={activeTicketId}
       listActive={listActive}
-      onCloseTicket={handleCloseTicket}
-      onReorderTicket={reorderOpenTicketTabs}
-      onSelectList={showList}
-      onSelectTicket={showOpenTicket}
+      onCloseTicket={synchronized.closeTicket}
+      onReorderTicket={synchronized.reorderOpenTicketTabs}
+      onSelectList={synchronized.showList}
+      onSelectTicket={synchronized.showOpenTicket}
       orientation={tabOrientation}
       savedViewLabel={activeSavedView?.label ?? "All tickets"}
       tabs={openTicketTabs}
+      unsynchronizedTicketIds={synchronized.unsynchronizedIds}
     />
   );
 
   return (
     <>
       <TicketMergeNotice message={displayState.mergeNotice} />
+      <TaskbarSyncNotice
+        conflictIds={synchronized.draftConflictIds}
+        hiddenUnsynchronizedCount={hiddenTaskbarSyncCount(openTicketTabs, synchronized.unsynchronizedIds)}
+        incompatible={synchronized.incompatible}
+        onCloseConflict={synchronized.closeDraftConflict}
+        selectionUnsynchronized={synchronized.selectionUnsynchronized}
+      />
       <WorkspaceHeaderChrome
         activeTicketId={activeTicketId}
         connections={connections}
         loadNotificationsAction={loadWorkspaceNotificationsAction}
         logoutAction={logoutAction}
         markNotificationsReadAction={markWorkspaceNotificationsReadAction}
-        onOpenNotificationTicket={showNotificationTicket}
+        onOpenNotificationTicket={synchronized.showNotificationTicket}
         onOpenSettings={onOpenSettings}
         onRefreshTicket={refreshTicketDetailById}
         onSearchQueryChange={setWorkspaceSearchQuery}

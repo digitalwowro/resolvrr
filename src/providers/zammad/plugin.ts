@@ -20,6 +20,7 @@ import {
   listZammadGroups,
   listZammadTags,
 } from "./ticket-lookups";
+import { resolveZammadTicketSignature } from "./ticket-signature";
 import { searchZammadLinkTargets } from "./ticket-link-targets";
 import { updateZammadTicketMetadata } from "./mutations";
 import {
@@ -33,6 +34,14 @@ import {
 } from "./notifications";
 import { getZammadTicketInlineImage } from "./ticket-inline-images";
 import { zammadConnectionIdentity } from "./connection-identity";
+import { parseZammadTaskbar } from "./taskbar-schema";
+import {
+  readZammadTicketTaskbar,
+  syncZammadTicketTaskbar,
+} from "./taskbar-sync";
+import {
+  listZammadMentionableUsers,
+} from "./ticket-mentions";
 
 const defaultValidationTimeoutMs = 5000;
 const zammadValidationUserAgent = "Resolvrr/1.0";
@@ -98,7 +107,25 @@ async function validateBasicAuth(
     throw classifyZammadResponse(response.status);
   }
 
-  return zammadConnectionIdentity(response.data);
+  const identity = zammadConnectionIdentity(response.data);
+  try {
+    const taskbarResponse = await safeProviderJson(`${baseUrl}/api/v1/taskbar`, {
+      allowedAddresses: input.validatedAddresses,
+      maxResponseBytes: 512 * 1024,
+      headers: {
+        Authorization: buildBasicAuthHeader(credentialsResult.data),
+        Accept: "application/json",
+        "User-Agent": zammadValidationUserAgent,
+      },
+      signal: AbortSignal.timeout(input.timeoutMs ?? defaultValidationTimeoutMs),
+    });
+    if (taskbarResponse.status >= 200 && taskbarResponse.status < 300) {
+      parseZammadTaskbar(taskbarResponse.data);
+    }
+  } catch {
+    // Taskbar synchronization is optional and is disabled safely at runtime.
+  }
+  return identity;
 }
 
 export const zammadProviderPlugin: HelpdeskProviderPlugin = {
@@ -127,11 +154,13 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "ticket:forward-customer-email",
     "lookup:link-targets",
     "lookup:assignable-users",
+    "lookup:mentionable-users",
     "lookup:current-user",
     "lookup:groups",
     "lookup:tags",
     "notifications:list",
     "notifications:mark-read",
+    "ticket-taskbar:sync",
   ],
   credentialSchemes: [
     {
@@ -157,10 +186,14 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   addTicketCustomerReply: addZammadTicketCustomerReply,
   forwardTicketEmail: forwardZammadTicketEmail,
   listAssignableUsers: listZammadAssignableUsers,
+  listMentionableUsers: listZammadMentionableUsers,
   getCurrentUser: getZammadCurrentUser,
+  resolveTicketSignature: resolveZammadTicketSignature,
   listGroups: listZammadGroups,
   listTags: listZammadTags,
   searchLinkTargets: searchZammadLinkTargets,
   listNotifications: listZammadNotifications,
   markNotificationsRead: markZammadNotificationsRead,
+  readTicketTaskbar: readZammadTicketTaskbar,
+  syncTicketTaskbar: syncZammadTicketTaskbar,
 };

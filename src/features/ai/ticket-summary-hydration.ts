@@ -11,15 +11,17 @@ import { readCachedTicketSummary } from "./ticket-summary-cache";
 type InitialTicketAiSummaryInput = {
   detail: TicketDetail;
   helpdeskConnectionId: string;
+  throwOnCacheReadError?: boolean;
   workspaceId: string;
   ticketExternalId: string;
   userId: string;
 };
 
-// Cache-only selected-ticket summary hydration for initial route loads.
+// Cache-only selected-ticket summary hydration for coordinated detail loads.
 export async function loadInitialTicketAiSummary({
   detail,
   helpdeskConnectionId,
+  throwOnCacheReadError,
   workspaceId,
   ticketExternalId,
   userId,
@@ -40,6 +42,7 @@ export async function loadInitialTicketAiSummary({
     {
       cacheRepository: prismaAiSummaryCacheRepository,
       encryptionKey: env.APP_ENCRYPTION_KEY,
+      throwOnReadError: throwOnCacheReadError,
       scope: { helpdeskConnectionId, ticketExternalId, userId },
     },
     await resolveEffectiveAiPrompt({

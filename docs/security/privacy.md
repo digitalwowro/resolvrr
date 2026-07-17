@@ -79,7 +79,8 @@ conversation content.
 - AI runtime configuration is resolved from the active workspace policy:
   disabled, admin-managed workspace key, or user-provided per-workspace key.
   There is no app-wide AI key in v1.
-- Read-only selected-ticket summaries reload ticket detail on the server, then
+- Read-only selected-ticket summaries are bound to an ownership-checked
+  workspace and personal connection, reload ticket detail on the server, then
   use selected-ticket metadata and sanitized thread text only under the
   cache/freshness rules in the architecture contract.
 - V1 AI Assistant operations use selected-ticket metadata and sanitized thread
@@ -89,7 +90,9 @@ conversation content.
 - Prompts, generated summaries, draft suggestions, generated replies, My Style
   text, and reviewed-action suggestions must not be logged.
 - AI telemetry may include only operation, phase, provider protocol family,
-  duration, status, unavailable reason, and retryability. It must not include
+  numeric provider HTTP status, a bounded opaque configuration version, safe
+  provider error code/type tokens, duration, status, unavailable reason, and
+  retryability. It must not include
   provider request bodies, provider response bodies, provider credentials, model
   names, ticket IDs, article IDs, customer names, email addresses, prompts,
   generated summaries, draft suggestions, generated replies, My Style text,
@@ -122,10 +125,24 @@ conversation content.
   history for the current user/workspace/ticket. Validation, provider,
   partial-success, and uncertain-delivery failures retain it; confirmed success,
   explicit discard/close, or retention expiry clears it.
+- Ticket taskbar sync state and retryable intent are scoped to the current
+  user's personal connection and identity version. They contain only ticket
+  external IDs, order, action kind, timing, compatibility, and safe error codes,
+  never credentials, raw taskbar payloads, ticket content, or another member's
+  state. Remote close conflicts inspect only the current user's identity-scoped
+  IndexedDB draft record. Each synchronization request is bound to and
+  ownership-checked against the originating personal connection, including
+  requests that finish after the user switches workspaces.
 - Reviewed agentic actions may prepare suggestions for existing
   provider-neutral update paths, but provider writes still require explicit user
   review and the normal submit/update path.
 - Customer-visible communication still happens only through the selected
   helpdesk provider after explicit user review and submit.
+- Workspace signature policy is shared configuration. Resolvrr-managed template
+  bodies and revision snapshots are encrypted at rest; provider-managed raw
+  signature records never leave the provider boundary. The browser receives only
+  sanitized rendered preview HTML and bounded inlined signature images. Signature
+  bodies, variables after rendering, provider signature IDs, image bytes, and
+  provider responses must never be logged.
 - A retired merged-ticket tombstone exposes neither source content nor raw
   provider/history identifiers, and it offers no provider mutation or AI action.
