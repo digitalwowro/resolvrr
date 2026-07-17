@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  useCallback, useEffect, useRef, useState,
+  forwardRef, useCallback, useEffect, useRef, useState,
   type ClipboardEvent, type KeyboardEvent, type ReactNode,
 } from "react";
 import { cn } from "@/components/ui/classnames";
@@ -14,7 +14,7 @@ import {
 import {
   commandState,
   clearStickyFormattingWhenEmpty,
-  escapeHtml,
+  fallbackEditorCommand,
   inactiveToolbarState,
   insertEditorContent,
   insertLineBreak,
@@ -30,7 +30,10 @@ import {
 } from "./ticket-rich-text-editor-dom";
 import { TicketRichTextEditorToolbarRow } from "./ticket-rich-text-editor-toolbar-row";
 import { useTicketMentionSuggestions } from "./use-ticket-mention-suggestions";
-
+import {
+  useTicketRichTextEditorRewrite,
+  type TicketRichTextEditorHandle,
+} from "./use-ticket-rich-text-editor-rewrite";
 type TicketRichTextEditorProps = {
   autoFocus?: boolean;
   className?: string;
@@ -40,12 +43,13 @@ type TicketRichTextEditorProps = {
   label: string;
   mentionGroupExternalId?: string;
   onChange(value: string): void;
+  onRewriteSelectionChange?(active: boolean): void;
   placeholder: string;
   value: string;
   contentKind?: "communication" | "signature";
 };
-
-export function TicketRichTextEditor({
+export type { TicketRichTextEditorHandle } from "./use-ticket-rich-text-editor-rewrite";
+export const TicketRichTextEditor = forwardRef<TicketRichTextEditorHandle, TicketRichTextEditorProps>(function TicketRichTextEditor({
   autoFocus = false,
   className,
   disabled,
@@ -54,10 +58,11 @@ export function TicketRichTextEditor({
   label,
   mentionGroupExternalId,
   onChange,
+  onRewriteSelectionChange,
   placeholder,
   value,
   contentKind = "communication",
-}: TicketRichTextEditorProps) {
+}, ref) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const editorFocusedRef = useRef(false);
   const [activeToolbarState, setActiveToolbarState] =
@@ -67,14 +72,20 @@ export function TicketRichTextEditor({
   const sanitizeEditorHtml = contentKind === "signature"
     ? sanitizeSignatureTemplateHtml
     : sanitizeComposerEditorHtml;
-
+  const rewrite = useTicketRichTextEditorRewrite({
+    disabled,
+    editorRef,
+    onApplied: emitChange,
+    onSelectionChange: onRewriteSelectionChange,
+    ref,
+  });
   const updateActiveToolbarState = useCallback(() => {
     const editor = editorRef.current;
     if (!editor || !selectionNodeInEditor(editor)) {
       setActiveToolbarState(inactiveToolbarState);
       return;
     }
-
+    rewrite.rememberCurrentSelection();
     const link = selectionInsideLink(editor);
     setActiveToolbarState({
       bold: commandState("bold"),
@@ -84,14 +95,13 @@ export function TicketRichTextEditor({
       underline: commandState("underline") && (!link || selectionInsideUnderline(editor)),
       unorderedList: commandState("insertUnorderedList"),
     });
-  }, []);
+  }, [rewrite]);
   const mentions = useTicketMentionSuggestions({
     disabled: disabled || contentKind !== "communication",
     editorRef,
     groupExternalId: mentionGroupExternalId,
     onInserted: emitChange,
   });
-
   useEffect(() => {
     const editor = editorRef.current;
     if (editor && editorFocusedRef.current) {
@@ -155,22 +165,7 @@ export function TicketRichTextEditor({
     if (!editor) {
       return;
     }
-
-    const text = editor.textContent?.trim() ?? "";
-    const escapedText = escapeHtml(text);
-    const escapedValue = commandValue ? escapeHtml(commandValue) : "";
-    const nextHtml: Record<EditorCommand, string> = {
-      bold: `<strong>${escapedText}</strong>`,
-      createLink: `<a href="${escapedValue}">${escapedText || escapedValue}</a>`,
-      insertOrderedList: `<ol><li>${escapedText}</li></ol>`,
-      insertUnorderedList: `<ul><li>${escapedText}</li></ul>`,
-      italic: `<em>${escapedText}</em>`,
-      redo: editor.innerHTML,
-      undo: editor.innerHTML,
-      underline: `<u>${escapedText}</u>`,
-    };
-
-    editor.innerHTML = nextHtml[command];
+    fallbackEditorCommand(editor, command, commandValue);
     emitChange();
   }
 
@@ -205,7 +200,6 @@ export function TicketRichTextEditor({
     }
     execute("createLink", href);
   }
-
   function handlePaste(event: ClipboardEvent<HTMLDivElement>) {
     event.preventDefault();
     const editor = editorRef.current;
@@ -231,6 +225,7 @@ export function TicketRichTextEditor({
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "Tab") rewrite.clearSelection();
     if (mentions.handleKeyDown(event)) {
       return;
     }
@@ -253,7 +248,10 @@ export function TicketRichTextEditor({
   }
 
   return (
-    <div className={cn("rounded-md border bg-white", className)}>
+    <div
+      className={cn("rounded-md border bg-white", className)}
+      onBlur={rewrite.handleContainerBlur}
+    >
       <label className="sr-only" htmlFor={id}>
         {label}
       </label>
@@ -281,11 +279,13 @@ export function TicketRichTextEditor({
           onBlur={() => { editorFocusedRef.current = false; }}
           onFocus={() => { editorFocusedRef.current = true; }}
           onInput={() => {
+            rewrite.clearSelection();
             mentions.updateFromSelection();
             emitChange();
           }}
           onKeyDown={handleKeyDown}
           onKeyUp={updateActiveToolbarState}
+          onMouseDown={rewrite.clearSelection}
           onMouseUp={updateActiveToolbarState}
           onPaste={handlePaste}
           ref={editorRef}
@@ -296,4 +296,4 @@ export function TicketRichTextEditor({
       </div>
     </div>
   );
-}
+});

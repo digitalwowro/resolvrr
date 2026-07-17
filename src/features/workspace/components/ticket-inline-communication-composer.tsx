@@ -1,17 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type {
   AiRephraseStyleOption,
-  DraftRewriteResult,
   RewriteDraftAction,
 } from "@/features/ai";
 import { Button } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
+import {
+  draftRewriteResultMessage,
+  plainTextToComposerHtml,
+  rewriteTargets,
+  suggestionId,
+  suggestionLabel,
+} from "./ticket-ai-draft-suggestions";
 import { TicketAiEditorToolbar } from "./ticket-ai-editor-toolbar";
 import type { PersistedDraftAiSuggestion } from "./ticket-communication-draft-persistence";
-import { escapeHtml } from "./ticket-rich-text-editor-dom";
-import { TicketRichTextEditor } from "./ticket-rich-text-editor";
+import {
+  TicketRichTextEditor,
+  type TicketRichTextEditorHandle,
+} from "./ticket-rich-text-editor";
 import { TicketSignaturePreview } from "./ticket-signature-preview";
 import type { TicketSignaturePreviewState } from "./use-ticket-signature-preview";
 
@@ -33,55 +41,6 @@ type InlineCommunicationComposerProps = {
   onRetrySignaturePreview?(): void;
 };
 
-function resultMessage(result: Exclude<DraftRewriteResult, { status: "available" }>) {
-  if (result.status === "unconfigured") {
-    return "AI drafting is not configured for this workspace.";
-  }
-  if (result.reason === "empty-draft") {
-    return "Write a draft before using AI.";
-  }
-  if (result.reason === "invalid-rephrase-style") {
-    return "Select an available rephrase style.";
-  }
-  if (result.reason === "provider-rate-limited") {
-    return "The AI provider is rate limited. Try again shortly.";
-  }
-  if (result.reason === "provider-auth-failed") {
-    return "The AI provider credentials need attention.";
-  }
-  if (result.reason === "provider-request-rejected") {
-    return "The AI provider rejected this request. Try again or check provider permissions.";
-  }
-  return "AI drafting is temporarily unavailable.";
-}
-
-function plainTextToComposerHtml(text: string): string {
-  return text
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean)
-    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br>")}</p>`)
-    .join("");
-}
-
-function suggestionLabel(
-  result: Extract<DraftRewriteResult, { status: "available" }>,
-): string {
-  if (result.operation === "proofread") {
-    return "Proofread";
-  }
-  return result.rephraseStyle
-    ? `Rephrase: ${result.rephraseStyle.label}`
-    : "Rephrase";
-}
-
-function suggestionId(): string {
-  return (
-    globalThis.crypto?.randomUUID?.() ??
-    `suggestion-${Date.now()}-${Math.random().toString(36).slice(2)}`
-  );
-}
-
 export function TicketInlineCommunicationComposer({
   body,
   editorId,
@@ -97,10 +56,12 @@ export function TicketInlineCommunicationComposer({
   onRetrySignaturePreview,
   suggestions,
 }: InlineCommunicationComposerProps) {
+  const editorRef = useRef<TicketRichTextEditorHandle | null>(null);
   const label = mode === "comment" ? "Comment" : mode === "forward" ? "Forward" : "Reply";
   const [pendingOperation, setPendingOperation] = useState<
     "proofread" | "rephrase" | null
   >(null);
+  const [selectionRewriteActive, setSelectionRewriteActive] = useState(false);
   const [selectedSuggestionId, setSelectedSuggestionId] = useState(
     suggestions[0]?.id ?? "",
   );
@@ -122,27 +83,42 @@ export function TicketInlineCommunicationComposer({
     setPendingOperation(request.operation);
     setMessage(null);
     try {
+      const captured = editorRef.current?.captureRewriteTarget() ?? {
+        status: "available" as const,
+        target: { html: body, kind: "draft" as const },
+      };
+      if (captured.status === "invalid") {
+        setMessage(captured.reason === "stale-selection"
+          ? "The selected text changed. Select it again before using AI."
+          : "Mentions and non-text selections cannot be rewritten.");
+        return;
+      }
+      const targets = rewriteTargets(captured.target);
       const result = await rewriteDraftAction({
-        bodyHtml: body,
         composerMode: mode === "forward" ? "reply" : mode,
         operation: request.operation,
         ...(request.operation === "rephrase"
           ? { rephraseStyleId: request.styleId }
           : {}),
+        target: targets.requestTarget,
       });
       if (result.status !== "available") {
-        setMessage(resultMessage(result));
+        setMessage(draftRewriteResultMessage(result));
         return;
       }
 
       const suggestion: PersistedDraftAiSuggestion = {
         generatedAt: result.generatedAt,
         id: suggestionId(),
-        label: suggestionLabel(result),
+        label: suggestionLabel(
+          result,
+          targets.persistedTarget.kind === "selection",
+        ),
         operation: result.operation,
         ...(result.rephraseStyle
           ? { rephraseStyleId: result.rephraseStyle.id }
           : {}),
+        target: targets.persistedTarget,
         text: result.text,
       };
       const nextSuggestions = [
@@ -158,6 +134,20 @@ export function TicketInlineCommunicationComposer({
 
   function applySuggestion() {
     if (!selectedSuggestion) {
+      return;
+    }
+    if (selectedSuggestion.target?.kind === "selection") {
+      const result = editorRef.current?.applySelectionRewrite(
+        selectedSuggestion.target.selection,
+        selectedSuggestion.text,
+      );
+      if (result?.status !== "applied") {
+        setMessage(
+          "The selected text changed after this suggestion was generated. Select it again and retry.",
+        );
+        return;
+      }
+      setMessage("Suggestion applied to the selected text.");
       return;
     }
     onBodyChange(plainTextToComposerHtml(selectedSuggestion.text));
@@ -183,6 +173,7 @@ export function TicketInlineCommunicationComposer({
         void rewriteDraft({ operation: "rephrase", styleId });
       }}
       pending={Boolean(pendingOperation)}
+      selectionActive={selectionRewriteActive}
       styles={rephraseStyleOptions}
     />
   );
@@ -202,10 +193,12 @@ export function TicketInlineCommunicationComposer({
         label={label}
         mentionGroupExternalId={mentionGroupExternalId}
         onChange={onBodyChange}
+        onRewriteSelectionChange={setSelectionRewriteActive}
         placeholder={mode === "comment"
           ? "Write a comment..."
           : mode === "forward" ? "Add a message..." : "Write a reply..."}
         value={body}
+        ref={editorRef}
       />
       {mode !== "comment" && signaturePreview && onRetrySignaturePreview ? (
         <TicketSignaturePreview

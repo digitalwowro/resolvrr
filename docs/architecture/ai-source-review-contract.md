@@ -36,7 +36,12 @@ Proofread and rephrase are draft-only operations. They use the user's current
 composer draft plus workspace-scoped My Style. Rephrase also uses the selected
 workspace rephrase style prompt or a permitted personal override. They do not
 require a provider read because they do not include selected-ticket source
-context.
+context. A request targets either the complete authored draft or one captured
+editor selection. Selection requests contain only the selected fragment, not
+the surrounding draft. Applying a selection suggestion requires the current
+sanitized editor HTML, range paths, offsets, selected text, and fragment to
+still match the captured context. Stale or mention-intersecting selections fail
+closed and never fall back to rewriting the complete draft.
 
 If a provider read fails, the AI operation is unavailable. The UI may preserve
 the user's local draft text and show a retry path, but it must not generate from
@@ -52,7 +57,8 @@ without a new contract.
 AI output is advisory until the user takes an explicit action:
 
 - proofread/rephrase output must be accepted or applied by the user before it
-  replaces draft text;
+  replaces draft text; selected-text output replaces only its validated
+  captured range;
 - suggested reply output must remain editable draft text until the user submits
   it through the existing customer reply path;
 - reviewed action preparation must show the proposed structured changes before

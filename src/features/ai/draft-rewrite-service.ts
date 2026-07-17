@@ -58,6 +58,12 @@ function operationInstruction(
   ].join("\n");
 }
 
+function rewriteTargetHtml(request: DraftRewriteRequest): string {
+  return request.target.kind === "selection"
+    ? request.target.fragmentHtml
+    : request.target.bodyHtml;
+}
+
 function userPrompt(input: {
   draftText: string;
   rephraseStyle: EffectiveAiRephraseStyle | null;
@@ -67,6 +73,9 @@ function userPrompt(input: {
   return [
     operationInstruction(input.request.operation, input.rephraseStyle),
     `Composer type: ${input.request.composerMode}.`,
+    input.request.target.kind === "selection"
+      ? "Rewrite scope: selected text only."
+      : "Rewrite scope: complete draft.",
     styleInstructions(input.style),
     "Draft text:",
     input.draftText,
@@ -89,7 +98,7 @@ export async function rewriteDraftText(input: {
     };
   }
 
-  const draftText = plainTextFromComposerHtml(input.request.bodyHtml).slice(
+  const draftText = plainTextFromComposerHtml(rewriteTargetHtml(input.request)).slice(
     0,
     maxDraftCharacters,
   );

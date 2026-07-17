@@ -46,9 +46,12 @@ describe("draft rewrite service", () => {
       generateText,
       prompt: { prompt: "Proofread system prompt." },
       request: {
-        bodyHtml: "<p>Hello<br>this is clear.</p><script>bad()</script>",
         composerMode: "reply",
         operation: "proofread",
+        target: {
+          bodyHtml: "<p>Hello<br>this is clear.</p><script>bad()</script>",
+          kind: "draft",
+        },
       },
       style,
     });
@@ -68,6 +71,7 @@ describe("draft rewrite service", () => {
     );
     const request = generateText.mock.calls[0]?.[1];
     expect(request?.userPrompt).toContain("Composer type: reply.");
+    expect(request?.userPrompt).toContain("Rewrite scope: complete draft.");
     expect(request?.userPrompt).toContain("Role: Support engineer");
     expect(request?.userPrompt).toContain("Audience: Technical customers");
     expect(request?.userPrompt).toContain("Hello\nthis is clear.");
@@ -85,10 +89,10 @@ describe("draft rewrite service", () => {
       generateText,
       prompt: { prompt: "Rephrase system prompt." },
       request: {
-        bodyHtml: "<p>Please send logs.</p>",
         composerMode: "comment",
         operation: "rephrase",
         rephraseStyleId: "style-friendly",
+        target: { bodyHtml: "<p>Please send logs.</p>", kind: "draft" },
       },
       rephraseStyle: {
         id: "style-friendly",
@@ -124,9 +128,9 @@ describe("draft rewrite service", () => {
         generateText,
         prompt: { prompt: "Prompt." },
         request: {
-          bodyHtml: "<p>Hello</p>",
           composerMode: "reply",
           operation: "proofread",
+          target: { bodyHtml: "<p>Hello</p>", kind: "draft" },
         },
         style,
       }),
@@ -142,9 +146,9 @@ describe("draft rewrite service", () => {
         generateText,
         prompt: { prompt: "Prompt." },
         request: {
-          bodyHtml: "<p> </p>",
           composerMode: "reply",
           operation: "proofread",
+          target: { bodyHtml: "<p> </p>", kind: "draft" },
         },
         style,
       }),
@@ -169,9 +173,9 @@ describe("draft rewrite service", () => {
         generateText,
         prompt: { prompt: "Prompt." },
         request: {
-          bodyHtml: "<p>Hello</p>",
           composerMode: "reply",
           operation: "proofread",
+          target: { bodyHtml: "<p>Hello</p>", kind: "draft" },
         },
         style,
       }),
@@ -180,5 +184,32 @@ describe("draft rewrite service", () => {
       retryable: true,
       status: "unavailable",
     });
+  });
+
+  it("sends only selected text to the generator for a selection rewrite", async () => {
+    const generateText = generator({
+      status: "available",
+      text: "Selected rewrite.",
+    });
+
+    await rewriteDraftText({
+      aiConfig: availableAiConfig,
+      generateText,
+      prompt: { prompt: "Proofread system prompt." },
+      request: {
+        composerMode: "reply",
+        operation: "proofread",
+        target: {
+          fragmentHtml: "<strong>Selected words</strong>",
+          kind: "selection",
+        },
+      },
+      style,
+    });
+
+    const request = generateText.mock.calls[0]?.[1];
+    expect(request?.userPrompt).toContain("Rewrite scope: selected text only.");
+    expect(request?.userPrompt).toContain("Selected words");
+    expect(request?.userPrompt).not.toContain("Unselected words");
   });
 });

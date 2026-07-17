@@ -85,6 +85,27 @@ export function commandState(command: EditorCommand): boolean {
     document.queryCommandState(command);
 }
 
+export function fallbackEditorCommand(
+  editor: HTMLElement,
+  command: EditorCommand,
+  commandValue?: string,
+) {
+  const text = editor.textContent?.trim() ?? "";
+  const escapedText = escapeHtml(text);
+  const escapedValue = commandValue ? escapeHtml(commandValue) : "";
+  const nextHtml: Record<EditorCommand, string> = {
+    bold: `<strong>${escapedText}</strong>`,
+    createLink: `<a href="${escapedValue}">${escapedText || escapedValue}</a>`,
+    insertOrderedList: `<ol><li>${escapedText}</li></ol>`,
+    insertUnorderedList: `<ul><li>${escapedText}</li></ul>`,
+    italic: `<em>${escapedText}</em>`,
+    redo: editor.innerHTML,
+    undo: editor.innerHTML,
+    underline: `<u>${escapedText}</u>`,
+  };
+  editor.innerHTML = nextHtml[command];
+}
+
 export function clearStickyFormattingWhenEmpty(editor: HTMLElement) {
   if (communicationBodyHasText(editor.innerHTML)) {
     return false;

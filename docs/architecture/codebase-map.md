@@ -610,6 +610,9 @@ added, moved, renamed, or removed.
           (`src/features/workspace/components/ticket-ai-editor-toolbar.tsx`): right-aligned
           Proofread, configured-style Rephrase menu, and inert AI Reply placeholder for the
           ticket communication editor.
+        - `ticket-ai-draft-suggestions.ts`
+          (`src/features/workspace/components/ticket-ai-draft-suggestions.ts`): suggestion labels,
+          safe full-draft HTML conversion, and editor-to-server rewrite target mapping.
         - `use-ticket-mention-suggestions.tsx`
           (`src/features/workspace/components/use-ticket-mention-suggestions.tsx`):
           staged-group-aware `@@` detection, debounced mention lookup, accessible option
@@ -705,6 +708,15 @@ added, moved, renamed, or removed.
         - `ticket-rich-text-editor-dom.ts`
           (`src/features/workspace/components/ticket-rich-text-editor-dom.ts`): ticket rich text
           editor dom workspace helper module.
+        - `ticket-rich-text-editor-selection.ts`
+          (`src/features/workspace/components/ticket-rich-text-editor-selection.ts`): captures,
+          serializes, revalidates, and applies fail-closed selected-text rewrite ranges.
+        - `ticket-rich-text-editor-range.ts`
+          (`src/features/workspace/components/ticket-rich-text-editor-range.ts`): normalizes hidden
+          browser block-boundary endpoints so selection replacement preserves adjacent paragraphs.
+        - `use-ticket-rich-text-editor-rewrite.ts`
+          (`src/features/workspace/components/use-ticket-rich-text-editor-rewrite.ts`): preserves
+          selection context across toolbar focus and exposes the editor rewrite controller.
         - `ticket-rich-text-editor-toolbar-row.tsx`
           (`src/features/workspace/components/ticket-rich-text-editor-toolbar-row.tsx`): ticket rich
           text editor toolbar row workspace UI component.
@@ -1469,6 +1481,10 @@ added, moved, renamed, or removed.
     - `ticket-communication-ai-drafts-workspace.test.tsx`
       (`tests/features/ticket-communication-ai-drafts-workspace.test.tsx`): verifies local inline
       composer draft recovery, proofread suggestion persistence, and suggestion apply behavior.
+    - `ticket-communication-ai-selection-workspace.test.tsx` and
+      `ticket-rich-text-editor-selection.test.ts`: verify selection-only AI request content,
+      surrounding rich-text preservation, toolbar-focus capture, stale-range rejection, and
+      non-editable mention protection.
     - `ticket-communication-draft-scope.test.ts`
       (`tests/features/ticket-communication-draft-scope.test.ts`): verifies drafts cannot cross
       users, workspaces, personal connections, identity versions, or legacy shared scopes.

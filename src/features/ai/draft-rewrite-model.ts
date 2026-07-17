@@ -1,11 +1,15 @@
 export type DraftRewriteOperation = "proofread" | "rephrase";
 export type DraftComposerMode = "comment" | "reply";
 
+export type DraftRewriteTarget =
+  | { bodyHtml: string; kind: "draft" }
+  | { fragmentHtml: string; kind: "selection" };
+
 export type DraftRewriteRequest = {
-  bodyHtml: string;
   composerMode: DraftComposerMode;
   operation: DraftRewriteOperation;
   rephraseStyleId?: string;
+  target: DraftRewriteTarget;
 };
 
 export type DraftRewriteUnavailableReason =
