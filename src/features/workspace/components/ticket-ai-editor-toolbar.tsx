@@ -18,14 +18,18 @@ export function TicketAiEditorToolbar({
   onProofread,
   onRephrase,
   pending,
+  selectionActive,
   styles,
 }: {
   disabled: boolean;
   onProofread(): void;
   onRephrase(styleId: string): void;
   pending: boolean;
+  selectionActive: boolean;
   styles: AiRephraseStyleOption[];
 }) {
+  const proofreadLabel = selectionActive ? "Proofread selection" : "Proofread";
+  const rephraseLabel = selectionActive ? "Rephrase selection" : "Rephrase";
   const rephraseItems: MenuDropdownItem[] = styles.map((style) => ({
     id: style.id,
     label: style.label,
@@ -42,7 +46,7 @@ export function TicketAiEditorToolbar({
         type="button"
         variant="ghost"
       >
-        Proofread
+        {proofreadLabel}
       </ToolbarButton>
       <ToolbarMenuDropdown
         align="end"
@@ -53,10 +57,10 @@ export function TicketAiEditorToolbar({
         triggerContent={(
           <>
             <Repeat2 aria-hidden="true" className={aiIconClassName} />
-            <span>Rephrase</span>
+            <span>{rephraseLabel}</span>
           </>
         )}
-        triggerLabel="Rephrase"
+        triggerLabel={rephraseLabel}
       />
       <ToolbarButton
         aria-disabled="true"

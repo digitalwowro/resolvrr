@@ -33,10 +33,15 @@ function invalidDraft(): DraftRewriteResult {
 function normalizedRequest(
   request: DraftRewriteRequest,
 ): DraftRewriteRequest | null {
+  const validTarget = request.target?.kind === "draft"
+    ? typeof request.target.bodyHtml === "string"
+    : request.target?.kind === "selection"
+      ? typeof request.target.fragmentHtml === "string"
+      : false;
   if (
     (request.composerMode !== "comment" && request.composerMode !== "reply") ||
     (request.operation !== "proofread" && request.operation !== "rephrase") ||
-    typeof request.bodyHtml !== "string"
+    !validTarget
   ) {
     return null;
   }

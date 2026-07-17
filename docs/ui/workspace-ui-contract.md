@@ -274,7 +274,14 @@ edits requires confirmation. The editor toolbar is scoped to basic formatting:
 bold, italic, underline, ordered list, unordered list, and link, with undo/redo
 controls on the left. Proofread, Rephrase, and the non-functional AI Reply
 placeholder align on the right at 14px. Rephrase opens the configured style
-menu and selecting one style immediately prepares that rephrase request.
+menu and selecting one style immediately prepares that rephrase request. A
+non-empty editor selection scopes Proofread or Rephrase to that text; otherwise
+the complete authored draft is used. While that selection is active, the
+buttons read `Proofread selection` and `Rephrase selection`. Toolbar focus must preserve the captured
+selection, Apply must replace only an unchanged captured range, and stale or
+non-editable mention selections must fail closed without changing the draft.
+Visually selected text must retain neighboring paragraph/list boundaries even
+when the browser's internal selection includes an adjacent block separator.
 Staged communication HTML is part of the selected-ticket draft and is sent by
 the main workspace `Update` action alongside metadata.
 Typing `@@` followed by a query opens a keyboard-accessible mention picker for

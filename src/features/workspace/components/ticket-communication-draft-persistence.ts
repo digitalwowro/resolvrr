@@ -8,13 +8,14 @@ import {
   setCurrentCommunicationDraftPresence,
   type CommunicationDraftPersistenceScope,
 } from "./ticket-communication-draft-runtime";
+import type { EditorRewriteSelection } from "./ticket-rich-text-editor-selection";
 export type {
   CommunicationDraftPersistenceScope,
 } from "./ticket-communication-draft-runtime";
 
 const databaseName = "resolvrr-workspace-drafts";
 const storeName = "communicationDrafts";
-const databaseVersion = 5;
+const databaseVersion = 6;
 export const communicationDraftRetentionMs = 7 * 24 * 60 * 60 * 1_000;
 export const maxPersistedAiSuggestions = 3;
 
@@ -24,6 +25,9 @@ export type PersistedDraftAiSuggestion = {
   label: string;
   operation: DraftRewriteOperation;
   rephraseStyleId?: string;
+  target?:
+    | { kind: "draft" }
+    | { kind: "selection"; selection: EditorRewriteSelection };
   text: string;
 };
 

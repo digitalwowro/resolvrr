@@ -32,6 +32,7 @@ export type {
   DraftRewriteOperation,
   DraftRewriteRequest,
   DraftRewriteResult,
+  DraftRewriteTarget,
   RewriteDraftAction,
 } from "./draft-rewrite-model";
 export type {

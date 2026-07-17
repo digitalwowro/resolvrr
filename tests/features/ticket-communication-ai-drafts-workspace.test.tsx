@@ -81,6 +81,9 @@ describe("TicketWorkspace communication AI drafts", () => {
     expect(
       screen.getByText("Saved concise suggestion."),
     ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+    expect(screen.getByRole("textbox", { name: "Reply" }))
+      .toHaveTextContent("Saved concise suggestion.");
 
     await user.click(
       screen.getByRole("button", { name: "Close composer" }),
@@ -98,7 +101,12 @@ describe("TicketWorkspace communication AI drafts", () => {
         composerMode: "reply",
         operation: "proofread",
       });
-      expect(request.bodyHtml).toContain("Please check logs");
+      expect(request.target).toMatchObject({
+        kind: "draft",
+      });
+      if (request.target.kind === "draft") {
+        expect(request.target.bodyHtml).toContain("Please check logs");
+      }
       return {
         generatedAt: "2026-06-14T10:00:00.000Z",
         operation: "proofread",

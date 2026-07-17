@@ -48,7 +48,13 @@ contextual customer-reply, and customer-forward composer when AI is configured.
 For forwards they operate only on the agent introduction, never the quoted
 source message. They operate on text the user
 has already typed. Generated text is shown as a suggestion and does not replace
-the draft unless the user explicitly applies it.
+the draft unless the user explicitly applies it. With no editor selection, the
+operation uses the complete authored draft. With a non-empty text selection, it
+uses and replaces only that selection while preserving the surrounding draft.
+The toolbar labels change to `Proofread selection` and `Rephrase selection`
+while that scope is active.
+If the draft or captured range changes before Apply, Resolvrr keeps the draft
+unchanged and asks the user to select the text again.
 
 Unsubmitted ticket composer drafts are recovered locally in the browser. The
 communication mode/context, reviewed To/Cc, subject/forward options, body, and a small suggestion history
