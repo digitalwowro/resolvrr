@@ -49,7 +49,7 @@ export function TicketArticleAttachments({
   return (
     <section
       aria-label="Article attachments"
-      className="mt-3 border-t border-slate-200/80 pt-3"
+      className="mt-3 border-t border-slate-200/60 pt-3"
     >
       <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
         <Paperclip aria-hidden="true" className="size-3.5" />

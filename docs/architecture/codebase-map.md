@@ -611,9 +611,9 @@ added, moved, renamed, or removed.
         - `ticket-inline-communication-composer.tsx`
           (`src/features/workspace/components/ticket-inline-communication-composer.tsx`):
           ticket-level Reply/Forward/Comment rich-text composer above the newest article. It
-          keeps outbound signature previews read-only and separate from the authored body, stages
-          text in the selected-ticket draft, exposes draft-only proofread/rephrase controls, and
-          has no local Send/Cancel footer.
+          keeps outbound signature previews visually inside the editor shell but read-only and
+          separate from the authored body, stages text in the selected-ticket draft, exposes
+          draft-only proofread/rephrase controls, and has no local Send/Cancel footer.
         - `ticket-ai-editor-toolbar.tsx`
           (`src/features/workspace/components/ticket-ai-editor-toolbar.tsx`): right-aligned
           Proofread, configured-style Rephrase menu, and inert AI Reply placeholder for the
@@ -626,8 +626,8 @@ added, moved, renamed, or removed.
           staged-group-aware `@@` detection, debounced mention lookup, accessible option
           navigation, and provider-neutral non-editable mention insertion.
         - `ticket-signature-preview.tsx` and `use-ticket-signature-preview.ts`: exact reviewed
-          signature preview, collapsed accessible disclosure, group-change refresh, retry state,
-          and Update readiness coordination.
+          signature preview, collapsed-by-default accessible read-only editor footer, group-change
+          refresh, retry state, and Update readiness coordination.
         - `workspace-settings-signatures-section.tsx`: admin signature-source selection and
           Resolvrr default/group template editor with safe variables and bounded images.
         - `ticket-communication-draft-persistence.ts`
@@ -639,7 +639,8 @@ added, moved, renamed, or removed.
           versioned communication drafts only against fresh reply or forward article contexts.
         - `ticket-forward-options.tsx`
           (`src/features/workspace/components/ticket-forward-options.tsx`): editable forward
-          subject, include-original, attachment selection, and read-only original preview.
+          subject, include-original, attachment selection, and read-only original preview in the
+          shared full-width composer inset.
         - `use-communication-draft-scope.ts`
           (`src/features/workspace/components/use-communication-draft-scope.ts`): stable user,
           workspace, and final-ticket IndexedDB communication draft scope.
@@ -733,7 +734,7 @@ added, moved, renamed, or removed.
           text editor toolbar workspace UI component.
         - `ticket-rich-text-editor.tsx`
           (`src/features/workspace/components/ticket-rich-text-editor.tsx`): ticket rich text editor
-          workspace UI component.
+          workspace UI component with scroll-safe autofocus.
         - `ticket-secondary-links-field.tsx`
           (`src/features/workspace/components/ticket-secondary-links-field.tsx`): linked ticket
           sidebar rows, staged pending-link display, and Add link modal trigger when related-link
@@ -788,21 +789,23 @@ added, moved, renamed, or removed.
           production list/open-ticket tab panel composition.
         - `ticket-thread-article-styles.ts`
           (`src/features/workspace/components/ticket-thread-article-styles.ts`): narrow class-map
-          companion for thread article variants and action selected states.
+          companion for thread article variants, thin direction-rail colors, and action selected
+          states.
         - `ticket-thread-article-parts.tsx`
           (`src/features/workspace/components/ticket-thread-article-parts.tsx`): thread article
           avatar, recipient detail, contextual Reply/Reply all action, and replyability components.
         - `ticket-thread-article.tsx`
-          (`src/features/workspace/components/ticket-thread-article.tsx`): production article-card
-          presentation with sanitized rich-text rendering, display-name-first From/To/Cc/Bcc
-          metadata, attachment metadata display, and provider-neutral contextual reply actions.
+          (`src/features/workspace/components/ticket-thread-article.tsx`): production article
+          presentation with explicit item boundaries, thin direction rails, sanitized rich-text
+          rendering, display-name-first From/To/Cc/Bcc metadata, attachment metadata display, and
+          provider-neutral contextual reply actions.
         - `ticket-thread.tsx` (`src/features/workspace/components/ticket-thread.tsx`): production
           ticket article thread and top-composer owner. It restores one local contextual draft,
           renders recipients and AI suggestions, and delegates article source selection upward.
         - `use-ticket-communication-selection.ts`
           (`src/features/workspace/components/use-ticket-communication-selection.ts`): ticket-level
-          communication source/mode selection, dirty-replacement confirmation, scroll, and focus
-          hook shared by footer and article actions.
+          communication source/mode selection, dirty-replacement confirmation, conversation-local
+          scroll, and focus hook shared by footer and article actions.
         - `ticket-workspace-chrome.tsx`
           (`src/features/workspace/components/ticket-workspace-chrome.tsx`): ticket workspace chrome
           workspace UI component.
@@ -1496,6 +1499,9 @@ added, moved, renamed, or removed.
       `ticket-rich-text-editor-selection.test.ts`: verify selection-only AI request content,
       surrounding rich-text preservation, toolbar-focus capture, stale-range rejection, and
       non-editable mention protection.
+    - `ticket-communication-composer-focus-workspace.test.tsx`
+      (`tests/features/ticket-communication-composer-focus-workspace.test.tsx`): verifies
+      communication composers focus their editor and scroll only the ticket conversation.
     - `ticket-communication-draft-scope.test.ts`
       (`tests/features/ticket-communication-draft-scope.test.ts`): verifies drafts cannot cross
       users, workspaces, personal connections, identity versions, or legacy shared scopes.

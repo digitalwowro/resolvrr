@@ -13,6 +13,7 @@ import {
   isPublicReplyableArticle,
 } from "./ticket-thread-article-parts";
 import {
+  articleRailClass,
   articleTypeLabel,
   articleTypeTokenClass,
 } from "./ticket-thread-article-styles";
@@ -73,11 +74,20 @@ export function TicketThreadArticle({
   return (
     <article
       aria-label={`${articleTypeLabel[article.direction]} from ${article.author}`}
-      className="group bg-white transition-colors hover:bg-slate-50/70 focus-within:bg-slate-50/70"
+      className="group border-b border-slate-200 bg-white transition-colors hover:bg-slate-50/40 focus-within:bg-slate-50/40"
     >
       <div
-        className="relative flex gap-3 pb-4 pl-4 pr-4 pt-4"
+        className="relative flex gap-3 py-4 pl-8 pr-4"
       >
+        <span
+          aria-hidden="true"
+          className={cn(
+            "absolute bottom-4 left-4 top-4 w-px",
+            articleRailClass[article.direction],
+          )}
+          data-article-direction={article.direction}
+          data-article-rail=""
+        />
         <ArticleAvatar article={article} />
         <div className="min-w-0 flex-1">
           <div

@@ -239,6 +239,12 @@ summary metadata, and article thread live inside one bordered conversation
 section, and that section owns its own vertical scrollbar. The metadata sidebar
 and bottom update bar remain outside that conversation scroller. Thread
 articles render provider-sanitized rich HTML and use the shared global link color.
+Each article owns a full-width bottom boundary and a thin, uninterrupted direction
+rail: indigo for customer messages, dark slate for agent messages, amber for internal
+comments, and muted slate for system or unknown items. The rail spans only its
+article and intentionally has no timeline dots or nodes. Attachments, expanded
+signatures, and quoted replies use lighter inset dividers so they remain subordinate
+to the boundary between complete articles.
 Email presentation tables retain their safe provider layout instead of receiving
 blanket data-table borders, widths, or cell padding. Verified embedded raster
 images render in place through authenticated same-origin URLs and retain safe
@@ -264,7 +270,10 @@ the agent can include or omit the original message and each provider-classified
 visible source attachment. Inline body resources and message alternatives never
 appear as attachment rows or choices. The original preview is read-only; only
 the agent introduction is editable and eligible for proofread/rephrase. No Bcc
-control is available.
+control is available. Forward-only controls use the same full-width content
+inset as To/Cc and the editor, without a separate section divider. Opening any
+communication mode scrolls only the conversation region; it must never move the
+application viewport or create space below the sticky ticket action bar.
 
 Article attachment rows are keyboard-focusable download links when the current
 user has an active personal helpdesk connection. Clicking a row downloads the
@@ -301,11 +310,12 @@ converts and validates that token only as part of the final article write;
 there is no separate notification or subscription write. If the group or agent
 access changed, Update fails closed, retains the communication draft, and
 reports the invalid mention.
-Reply and Forward show a read-only signature preview directly below the editable
-body. An available signature is collapsed by default behind a compact,
-keyboard-accessible disclosure and expands on the same composer background
-without becoming part of the editable body. Update remains disabled while that
-preview is loading, unavailable, or no
+Reply and Forward show the read-only signature inside the editor's bordered
+visual shell, directly after the editable body. An available signature is
+collapsed by default behind a compact, keyboard-accessible disclosure and may be
+expanded without becoming part of the editable DOM, AI rewrite range, or
+persisted authored body. Loading, unavailable, and retry states occupy the same
+read-only footer. Update remains disabled while that preview is unavailable or no
 longer matches the draft's reviewed context. A staged Group change refreshes the
 preview before submission. Workspace admins choose Zammad-managed,
 Resolvrr-managed, or no signature in Settings > Signatures; existing workspaces

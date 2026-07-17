@@ -6,13 +6,15 @@ import { Button } from "@/components/ui";
 import type { TicketSignaturePreviewState } from "./use-ticket-signature-preview";
 
 export function TicketSignaturePreview({
+  defaultExpanded = false,
   onRetry,
   preview,
 }: {
+  defaultExpanded?: boolean;
   onRetry(): void;
   preview: TicketSignaturePreviewState;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const contentId = useId();
   if (preview.status === "idle") return null;
   if (preview.status === "loading") {
@@ -49,6 +51,7 @@ export function TicketSignaturePreview({
       <button
         aria-controls={contentId}
         aria-expanded={expanded}
+        aria-label={`Signature from ${sourceLabel}`}
         className="flex h-9 w-full items-center gap-1.5 px-3 text-left text-xs font-medium text-slate-600 hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-indigo-600"
         onClick={() => setExpanded((current) => !current)}
         type="button"
@@ -58,6 +61,7 @@ export function TicketSignaturePreview({
           className={`size-3.5 transition-transform ${expanded ? "rotate-90" : ""}`}
         />
         Signature from {sourceLabel}
+        <span className="ml-auto font-normal text-slate-400">Read-only</span>
       </button>
       {expanded ? (
         <div

@@ -72,8 +72,11 @@ export function TicketAiSummaryPanel({
   const generatedLabel = generatedStatusText(result);
 
   return (
-    <div className="-ml-4 mt-4 border-t border-slate-200 pl-4 pt-4">
-      <div className="w-full rounded-md border border-indigo-100 bg-indigo-50/40 px-4 py-3">
+    <div className="-ml-4 mt-4 border-t border-slate-200 pl-4 pr-4 pt-4">
+      <section
+        aria-label="AI summary"
+        className="w-full rounded-md border border-indigo-100 bg-indigo-50/40 px-4 py-3"
+      >
         <div className="flex min-w-0 items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <Sparkles
@@ -137,7 +140,7 @@ export function TicketAiSummaryPanel({
             </p>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

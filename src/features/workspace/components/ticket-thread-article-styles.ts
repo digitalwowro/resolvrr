@@ -24,6 +24,14 @@ export const articleTypeTokenClass: Record<WorkspaceArticle["direction"], string
   unknown: "rounded-md bg-slate-100 px-2 py-0.5 font-medium text-slate-600",
 };
 
+export const articleRailClass: Record<WorkspaceArticle["direction"], string> = {
+  inbound: "bg-indigo-500",
+  outbound: "bg-slate-500",
+  internal: "bg-amber-500",
+  system: "bg-slate-300",
+  unknown: "bg-slate-300",
+};
+
 export const actionSelectedClass: Record<WorkspaceArticle["direction"], string> = {
   inbound: "bg-slate-100 text-slate-950 hover:bg-slate-100 active:bg-slate-100",
   outbound: "bg-slate-100 text-slate-950 hover:bg-slate-100 active:bg-slate-100",
