@@ -28,6 +28,7 @@ type TicketTabProps = {
   unread?: boolean;
   dirty?: boolean;
   loading?: boolean;
+  syncPending?: boolean;
   containerClassName?: string;
   containerRef?: Ref<HTMLElement>;
   containerStyle?: CSSProperties;
@@ -55,6 +56,7 @@ export function TicketTab({
   unread = false,
   dirty = false,
   loading = false,
+  syncPending = false,
   containerClassName,
   containerRef,
   containerStyle,
@@ -177,6 +179,14 @@ export function TicketTab({
         {loading ? <span className="sr-only">{label} loading</span> : null}
         {icon}
         {unread ? <span className="sr-only">Unread</span> : null}
+        {syncPending ? (
+          <Tooltip content="Not synchronized">
+            <span
+              aria-label="Not synchronized"
+              className="size-2 shrink-0 rounded-full bg-amber-500"
+            />
+          </Tooltip>
+        ) : null}
         {vertical ? verticalLabelText : horizontalLabelText}
         {dirty ? <span className="sr-only">Unsaved changes</span> : null}
       </button>

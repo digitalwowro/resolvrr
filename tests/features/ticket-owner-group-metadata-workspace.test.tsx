@@ -23,6 +23,17 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
+vi.mock("@/features/tickets/lookup-actions", () => ({
+  lookupWorkspaceMentionableUsersAction: vi.fn(),
+  lookupWorkspaceAssignableUsersAction: vi.fn(async ({ groupExternalIds }) => ({
+    status: "available",
+    cachePolicy: "request",
+    options: groupExternalIds.includes("group-2")
+      ? [{ externalId: "agent-2", label: "Priya Agent" }]
+      : [{ externalId: "agent-1", label: "Agent Smith" }],
+  })),
+}));
+
 type MutationAction = (
   request: SelectedTicketUpdatePayload,
 ) => Promise<TicketMetadataMutationActionState>;
@@ -66,10 +77,13 @@ describe("TicketWorkspace owner and group metadata updates", () => {
     }));
     renderWorkspace(action);
 
-    await user.click(screen.getByRole("combobox", { name: "Ticket owner" }));
-    await user.click(screen.getByRole("option", { name: "Priya Agent" }));
     await user.click(screen.getByRole("combobox", { name: "Ticket group" }));
     await user.click(screen.getByRole("option", { name: "Billing" }));
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "Ticket owner" })).toBeEnabled(),
+    );
+    await user.click(screen.getByRole("combobox", { name: "Ticket owner" }));
+    await user.click(screen.getByRole("option", { name: "Priya Agent" }));
 
     expect(action).not.toHaveBeenCalled();
     expect(screen.getByRole("combobox", { name: "Ticket owner" })).toHaveClass(

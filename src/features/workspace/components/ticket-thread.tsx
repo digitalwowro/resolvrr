@@ -7,6 +7,7 @@ import type { AiRephraseStyleOption, RewriteDraftAction } from "@/features/ai";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
 import type { TicketCommunicationDraft } from "./metadata-draft";
+import type { TicketSignaturePreviewState } from "./use-ticket-signature-preview";
 import { replyRecipientsEdited } from "./communication-draft";
 import { forwardDraftEdited } from "./communication-draft";
 import { TicketThreadArticle } from "./ticket-thread-article";
@@ -22,6 +23,9 @@ import {
   type CommunicationDraftPersistenceScope,
   type PersistedDraftAiSuggestion,
 } from "./ticket-communication-draft-persistence";
+import {
+  setCurrentCommunicationDraftPresence,
+} from "./ticket-communication-draft-runtime";
 
 type TicketThreadProps = {
   articles: WorkspaceArticle[];
@@ -30,6 +34,7 @@ type TicketThreadProps = {
   disabled: boolean;
   draftPersistenceScope?: CommunicationDraftPersistenceScope;
   managedAddresses: string[];
+  mentionGroupExternalId?: string;
   onCommunicationDraftChange(draft: TicketCommunicationDraft | undefined): void;
   onRequestReply(article: WorkspaceArticle, intent: TicketReplyIntent): void;
   onRequestForward(article: WorkspaceArticle): void;
@@ -37,6 +42,8 @@ type TicketThreadProps = {
   rephraseStyleOptions?: AiRephraseStyleOption[];
   rewriteDraftAction?: RewriteDraftAction;
   scrollAfterArticleCount?: number;
+  signaturePreview?: TicketSignaturePreviewState;
+  onRetrySignaturePreview?(): void;
 };
 
 export function TicketThread({
@@ -46,6 +53,7 @@ export function TicketThread({
   disabled,
   draftPersistenceScope,
   managedAddresses,
+  mentionGroupExternalId,
   onCommunicationDraftChange,
   onRequestReply,
   onRequestForward,
@@ -53,6 +61,8 @@ export function TicketThread({
   rephraseStyleOptions,
   rewriteDraftAction,
   scrollAfterArticleCount,
+  signaturePreview,
+  onRetrySignaturePreview,
 }: TicketThreadProps) {
   const [suggestions, setSuggestions] = useState<PersistedDraftAiSuggestion[]>([]);
   const [draftRestored, setDraftRestored] = useState(false);
@@ -64,6 +74,12 @@ export function TicketThread({
   useEffect(() => { draftRef.current = communicationDraft; }, [communicationDraft]);
   useEffect(() => { onDraftChangeRef.current = onCommunicationDraftChange; }, [onCommunicationDraftChange]);
   useEffect(() => { void pruneExpiredCommunicationDrafts(); }, []);
+  useEffect(
+    () => () => {
+      setCurrentCommunicationDraftPresence(draftPersistenceScope, false);
+    },
+    [draftPersistenceScope],
+  );
 
   useEffect(() => {
     if (scrollAfterArticleCount === undefined || articles.length <= scrollAfterArticleCount) return;
@@ -114,6 +130,9 @@ export function TicketThread({
       scope: draftPersistenceScope,
       suggestions: nextSuggestions,
       subject: draft.kind === "customer-forward" ? draft.subject : undefined,
+      signatureContext: draft.kind !== "internal-comment"
+        ? draft.signatureContext
+        : undefined,
       to: draft.kind !== "internal-comment" ? draft.to : undefined,
     });
   }
@@ -142,43 +161,45 @@ export function TicketThread({
     <section className="pr-0">
       {communicationDraft ? (
         <div
-          className="relative bg-indigo-50/30"
+          className="bg-indigo-50/30"
           id="ticket-communication-composer"
         >
-          <button
-            aria-label="Close composer"
-            className="absolute right-4 top-3 z-10 inline-grid size-7 place-items-center rounded-md border border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={disabled}
-            onClick={closeComposer}
-            type="button"
-          >
-            <X aria-hidden="true" className="size-4" />
-          </button>
+          <div className="flex min-w-0 items-start justify-between gap-3 px-4 pt-3 text-xs text-slate-600">
+            <span className="min-w-0 truncate font-medium">
+              {communicationDraft.kind === "internal-comment"
+                ? "Internal comment"
+                : `${communicationDraft.kind === "customer-forward" ? "Forwarding" : "Replying to"} ${sourceArticle?.author ?? "selected message"} · ${sourceArticle?.meta ?? ""}`}
+            </span>
+            <button
+              aria-label="Close composer"
+              className="inline-grid size-7 shrink-0 place-items-center rounded-md border border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={disabled}
+              onClick={closeComposer}
+              type="button"
+            >
+              <X aria-hidden="true" className="size-4" />
+            </button>
+          </div>
           {communicationDraft.kind !== "internal-comment" ? (
-            <div className="px-4 pb-1 pr-14 pt-3 text-xs text-slate-600">
-              {communicationDraft.kind === "customer-forward" ? "Forwarding" : "Replying to"} {sourceArticle?.author ?? "selected message"} · {sourceArticle?.meta ?? ""}
-              <div className="mt-2">
-                <TicketReplyRecipientEditor
-                  disabled={disabled}
-                  draft={communicationDraft}
-                  managedAddresses={managedAddresses}
-                  onChange={changeDraft}
-                />
-              </div>
+            <div className="px-4 pb-3 pt-2 text-xs text-slate-600">
+              <TicketReplyRecipientEditor
+                disabled={disabled}
+                draft={communicationDraft}
+                managedAddresses={managedAddresses}
+                onChange={changeDraft}
+              />
               {communicationDraft.kind === "customer-forward" ? (
-                <TicketForwardOptions
-                  article={sourceArticle}
-                  disabled={disabled}
-                  draft={communicationDraft}
-                  onChange={changeDraft}
-                />
+                <div className="mt-2">
+                  <TicketForwardOptions
+                    article={sourceArticle}
+                    disabled={disabled}
+                    draft={communicationDraft}
+                    onChange={changeDraft}
+                  />
+                </div>
               ) : null}
             </div>
-          ) : (
-            <div className="px-4 pr-14 pt-3 text-xs font-medium text-slate-600">
-              Internal comment
-            </div>
-          )}
+          ) : null}
           <TicketInlineCommunicationComposer
             body={communicationDraft.body}
             disabled={disabled}
@@ -188,6 +209,7 @@ export function TicketThread({
               : "ticket"}
             key={`${communicationDraft.kind}-${sourceArticle?.id ?? "ticket"}`}
             mode={mode}
+            mentionGroupExternalId={mentionGroupExternalId}
             onBodyChange={(body) => changeDraft({ ...communicationDraft, body })}
             onSuggestionsChange={(nextSuggestions) => {
               setSuggestions(nextSuggestions);
@@ -195,6 +217,8 @@ export function TicketThread({
             }}
             rephraseStyleOptions={rephraseStyleOptions}
             rewriteDraftAction={rewriteDraftAction}
+            signaturePreview={signaturePreview}
+            onRetrySignaturePreview={onRetrySignaturePreview}
             suggestions={suggestions}
           />
         </div>

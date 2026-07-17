@@ -125,16 +125,24 @@ export function defaultWorkspaceSavedViewId(
 export function initialWorkspaceSavedViewSelection({
   blockUnfilteredFallback,
   capabilities,
+  preferredSavedViewId,
   savedViews,
 }: {
   savedViews: StoredSavedView[];
   capabilities?: TicketListQueryCapabilities;
   blockUnfilteredFallback?: boolean;
+  preferredSavedViewId?: string;
 }): InitialWorkspaceSavedViewSelection {
-  const selectedSavedViewId = defaultWorkspaceSavedViewId(
-    savedViews,
-    capabilities,
+  const preferredSavedView = savedViews.find(
+    (savedView) =>
+      savedView.id === preferredSavedViewId &&
+      !savedViewQueryRejection(savedView.query, capabilities),
   );
+  const selectedSavedViewId =
+    preferredSavedView?.id ??
+    (preferredSavedViewId === allTicketsSavedViewId
+      ? allTicketsSavedViewId
+      : defaultWorkspaceSavedViewId(savedViews, capabilities));
 
   if (blockUnfilteredFallback && selectedSavedViewId === allTicketsSavedViewId) {
     return {

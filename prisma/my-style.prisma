@@ -1,13 +1,13 @@
 model WorkspaceMyStyle {
-  id                   String             @id @default(cuid())
-  userId               String
-  workspaceId          String
-  encryptedStyle       String
-  keyVersion           String             @default("v1")
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workspace            Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id             String    @id @default(cuid())
+  userId         String
+  workspaceId    String
+  encryptedStyle String
+  keyVersion     String    @default("v1")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([userId, workspaceId])
   @@index([workspaceId])

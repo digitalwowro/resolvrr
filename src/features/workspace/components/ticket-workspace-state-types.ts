@@ -1,4 +1,7 @@
-import type { WorkspaceTicketDetailLoadResult } from "@/features/tickets/detail-action-result";
+import type {
+  LoadWorkspaceTicketDetailHydrationAction,
+  WorkspaceTicketDetailHydrationResult,
+} from "@/features/workspace/ticket-detail-hydration";
 import type { WorkspaceTicketListSort } from "@/features/tickets/list-page-action-result";
 import type {
   WorkspaceTicketColumn,
@@ -6,7 +9,6 @@ import type {
   WorkspaceTicketRow,
   WorkspaceTicketTab,
 } from "@/features/tickets/workspace-adapter";
-import type { LoadWorkspaceTicketDetailAction } from "@/features/tickets/detail-action-result";
 import type {
   SaveWorkspaceOpenTabsStateAction,
   WorkspaceOpenTabsState,
@@ -17,8 +19,8 @@ export type ActiveWorkspacePane = "list" | { ticketId: string };
 export type TicketWorkspaceStateProps = {
   columns: WorkspaceTicketColumn[];
   detail?: WorkspaceTicketDetail;
-  detailResult?: WorkspaceTicketDetailLoadResult;
-  loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
+  detailResult?: WorkspaceTicketDetailHydrationResult;
+  loadTicketDetailAction: LoadWorkspaceTicketDetailHydrationAction;
   localSortEnabled: boolean;
   onProviderSortChange(sort: WorkspaceTicketListSort): void;
   providerSortEnabled: boolean;
@@ -28,4 +30,5 @@ export type TicketWorkspaceStateProps = {
   saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
   selectedTicketId?: string;
   ticketTabs: WorkspaceTicketTab[];
+  workspaceId?: string;
 };

@@ -28,6 +28,7 @@ export type SavedViewMutationCode =
   | "invalid-visibility"
   | "invalid-appearance"
   | "invalid-conditions"
+  | "owner-group-mismatch"
   | "unsupported-query"
   | "query-too-expensive"
   | "permission-denied"

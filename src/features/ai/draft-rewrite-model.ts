@@ -13,6 +13,7 @@ export type DraftRewriteUnavailableReason =
   | "invalid-rephrase-style"
   | "provider-auth-failed"
   | "provider-rate-limited"
+  | "provider-request-rejected"
   | "provider-temporary-failure";
 
 export type DraftRewriteResult =

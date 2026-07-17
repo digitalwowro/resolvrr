@@ -4,6 +4,7 @@ import {
   type ProviderContext,
   type ProviderLookupOption,
 } from "@/core/providers";
+import type { TicketAssignableUserLookupInput } from "@/core/ticket-lookups";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
 import {
   cleanString,
@@ -20,7 +21,7 @@ import {
 } from "./schemas";
 import { zammadGetJson } from "./client";
 
-const lookupPageSize = 50;
+const lookupPageSize = 200;
 const zammadTagListResponseSchema = z.array(
   z.object({
     id: z.union([z.number(), z.string()]).optional(),
@@ -42,12 +43,20 @@ function timingMetadata(context: ProviderContext) {
   };
 }
 
-function lookupPath(path: string) {
-  return `${path}?page=1&per_page=${lookupPageSize}`;
+function lookupPath(path: string, page: number) {
+  return `${path}?page=${page}&per_page=${lookupPageSize}`;
 }
 
-function userHasGroupAccess(user: ZammadUser): boolean {
-  return Object.keys(user.group_ids ?? {}).length > 0;
+function lookupReferenceIds(values: string[] | undefined): string[] {
+  return (values ?? []).map((value) => {
+    if (!/^\d+$/u.test(value) || Number(value) <= 0) {
+      throw new ProviderError(
+        "validation-failure",
+        "Invalid helpdesk lookup reference.",
+      );
+    }
+    return value;
+  });
 }
 
 function userLookupOption(user: ZammadUser): ProviderLookupOption | undefined {
@@ -89,22 +98,53 @@ function uniqueOptions(options: ProviderLookupOption[]): ProviderLookupOption[] 
 
 export async function listZammadAssignableUsers(
   context: ProviderContext,
+  input: TicketAssignableUserLookupInput = { groupExternalIds: [] },
 ): Promise<ProviderLookupOption[]> {
   return measureTicketReadPhase(
     "provider-user-lookup-request",
     { ...timingMetadata(context), operation: "detail" },
     async () => {
-      const raw = await zammadGetJson(context, lookupPath("/api/v1/users"));
-      const parsed = zammadUserListResponseSchema.safeParse(raw);
-      if (!parsed.success) {
-        throw providerDataMismatch();
+      const groupExternalIds = lookupReferenceIds(input.groupExternalIds);
+      const externalIds = lookupReferenceIds(input.externalIds);
+      const options: ProviderLookupOption[] = [];
+      const seenPageIds = new Set<string>();
+      for (let page = 1; ; page += 1) {
+        const params = new URLSearchParams({
+          page: String(page),
+          per_page: String(lookupPageSize),
+          permissions: "ticket.agent",
+          query: "*",
+        });
+        groupExternalIds.forEach((groupExternalId) => {
+          params.append(`group_ids[${groupExternalId}]`, "full");
+        });
+        externalIds.forEach((externalId) => {
+          params.append("ids[]", externalId);
+        });
+        const raw = await zammadGetJson(
+          context,
+          `/api/v1/users/search?${params.toString()}`,
+        );
+        const parsed = zammadUserListResponseSchema.safeParse(raw);
+        if (!parsed.success) {
+          throw providerDataMismatch();
+        }
+        const pageIds = parsed.data.map((user) => relationId(user.id)).filter(Boolean);
+        if (pageIds.some((externalId) => seenPageIds.has(externalId!))) {
+          throw providerDataMismatch();
+        }
+        pageIds.forEach((externalId) => seenPageIds.add(externalId!));
+        options.push(
+          ...parsed.data
+            .filter((user) => user.active !== false)
+            .map(userLookupOption)
+            .filter((option): option is ProviderLookupOption => Boolean(option)),
+        );
+        if (parsed.data.length < lookupPageSize) {
+          break;
+        }
       }
-      return uniqueOptions(
-        parsed.data
-          .filter((user) => user.active !== false && userHasGroupAccess(user))
-          .map(userLookupOption)
-          .filter((option): option is ProviderLookupOption => Boolean(option)),
-      );
+      return uniqueOptions(options);
     },
   );
 }
@@ -137,17 +177,27 @@ export async function listZammadGroups(
     "provider-lookup-request",
     { ...timingMetadata(context), operation: "detail" },
     async () => {
-      const raw = await zammadGetJson(context, lookupPath("/api/v1/groups"));
-      const parsed = zammadGroupListResponseSchema.safeParse(raw);
-      if (!parsed.success) {
-        throw providerDataMismatch();
+      const options: ProviderLookupOption[] = [];
+      for (let page = 1; ; page += 1) {
+        const raw = await zammadGetJson(
+          context,
+          lookupPath("/api/v1/groups", page),
+        );
+        const parsed = zammadGroupListResponseSchema.safeParse(raw);
+        if (!parsed.success) {
+          throw providerDataMismatch();
+        }
+        options.push(
+          ...parsed.data
+            .filter((group) => group.active !== false)
+            .map(groupLookupOption)
+            .filter((option): option is ProviderLookupOption => Boolean(option)),
+        );
+        if (parsed.data.length < lookupPageSize) {
+          break;
+        }
       }
-      return uniqueOptions(
-        parsed.data
-          .filter((group) => group.active !== false)
-          .map(groupLookupOption)
-          .filter((option): option is ProviderLookupOption => Boolean(option)),
-      );
+      return uniqueOptions(options);
     },
   );
 }

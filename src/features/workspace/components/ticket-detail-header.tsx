@@ -18,6 +18,7 @@ import type {
   TicketAiSummaryResult,
 } from "@/features/ai";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
+import type { InitialTicketAiSummary } from "@/features/workspace/ticket-detail-hydration";
 import { TicketAiSummaryPanel } from "./ticket-ai-summary-panel";
 import { TicketPriorityDot } from "./ticket-priority-dot";
 import { TicketStateBadge } from "./ticket-state-badge";
@@ -36,16 +37,25 @@ type TicketDetailHeaderProps = {
     ticketId: string;
   };
   onRefresh(): void;
+  onTicketAiSummaryAvailable(
+    ticketId: string,
+    summary: InitialTicketAiSummary,
+  ): void;
   refreshing: boolean;
   summarizeTicketAction: SummarizeWorkspaceTicketAction;
+  helpdeskConnectionId?: string;
+  workspaceId?: string;
 };
 
 export function TicketDetailHeader({
   detail,
   initialTicketAiSummary,
   onRefresh,
+  onTicketAiSummaryAvailable,
   refreshing,
   summarizeTicketAction,
+  helpdeskConnectionId,
+  workspaceId,
 }: TicketDetailHeaderProps) {
   const [ticketLinkCopied, setTicketLinkCopied] = useState(false);
   const [summaryState, setSummaryState] = useState<TicketSummaryState>({
@@ -58,16 +68,16 @@ export function TicketDetailHeader({
   });
   const summaryRequestRef = useRef(0);
   const customerEmail = detailCustomerEmail(detail);
-
-  if (summaryState.ticketId !== detail.id) {
-    setSummaryState({ loading: false, ticketId: detail.id });
-  }
+  const hydratedSummary =
+    initialTicketAiSummary?.ticketId === detail.id
+      ? initialTicketAiSummary.result
+      : undefined;
 
   const summaryStateMatchesTicket = summaryState.ticketId === detail.id;
   const summaryLoading = summaryStateMatchesTicket ? summaryState.loading : false;
   const summaryResult = summaryStateMatchesTicket
-    ? summaryState.result
-    : undefined;
+    ? summaryState.result ?? hydratedSummary
+    : hydratedSummary;
 
   function copyTicketLink() {
     if (!window.navigator.clipboard) {
@@ -92,10 +102,18 @@ export function TicketDetailHeader({
     try {
       nextResult = await summarizeTicketAction({
         ...(forceRefresh ? { forceRefresh: true } : {}),
+        helpdeskConnectionId: helpdeskConnectionId ?? "",
         ticketExternalId: ticketId,
+        workspaceId: workspaceId ?? "",
       });
     } finally {
       if (summaryRequestRef.current === requestId) {
+        if (nextResult?.status === "available") {
+          onTicketAiSummaryAvailable(ticketId, {
+            result: nextResult,
+            ticketId,
+          });
+        }
         setSummaryState((current) => ({
           loading: false,
           result:

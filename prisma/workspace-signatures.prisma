@@ -1,0 +1,32 @@
+model WorkspaceSignatureTemplate {
+  id                String                               @id @default(cuid())
+  workspaceId       String
+  scopeKey          String
+  groupExternalId   String?
+  encryptedBodyHtml String
+  keyVersion        String                               @default("v1")
+  contextVersion    String                               @default(cuid())
+  createdAt         DateTime                             @default(now())
+  updatedAt         DateTime                             @updatedAt
+  workspace         Workspace                            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  revisions         WorkspaceSignatureTemplateRevision[]
+
+  @@unique([workspaceId, scopeKey])
+  @@index([workspaceId])
+  @@index([workspaceId, groupExternalId])
+}
+
+model WorkspaceSignatureTemplateRevision {
+  id                String                     @id @default(cuid())
+  templateId        String
+  contextVersion    String
+  encryptedBodyHtml String
+  keyVersion        String                     @default("v1")
+  createdByUserId   String?
+  createdAt         DateTime                   @default(now())
+  template          WorkspaceSignatureTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  createdBy         User?                      @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([templateId, createdAt])
+  @@index([createdByUserId])
+}

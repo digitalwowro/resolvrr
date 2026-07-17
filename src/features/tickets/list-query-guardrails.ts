@@ -7,6 +7,7 @@ import type {
 } from "@/core/providers";
 import {
   defaultTicketListQueryCapabilities,
+  isCompleteResultTicketSortKey,
   ticketListPageSizeLimits,
 } from "@/core/ticket-list-query";
 
@@ -59,7 +60,10 @@ export function guardTicketListQuery(
   if (query.count?.includeTotal && !capabilities.totalCount) {
     return unsupported("count-unsupported", capabilities);
   }
-  if (input.sort && !capabilities.providerSort) {
+  if (
+    input.sort &&
+    (!capabilities.providerSort || isCompleteResultTicketSortKey(input.sort.key))
+  ) {
     return unsupported("sort-unsupported", capabilities);
   }
   if (query.group && !capabilities.providerGrouping) {

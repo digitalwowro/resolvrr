@@ -86,4 +86,21 @@ describe("ticket list query guardrails", () => {
       ),
     ).toMatchObject({ status: "supported" });
   });
+
+  it("rejects provider-side relationship ID sorting as display-name sorting", () => {
+    const input = {
+      sort: { key: "owner" as const, direction: "ascending" as const },
+    };
+
+    expect(
+      guardTicketListQuery(
+        ["ticket:list", "ticket:sort"],
+        normalizeTicketListQuery(input),
+        input,
+      ),
+    ).toMatchObject({
+      status: "unsupported",
+      rejection: { kind: "sort-unsupported" },
+    });
+  });
 });

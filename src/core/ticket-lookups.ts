@@ -3,7 +3,13 @@ export type TicketLookupOption = {
   label: string;
 };
 
+export type TicketAssignableUserLookupInput = {
+  groupExternalIds: string[];
+  externalIds?: string[];
+};
+
 export type TicketLookupUnavailableReason =
+  | "invalid-input"
   | "unsupported-capability"
   | "provider-auth-failed"
   | "provider-permission-denied"

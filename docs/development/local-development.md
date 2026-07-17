@@ -22,6 +22,26 @@ existing provider-safe read boundary and must not mutate production tickets.
 Browser automation and screenshots are not part of routine verification unless
 explicitly requested.
 
+## Optional Browser Verification
+
+Playwright is exact-pinned as development-only tooling and is never part of the
+default test, build, merge, or security workflow. Run it only when the user
+explicitly requests browser or visual verification.
+
+- Capture a local authenticated state on a headless SSH host by supplying the
+  Resolvrr credentials only as temporary environment variables to
+  `npm run playwright:auth`. The resulting
+  `playwright/.auth/resolvrr.json` is gitignored and must never be committed or
+  shared.
+- Run explicitly authored Chromium checks: `npm run test:e2e`.
+- Override the default origin when needed:
+  `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3005 npm run test:e2e`.
+
+Playwright files use `tests/e2e/*.pw.ts` so Vitest does not collect them.
+Chromium runs serially to avoid concurrent writes against a shared development
+helpdesk. Tests and audits must avoid live mutations unless the user explicitly
+authorizes the exact operation.
+
 ## Local Services
 
 The app listens on `0.0.0.0:3005`. Open the app through

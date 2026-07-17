@@ -26,6 +26,14 @@ import {
   ViewIcon,
 } from "./workspace-settings-views-utils";
 import { ViewDetailsForm } from "./workspace-settings-view-details-form";
+import { useSavedViewOwnerCompatibility } from "./use-saved-view-owner-compatibility";
+
+const emptySavedViewSettingsData: SavedViewSettingsData = {
+  views: [],
+  ownerOptions: [],
+  groupOptions: [],
+  canManageShared: false,
+};
 
 export function ViewsSection({
   activeWorkspaceLabel,
@@ -60,6 +68,10 @@ export function ViewsSection({
 
   const views = data?.views ?? [];
   const selectedView = views.find((view) => view.id === selectedId);
+  const ownerCompatibility = useSavedViewOwnerCompatibility(
+    draft.conditions,
+    data ?? emptySavedViewSettingsData,
+  );
 
   const iconOptions = useMemo(
     () =>
@@ -218,11 +230,16 @@ export function ViewsSection({
 
           <ViewConditionsEditor
             conditions={draft.conditions}
-            data={data}
+            data={ownerCompatibility.data}
             onConditionsChange={(conditions) =>
               setDraft((current) => ({ ...current, conditions }))
             }
           />
+          {ownerCompatibility.message ? (
+            <p className="mt-3 text-sm text-amber-700" role="alert">
+              {ownerCompatibility.message}
+            </p>
+          ) : null}
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
             <div className="flex gap-2">
@@ -254,7 +271,13 @@ export function ViewsSection({
               ) : null}
             </div>
             <Button
-              disabled={pending || !draft.name.trim() || draft.conditions.length === 0}
+              disabled={
+                pending ||
+                ownerCompatibility.validating ||
+                !ownerCompatibility.valid ||
+                !draft.name.trim() ||
+                draft.conditions.length === 0
+              }
               loading={pendingKey === "save"}
               onClick={saveDraft}
               type="button"

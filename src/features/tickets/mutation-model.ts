@@ -9,6 +9,7 @@ import type {
 import type {
   TicketReplyIntent,
 } from "@/core/ticket-replies";
+import type { TicketSignatureSelection } from "@/core/ticket-signatures";
 import type { TicketReadUnavailableReason } from "./read-model";
 
 export type TicketMetadataMutationField =
@@ -60,6 +61,7 @@ export type SelectedTicketUpdateCustomerReplyPayload = {
   intent: TicketReplyIntent;
   kind: "customer-reply";
   sourceArticleExternalId: string;
+  signatureContext?: TicketSignatureSelection;
   to: string[];
 };
 
@@ -72,6 +74,7 @@ export type SelectedTicketUpdateCustomerForwardPayload = {
   includeOriginal: boolean;
   kind: "customer-forward";
   sourceArticleExternalId: string;
+  signatureContext?: TicketSignatureSelection;
   subject: string;
   to: string[];
 };
@@ -114,6 +117,7 @@ export type TicketMetadataMutationCapabilities = {
 export type TicketMetadataMutationErrorReason =
   | TicketReadUnavailableReason
   | "invalid-input"
+  | "invalid-mention"
   | "invalid-recipient"
   | "forward-context-stale"
   | "forward-context-unavailable"
@@ -122,8 +126,11 @@ export type TicketMetadataMutationErrorReason =
   | "invalid-forward-subject"
   | "reply-context-stale"
   | "reply-context-unavailable"
+  | "signature-context-stale"
+  | "signature-context-unavailable"
   | "delivery-uncertain"
   | "unsupported-reply-intent"
+  | "owner-group-mismatch"
   | "unavailable-transition";
 
 export type TicketMetadataMutationResult =

@@ -1,6 +1,8 @@
 import { sanitizeForwardedProviderHtml } from "@/security/sanitize-html";
 import { zammadInlineAttachmentIdForSource } from "./article-attachments";
 import type { ZammadArticle } from "./schemas";
+import type { ResolvedTicketSignature } from "@/core/ticket-signatures";
+import { zammadOutboundSignatureHtml } from "./outbound-signature";
 
 function escapeHtml(value: string): string {
   return value
@@ -37,13 +39,15 @@ export function zammadForwardBody(input: {
   bodyFormat: "plain" | "html";
   includeOriginal: boolean;
   inlineImages: Map<string, string>;
+  signature?: ResolvedTicketSignature;
   subject: string;
 }): { body: string; contentType: "text/html" } {
   const introduction = input.bodyFormat === "html"
     ? input.body
     : `<p>${escapeHtml(input.body).replace(/\n/gu, "<br>")}</p>`;
+  const signature = zammadOutboundSignatureHtml(input.signature);
   if (!input.includeOriginal) {
-    return { body: introduction, contentType: "text/html" };
+    return { body: `${introduction}${signature}`, contentType: "text/html" };
   }
   const article = input.article;
   const original = sanitizeForwardedProviderHtml(
@@ -60,7 +64,7 @@ export function zammadForwardBody(input: {
     `<div><strong>${label}:</strong> ${escapeHtml(value)}</div>`,
   ).join("");
   return {
-    body: `${introduction}<br><div>---------- Forwarded message ----------</div>${headerHtml}<br>${original}`,
+    body: `${introduction}${signature}<br><div>---------- Forwarded message ----------</div>${headerHtml}<br>${original}`,
     contentType: "text/html",
   };
 }

@@ -20,6 +20,7 @@ export function useTicketWorkspaceDisplayState({
   saveWorkspaceOpenTabsStateAction,
   selectedTicketId,
   ticketTabs,
+  workspaceId,
 }: TicketWorkspaceStateProps) {
   const initialDetailResult = useMemo(
     () =>
@@ -38,6 +39,7 @@ export function useTicketWorkspaceDisplayState({
     isTicketDetailRefreshing,
     isTicketDetailStale,
     refreshTicketDetail,
+    setTicketAiSummary,
   } = useTicketDetailLoader({
     initialDetailResult,
     loadTicketDetailAction,
@@ -49,6 +51,7 @@ export function useTicketWorkspaceDisplayState({
     listActive,
     openTicketTabs,
     recentTicketTabs,
+    reconcileOpenTicketTabs,
     reorderOpenTicketTabs,
     returnActiveTicketToList,
     setTabOrientation,
@@ -67,6 +70,7 @@ export function useTicketWorkspaceDisplayState({
     saveWorkspaceOpenTabsStateAction,
     selectedTicketId,
     ticketTabs,
+    workspaceId,
   });
   const activeDetail = detailFor(activeTicketId);
   const handledMergeResolutions = useRef(new Set<string>());
@@ -191,12 +195,14 @@ export function useTicketWorkspaceDisplayState({
     openTicketTabs,
     partiallySelected,
     recentTicketTabs,
+    reconcileOpenTicketTabs,
     refreshActiveTicketDetail,
     refreshTicketDetailById,
     refreshList,
     reorderOpenTicketTabs,
     returnActiveTicketToList,
     selectedRowIds,
+    setTicketAiSummary,
     setTabOrientation,
     showList,
     showNotificationTicket,

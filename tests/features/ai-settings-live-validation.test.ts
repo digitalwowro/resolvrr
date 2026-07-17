@@ -46,4 +46,19 @@ describe("workspace AI settings live validation", () => {
       ).resolves.toBe("provider-auth-failed");
     },
   );
+
+  it("preserves provider request rejection during validation", async () => {
+    vi.mocked(generateAiText).mockResolvedValueOnce({
+      reason: "provider-request-rejected",
+      retryable: false,
+      status: "unavailable",
+    });
+
+    await expect(
+      validateAiProviderConfig({
+        ...baseConfig,
+        provider: "openai-compatible",
+      }),
+    ).resolves.toBe("provider-request-rejected");
+  });
 });

@@ -1,6 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { vi } from "vitest";
-import type { RewriteDraftAction } from "@/features/ai";
+import type {
+  AiRephraseStyleOption,
+  RewriteDraftAction,
+} from "@/features/ai";
 import {
   defaultWorkspaceTicketColumns,
   type LoadWorkspaceTicketDetailAction,
@@ -9,6 +12,10 @@ import {
   type WorkspaceArticle,
 } from "@/features/tickets";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
+import {
+  WorkspaceSignatureActionsProvider,
+  type WorkspaceSignatureActions,
+} from "@/features/workspace/components/ticket-signature-preview-action-context";
 import {
   availableList,
   noopAction,
@@ -46,12 +53,14 @@ export function renderWorkspace({
   metadataPriority = false,
   updateTicketMetadataAction = noopMutationAction,
   loadTicketDetailAction,
+  rephraseStyleOptions,
   rewriteDraftAction,
   providerManagedAddresses,
   userId,
   workspaceId = "connection-1",
   helpdeskConnectionId = "personal-connection-1",
   identityVersion = "identity-v1",
+  signatureActions,
 }: {
   articles?: WorkspaceArticle[];
   customerReplies?: boolean;
@@ -59,6 +68,7 @@ export function renderWorkspace({
   internalNotes?: boolean;
   metadataPriority?: boolean;
   loadTicketDetailAction?: LoadWorkspaceTicketDetailAction;
+  rephraseStyleOptions?: AiRephraseStyleOption[];
   rewriteDraftAction?: RewriteDraftAction;
   providerManagedAddresses?: string[];
   updateTicketMetadataAction?: MutationAction;
@@ -66,6 +76,7 @@ export function renderWorkspace({
   workspaceId?: string;
   helpdeskConnectionId?: string;
   identityVersion?: string;
+  signatureActions?: WorkspaceSignatureActions;
 } = {}) {
   const detailProps = selectedDetailProps();
   const detail = {
@@ -76,7 +87,7 @@ export function renderWorkspace({
       : {}),
   };
 
-  render(
+  const workspace = (
     <TicketWorkspace
       columns={defaultWorkspaceTicketColumns}
       connections={[{
@@ -99,6 +110,7 @@ export function renderWorkspace({
       loadTicketDetailAction={loadTicketDetailAction}
       logoutAction={noopAction}
       rows={[row]}
+      rephraseStyleOptions={rephraseStyleOptions}
       selectedTicketId="ticket-1"
       setActiveConnectionAction={noopAction}
       tabs={[{ ...row }]}
@@ -106,8 +118,13 @@ export function renderWorkspace({
       rewriteDraftAction={rewriteDraftAction}
       userEmail="agent@example.com"
       userId={userId}
-    />,
+    />
   );
+  render(signatureActions ? (
+    <WorkspaceSignatureActionsProvider actions={signatureActions}>
+      {workspace}
+    </WorkspaceSignatureActionsProvider>
+  ) : workspace);
 }
 
 export function internalArticle(): WorkspaceArticle {

@@ -18,6 +18,7 @@ import {
   updateZammadTicketTags,
 } from "./ticket-secondary-mutations";
 import { readZammadTicketForMutation } from "./ticket-mutation-preflight";
+import { assertZammadOwnerGroupCompatible } from "./owner-assignment";
 
 const zammadStateByCanonical: Record<TicketMutableState, string> = {
   new: "new",
@@ -89,18 +90,6 @@ async function currentTicketForMutation(
   return readZammadTicketForMutation(context, ticketExternalId);
 }
 
-async function currentMappedTicketForMutation(
-  context: ProviderContext,
-  ticketExternalId: string,
-): Promise<Ticket> {
-  const { assets, ticket } = await currentTicketForMutation(
-    context,
-    ticketExternalId,
-  );
-
-  return mapTicket(ticket, zammadBaseUrl(context), assets);
-}
-
 function assertZammadStateMutationAllowed(
   currentTicket: Ticket,
   input: TicketMetadataMutationInput,
@@ -150,14 +139,24 @@ export async function updateZammadTicketMetadata(
     );
   }
   assertNoOrphanPendingDate(input);
-  const currentTicket = await measureTicketReadPhase(
+  const currentPayload = await measureTicketReadPhase(
     "provider-metadata-mutation-current-ticket-request",
     {
       connectionId: context.connection.id,
       operation: "mutation",
       providerKey: context.connection.providerKey,
     },
-    () => currentMappedTicketForMutation(context, ticketExternalId),
+    () => currentTicketForMutation(context, ticketExternalId),
+  );
+  const currentTicket: Ticket = mapTicket(
+    currentPayload.ticket,
+    zammadBaseUrl(context),
+    currentPayload.assets,
+  );
+  await assertZammadOwnerGroupCompatible(
+    context,
+    currentPayload.ticket,
+    input,
   );
   assertZammadStateMutationAllowed(currentTicket, input);
 

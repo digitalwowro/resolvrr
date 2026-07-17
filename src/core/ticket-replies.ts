@@ -1,3 +1,8 @@
+import type {
+  ResolvedTicketSignature,
+  TicketSignatureSelection,
+} from "./ticket-signatures";
+
 export type TicketReplyIntent = "reply" | "reply-all";
 
 export type TicketReplyChannel = "email" | "web" | "phone";
@@ -37,5 +42,10 @@ export type TicketCustomerReplyInput = {
   contextVersion: string;
   intent: TicketReplyIntent;
   sourceArticleExternalId: string;
+  signatureContext?: TicketSignatureSelection;
   to: string[];
+};
+
+export type ProviderTicketCustomerReplyInput = TicketCustomerReplyInput & {
+  resolvedSignature?: ResolvedTicketSignature;
 };

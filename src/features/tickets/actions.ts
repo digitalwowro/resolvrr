@@ -6,6 +6,7 @@ import { env } from "@/config/env";
 import { prismaAiSummaryCacheRepository } from "@/data/ai-summary-cache-repository";
 import { prismaHelpdeskConnectionsRepository } from "@/data/helpdesk-connections-repository";
 import { prismaTicketDetailCacheRepository } from "@/data/ticket-detail-cache-repository";
+import { prismaWorkspaceSignatureRepository } from "@/data/workspace-signature-repository";
 import { providerRegistry } from "@/providers";
 import {
   addWorkspaceTicketCustomerReply,
@@ -120,7 +121,10 @@ export async function updateTicketMetadataAction(
         actionInput.communication,
         prismaTicketDetailCacheRepository,
         prismaAiSummaryCacheRepository,
-        { finalize: false },
+        {
+          finalize: false,
+          signatureRepository: prismaWorkspaceSignatureRepository,
+        },
       ),
     );
     if (result.status === "failed") {
@@ -156,7 +160,10 @@ export async function updateTicketMetadataAction(
         actionInput.communication,
         prismaTicketDetailCacheRepository,
         prismaAiSummaryCacheRepository,
-        { finalize: false },
+        {
+          finalize: false,
+          signatureRepository: prismaWorkspaceSignatureRepository,
+        },
       ),
     );
     if (result.status === "failed") {

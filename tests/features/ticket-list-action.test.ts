@@ -145,6 +145,33 @@ describe("loadWorkspaceTicketListPageAction", () => {
     );
   });
 
+  it("does not translate relationship display sorting into provider ID sorting", async () => {
+    mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
+      status: "available",
+      helpdeskConnectionId: "connection-1",
+      workspaceId: "workspace-1",
+      connectionName: "Support",
+      communicationCapabilities: { customerReplies: false, internalNotes: false },
+      metadataMutationCapabilities: { state: false, priority: false },
+      tickets: [],
+      loadedCount: 0,
+      measuredAt: new Date("2026-05-24T08:31:30Z"),
+    });
+
+    const result = await loadWorkspaceTicketListPageAction({
+      sort: { key: "owner", direction: "ascending" },
+    });
+
+    expect(mockedLoadWorkspaceTicketList).toHaveBeenCalledWith(
+      prismaHelpdeskConnectionsRepository,
+      {},
+      "test-encryption-key",
+      "user-1",
+      {},
+    );
+    expect(result).toMatchObject({ status: "available", appliedSort: undefined });
+  });
+
   it("returns provider-neutral grouped workspace buckets", async () => {
     mockedLoadWorkspaceTicketList.mockResolvedValueOnce({
       status: "available",

@@ -3,6 +3,7 @@
 import {
   Bot,
   Eye,
+  FileSignature,
   MessageSquareText,
   PencilLine,
   Settings,
@@ -90,6 +91,14 @@ export function WorkspaceSettingsNav({
           >
             <Bot aria-hidden="true" className="size-4" />
             AI Settings
+          </button>
+          <button
+            className={sectionButtonClass(activeSection === "signatures")}
+            onClick={() => onSectionChange("signatures")}
+            type="button"
+          >
+            <FileSignature aria-hidden="true" className="size-4" />
+            Signatures
           </button>
           {myStyleAvailable ? (
             <button

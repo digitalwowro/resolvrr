@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import type { AuthUser } from "@/auth/types";
 import { decryptSecret, encryptSecret } from "@/security/encryption";
 import type { HelpdeskConnectionsRepository } from "@/features/helpdesk-connections/repository";
@@ -122,6 +123,16 @@ function runtimeConfigFromStored(
       status: "available",
       apiKey: decryptSecret(config.encryptedApiKey, encryptionKey),
       baseUrl: config.baseUrl,
+      configurationVersion: createHmac("sha256", encryptionKey)
+        .update(JSON.stringify([
+          "resolvrr:ai-config:v1",
+          config.providerProtocol,
+          config.baseUrl,
+          config.model,
+          config.encryptedApiKey,
+        ]))
+        .digest("hex")
+        .slice(0, 16),
       model: config.model,
       provider: config.providerProtocol,
     };

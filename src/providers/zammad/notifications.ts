@@ -7,7 +7,11 @@ import { ProviderError, type ProviderContext } from "@/core/providers";
 import { z } from "zod";
 import { zammadGetJson, zammadSendJson } from "./client";
 import { cleanString } from "./participants";
-import type { ZammadAssets, ZammadTicket } from "./schemas";
+import {
+  zammadTicketSchema,
+  type ZammadAssets,
+  type ZammadTicket,
+} from "./schemas";
 import { zammadTicketPayloadRecords } from "./ticket-detail-payload";
 import { isZammadMergedTicket } from "./ticket-state";
 
@@ -69,11 +73,22 @@ async function readZammadTicket(
     `/api/v1/tickets/${encodeURIComponent(ticketExternalId)}?expand=true&full=true`,
   );
   const parsed = zammadTicketPayloadRecords(rawTicket);
-  const ticket = parsed.tickets[0];
+  const directTicket = Array.isArray(rawTicket)
+    ? undefined
+    : zammadTicketSchema.safeParse(rawTicket);
+  const ticket =
+    parsed.tickets[0] ?? (directTicket?.success ? directTicket.data : undefined);
   if (!ticket) {
     throw providerDataMismatch();
   }
   return { assets: parsed.assets, ticket };
+}
+
+function isUnavailableNotificationTicket(error: unknown): boolean {
+  return (
+    error instanceof ProviderError &&
+    (error.statusCode === 403 || error.statusCode === 404)
+  );
 }
 
 export async function listZammadNotifications(
@@ -105,12 +120,21 @@ export async function listZammadNotifications(
   const ticketIds = [
     ...new Set(ticketNotifications.map((notification) => notification.ticketExternalId)),
   ];
-  const ticketEntries = await Promise.all(
+  const ticketResults = await Promise.allSettled(
     ticketIds.map(async (ticketExternalId) => {
       const payload = await readZammadTicket(context, ticketExternalId);
       return [ticketExternalId, payload] as const;
     }),
   );
+  const ticketEntries = ticketResults.flatMap((result) => {
+    if (result.status === "fulfilled") {
+      return [result.value];
+    }
+    if (isUnavailableNotificationTicket(result.reason)) {
+      return [];
+    }
+    throw result.reason;
+  });
   const ticketsById = new Map(ticketEntries);
 
   return ticketNotifications

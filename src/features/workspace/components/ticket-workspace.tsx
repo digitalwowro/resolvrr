@@ -1,5 +1,4 @@
 "use client";
-
 import { allTicketsSavedViewId, type WorkspaceSavedView } from "@/features/saved-views/workspace";
 import { noTicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type { HelpdeskConnectionFormAction } from "@/features/helpdesk-connections/service-types";
@@ -24,7 +23,6 @@ import { workspaceSavedViewOptionsFromSettingsData } from "./workspace-saved-vie
 import { workspaceSettingsConnectionFromMenu } from "./workspace-settings-connections";
 
 export { workspaceSavedViewOptionsFromSettingsData } from "./workspace-saved-view-options";
-
 export function TicketWorkspace({
   changePasswordAction,
   columns,
@@ -54,6 +52,7 @@ export function TicketWorkspace({
   rows,
   searchTicketLinkTargetsAction,
   summarizeTicketAction,
+  synchronizeWorkspaceTaskbarAction,
   savedViews,
   initialTicketAiSummary,
   initialAiSettingsData,
@@ -66,6 +65,7 @@ export function TicketWorkspace({
   resetMyStyleAction,
   resetWorkspaceAiPromptAction,
   saveWorkspaceOpenTabsStateAction,
+  saveWorkspaceSelectedSavedViewAction,
   moveWorkspaceAiRephraseStyleAction,
   rewriteDraftAction,
   saveUserWorkspaceAiSettingsAction,
@@ -95,8 +95,7 @@ export function TicketWorkspace({
   validateConnectionAction,
 }: TicketWorkspaceProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsSection, setSettingsSection] =
-    useState<WorkspaceSettingsSection>("workspaces");
+  const [settingsSection, setSettingsSection] = useState<WorkspaceSettingsSection>("workspaces");
   const [workspaceSavedViewOptions, setWorkspaceSavedViewOptions] = useState<
     WorkspaceSavedView[]
   >(() => savedViews ?? [{ id: allTicketsSavedViewId, label: "All tickets" }]);
@@ -167,6 +166,7 @@ export function TicketWorkspace({
         </>
       ) : (
         <TicketWorkspaceDisplay
+          key={`${activeWorkspaceId ?? "none"}:${activeWorkspace?.connectionId ?? "none"}:${activeWorkspace?.identityVersion ?? "none"}`}
           columns={columns}
           communicationCapabilities={effectiveCommunicationCapabilities}
           connections={connections}
@@ -178,9 +178,7 @@ export function TicketWorkspace({
             effectiveLoadWorkspaceNotificationsAction
           }
           logoutAction={logoutAction}
-          markWorkspaceNotificationsReadAction={
-            effectiveMarkWorkspaceNotificationsReadAction
-          }
+          markWorkspaceNotificationsReadAction={effectiveMarkWorkspaceNotificationsReadAction}
           metadataMutationCapabilities={effectiveMetadataMutationCapabilities}
           providerGroupingEnabled={
             listResult.queryCapabilities?.providerGrouping === true
@@ -193,6 +191,7 @@ export function TicketWorkspace({
           savedViews={workspaceSavedViewOptions}
           initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
           saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
+          saveWorkspaceSelectedSavedViewAction={saveWorkspaceSelectedSavedViewAction}
           selectedSavedViewId={selectedSavedViewId ?? allTicketsSavedViewId}
           selectedTicketId={selectedTicketId}
           setActiveConnectionAction={setActiveConnectionAction}
@@ -200,6 +199,7 @@ export function TicketWorkspace({
             searchTicketLinkTargetsAction ?? unavailableLinkTargetSearchAction
           }
           summarizeTicketAction={effectiveSummarizeTicketAction}
+          synchronizeWorkspaceTaskbarAction={synchronizeWorkspaceTaskbarAction}
           initialTicketAiSummary={initialTicketAiSummary}
           rewriteDraftAction={rewriteDraftAction}
           rephraseStyleOptions={rephraseStyleOptions}

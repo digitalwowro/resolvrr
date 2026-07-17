@@ -28,10 +28,21 @@ function unavailableTicketSummary(
   };
 }
 
+function retryDelay(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 300));
+}
+
 export const summarizeWorkspaceTicketAction: SummarizeWorkspaceTicketAction =
-  async ({ forceRefresh, ticketExternalId }) => {
+  async ({
+    forceRefresh,
+    helpdeskConnectionId,
+    ticketExternalId,
+    workspaceId,
+  }) => {
     const trimmedTicketId = ticketExternalId.trim();
-    if (!trimmedTicketId) {
+    const trimmedConnectionId = helpdeskConnectionId.trim();
+    const trimmedWorkspaceId = workspaceId.trim();
+    if (!trimmedTicketId || !trimmedConnectionId || !trimmedWorkspaceId) {
       return unavailableTicketSummary(false);
     }
 
@@ -43,48 +54,66 @@ export const summarizeWorkspaceTicketAction: SummarizeWorkspaceTicketAction =
       user.id,
       trimmedTicketId,
       prismaTicketDetailCacheRepository,
-      { cacheMode: "bypass" },
+      {
+        cacheMode: "bypass",
+        helpdeskConnectionId: trimmedConnectionId,
+        workspaceId: trimmedWorkspaceId,
+      },
     );
-    if (detailResult.status !== "available") {
+    if (
+      detailResult.status !== "available" ||
+      detailResult.helpdeskConnectionId !== trimmedConnectionId ||
+      detailResult.workspaceId !== trimmedWorkspaceId
+    ) {
       return unavailableTicketSummary(
         detailResult.status === "unavailable" && detailResult.retryable,
       );
     }
 
-    const aiConfig = detailResult.workspaceId
-      ? await resolveWorkspaceAiRuntimeConfig(
-          prismaAiSettingsRepository,
-          env.APP_ENCRYPTION_KEY,
-          user.id,
-          detailResult.workspaceId,
-      )
-      : { status: "unconfigured" as const, reason: "no-active-workspace" as const };
-    const summaryPrompt = detailResult.workspaceId
-      ? await resolveEffectiveAiPrompt({
-          encryptionKey: env.APP_ENCRYPTION_KEY,
-          workspaceId: detailResult.workspaceId,
-          promptKey: ticketSummaryPromptKey,
-          promptRepository: prismaAiPromptRepository,
-          settingsRepository: prismaAiSettingsRepository,
-          userId: user.id,
-        })
-      : undefined;
+    const aiConfig = await resolveWorkspaceAiRuntimeConfig(
+      prismaAiSettingsRepository,
+      env.APP_ENCRYPTION_KEY,
+      user.id,
+      trimmedWorkspaceId,
+    );
+    const summaryPrompt = await resolveEffectiveAiPrompt({
+      encryptionKey: env.APP_ENCRYPTION_KEY,
+      workspaceId: trimmedWorkspaceId,
+      promptKey: ticketSummaryPromptKey,
+      promptRepository: prismaAiPromptRepository,
+      settingsRepository: prismaAiSettingsRepository,
+      userId: user.id,
+    });
 
-    return summarizeTicketDetail(
-      aiConfig,
+    const summarize = (config: typeof aiConfig) => summarizeTicketDetail(
+      config,
       detailResult.detail,
-      detailResult.helpdeskConnectionId
-        ? {
-            cacheRepository: prismaAiSummaryCacheRepository,
-            encryptionKey: env.APP_ENCRYPTION_KEY,
-            scope: {
-              helpdeskConnectionId: detailResult.helpdeskConnectionId,
-              ticketExternalId: detailResult.detail.ticket.externalId,
-              userId: user.id,
-            },
-          }
-        : undefined,
+      {
+        cacheRepository: prismaAiSummaryCacheRepository,
+        encryptionKey: env.APP_ENCRYPTION_KEY,
+        scope: {
+          helpdeskConnectionId: trimmedConnectionId,
+          ticketExternalId: detailResult.detail.ticket.externalId,
+          userId: user.id,
+        },
+      },
       summaryPrompt,
       { forceRefresh },
     );
+    const firstResult = await summarize(aiConfig);
+    if (
+      firstResult.status !== "unavailable" ||
+      firstResult.reason !== "provider-auth-failed"
+    ) {
+      return firstResult;
+    }
+
+    await retryDelay();
+    const revalidatedConfig = await resolveWorkspaceAiRuntimeConfig(
+      prismaAiSettingsRepository,
+      env.APP_ENCRYPTION_KEY,
+      user.id,
+      trimmedWorkspaceId,
+    );
+    return summarize(revalidatedConfig);
   };

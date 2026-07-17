@@ -8,10 +8,11 @@ import type {
   SetDefaultWorkspaceSavedViewAction,
 } from "@/features/saved-views/settings-model";
 import type { WorkspaceSavedView } from "@/features/saved-views/workspace";
+import type { SaveWorkspaceSelectedSavedViewAction } from "@/features/saved-views/selection-preference";
 import type {
-  LoadWorkspaceTicketDetailAction,
-  WorkspaceTicketDetailLoadResult,
-} from "@/features/tickets/detail-action-result";
+  LoadWorkspaceTicketDetailHydrationAction,
+  WorkspaceTicketDetailHydrationResult,
+} from "@/features/workspace/ticket-detail-hydration";
 import type { LoadWorkspaceTicketListPageAction } from "@/features/tickets/list-page-action-result";
 import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
 import type {
@@ -74,6 +75,7 @@ import type {
   UpdateAvatarAction,
   UpdateProfileAction,
 } from "./workspace-settings-profile-section";
+import type { SynchronizeWorkspaceTaskbarAction } from "./use-ticket-taskbar-sync";
 
 export type TicketWorkspaceProps = {
   changePasswordAction?: ChangePasswordAction;
@@ -86,10 +88,10 @@ export type TicketWorkspaceProps = {
   deleteManagedUserAction?: DeleteManagedUserAction;
   deleteConnectionAction?: HelpdeskConnectionFormAction;
   detail?: WorkspaceTicketDetail;
-  detailResult?: WorkspaceTicketDetailLoadResult;
+  detailResult?: WorkspaceTicketDetailHydrationResult;
   disableConnectionAction?: HelpdeskConnectionFormAction;
   listResult: TicketListReadResult;
-  loadTicketDetailAction?: LoadWorkspaceTicketDetailAction;
+  loadTicketDetailAction?: LoadWorkspaceTicketDetailHydrationAction;
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
   loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
   loadWorkspaceNotificationsAction?: LoadWorkspaceNotificationsAction;
@@ -101,6 +103,7 @@ export type TicketWorkspaceProps = {
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
   rewriteDraftAction?: RewriteDraftAction;
   summarizeTicketAction?: SummarizeWorkspaceTicketAction;
+  synchronizeWorkspaceTaskbarAction?: SynchronizeWorkspaceTaskbarAction;
   initialTicketAiSummary?: {
     result: Extract<TicketAiSummaryResult, { status: "available" }>;
     ticketId: string;
@@ -115,6 +118,7 @@ export type TicketWorkspaceProps = {
   reorderSavedViewsAction?: ReorderWorkspaceSavedViewsAction;
   initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
   saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
+  saveWorkspaceSelectedSavedViewAction?: SaveWorkspaceSelectedSavedViewAction;
   resetMyStyleAction?: ResetMyStyleAction;
   resetManagedUserPasswordAction?: ResetManagedUserPasswordAction;
   rephraseStyleOptions?: AiRephraseStyleOption[];

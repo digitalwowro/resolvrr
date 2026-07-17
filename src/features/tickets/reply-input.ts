@@ -4,6 +4,7 @@ import type {
   TicketReplyIntent,
 } from "@/core/ticket-replies";
 import type { TicketCommunicationBodyFormat } from "@/core/tickets";
+import type { TicketSignatureSelection } from "@/core/ticket-signatures";
 
 const addressSchema = z.string().trim().toLowerCase().max(254).email();
 
@@ -53,6 +54,7 @@ export function customerReplyInput(input: {
   contextVersion: string;
   intent: string;
   sourceArticleExternalId: string;
+  signatureContext?: TicketSignatureSelection;
   to: string[];
 }): TicketCustomerReplyInput | undefined {
   const recipients = normalizedReplyRecipients(input.to, input.cc);
@@ -72,6 +74,7 @@ export function customerReplyInput(input: {
     contextVersion: input.contextVersion.trim(),
     intent: input.intent,
     sourceArticleExternalId: input.sourceArticleExternalId.trim(),
+    signatureContext: input.signatureContext,
     to: recipients.to,
   };
 }

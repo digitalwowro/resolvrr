@@ -1,5 +1,6 @@
 import type { TicketCommunicationBodyFormat } from "@/core/tickets";
 import { sanitizeComposerHtml } from "@/security/sanitize-html";
+import { ticketSignatureSources } from "@/core/ticket-signatures";
 import {
   isTicketCommunicationBodyFormat,
   normalizedCommunicationBody,
@@ -23,12 +24,25 @@ const customerReplyFields = [
   "intent",
   "kind",
   "sourceArticleExternalId",
+  "signatureContext",
   "to",
 ] as const;
 const customerForwardFields = [
   "attachmentExternalIds", "body", "bodyFormat", "cc", "contextVersion",
-  "includeOriginal", "kind", "sourceArticleExternalId", "subject", "to",
+  "includeOriginal", "kind", "sourceArticleExternalId", "signatureContext",
+  "subject", "to",
 ] as const;
+
+function parsedSignatureContext(record: Record<string, unknown>) {
+  if (record.signatureContext === undefined) return undefined;
+  const value = objectValue(record.signatureContext);
+  if (!value || hasUnsupportedKeys(value, ["contextVersion", "source"])) return null;
+  const contextVersion = textValue(value, "contextVersion").trim();
+  const source = textValue(value, "source");
+  return contextVersion && ticketSignatureSources.includes(source as never)
+    ? { contextVersion, source: source as (typeof ticketSignatureSources)[number] }
+    : null;
+}
 
 export function selectedTicketCommunicationInput(value: unknown):
   | { status: "absent" }
@@ -58,6 +72,8 @@ export function selectedTicketCommunicationInput(value: unknown):
     bodyFormat === "html" ? sanitizeComposerHtml(rawBody) : rawBody,
   );
   if (!body && kind !== "customer-forward") return { status: "invalid" };
+  const signatureContext = parsedSignatureContext(record);
+  if (signatureContext === null) return { status: "invalid" };
   if (kind === "internal-comment") {
     return { communication: { body, bodyFormat, kind }, status: "valid" };
   }
@@ -70,6 +86,7 @@ export function selectedTicketCommunicationInput(value: unknown):
       contextVersion: textValue(record, "contextVersion"),
       includeOriginal: record.includeOriginal === true,
       sourceArticleExternalId: textValue(record, "sourceArticleExternalId"),
+      signatureContext,
       subject: textValue(record, "subject"),
       to: stringArrayValue(record, "to") ?? [],
     });
@@ -84,6 +101,7 @@ export function selectedTicketCommunicationInput(value: unknown):
     contextVersion: textValue(record, "contextVersion"),
     intent: textValue(record, "intent"),
     sourceArticleExternalId: textValue(record, "sourceArticleExternalId"),
+    signatureContext,
     to: stringArrayValue(record, "to") ?? [],
   });
   return reply

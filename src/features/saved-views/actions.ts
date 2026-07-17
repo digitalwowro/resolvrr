@@ -7,9 +7,10 @@ import { prismaSavedViewsRepository } from "@/data/saved-views-repository";
 import { providerRegistry } from "@/providers";
 import { loadActiveTicketProviderContext } from "@/features/tickets/connection-context";
 import {
+  dispatchAssignableUsersRead,
   dispatchCurrentHelpdeskUserRead,
   dispatchTicketLookupDataRead,
-} from "@/features/tickets/provider-dispatch";
+} from "@/features/tickets/ticket-lookup-service";
 import {
   deleteManagedSavedView,
   reorderManagedSavedViews,
@@ -23,6 +24,26 @@ import {
   type SavedViewSettingsActionResult,
   type SavedViewSettingsData,
 } from "./settings-model";
+import { savedViewOwnersMatchGroups } from "./owner-group-compatibility";
+
+async function ownersMatchSelectedGroups({
+  conditions,
+  context,
+  currentUser,
+}: {
+  conditions: SavedViewManageInput["conditions"];
+  context: Awaited<ReturnType<typeof activeSavedViewContext>>;
+  currentUser?: SavedViewSettingsData["currentUser"];
+}) {
+  const providerContext = context?.providerContext;
+  return savedViewOwnersMatchGroups({
+    conditions,
+    currentUser,
+    lookup: providerContext
+      ? (input) => dispatchAssignableUsersRead(providerContext, input)
+      : undefined,
+  });
+}
 
 function emptySettingsData(canManageShared: boolean): SavedViewSettingsData {
   return {
@@ -128,6 +149,18 @@ export async function saveWorkspaceSavedViewAction(
     currentUserLookup?.status === "available"
       ? currentUserLookup.options[0]
       : undefined;
+
+  if (!await ownersMatchSelectedGroups({
+    conditions: input.conditions,
+    context,
+    currentUser,
+  })) {
+    return {
+      ok: false,
+      code: "owner-group-mismatch",
+      data: await loadSettingsDataForUser(),
+    };
+  }
 
   const result = await saveManagedSavedView(
     prismaSavedViewsRepository,

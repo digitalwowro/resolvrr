@@ -11,7 +11,7 @@ vi.mock("@/auth/current-user", () => ({
 
 vi.mock("@/data/helpdesk-connections-repository", () => ({
   prismaHelpdeskConnectionsRepository: {
-    getActiveWorkspaceId: vi.fn(),
+    findWorkspaceForUser: vi.fn(),
   },
 }));
 
@@ -21,18 +21,20 @@ vi.mock("@/data/workspace-tabs-repository", () => ({
   },
 }));
 
-const mockedGetActiveConnectionId = vi.mocked(
-  prismaHelpdeskConnectionsRepository.getActiveWorkspaceId,
+const mockedFindWorkspaceForUser = vi.mocked(
+  prismaHelpdeskConnectionsRepository.findWorkspaceForUser,
 );
 const mockedSetForUser = vi.mocked(prismaWorkspaceTabsRepository.setForUser);
 
 describe("saveWorkspaceOpenTabsStateAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedGetActiveConnectionId.mockResolvedValue("connection-1");
+    mockedFindWorkspaceForUser.mockResolvedValue({
+      id: "workspace-1",
+    } as never);
   });
 
-  it("writes valid workspace tab state for the active connection", async () => {
+  it("writes valid workspace tab state for the originating workspace", async () => {
     await saveWorkspaceOpenTabsStateAction({
       activePane: "ticket-1",
       openTabs: [row],
@@ -40,11 +42,11 @@ describe("saveWorkspaceOpenTabsStateAction", () => {
       tabOrientation: "horizontal",
       updatedAt: "2026-06-02T00:00:00.000Z",
       version: workspaceOpenTabsStateVersion,
-    });
+    }, "workspace-1");
 
     expect(mockedSetForUser).toHaveBeenCalledWith(
       "user-1",
-      "connection-1",
+      "workspace-1",
       expect.objectContaining({
         activePane: "ticket-1",
         openTabs: [expect.objectContaining({ id: "ticket-1" })],
@@ -60,14 +62,14 @@ describe("saveWorkspaceOpenTabsStateAction", () => {
       tabOrientation: "horizontal",
       updatedAt: "2026-06-02T00:00:00.000Z",
       version: 0,
-    } as never);
+    } as never, "workspace-1");
 
-    expect(mockedGetActiveConnectionId).not.toHaveBeenCalled();
+    expect(mockedFindWorkspaceForUser).not.toHaveBeenCalled();
     expect(mockedSetForUser).not.toHaveBeenCalled();
   });
 
-  it("does not write without an active connection", async () => {
-    mockedGetActiveConnectionId.mockResolvedValueOnce(null);
+  it("does not write without access to the originating workspace", async () => {
+    mockedFindWorkspaceForUser.mockResolvedValueOnce(null);
 
     await saveWorkspaceOpenTabsStateAction({
       activePane: "list",
@@ -76,7 +78,7 @@ describe("saveWorkspaceOpenTabsStateAction", () => {
       tabOrientation: "horizontal",
       updatedAt: "2026-06-02T00:00:00.000Z",
       version: workspaceOpenTabsStateVersion,
-    });
+    }, "workspace-2");
 
     expect(mockedSetForUser).not.toHaveBeenCalled();
   });

@@ -4,6 +4,7 @@ import type {
   TicketCustomerReplyInput,
   TicketInternalNoteInput,
 } from "@/core/tickets";
+import type { ResolvedTicketSignature } from "@/core/ticket-signatures";
 import type { TicketProviderContext } from "./connection-context";
 import { readUnavailableForProviderError } from "./connection-context";
 import type {
@@ -46,6 +47,9 @@ function normalizedCustomerForwardInput(
 }
 
 function replyFailureReason(error: ProviderError) {
+  if (error.diagnosticCode === "invalid-mention") {
+    return "invalid-mention" as const;
+  }
   if (error.diagnosticCode === "invalid-recipient") {
     return "invalid-recipient" as const;
   }
@@ -83,6 +87,7 @@ export async function dispatchTicketCustomerForward(
   providerContext: TicketProviderContext,
   ticketExternalId: string,
   input: TicketCustomerForwardInput,
+  resolvedSignature?: ResolvedTicketSignature,
 ): Promise<TicketCustomerForwardResult> {
   if (!input.subject.trim() || input.to.length + input.cc.length === 0) {
     return { status: "failed", reason: "invalid-input", retryable: false };
@@ -97,7 +102,7 @@ export async function dispatchTicketCustomerForward(
     await providerContext.plugin.forwardTicketEmail(
       providerContext.context,
       ticketExternalId,
-      normalizedCustomerForwardInput(input),
+      { ...normalizedCustomerForwardInput(input), resolvedSignature },
     );
     return { status: "saved" };
   } catch (error) {
@@ -163,6 +168,7 @@ export async function dispatchTicketCustomerReply(
   providerContext: TicketProviderContext,
   ticketExternalId: string,
   input: TicketCustomerReplyInput,
+  resolvedSignature?: ResolvedTicketSignature,
 ): Promise<TicketCustomerReplyResult> {
   if (!input.body.trim()) {
     return { status: "failed", reason: "invalid-input", retryable: false };
@@ -182,7 +188,7 @@ export async function dispatchTicketCustomerReply(
     await providerContext.plugin.addTicketCustomerReply(
       providerContext.context,
       ticketExternalId,
-      normalizedCustomerReplyInput(input),
+      { ...normalizedCustomerReplyInput(input), resolvedSignature },
     );
     return { status: "saved" };
   } catch (error) {

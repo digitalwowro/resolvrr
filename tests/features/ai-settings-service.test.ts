@@ -66,7 +66,26 @@ describe("workspace AI settings service", () => {
       ),
     ).resolves.toMatchObject({
       apiKey: "openai-key",
+      configurationVersion: expect.stringMatching(/^[a-f0-9]{16}$/u),
       status: "available",
+    });
+    const firstResolved = await resolveWorkspaceAiRuntimeConfig(
+      repository,
+      encryptionKey,
+      "user-1",
+      "connection-1",
+    );
+    const secondResolved = await resolveWorkspaceAiRuntimeConfig(
+      repository,
+      encryptionKey,
+      "user-1",
+      "connection-1",
+    );
+    expect(firstResolved).toMatchObject({
+      configurationVersion:
+        secondResolved.status === "available"
+          ? secondResolved.configurationVersion
+          : undefined,
     });
 
     repository.workspaceSetting = {

@@ -8,11 +8,17 @@ import {
   ticketReadTimingDuration,
   ticketReadTimingStart,
 } from "@/telemetry/ticket-read-timing";
-import { loadActiveTicketProviderContext } from "./connection-context";
+import {
+  loadActiveTicketProviderContext,
+  loadTicketProviderContextForConnection,
+} from "./connection-context";
 import {
   dispatchTicketListRead,
-  dispatchTicketLookupDataRead,
 } from "./provider-dispatch";
+import {
+  dispatchAssignableUsersRead,
+  dispatchTicketLookupDataRead,
+} from "./ticket-lookup-service";
 import { guardTicketListQuery } from "./list-query-guardrails";
 import {
   noTicketDetailCacheRepository,
@@ -27,6 +33,12 @@ import {
 import { countAwareListQueryInput } from "./service-list-query";
 import { loadResolvedTicketDetail } from "./detail-resolution-service";
 export { updateWorkspaceTicketMetadata } from "./metadata-mutation-service";
+
+export type WorkspaceTicketDetailLoadOptions =
+  TicketDetailCacheLoadOptions & {
+    helpdeskConnectionId?: string;
+    workspaceId?: string;
+  };
 
 export async function loadWorkspaceTicketList(
   repository: HelpdeskConnectionsRepository,
@@ -105,16 +117,25 @@ export async function loadWorkspaceTicketDetail(
   userId: string,
   ticketExternalId: TicketExternalId,
   cacheRepository: TicketDetailCacheRepository = noTicketDetailCacheRepository,
-  options: TicketDetailCacheLoadOptions = {},
+  options: WorkspaceTicketDetailLoadOptions = {},
 ): Promise<TicketDetailReadResult> {
   const totalStart = ticketReadTimingStart();
-  const providerContext = await loadActiveTicketProviderContext(
-    repository,
-    registry,
-    encryptionKey,
-    userId,
-    "detail",
-  );
+  const providerContext = options.helpdeskConnectionId
+    ? await loadTicketProviderContextForConnection(
+        repository,
+        registry,
+        encryptionKey,
+        userId,
+        options.helpdeskConnectionId,
+        "detail",
+      )
+    : await loadActiveTicketProviderContext(
+        repository,
+        registry,
+        encryptionKey,
+        userId,
+        "detail",
+      );
   if (providerContext.status === "unavailable") {
     recordTicketReadTiming({
       durationMs: ticketReadTimingDuration(totalStart),
@@ -125,6 +146,12 @@ export async function loadWorkspaceTicketDetail(
       status: "unavailable",
     });
     return providerContext;
+  }
+  if (
+    options.workspaceId &&
+    providerContext.value.context.connection.workspaceId !== options.workspaceId
+  ) {
+    return unavailableTicketRead("no-active-connection");
   }
 
   if (options.cacheMode === "bypass") {
@@ -154,7 +181,7 @@ export async function loadWorkspaceTicketDetail(
   let result: Awaited<ReturnType<typeof loadResolvedTicketDetail>>;
   let lookupData: Awaited<ReturnType<typeof dispatchTicketLookupDataRead>>;
   try {
-    [result, lookupData] = await Promise.all([
+    const [resolvedResult, supportingLookupData] = await Promise.all([
       loadResolvedTicketDetail({
         cacheRepository,
         encryptionKey,
@@ -163,8 +190,24 @@ export async function loadWorkspaceTicketDetail(
         requestedExternalId: ticketExternalId,
         userId,
       }),
-      dispatchTicketLookupDataRead(providerContext.value),
+      dispatchTicketLookupDataRead(providerContext.value, {
+        assignableUsers: false,
+      }),
     ]);
+    result = resolvedResult;
+    lookupData = result.status === "available"
+      ? {
+          ...supportingLookupData,
+          assignableUsers: await dispatchAssignableUsersRead(
+            providerContext.value,
+            {
+              groupExternalIds: result.detail.ticket.group?.externalId
+                ? [result.detail.ticket.group.externalId]
+                : [],
+            },
+          ),
+        }
+      : supportingLookupData;
     recordTicketReadTiming({
       cacheDataKind: "ticket-detail",
       cacheEvent:

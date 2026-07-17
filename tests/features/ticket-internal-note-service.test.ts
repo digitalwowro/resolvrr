@@ -162,7 +162,10 @@ describe("ticket customer reply service", () => {
         requestSecurity: { validatedAddresses: ["93.184.216.34"] },
       }),
       "ticket-1",
-      replyInput("Thanks for the report."),
+      expect.objectContaining({
+        ...replyInput("Thanks for the report."),
+        resolvedSignature: expect.objectContaining({ source: "none" }),
+      }),
     );
     expect(getTicketDetail).toHaveBeenCalledWith(expect.any(Object), "ticket-1");
   });

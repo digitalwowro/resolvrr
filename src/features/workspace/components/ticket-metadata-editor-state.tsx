@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TicketMetadataMutationActionState } from "@/features/tickets/mutation-model";
@@ -27,18 +26,17 @@ import { assignmentLabel } from "./ticket-assignment-fields";
 import { TicketMetadataActionBar } from "./ticket-metadata-action-bar";
 import { TicketMetadataEditorSidebar } from "./ticket-metadata-editor-sidebar";
 import { TicketThread } from "./ticket-thread";
-import {
-  latestForwardableArticle,
-  latestReplyableArticle,
-} from "./communication-draft-factory";
+import { latestForwardableArticle, latestReplyableArticle } from "./communication-draft-factory";
 import { CommunicationDraftReplacementDialog } from "./communication-draft-replacement-dialog";
 import { useTicketCommunicationSelection } from "./use-ticket-communication-selection";
-import {
-  clearPersistedCommunicationDrafts,
-} from "./ticket-communication-draft-persistence";
+import { clearPersistedCommunicationDrafts } from "./ticket-communication-draft-persistence";
 import { useCommunicationDraftScope } from "./use-communication-draft-scope";
 import type { TicketMetadataEditorStateProps } from "./ticket-metadata-editor-state-types";
-
+import {
+  ticketCommunicationSignatureReady,
+  useSelectedTicketSignaturePreview,
+} from "./use-ticket-signature-preview";
+import { useWorkspaceSignatureActions } from "./ticket-signature-preview-action-context";
 export function TicketMetadataEditorState({
   communicationCapabilities,
   detail,
@@ -61,19 +59,14 @@ export function TicketMetadataEditorState({
   const router = useRouter();
   const refreshSavedDetail =
     onMetadataSavedDetailRefresh ?? noopMetadataSavedDetailRefresh;
-  const [renderedBaseline, setRenderedBaseline] =
-    useState<SelectedTicketDraft>(loadedBaseline);
+  const [renderedBaseline, setRenderedBaseline] = useState<SelectedTicketDraft>(loadedBaseline);
   const [baseline, setBaseline] = useState<SelectedTicketDraft>(loadedBaseline);
-  const [draft, setDraft] = useState<SelectedTicketDraft>(
-    metadataDraftFromBaseline(loadedBaseline),
-  );
+  const [draft, setDraft] = useState<SelectedTicketDraft>(metadataDraftFromBaseline(loadedBaseline));
   const [saving, setSaving] = useState(false);
-  const [mutationResult, setMutationResult] =
-    useState<TicketMetadataMutationActionState>({ status: "idle" });
+  const [mutationResult, setMutationResult] = useState<TicketMetadataMutationActionState>({ status: "idle" });
   const [threadComposerResetKey, setThreadComposerResetKey] = useState(0);
-  const [scrollAfterArticleCount, setScrollAfterArticleCount] =
-    useState<number>();
-
+  const [scrollAfterArticleCount, setScrollAfterArticleCount] = useState<number>();
+  const { loadTicketSignaturePreviewAction } = useWorkspaceSignatureActions();
   let currentBaseline = baseline;
   let currentDraft = draft;
   if (renderedBaseline !== loadedBaseline) {
@@ -88,20 +81,25 @@ export function TicketMetadataEditorState({
     currentBaseline = loadedBaseline;
     currentDraft = nextDraft;
   }
-
   const dirtyFields = metadataDraftDirtyFields(currentBaseline, currentDraft);
   const hasChanges = metadataDraftHasChanges(dirtyFields);
   const validation = validateMetadataDraft(detail, dirtyFields, currentDraft);
   const statusText = mutationStatusText(saving, mutationResult);
-  const canUpdate = hasChanges && validation.valid && !saving;
   const draftPersistenceScope = useCommunicationDraftScope(
     detail.id, userId, workspaceId, helpdeskConnectionId, identityVersion,
   );
-
   function changeDraft(nextDraft: SelectedTicketDraft) {
     setDraft(nextDraft);
     setMutationResult({ status: "idle" });
   }
+  const signaturePreview = useSelectedTicketSignaturePreview({
+    action: loadTicketSignaturePreviewAction,
+    draft: currentDraft,
+    setDraft,
+    ticketExternalId: detail.id,
+  });
+  const canUpdate = hasChanges && validation.valid && !saving &&
+    ticketCommunicationSignatureReady(currentDraft.communication, signaturePreview.state);
 
   const communicationSelection = useTicketCommunicationSelection({
     draft: currentDraft.communication,
@@ -109,7 +107,6 @@ export function TicketMetadataEditorState({
   });
   const latestReplySource = latestReplyableArticle(detail.articles);
   const latestForwardSource = latestForwardableArticle(detail.articles);
-
   function discardChanges() {
     const nextDraft = metadataDraftFromBaseline(currentBaseline);
     setDraft(nextDraft);
@@ -236,6 +233,7 @@ export function TicketMetadataEditorState({
             draftPersistenceScope={draftPersistenceScope}
             key={threadComposerResetKey}
             managedAddresses={detail.replyPolicy?.providerManagedAddresses ?? []}
+            mentionGroupExternalId={currentDraft.metadata.groupExternalId}
             onCommunicationDraftChange={(communication) =>
               changeDraft({ ...currentDraft, communication })
             }
@@ -245,6 +243,8 @@ export function TicketMetadataEditorState({
             rephraseStyleOptions={rephraseStyleOptions}
             rewriteDraftAction={rewriteDraftAction}
             scrollAfterArticleCount={scrollAfterArticleCount}
+            signaturePreview={signaturePreview.state}
+            onRetrySignaturePreview={signaturePreview.retry}
           />
         </section>
         <TicketMetadataEditorSidebar

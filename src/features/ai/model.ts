@@ -1,12 +1,15 @@
 export type TicketAiSummaryRequest = {
   forceRefresh?: boolean;
+  helpdeskConnectionId: string;
   ticketExternalId: string;
+  workspaceId: string;
 };
 
 export type TicketAiSummaryUnavailableReason =
   | "empty-ticket"
   | "provider-auth-failed"
   | "provider-rate-limited"
+  | "provider-request-rejected"
   | "provider-temporary-failure"
   | "ticket-unavailable";
 

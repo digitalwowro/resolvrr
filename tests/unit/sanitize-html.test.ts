@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   sanitizeForwardedProviderHtml,
   sanitizeProviderHtml,
+  sanitizeSignatureTemplateHtml,
 } from "@/security/sanitize-html";
 
 describe("provider HTML sanitization", () => {
@@ -76,6 +77,17 @@ describe("provider HTML sanitization", () => {
     expect(sanitized).not.toContain("position");
   });
 
+  it("preserves provider-approved embedded image data", () => {
+    const source = "data:image/jpeg;base64,AQID";
+    const sanitized = sanitizeProviderHtml(
+      `<img src="${source}" alt="Logo">`,
+      { rewriteImageSource: () => source },
+    );
+
+    expect(sanitized).toContain(`src="${source}"`);
+    expect(sanitized).toContain('alt="Logo"');
+  });
+
   it("preserves safe forwarded-email styling but removes active content and tracking images", () => {
     const sanitized = sanitizeForwardedProviderHtml(
       '<div style="color:#125599;position:fixed"><table><tr><td style="padding:10px">Hi</td></tr></table><img src="https://tracker.example/pixel"><script>bad()</script></div>',
@@ -83,6 +95,15 @@ describe("provider HTML sanitization", () => {
     expect(sanitized).toContain('style="color:#125599"');
     expect(sanitized).toContain('style="padding:10px"');
     expect(sanitized).not.toContain("position");
+    expect(sanitized).not.toContain("tracker.example");
+    expect(sanitized).not.toContain("<script");
+  });
+
+  it("keeps managed signature images while removing remote tracking images", () => {
+    const sanitized = sanitizeSignatureTemplateHtml(
+      '<p>Agent</p><img src="data:image/png;base64,AQID"><img src="https://tracker.example/pixel"><script>bad()</script>',
+    );
+    expect(sanitized).toContain("data:image/png;base64,AQID");
     expect(sanitized).not.toContain("tracker.example");
     expect(sanitized).not.toContain("<script");
   });

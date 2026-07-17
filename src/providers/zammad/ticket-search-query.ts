@@ -1,8 +1,10 @@
 import {
+  ProviderError,
   type TicketListGroupKey,
   type TicketListQuery,
   type TicketSortKey,
 } from "@/core/providers";
+import { isCompleteResultTicketSortKey } from "@/core/ticket-list-query";
 import {
   ticketPriorityDefinitions,
   ticketStateDefinitions,
@@ -73,6 +75,10 @@ function zammadSearchNot(clause: string) {
   return `NOT (${clause})`;
 }
 
+function zammadSearchAny(clauses: string[]) {
+  return clauses.length === 1 ? clauses[0]! : `(${clauses.join(" OR ")})`;
+}
+
 export function zammadVisibleTicketQuery(baseQuery: string) {
   const normalized = baseQuery.trim();
   const visible = "NOT (state.name:\"merged\")";
@@ -125,8 +131,17 @@ function zammadTicketSearchQuery(query: TicketListQuery, baseQuery?: string) {
       ),
     );
   }
+  const includedOwnerClauses: string[] = [];
   if (query.filter.ownerExternalIds?.length) {
-    parts.push(zammadSearchField("owner_id", query.filter.ownerExternalIds));
+    includedOwnerClauses.push(
+      zammadSearchField("owner_id", query.filter.ownerExternalIds),
+    );
+  }
+  if (query.filter.ownerUnassigned) {
+    includedOwnerClauses.push(zammadSearchRawField("owner_id", "null"));
+  }
+  if (includedOwnerClauses.length) {
+    parts.push(zammadSearchAny(includedOwnerClauses));
   }
   if (query.filter.excludedOwnerExternalIds?.length) {
     parts.push(
@@ -134,9 +149,6 @@ function zammadTicketSearchQuery(query: TicketListQuery, baseQuery?: string) {
         zammadSearchField("owner_id", query.filter.excludedOwnerExternalIds),
       ),
     );
-  }
-  if (query.filter.ownerUnassigned) {
-    parts.push(zammadSearchRawField("owner_id", "null"));
   }
   if (query.filter.excludeOwnerUnassigned) {
     parts.push(zammadSearchNot(zammadSearchRawField("owner_id", "null")));
@@ -161,6 +173,12 @@ export function zammadTicketListPath(
   limit: number,
   searchQuery?: string,
 ) {
+  if (query.sort && isCompleteResultTicketSortKey(query.sort.key)) {
+    throw new ProviderError(
+      "unsupported-capability",
+      "Display-value ticket sorting requires a complete result set.",
+    );
+  }
   const effectiveSearchQuery = zammadTicketSearchQuery(query, searchQuery);
   const params = new URLSearchParams({
     page: String(page),

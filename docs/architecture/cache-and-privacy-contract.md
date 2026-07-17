@@ -53,6 +53,9 @@ job queues remain out of scope. Read-only AI behavior is defined separately in
   AI suggestions, and expires after a short
   retention window. Legacy comments restore directly; legacy replies restore
   only after their source receives a fresh valid context, using fresh defaults.
+  Mention tokens inside unsent HTML contain only a provider-neutral external
+  user reference and the selected display label. Mention suggestion results are
+  request-scoped lookups and are not cached or persisted as a directory.
 - Workspace and per-user AI settings are encrypted server-side configuration,
   not cache data. Changing active-workspace AI policy/default config invalidates
   generated summaries for that workspace; changing a user's per-workspace AI

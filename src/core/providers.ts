@@ -3,17 +3,25 @@ import type {
   HelpdeskNotification,
   HelpdeskNotificationMarkReadInput,
 } from "./notifications";
-import type { TicketLookupOption } from "./ticket-lookups";
+import type {
+  TicketAssignableUserLookupInput,
+  TicketLookupOption,
+} from "./ticket-lookups";
+import type { TicketMentionLookupInput } from "./ticket-mentions";
 import type {
   TicketInternalNoteInput,
-  TicketCustomerForwardInput,
   TicketLinkTarget,
   TicketLinkTargetSearchInput,
   TicketMetadataMutationInput,
   TicketDetailProviderResult,
   TicketExternalId,
 } from "./tickets";
-import type { TicketCustomerReplyInput } from "./ticket-replies";
+import type { ProviderTicketCustomerReplyInput } from "./ticket-replies";
+import type { ProviderTicketCustomerForwardInput } from "./ticket-forwards";
+import type {
+  ProviderTicketSignature,
+  ProviderTicketSignatureRequest,
+} from "./ticket-signatures";
 import type {
   TicketInlineImage,
   TicketInlineImageLocator,
@@ -23,6 +31,11 @@ import type {
   TicketListQuery,
   TicketListResult,
 } from "./ticket-list-query";
+import type {
+  TicketTaskbarCommand,
+  TicketTaskbarSnapshot,
+  TicketTaskbarSyncResult,
+} from "./ticket-taskbar";
 export type {
   TicketListBucket,
   TicketListCountRequest,
@@ -63,11 +76,13 @@ export type ProviderCapability =
   | "ticket:forward-customer-email"
   | "lookup:link-targets"
   | "lookup:assignable-users"
+  | "lookup:mentionable-users"
   | "lookup:groups"
   | "lookup:tags"
   | "lookup:current-user"
   | "notifications:list"
   | "notifications:mark-read"
+  | "ticket-taskbar:sync"
   | "search:full-text";
 
 export type ProviderErrorKind =
@@ -175,14 +190,25 @@ export type HelpdeskProviderPlugin = {
   addTicketCustomerReply?(
     context: ProviderContext,
     ticketExternalId: TicketExternalId,
-    input: TicketCustomerReplyInput,
+    input: ProviderTicketCustomerReplyInput,
   ): Promise<void>;
   forwardTicketEmail?(
     context: ProviderContext,
     ticketExternalId: TicketExternalId,
-    input: TicketCustomerForwardInput,
+    input: ProviderTicketCustomerForwardInput,
   ): Promise<void>;
-  listAssignableUsers?(context: ProviderContext): Promise<ProviderLookupOption[]>;
+  resolveTicketSignature?(
+    context: ProviderContext,
+    input: ProviderTicketSignatureRequest,
+  ): Promise<ProviderTicketSignature>;
+  listAssignableUsers?(
+    context: ProviderContext,
+    input: TicketAssignableUserLookupInput,
+  ): Promise<ProviderLookupOption[]>;
+  listMentionableUsers?(
+    context: ProviderContext,
+    input: TicketMentionLookupInput,
+  ): Promise<ProviderLookupOption[]>;
   listGroups?(context: ProviderContext): Promise<ProviderLookupOption[]>;
   listTags?(context: ProviderContext): Promise<ProviderLookupOption[]>;
   getCurrentUser?(context: ProviderContext): Promise<ProviderLookupOption>;
@@ -195,4 +221,9 @@ export type HelpdeskProviderPlugin = {
     context: ProviderContext,
     input: HelpdeskNotificationMarkReadInput,
   ): Promise<void>;
+  readTicketTaskbar?(context: ProviderContext): Promise<TicketTaskbarSnapshot>;
+  syncTicketTaskbar?(
+    context: ProviderContext,
+    commands: TicketTaskbarCommand[],
+  ): Promise<TicketTaskbarSyncResult>;
 };

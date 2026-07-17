@@ -39,6 +39,8 @@ const messageText: Record<WorkspaceAiSettingsActionCode, string> = {
   "not-admin": "Only admins can change workspace AI settings.",
   "provider-auth-failed": "The AI provider rejected the credentials.",
   "provider-rate-limited": "The AI provider is rate limited.",
+  "provider-request-rejected":
+    "The AI provider rejected validation. Check account and model permissions.",
   "provider-temporary-failure": "AI provider validation temporarily failed.",
   "user-ai-not-required": "This workspace does not require a personal AI key.",
 };

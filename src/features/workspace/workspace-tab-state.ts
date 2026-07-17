@@ -22,6 +22,7 @@ export type WorkspaceOpenTabsState = {
 
 export type SaveWorkspaceOpenTabsStateAction = (
   state: WorkspaceOpenTabsState,
+  workspaceId: string,
 ) => Promise<void>;
 
 function stringValue(value: unknown): string | undefined {
@@ -30,6 +31,16 @@ function stringValue(value: unknown): string | undefined {
 
 function optionalStringValue(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function timestampValue(value: unknown): string {
+  if (typeof value !== "string") {
+    return new Date(0).toISOString();
+  }
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp)
+    ? new Date(timestamp).toISOString()
+    : new Date(0).toISOString();
 }
 
 function tabFromStorage(value: unknown): WorkspaceTicketTab | undefined {
@@ -127,7 +138,7 @@ export function workspaceOpenTabsStateFromStorage(
 
   const openTabs = tabsFromStorage(record.openTabs);
   const activePane = stringValue(record.activePane) ?? "list";
-  const updatedAt = stringValue(record.updatedAt) ?? new Date(0).toISOString();
+  const updatedAt = timestampValue(record.updatedAt);
 
   return {
     activePane,

@@ -1,4 +1,7 @@
-import { DropdownSelect, type DropdownOption } from "@/components/ui";
+import {
+  SearchableDropdown,
+  type DropdownOption,
+} from "@/components/ui";
 import type { TicketLookupList } from "@/core/ticket-lookups";
 import type { TicketMetadataMutationCapabilities } from "@/features/tickets/mutation-model";
 import type { WorkspaceTicketDetail } from "@/features/tickets/workspace-adapter";
@@ -8,6 +11,7 @@ import type {
 } from "./metadata-draft";
 import { TicketLookupOptions } from "./ticket-lookup-options";
 import { EditableSidebarField, SidebarField } from "./ticket-sidebar-field";
+import { useTicketOwnerLookup } from "./use-ticket-owner-lookup";
 
 const changedControlClass =
   "border-amber-500 bg-amber-50 focus-visible:outline-amber-500";
@@ -66,10 +70,16 @@ export function TicketAssignmentFields({
   onDraftChange(nextDraft: SelectedTicketDraft): void;
   saving: boolean;
 }) {
-  const ownerOptions = lookupOptions(detail.lookupData.assignableUsers);
+  const ownerLookup = useTicketOwnerLookup({
+    groupExternalId: draft.metadata.groupExternalId,
+    initialGroupExternalId: detail.groupExternalId,
+    initialLookup: detail.lookupData.assignableUsers,
+  });
+  const ownerOptions = lookupOptions(ownerLookup.lookup);
   const groupOptions = lookupOptions(detail.lookupData.groups);
   const ownerEditable =
-    metadataMutationCapabilities.owner === true && ownerOptions.length > 0;
+    metadataMutationCapabilities.owner === true &&
+    Boolean(draft.metadata.groupExternalId);
   const groupEditable =
     metadataMutationCapabilities.group === true && groupOptions.length > 0;
 
@@ -77,10 +87,13 @@ export function TicketAssignmentFields({
     <>
       {ownerEditable ? (
         <EditableSidebarField label="Owner">
-          <DropdownSelect
+          <SearchableDropdown
             ariaLabel="Ticket owner"
             className="block w-full [&>div]:w-full"
-            disabled={saving}
+            disabled={saving || ownerLookup.loading}
+            emptyMessage={
+              ownerLookup.loading ? "Loading owners..." : "No eligible owners"
+            }
             onValueChange={(value) =>
               onDraftChange({
                 ...draft,
@@ -88,9 +101,10 @@ export function TicketAssignmentFields({
               })
             }
             options={ownerOptions}
-            placeholder="Unassigned"
+            placeholder={ownerLookup.loading ? "Loading..." : "Select owner"}
+            searchPlaceholder="Find owner"
             selectedDisplay={selectedDisplay(
-              detail.lookupData.assignableUsers,
+              ownerLookup.lookup,
               draft.metadata.ownerExternalId,
               detail.owner,
             )}
@@ -99,6 +113,11 @@ export function TicketAssignmentFields({
             }
             value={draft.metadata.ownerExternalId}
           />
+          {dirtyFields.owner && !draft.metadata.ownerExternalId ? (
+            <p className="mt-1 text-xs text-amber-700">
+              Select an owner with full access to this group.
+            </p>
+          ) : null}
         </EditableSidebarField>
       ) : (
         <>
@@ -106,24 +125,32 @@ export function TicketAssignmentFields({
             <span>{detail.owner}</span>
           </SidebarField>
           <SidebarField label="Owner options">
-            <TicketLookupOptions lookup={detail.lookupData.assignableUsers} />
+            <TicketLookupOptions lookup={ownerLookup.lookup} />
           </SidebarField>
         </>
       )}
       {groupEditable ? (
         <EditableSidebarField label="Group">
-          <DropdownSelect
+          <SearchableDropdown
             ariaLabel="Ticket group"
             className="block w-full [&>div]:w-full"
             disabled={saving}
             onValueChange={(value) =>
               onDraftChange({
                 ...draft,
-                metadata: { ...draft.metadata, groupExternalId: value },
+                metadata: {
+                  ...draft.metadata,
+                  groupExternalId: value,
+                  ownerExternalId:
+                    value === draft.metadata.groupExternalId
+                      ? draft.metadata.ownerExternalId
+                      : undefined,
+                },
               })
             }
             options={groupOptions}
             placeholder="Unassigned"
+            searchPlaceholder="Find group"
             selectedDisplay={selectedDisplay(
               detail.lookupData.groups,
               draft.metadata.groupExternalId,

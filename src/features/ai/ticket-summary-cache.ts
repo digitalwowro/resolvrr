@@ -22,6 +22,7 @@ import { ticketSummaryPromptContext } from "./ticket-summary-context";
 export type TicketSummaryCacheOptions = {
   cacheRepository?: AiSummaryCacheRepository;
   encryptionKey: string;
+  throwOnReadError?: boolean;
   scope: {
     helpdeskConnectionId: string;
     ticketExternalId: string;
@@ -34,6 +35,7 @@ export async function readCachedSummary(input: {
   cacheRepository: AiSummaryCacheRepository;
   encryptionKey: string;
   providerProtocol: "anthropic-compatible" | "openai-compatible";
+  throwOnError?: boolean;
 }): Promise<Extract<TicketAiSummaryResult, { status: "available" }> | null> {
   if (!input.cacheRepository.enabled) {
     return null;
@@ -56,7 +58,7 @@ export async function readCachedSummary(input: {
       status: cacheResult.status === "hit" ? "ok" : "unavailable",
     });
     return cacheResult.status === "hit" ? cacheResult.result : null;
-  } catch {
+  } catch (error) {
     recordAiGenerationTiming({
       cacheDataKind: "ai-summary",
       cacheEvent: "read-failed",
@@ -68,6 +70,7 @@ export async function readCachedSummary(input: {
       retryable: true,
       status: "unavailable",
     });
+    if (input.throwOnError) throw error;
     return null;
   }
 }
@@ -145,6 +148,7 @@ export async function readCachedTicketSummary(
         cacheOptions.cacheRepository ?? noAiSummaryCacheRepository,
       encryptionKey: cacheOptions.encryptionKey,
       providerProtocol: config.provider,
+      throwOnError: cacheOptions.throwOnReadError,
     })) ?? undefined
   );
 }

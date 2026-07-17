@@ -16,9 +16,9 @@ describe("Zammad connection validation", () => {
   });
 
   it("validates Basic Auth through the SSRF-safe current-user endpoint request", async () => {
-    mockedSafeProviderJson.mockResolvedValue({
-      status: 200, headers: new Headers(), data: currentUser,
-    });
+    mockedSafeProviderJson
+      .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: currentUser })
+      .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: [] });
 
     const identity = await zammadProviderPlugin.validateConnection({
       baseUrl: "https://helpdesk.example.com",
@@ -41,6 +41,13 @@ describe("Zammad connection validation", () => {
           "User-Agent": "Resolvrr/1.0",
         }),
         signal: expect.any(AbortSignal),
+      }),
+    );
+    expect(mockedSafeProviderJson).toHaveBeenCalledWith(
+      "https://helpdesk.example.com/api/v1/taskbar",
+      expect.objectContaining({
+        allowedAddresses: ["93.184.216.34"],
+        maxResponseBytes: 512 * 1024,
       }),
     );
   });

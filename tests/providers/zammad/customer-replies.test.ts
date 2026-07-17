@@ -128,6 +128,38 @@ describe("Zammad contextual customer reply mutations", () => {
     );
   });
 
+  it("preserves a structured mention in an HTML customer reply", async () => {
+    const source = article();
+    arrangeReads(source);
+    mockedSafeProviderJson.mockResolvedValueOnce({
+      status: 201, headers: new Headers(),
+      data: { ...source, id: 501, sender: "Agent" },
+    });
+    const replyContext = contextFor(source);
+
+    await zammadProviderPlugin.addTicketCustomerReply?.(
+      providerContext(),
+      "42",
+      {
+        body:
+          '<p><span data-resolvrr-mention-id="4" contenteditable="false">Manuela Duma</span> FYI.</p>',
+        bodyFormat: "html",
+        cc: [],
+        contextVersion: replyContext.contextVersion,
+        intent: "reply",
+        sourceArticleExternalId: "500",
+        to: ["maya@example.com"],
+      },
+    );
+
+    const request = JSON.parse(
+      String(mockedSafeProviderJson.mock.calls[3]?.[1]?.body),
+    );
+    expect(request.body).toBe(
+      '<p><a href="https://helpdesk.example.com/#user/profile/4" data-mention-user-id="4">Manuela Duma</a> FYI.</p>',
+    );
+  });
+
   it("does not POST when the reply context version is stale", async () => {
     arrangeReads(article());
 

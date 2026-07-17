@@ -43,12 +43,12 @@ function RecipientRow({
   }
 
   return (
-    <div className="grid grid-cols-[2rem_1fr] gap-2">
+    <div className="grid w-full min-w-0 grid-cols-[2rem_minmax(0,1fr)] gap-2">
       <label className="pt-1.5 text-xs font-semibold text-slate-600" htmlFor={`reply-${label}`}>
         {label}
       </label>
-      <div>
-        <div className="flex min-h-8 flex-wrap items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-1 focus-within:border-indigo-500">
+      <div className="min-w-0">
+        <div className="flex min-h-8 w-full flex-wrap items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-1 focus-within:border-indigo-500">
           {values.map((address) => (
             <span
               className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-800"
@@ -68,7 +68,7 @@ function RecipientRow({
           ))}
           <input
             aria-describedby={error ? `reply-${label}-error` : undefined}
-            className="min-w-40 flex-1 bg-transparent px-1 py-0.5 text-sm outline-none placeholder:text-slate-400"
+            className="min-w-32 flex-1 bg-transparent px-1 py-0.5 text-sm outline-none placeholder:text-slate-400"
             disabled={disabled}
             id={`reply-${label}`}
             onBlur={addEntry}
@@ -108,7 +108,7 @@ export function TicketReplyRecipientEditor({
     managed.has(address.toLowerCase()),
   );
   return (
-    <div className="space-y-2 border-b border-indigo-100 pb-3">
+    <div className="w-full space-y-2">
       <RecipientRow
         disabled={disabled}
         label="To"

@@ -65,6 +65,7 @@ describe("TicketWorkspace email forwarding", () => {
         contextVersion: "forward-v1",
         includeOriginal: true,
         kind: "customer-forward",
+        signatureContext: { contextVersion: "signature-disabled", source: "none" },
         sourceArticleExternalId: article.id,
         subject: "Cannot log in",
         to: ["customer@example.com"],

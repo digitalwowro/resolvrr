@@ -1,6 +1,5 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import type {
   AiRephraseStyleOption,
@@ -9,9 +8,12 @@ import type {
 } from "@/features/ai";
 import { Button } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
+import { TicketAiEditorToolbar } from "./ticket-ai-editor-toolbar";
 import type { PersistedDraftAiSuggestion } from "./ticket-communication-draft-persistence";
 import { escapeHtml } from "./ticket-rich-text-editor-dom";
 import { TicketRichTextEditor } from "./ticket-rich-text-editor";
+import { TicketSignaturePreview } from "./ticket-signature-preview";
+import type { TicketSignaturePreviewState } from "./use-ticket-signature-preview";
 
 export type InlineCommunicationMode = "comment" | "forward" | "reply";
 
@@ -22,10 +24,13 @@ type InlineCommunicationComposerProps = {
   draftRestored?: boolean;
   suggestions: PersistedDraftAiSuggestion[];
   mode: InlineCommunicationMode;
+  mentionGroupExternalId?: string;
   onBodyChange(body: string): void;
   onSuggestionsChange(suggestions: PersistedDraftAiSuggestion[]): void;
   rephraseStyleOptions?: AiRephraseStyleOption[];
   rewriteDraftAction?: RewriteDraftAction;
+  signaturePreview?: TicketSignaturePreviewState;
+  onRetrySignaturePreview?(): void;
 };
 
 function resultMessage(result: Exclude<DraftRewriteResult, { status: "available" }>) {
@@ -43,6 +48,9 @@ function resultMessage(result: Exclude<DraftRewriteResult, { status: "available"
   }
   if (result.reason === "provider-auth-failed") {
     return "The AI provider credentials need attention.";
+  }
+  if (result.reason === "provider-request-rejected") {
+    return "The AI provider rejected this request. Try again or check provider permissions.";
   }
   return "AI drafting is temporarily unavailable.";
 }
@@ -80,23 +88,19 @@ export function TicketInlineCommunicationComposer({
   disabled,
   draftRestored = false,
   mode,
+  mentionGroupExternalId,
   onBodyChange,
   onSuggestionsChange,
   rephraseStyleOptions = [],
   rewriteDraftAction,
+  signaturePreview,
+  onRetrySignaturePreview,
   suggestions,
 }: InlineCommunicationComposerProps) {
   const label = mode === "comment" ? "Comment" : mode === "forward" ? "Forward" : "Reply";
   const [pendingOperation, setPendingOperation] = useState<
     "proofread" | "rephrase" | null
   >(null);
-  const [rephraseStyleId, setRephraseStyleId] = useState(
-    rephraseStyleOptions[0]?.id ?? "",
-  );
-  const selectedStyleId =
-    rephraseStyleOptions.some((style) => style.id === rephraseStyleId)
-      ? rephraseStyleId
-      : rephraseStyleOptions[0]?.id ?? "";
   const [selectedSuggestionId, setSelectedSuggestionId] = useState(
     suggestions[0]?.id ?? "",
   );
@@ -107,21 +111,23 @@ export function TicketInlineCommunicationComposer({
     suggestions.find((suggestion) => suggestion.id === selectedSuggestionId) ??
     suggestions[0];
 
-  async function rewriteDraft(operation: "proofread" | "rephrase") {
+  async function rewriteDraft(request:
+    | { operation: "proofread" }
+    | { operation: "rephrase"; styleId: string }) {
     if (!rewriteDraftAction) {
       setMessage("AI drafting is unavailable.");
       return;
     }
 
-    setPendingOperation(operation);
+    setPendingOperation(request.operation);
     setMessage(null);
     try {
       const result = await rewriteDraftAction({
         bodyHtml: body,
         composerMode: mode === "forward" ? "reply" : mode,
-        operation,
-        ...(operation === "rephrase"
-          ? { rephraseStyleId: selectedStyleId }
+        operation: request.operation,
+        ...(request.operation === "rephrase"
+          ? { rephraseStyleId: request.styleId }
           : {}),
       });
       if (result.status !== "available") {
@@ -170,53 +176,21 @@ export function TicketInlineCommunicationComposer({
   }
 
   const aiControls = (
-    <>
-      <button
-        className="inline-flex h-6 items-center gap-1 rounded-md px-2 text-xs font-medium text-slate-700 hover:bg-slate-200 hover:text-slate-950 disabled:cursor-wait disabled:opacity-50"
-        disabled={disabled || Boolean(pendingOperation)}
-        onClick={() => void rewriteDraft("proofread")}
-        type="button"
-      >
-        <Sparkles aria-hidden="true" className="size-3" />
-        Proofread
-      </button>
-      <select
-        aria-label="Rephrase style"
-        className="h-6 rounded-md border border-slate-200 bg-white px-1 text-xs text-slate-700 outline-none focus:border-indigo-500"
-        disabled={
-          disabled || Boolean(pendingOperation) || rephraseStyleOptions.length === 0
-        }
-        onChange={(event) =>
-          setRephraseStyleId(event.currentTarget.value)
-        }
-        value={selectedStyleId}
-      >
-        {rephraseStyleOptions.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <button
-        className="inline-flex h-6 items-center gap-1 rounded-md px-2 text-xs font-medium text-slate-700 hover:bg-slate-200 hover:text-slate-950 disabled:cursor-wait disabled:opacity-50"
-        disabled={
-          disabled ||
-          Boolean(pendingOperation) ||
-          rephraseStyleOptions.length === 0
-        }
-        onClick={() => void rewriteDraft("rephrase")}
-        type="button"
-      >
-        <Sparkles aria-hidden="true" className="size-3" />
-        Rephrase
-      </button>
-    </>
+    <TicketAiEditorToolbar
+      disabled={disabled}
+      onProofread={() => void rewriteDraft({ operation: "proofread" })}
+      onRephrase={(styleId) => {
+        void rewriteDraft({ operation: "rephrase", styleId });
+      }}
+      pending={Boolean(pendingOperation)}
+      styles={rephraseStyleOptions}
+    />
   );
 
   return (
     <div
       aria-label={`${label} composer`}
-      className="border-b border-slate-200 bg-indigo-50/30 px-4 py-4"
+      className="border-b border-slate-200 px-4 pb-4 pt-3"
       role="form"
     >
       <TicketRichTextEditor
@@ -226,12 +200,22 @@ export function TicketInlineCommunicationComposer({
         extraToolbarControls={aiControls}
         id={`${mode}-${editorId}`}
         label={label}
+        mentionGroupExternalId={mentionGroupExternalId}
         onChange={onBodyChange}
         placeholder={mode === "comment"
           ? "Write a comment..."
           : mode === "forward" ? "Add a message..." : "Write a reply..."}
         value={body}
       />
+      {mode !== "comment" && signaturePreview && onRetrySignaturePreview ? (
+        <TicketSignaturePreview
+          key={signaturePreview.status === "available"
+            ? signaturePreview.signature.contextVersion
+            : signaturePreview.status}
+          onRetry={onRetrySignaturePreview}
+          preview={signaturePreview}
+        />
+      ) : null}
       {message ? (
         <p className="mt-2 text-xs text-slate-600" role="status">
           {message}

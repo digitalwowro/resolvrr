@@ -38,6 +38,9 @@ function summaryStatusText(result: TicketAiSummaryResult) {
   if (result.reason === "provider-auth-failed") {
     return "AI provider authentication failed";
   }
+  if (result.reason === "provider-request-rejected") {
+    return "AI provider rejected this request";
+  }
   if (result.reason === "ticket-unavailable") {
     return "Ticket detail is unavailable";
   }

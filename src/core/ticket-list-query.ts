@@ -22,6 +22,20 @@ export type TicketSort = {
   direction: TicketSortDirection;
 };
 
+export const completeResultTicketSortKeys = [
+  "customer",
+  "owner",
+  "group",
+] as const satisfies readonly TicketSortKey[];
+
+export function isCompleteResultTicketSortKey(
+  key: TicketSortKey,
+): key is (typeof completeResultTicketSortKeys)[number] {
+  return completeResultTicketSortKeys.includes(
+    key as (typeof completeResultTicketSortKeys)[number],
+  );
+}
+
 export type TicketListCountRequest = {
   includeTotal: boolean;
 };

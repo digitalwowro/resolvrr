@@ -1,8 +1,9 @@
 import type { WorkspaceSavedView } from "@/features/saved-views/workspace";
+import type { SaveWorkspaceSelectedSavedViewAction } from "@/features/saved-views/selection-preference";
 import type {
-  LoadWorkspaceTicketDetailAction,
-  WorkspaceTicketDetailLoadResult,
-} from "@/features/tickets/detail-action-result";
+  LoadWorkspaceTicketDetailHydrationAction,
+  WorkspaceTicketDetailHydrationResult,
+} from "@/features/workspace/ticket-detail-hydration";
 import type {
   LoadWorkspaceTicketListPageAction,
   WorkspaceTicketListGroup,
@@ -39,14 +40,15 @@ import type {
 } from "@/features/tickets/workspace-adapter";
 import type { WorkspaceSettingsSection } from "./workspace-settings-dialog";
 import type { WorkspaceMenuConnection } from "./workspace-header";
+import type { SynchronizeWorkspaceTaskbarAction } from "./use-ticket-taskbar-sync";
 
 export type TicketWorkspaceDisplayProps = {
   connections: WorkspaceMenuConnection[];
   columns: WorkspaceTicketColumn[];
   communicationCapabilities: TicketCommunicationCapabilities;
   detail?: WorkspaceTicketDetail;
-  detailResult?: WorkspaceTicketDetailLoadResult;
-  loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
+  detailResult?: WorkspaceTicketDetailHydrationResult;
+  loadTicketDetailAction: LoadWorkspaceTicketDetailHydrationAction;
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
   loadWorkspaceNotificationsAction: LoadWorkspaceNotificationsAction;
   logoutAction(formData: FormData): void | Promise<void>;
@@ -63,6 +65,7 @@ export type TicketWorkspaceDisplayProps = {
   rewriteDraftAction?: RewriteDraftAction;
   rephraseStyleOptions?: AiRephraseStyleOption[];
   summarizeTicketAction: SummarizeWorkspaceTicketAction;
+  synchronizeWorkspaceTaskbarAction?: SynchronizeWorkspaceTaskbarAction;
   initialTicketAiSummary?: {
     result: Extract<TicketAiSummaryResult, { status: "available" }>;
     ticketId: string;
@@ -70,6 +73,7 @@ export type TicketWorkspaceDisplayProps = {
   savedViews: WorkspaceSavedView[];
   initialWorkspaceOpenTabsState?: WorkspaceOpenTabsState;
   saveWorkspaceOpenTabsStateAction?: SaveWorkspaceOpenTabsStateAction;
+  saveWorkspaceSelectedSavedViewAction?: SaveWorkspaceSelectedSavedViewAction;
   selectedSavedViewId: string;
   selectedTicketId?: string;
   setActiveConnectionAction(

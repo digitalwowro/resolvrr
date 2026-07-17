@@ -4,6 +4,7 @@ import type {
   TicketMutableState,
 } from "@/core/tickets";
 import type { TicketReplyIntent } from "@/core/ticket-replies";
+import type { TicketSignatureSelection } from "@/core/ticket-signatures";
 import type { PendingDateTimeParts } from "./ticket-pending-date-time";
 
 export type TicketMetadataDraft = {
@@ -34,6 +35,7 @@ export type TicketCustomerReplyDraft = {
   intent: TicketReplyIntent;
   kind: "customer-reply";
   sourceArticleExternalId: string;
+  signatureContext?: TicketSignatureSelection;
   to: string[];
 };
 
@@ -50,6 +52,7 @@ export type TicketCustomerForwardDraft = {
   includeOriginal: boolean;
   kind: "customer-forward";
   sourceArticleExternalId: string;
+  signatureContext?: TicketSignatureSelection;
   subject: string;
   to: string[];
 };

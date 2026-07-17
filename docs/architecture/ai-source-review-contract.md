@@ -42,9 +42,10 @@ If a provider read fails, the AI operation is unavailable. The UI may preserve
 the user's local draft text and show a retry path, but it must not generate from
 stale source as a fallback.
 
-The implemented summary slice has its own cache-only route hydration rule. That
-summary-specific behavior must not be copied to drafting, reply, or reviewed
-action operations without a new contract.
+The implemented summary slice has its own cache-only selected-ticket detail
+hydration rule for both initial and later ticket loads. That summary-specific
+behavior must not be copied to drafting, reply, or reviewed action operations
+without a new contract.
 
 ## Review And Approval
 

@@ -23,6 +23,7 @@ type VerticalTicketTabsProps = {
   onReorderTicket(sourceTicketId: string, targetIndex: number): void;
   savedViewLabel: string;
   tabs: WorkspaceTicketTab[];
+  unsynchronizedTicketIds?: string[];
 };
 
 const priorityTextColor: Record<TicketPriority | "unknown", string> = {
@@ -68,6 +69,7 @@ function VerticalTicketTab({
   reorderClassName,
   style,
   tab,
+  syncPending,
 }: {
   active: boolean;
   onClose(): void;
@@ -82,6 +84,7 @@ function VerticalTicketTab({
   reorderClassName: string;
   style?: CSSProperties;
   tab: WorkspaceTicketTab;
+  syncPending?: boolean;
 }) {
   const key = tab.stateKey ?? "unknown";
 
@@ -118,6 +121,7 @@ function VerticalTicketTab({
         </span>
       )}
       title={tab.title}
+      syncPending={syncPending}
     />
   );
 }
@@ -131,6 +135,7 @@ export function VerticalTicketTabs({
   onReorderTicket,
   savedViewLabel,
   tabs,
+  unsynchronizedTicketIds = [],
 }: VerticalTicketTabsProps) {
   const {
     announcement,
@@ -187,6 +192,7 @@ export function VerticalTicketTabs({
               reorderClassName={reorderProps.className}
               style={reorderProps.style}
               tab={tab}
+              syncPending={unsynchronizedTicketIds.includes(tab.id)}
             />
           );
         })}
