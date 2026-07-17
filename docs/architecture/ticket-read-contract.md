@@ -79,10 +79,10 @@ Article fields include:
   styles and dimensions, inline emphasis, and verified inline raster images may be
   preserved by the sanitizer. Scripts, active/overlay styles, remote images,
   unsafe attributes, and unsafe URL schemes are not part of the contract.
-- `attachments`: metadata only for provider-classified user-visible files.
-  Message-body alternatives and referenced inline resources stay provider-private.
-  The workspace may display filename, content type, and byte size. Attachment
-  download and preview remain outside this slice.
+- `attachments`: metadata for provider-classified visible files; alternatives
+  and inline resources stay provider-private. Authenticated downloads revalidate
+  personal connection, ownership, classification, and a 25 MiB byte bound;
+  responses are private/non-cacheable and preview remains outside this slice.
 
 Inline body images are not attachments. The optional provider-neutral inline-image
 capability rewrites only verified body references to an authenticated same-origin

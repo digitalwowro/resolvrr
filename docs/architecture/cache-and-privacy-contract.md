@@ -143,6 +143,11 @@ and are never written to the ticket cache. If sanitized customer content is
 persisted later, the cache implementation must treat it as sensitive content and
 encrypt it at rest.
 
+Visible attachment bytes are also fetched only after an authenticated,
+connection-owned request and fresh provider revalidation. Download responses use
+`private, no-store`, force attachment disposition, and are never written to the
+ticket, thread, browser, or AI caches.
+
 ### Lookup Data
 
 Lookup snapshots may contain provider-neutral options for owner, group, tag,

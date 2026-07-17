@@ -139,11 +139,16 @@ warning and keep provider source-of-truth semantics. Optimistic rendering is
 not used. Forwarded source attachments are revalidated and read only inside the
 provider boundary with bounded binary responses. Providers expose only their
 user-visible attachment set; body alternatives and referenced inline resources
-remain provider-private. The optional `ticket:inline-images` read capability may
+remain provider-private. The optional `ticket:attachments` read capability may
+serve one freshly revalidated visible file through the authenticated
+provider-neutral download route. Implementations must verify ticket/article
+ownership, visible classification, declared size, received size, filename, and
+content type before returning bounded bytes. The optional `ticket:inline-images`
+read capability may
 serve an exact referenced raster image through the authenticated provider-neutral
 media route. Implementations must freshly verify ticket/article ownership,
 provider inline classification, MIME allowlisting, and size bounds before reading
-bytes; arbitrary provider attachment reads are not permitted.
+bytes; unclassified provider attachment reads are not permitted.
 
 Communication audit logs record only the communication kind, final status,
 provider-neutral failure reason, retryability, and safe connection/provider
