@@ -24,8 +24,10 @@ type TicketThreadArticleProps = {
   article: WorkspaceArticle;
   canForward: boolean;
   canReply: boolean;
+  helpdeskConnectionId?: string;
   onForward(): void;
   onReply(intent: TicketReplyIntent): void;
+  ticketExternalId: string;
 };
 
 export function TicketThreadArticle({
@@ -34,8 +36,10 @@ export function TicketThreadArticle({
   article,
   canForward,
   canReply,
+  helpdeskConnectionId,
   onForward,
   onReply,
+  ticketExternalId,
 }: TicketThreadArticleProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const hasRecipientDetails =
@@ -102,7 +106,12 @@ export function TicketThreadArticle({
             <ArticleContactDetails article={article} />
           ) : null}
           <TicketArticleBody html={article.sanitizedHtml} />
-          <TicketArticleAttachments attachments={article.attachments} />
+          <TicketArticleAttachments
+            articleExternalId={article.id}
+            attachments={article.attachments}
+            helpdeskConnectionId={helpdeskConnectionId}
+            ticketExternalId={ticketExternalId}
+          />
           {hasActions ? (
             <ArticleActions
               activeIntent={activeIntent}

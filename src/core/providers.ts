@@ -27,6 +27,10 @@ import type {
   TicketInlineImageLocator,
 } from "./ticket-inline-images";
 import type {
+  TicketAttachmentFile,
+  TicketAttachmentLocator,
+} from "./ticket-attachments";
+import type {
   TicketListFilter,
   TicketListQuery,
   TicketListResult,
@@ -60,6 +64,7 @@ export type ProviderCapability =
   | "ticket:group"
   | "ticket:group-count"
   | "ticket:detail"
+  | "ticket:attachments"
   | "ticket:inline-images"
   | "ticket:links"
   | "ticket:subscription"
@@ -177,6 +182,10 @@ export type HelpdeskProviderPlugin = {
     context: ProviderContext,
     input: TicketInlineImageLocator,
   ): Promise<TicketInlineImage>;
+  getTicketAttachment?(
+    context: ProviderContext,
+    input: TicketAttachmentLocator,
+  ): Promise<TicketAttachmentFile>;
   updateTicketMetadata?(
     context: ProviderContext,
     ticketExternalId: TicketExternalId,

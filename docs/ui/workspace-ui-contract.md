@@ -266,6 +266,13 @@ appear as attachment rows or choices. The original preview is read-only; only
 the agent introduction is editable and eligible for proofread/rephrase. No Bcc
 control is available.
 
+Article attachment rows are keyboard-focusable download links when the current
+user has an active personal helpdesk connection. Clicking a row downloads the
+exact provider-classified visible file through Resolvrr's authenticated,
+same-origin route; the UI never links directly to a provider URL. Filename,
+content type, and byte size remain visible, while inline body resources and
+message alternatives remain absent from the attachment list.
+
 The reply composer shows editable To and Cc chips and never Bcc. It validates
 plain email additions, deduplicates across fields with To precedence, requires at
 least one recipient, and warns without blocking when a provider-managed address

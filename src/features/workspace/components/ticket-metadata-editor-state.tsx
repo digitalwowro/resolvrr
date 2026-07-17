@@ -100,7 +100,6 @@ export function TicketMetadataEditorState({
   });
   const canUpdate = hasChanges && validation.valid && !saving &&
     ticketCommunicationSignatureReady(currentDraft.communication, signaturePreview.state);
-
   const communicationSelection = useTicketCommunicationSelection({
     draft: currentDraft.communication,
     onChange: (communication) => changeDraft({ ...currentDraft, communication }),
@@ -113,7 +112,6 @@ export function TicketMetadataEditorState({
     setMutationResult({ status: "idle" });
     void clearPersistedCommunicationDrafts(draftPersistenceScope);
   }
-
   function submitChanges(navigation: PostUpdateNavigation) {
     if (!canUpdate) {
       return;
@@ -231,6 +229,7 @@ export function TicketMetadataEditorState({
             communicationCapabilities={communicationCapabilities}
             disabled={saving}
             draftPersistenceScope={draftPersistenceScope}
+            helpdeskConnectionId={helpdeskConnectionId}
             key={threadComposerResetKey}
             managedAddresses={detail.replyPolicy?.providerManagedAddresses ?? []}
             mentionGroupExternalId={currentDraft.metadata.groupExternalId}
@@ -244,6 +243,7 @@ export function TicketMetadataEditorState({
             rewriteDraftAction={rewriteDraftAction}
             scrollAfterArticleCount={scrollAfterArticleCount}
             signaturePreview={signaturePreview.state}
+            ticketExternalId={detail.id}
             onRetrySignaturePreview={signaturePreview.retry}
           />
         </section>

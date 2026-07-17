@@ -33,6 +33,7 @@ type TicketThreadProps = {
   communicationCapabilities: TicketCommunicationCapabilities;
   disabled: boolean;
   draftPersistenceScope?: CommunicationDraftPersistenceScope;
+  helpdeskConnectionId?: string;
   managedAddresses: string[];
   mentionGroupExternalId?: string;
   onCommunicationDraftChange(draft: TicketCommunicationDraft | undefined): void;
@@ -43,6 +44,7 @@ type TicketThreadProps = {
   rewriteDraftAction?: RewriteDraftAction;
   scrollAfterArticleCount?: number;
   signaturePreview?: TicketSignaturePreviewState;
+  ticketExternalId: string;
   onRetrySignaturePreview?(): void;
 };
 
@@ -52,6 +54,7 @@ export function TicketThread({
   communicationCapabilities,
   disabled,
   draftPersistenceScope,
+  helpdeskConnectionId,
   managedAddresses,
   mentionGroupExternalId,
   onCommunicationDraftChange,
@@ -62,6 +65,7 @@ export function TicketThread({
   rewriteDraftAction,
   scrollAfterArticleCount,
   signaturePreview,
+  ticketExternalId,
   onRetrySignaturePreview,
 }: TicketThreadProps) {
   const [suggestions, setSuggestions] = useState<PersistedDraftAiSuggestion[]>([]);
@@ -236,8 +240,10 @@ export function TicketThread({
               article={article}
               canForward={Boolean(communicationCapabilities.customerForwards)}
               canReply={communicationCapabilities.customerReplies}
+              helpdeskConnectionId={helpdeskConnectionId}
               onForward={() => onRequestForward(article)}
               onReply={(intent) => onRequestReply(article, intent)}
+              ticketExternalId={ticketExternalId}
             />
           </div>
         ))}

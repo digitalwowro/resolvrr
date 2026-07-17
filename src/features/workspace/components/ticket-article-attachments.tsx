@@ -1,8 +1,12 @@
-import { Paperclip } from "lucide-react";
+import { Download, Paperclip } from "lucide-react";
+import { ticketAttachmentDownloadPath } from "@/core/ticket-attachments";
 import type { WorkspaceAttachment } from "@/features/tickets/workspace-adapter";
 
 type TicketArticleAttachmentsProps = {
+  articleExternalId: string;
   attachments: WorkspaceAttachment[];
+  helpdeskConnectionId?: string;
+  ticketExternalId: string;
 };
 
 const byteUnits = ["B", "KB", "MB", "GB"] as const;
@@ -33,7 +37,10 @@ function attachmentMeta(attachment: WorkspaceAttachment): string {
 }
 
 export function TicketArticleAttachments({
+  articleExternalId,
   attachments,
+  helpdeskConnectionId,
+  ticketExternalId,
 }: TicketArticleAttachmentsProps) {
   if (attachments.length === 0) {
     return null;
@@ -53,18 +60,43 @@ export function TicketArticleAttachments({
       <ul className="grid gap-1.5">
         {attachments.map((attachment) => {
           const meta = attachmentMeta(attachment);
-
-          return (
-            <li
-              className="flex min-w-0 items-center justify-between gap-3 rounded border border-slate-200 bg-white/70 px-2 py-1.5 text-xs"
-              key={attachment.id}
-            >
+          const content = (
+            <>
               <span className="min-w-0 truncate font-medium text-slate-900">
                 {attachment.fileName}
               </span>
-              {meta ? (
-                <span className="shrink-0 text-slate-500">{meta}</span>
-              ) : null}
+              <span className="flex shrink-0 items-center gap-2 text-slate-500">
+                {meta ? <span>{meta}</span> : null}
+                {helpdeskConnectionId ? (
+                  <Download aria-hidden="true" className="size-3.5" />
+                ) : null}
+              </span>
+            </>
+          );
+
+          return (
+            <li
+              className="min-w-0"
+              key={attachment.id}
+            >
+              {helpdeskConnectionId ? (
+                <a
+                  aria-label={`Download ${attachment.fileName}`}
+                  className="flex min-w-0 items-center justify-between gap-3 rounded border border-slate-200 bg-white/70 px-2 py-1.5 text-xs hover:border-indigo-300 hover:bg-indigo-50/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  download={attachment.fileName}
+                  href={ticketAttachmentDownloadPath(helpdeskConnectionId, {
+                    articleExternalId,
+                    attachmentExternalId: attachment.id,
+                    ticketExternalId,
+                  })}
+                >
+                  {content}
+                </a>
+              ) : (
+                <div className="flex min-w-0 items-center justify-between gap-3 rounded border border-slate-200 bg-white/70 px-2 py-1.5 text-xs">
+                  {content}
+                </div>
+              )}
             </li>
           );
         })}

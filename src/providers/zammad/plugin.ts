@@ -33,6 +33,7 @@ import {
   markZammadNotificationsRead,
 } from "./notifications";
 import { getZammadTicketInlineImage } from "./ticket-inline-images";
+import { getZammadTicketAttachment } from "./ticket-attachments";
 import { zammadConnectionIdentity } from "./connection-identity";
 import { parseZammadTaskbar } from "./taskbar-schema";
 import {
@@ -138,6 +139,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "ticket:group",
     "ticket:group-count",
     "ticket:detail",
+    "ticket:attachments",
     "ticket:inline-images",
     "ticket:links",
     "ticket:subscription",
@@ -180,6 +182,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   validateConnection: validateBasicAuth,
   listTickets: listZammadTickets,
   getTicketDetail: getZammadTicketDetail,
+  getTicketAttachment: getZammadTicketAttachment,
   getTicketInlineImage: getZammadTicketInlineImage,
   updateTicketMetadata: updateZammadTicketMetadata,
   addTicketInternalNote: addZammadTicketInternalNote,

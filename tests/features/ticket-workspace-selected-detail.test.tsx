@@ -47,7 +47,7 @@ describe("TicketWorkspace selected detail", () => {
       cc: [{ label: "Billing Team", email: "billing@example.com" }],
       attachments: [
         {
-          id: "attachment-1",
+          id: "91",
           fileName: "error-report.pdf",
           contentType: "application/pdf",
           byteSize: 3492,
@@ -72,7 +72,12 @@ describe("TicketWorkspace selected detail", () => {
     render(
       <TicketWorkspace
         columns={defaultWorkspaceTicketColumns}
-        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        connections={[{
+          id: "workspace-1",
+          connectionId: "connection-1",
+          label: "Support",
+          active: true,
+        }]}
         detail={detailProps.detail}
         detailResult={detailProps.detailResult}
         listResult={availableList}
@@ -112,14 +117,16 @@ describe("TicketWorkspace selected detail", () => {
       "https://example.com/docs",
     );
     expect(screen.getByText("Attachments (1)")).toBeInTheDocument();
-    expect(screen.getByText("error-report.pdf")).toBeInTheDocument();
     expect(screen.getByText("application/pdf - 3.4 KB")).toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: "error-report.pdf" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("link", { name: "Download error-report.pdf" }),
+    ).toHaveAttribute(
+      "href",
+      "/api/helpdesk-connections/connection-1/tickets/ticket-1/articles/article-ticket-1/attachments/91",
+    );
     expect(
-      screen.queryByRole("button", { name: /error-report\.pdf/u }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("link", { name: "Download error-report.pdf" }),
+    ).toHaveAttribute("download", "error-report.pdf");
     expect(screen.getByText("Explore these links:").parentElement).toHaveClass(
       "whitespace-normal",
     );

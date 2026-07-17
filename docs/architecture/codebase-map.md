@@ -67,6 +67,9 @@ added, moved, renamed, or removed.
     - `src/app/api/helpdesk-connections/[connectionId]/tickets/[ticketExternalId]/articles/[articleExternalId]/inline-images/[attachmentExternalId]`:
       authenticated, private/no-store provider-neutral inline ticket-image route with bounded path
       validation and safe response headers.
+    - `src/app/api/helpdesk-connections/[connectionId]/tickets/[ticketExternalId]/articles/[articleExternalId]/attachments/[attachmentExternalId]`:
+      authenticated, private/no-store provider-neutral visible-attachment download route with safe
+      content-disposition, bounded path validation, and defensive response headers.
     - `globals.css` (`src/app/globals.css`): global Tailwind import, base document styles, and
       default plain-anchor color.
     - `layout.tsx` (`src/app/layout.tsx`): root document shell and metadata.
@@ -147,6 +150,8 @@ added, moved, renamed, or removed.
       mention lookup input and option contracts.
     - `ticket-inline-images.ts` (`src/core/ticket-inline-images.ts`): provider-neutral inline raster
       locator, safe MIME, byte result, and same-origin route-path contracts.
+    - `ticket-attachments.ts` (`src/core/ticket-attachments.ts`): provider-neutral visible-file
+      locator, bounded byte result, and authenticated same-origin download-path contracts.
     - `ticket-replies.ts` (`src/core/ticket-replies.ts`): focused provider-neutral contextual
       reply intent, channel, recipient, article context, policy, and send-input contracts.
     - `ticket-forwards.ts` (`src/core/ticket-forwards.ts`): provider-neutral public-email forward
@@ -404,6 +409,9 @@ added, moved, renamed, or removed.
         lookup, base URL revalidation, and setup timing for ticket reads and metadata mutations.
       - `inline-image-service.ts` (`src/features/tickets/inline-image-service.ts`): authenticated
         provider-neutral inline-image capability dispatch using the article's explicit connection.
+      - `attachment-service.ts` (`src/features/tickets/attachment-service.ts`): authenticated
+        provider-neutral visible-attachment capability dispatch using the article's explicit
+        personal connection.
       - `date-time-format.ts` (`src/features/tickets/date-time-format.ts`): shared workspace
         date/time formatter for provider-backed ticket table, detail, thread, and metadata display
         strings.
@@ -553,9 +561,9 @@ added, moved, renamed, or removed.
           (`src/features/workspace/components/ticket-ai-summary-panel.tsx`): selected-ticket AI
           Assistant summary panel that triggers generation only from an explicit user action.
         - `ticket-article-attachments.tsx`
-          (`src/features/workspace/components/ticket-article-attachments.tsx`): read-only article
-          attachment metadata presentation. It displays provider-neutral filename, content type, and
-          byte size values only; downloads and previews are intentionally not exposed here.
+          (`src/features/workspace/components/ticket-article-attachments.tsx`): article attachment
+          metadata presentation and keyboard-accessible authenticated download links. It displays
+          provider-neutral filename, content type, and byte size without exposing provider URLs.
         - `ticket-article-body-html.ts`
           (`src/features/workspace/components/ticket-article-body-html.ts`): sanitized article HTML
           line extraction, plain-text conversion, trailing-empty-block trimming, and open-tag repair
@@ -1103,6 +1111,9 @@ added, moved, renamed, or removed.
         included originals.
       - `ticket-inline-images.ts` (`src/providers/zammad/ticket-inline-images.ts`): fresh
         ticket/article ownership and inline-resource revalidation plus bounded raster-byte reads.
+      - `ticket-attachments.ts` (`src/providers/zammad/ticket-attachments.ts`): fresh
+        ticket/article ownership and visible-file classification revalidation plus bounded
+        attachment-byte reads.
       - `reply-policy.ts` (`src/providers/zammad/reply-policy.ts`): active Zammad system email
         address lookup with fail-closed optional context behavior.
       - `schemas.ts` (`src/providers/zammad/schemas.ts`): Zammad raw ticket, article, expanded
