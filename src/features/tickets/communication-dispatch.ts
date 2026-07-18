@@ -59,6 +59,15 @@ function replyFailureReason(error: ProviderError) {
   if (error.diagnosticCode === "reply-context-unavailable") {
     return "reply-context-unavailable" as const;
   }
+  if (error.diagnosticCode === "reply-history-context-stale") {
+    return "reply-history-context-stale" as const;
+  }
+  if (error.diagnosticCode === "reply-history-too-large") {
+    return "reply-history-too-large" as const;
+  }
+  if (error.diagnosticCode === "reply-history-unavailable") {
+    return "reply-history-unavailable" as const;
+  }
   if (error.diagnosticCode === "unsupported-reply-intent") {
     return "unsupported-reply-intent" as const;
   }

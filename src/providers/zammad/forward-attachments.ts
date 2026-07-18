@@ -10,7 +10,6 @@ import type { ZammadArticle } from "./schemas";
 const maxAttachmentBytes = 10 * 1024 * 1024;
 const maxTotalAttachmentBytes = 25 * 1024 * 1024;
 const maxForwardAttachments = 25;
-const maxInlineResources = 25;
 
 type DownloadedAttachment = {
   attachment: ZammadArticleAttachment;
@@ -102,33 +101,20 @@ function selectedVisibleAttachments(
 export async function prepareZammadForwardAttachments(input: {
   article: ZammadArticle;
   context: ProviderContext;
-  includeOriginal: boolean;
   selectedIds: string[];
   ticketId: number;
 }): Promise<{
   attachments: Array<{ data: string; filename: string; "mime-type": string }>;
-  inlineImages: Map<string, string>;
 }> {
   const classified = classifyZammadArticleAttachments(input.article);
   const selected = selectedVisibleAttachments(classified.visible, input.selectedIds);
-  const inline = input.includeOriginal
-    ? classified.inline.filter((attachment) =>
-        safeContentType(attachment).startsWith("image/"),
-      )
-    : [];
-  if (inline.length > maxInlineResources) {
-    throw mismatch("forward-attachments-too-large");
-  }
-
-  const requested = [...selected, ...inline];
   const downloads = await downloadAttachments(
     input.context,
     input.ticketId,
     input.article.id,
-    requested,
+    selected,
   );
   const selectedIds = new Set(selected.map((attachment) => attachment.id));
-  const inlineIds = new Set(inline.map((attachment) => attachment.id));
   const attachments = downloads.flatMap(({ attachment, data }) =>
     selectedIds.has(attachment.id)
       ? [{
@@ -138,15 +124,5 @@ export async function prepareZammadForwardAttachments(input: {
         }]
       : [],
   );
-  const inlineImages = new Map<string, string>();
-  for (const { attachment, data } of downloads) {
-    if (!inlineIds.has(attachment.id)) continue;
-    const contentType = safeContentType(attachment);
-    inlineImages.set(
-      String(attachment.id),
-      `data:${contentType};base64,${Buffer.from(data).toString("base64")}`,
-    );
-  }
-
-  return { attachments, inlineImages };
+  return { attachments };
 }

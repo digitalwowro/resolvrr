@@ -1,11 +1,11 @@
 import {
   normalizeLine,
   plainTextFromHtml,
-} from "./ticket-article-body-html";
+} from "./ticket-article-content-html";
 import type {
   CollapseCandidate,
   HtmlLine,
-} from "./ticket-article-body-trim-types";
+} from "./ticket-article-content-types";
 
 type HtmlBlockRange = {
   end: number;

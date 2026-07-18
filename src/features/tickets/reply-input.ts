@@ -5,6 +5,9 @@ import type {
 } from "@/core/ticket-replies";
 import type { TicketCommunicationBodyFormat } from "@/core/tickets";
 import type { TicketSignatureSelection } from "@/core/ticket-signatures";
+import {
+  isTicketConversationHistoryScope,
+} from "@/core/ticket-conversation-history";
 
 const addressSchema = z.string().trim().toLowerCase().max(254).email();
 
@@ -51,16 +54,29 @@ export function customerReplyInput(input: {
   body: string;
   bodyFormat: TicketCommunicationBodyFormat;
   cc: string[];
+  conversationHistoryContextVersion?: string;
+  conversationHistoryScope?: unknown;
   contextVersion: string;
+  includeConversationHistory: boolean;
   intent: string;
   sourceArticleExternalId: string;
   signatureContext?: TicketSignatureSelection;
   to: string[];
 }): TicketCustomerReplyInput | undefined {
   const recipients = normalizedReplyRecipients(input.to, input.cc);
+  const conversationHistoryScope = isTicketConversationHistoryScope(
+    input.conversationHistoryScope,
+  )
+    ? input.conversationHistoryScope
+    : undefined;
   if (
     !input.body ||
     !input.contextVersion.trim() ||
+    (input.includeConversationHistory &&
+      (
+        !input.conversationHistoryContextVersion?.trim() ||
+        !conversationHistoryScope
+      )) ||
     !input.sourceArticleExternalId.trim() ||
     !isTicketReplyIntent(input.intent) ||
     !recipients
@@ -71,10 +87,20 @@ export function customerReplyInput(input: {
     body: input.body,
     bodyFormat: input.bodyFormat,
     cc: recipients.cc,
+    ...(input.includeConversationHistory
+      ? {
+          conversationHistoryContextVersion:
+            input.conversationHistoryContextVersion?.trim(),
+          conversationHistoryScope,
+        }
+      : {}),
     contextVersion: input.contextVersion.trim(),
+    includeConversationHistory: input.includeConversationHistory,
     intent: input.intent,
     sourceArticleExternalId: input.sourceArticleExternalId.trim(),
-    signatureContext: input.signatureContext,
+    ...(input.signatureContext
+      ? { signatureContext: input.signatureContext }
+      : {}),
     to: recipients.to,
   };
 }

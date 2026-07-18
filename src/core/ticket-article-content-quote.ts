@@ -1,8 +1,8 @@
-import { normalizeLine } from "./ticket-article-body-html";
+import { normalizeLine } from "./ticket-article-content-html";
 import type {
   CollapseCandidate,
   HtmlLine,
-} from "./ticket-article-body-trim-types";
+} from "./ticket-article-content-types";
 
 export const STRUCTURAL_QUOTE_PATTERNS = [
   /<blockquote\b/i,

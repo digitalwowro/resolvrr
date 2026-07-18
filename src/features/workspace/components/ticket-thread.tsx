@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { TicketReplyIntent } from "@/core/ticket-replies";
+import type { TicketConversationHistoryContext } from "@/core/ticket-conversation-history";
 import type { AiRephraseStyleOption, RewriteDraftAction } from "@/features/ai";
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
@@ -14,6 +15,7 @@ import { TicketThreadArticle } from "./ticket-thread-article";
 import { TicketInlineCommunicationComposer } from "./ticket-inline-communication-composer";
 import { TicketReplyRecipientEditor } from "./ticket-reply-recipient-editor";
 import { TicketForwardOptions } from "./ticket-forward-options";
+import { TicketThreadConversationHistory } from "./ticket-thread-conversation-history";
 import { restoredCommunicationDraft } from "./ticket-communication-draft-restore";
 import {
   clearPersistedCommunicationDrafts,
@@ -31,6 +33,7 @@ type TicketThreadProps = {
   articles: WorkspaceArticle[];
   communicationDraft?: TicketCommunicationDraft;
   communicationCapabilities: TicketCommunicationCapabilities;
+  conversationHistory?: TicketConversationHistoryContext;
   disabled: boolean;
   draftPersistenceScope?: CommunicationDraftPersistenceScope;
   helpdeskConnectionId?: string;
@@ -52,6 +55,7 @@ export function TicketThread({
   articles,
   communicationDraft,
   communicationCapabilities,
+  conversationHistory,
   disabled,
   draftPersistenceScope,
   helpdeskConnectionId,
@@ -100,14 +104,24 @@ export function TicketThread({
     restoredScopeRef.current = scopeKey;
     void loadPersistedCommunicationDrafts(draftPersistenceScope).then((records) => {
       if (cancelled || draftRef.current || !records[0]) return;
-      const draft = restoredCommunicationDraft(records[0], articles, communicationCapabilities);
+      const draft = restoredCommunicationDraft(
+        records[0],
+        articles,
+        communicationCapabilities,
+        conversationHistory,
+      );
       if (!draft) return;
       setSuggestions(records[0].suggestions);
       setDraftRestored(true);
       onDraftChangeRef.current(draft);
     });
     return () => { cancelled = true; };
-  }, [articles, communicationCapabilities, draftPersistenceScope]);
+  }, [
+    articles,
+    communicationCapabilities,
+    conversationHistory,
+    draftPersistenceScope,
+  ]);
 
   function persist(
     draft: TicketCommunicationDraft,
@@ -122,11 +136,21 @@ export function TicketThread({
         : undefined,
       bodyHtml: draft.body,
       cc: draft.kind !== "internal-comment" ? draft.cc : undefined,
+      conversationHistoryContextVersion: draft.kind === "customer-reply"
+        ? draft.conversationHistoryContextVersion
+        : draft.kind === "customer-forward"
+          ? draft.conversationHistoryContextVersion
+          : undefined,
+      conversationHistoryScope: draft.kind === "internal-comment"
+        ? undefined
+        : draft.conversationHistoryScope,
       contextVersion: draft.kind !== "internal-comment"
         ? draft.contextVersion
         : undefined,
       intent: draft.kind === "customer-reply" ? draft.intent : undefined,
-      includeOriginal: draft.kind === "customer-forward" ? draft.includeOriginal : undefined,
+      includeConversationHistory: draft.kind === "internal-comment"
+        ? undefined
+        : draft.includeConversationHistory,
       kind: draft.kind,
       recipientEdited: draft.kind === "customer-reply"
         ? replyRecipientsEdited(draft)
@@ -160,7 +184,6 @@ export function TicketThread({
   const mode = communicationDraft?.kind === "internal-comment"
     ? "comment"
     : communicationDraft?.kind === "customer-forward" ? "forward" : "reply";
-
   return (
     <section className="pr-0">
       {communicationDraft ? (
@@ -206,6 +229,16 @@ export function TicketThread({
           ) : null}
           <TicketInlineCommunicationComposer
             body={communicationDraft.body}
+            conversationHistoryFooter={
+              communicationDraft.kind !== "internal-comment" ? (
+                <TicketThreadConversationHistory
+                  articles={articles}
+                  disabled={disabled}
+                  draft={communicationDraft}
+                  onChange={changeDraft}
+                />
+              ) : undefined
+            }
             disabled={disabled}
             draftRestored={draftRestored}
             editorId={communicationDraft.kind !== "internal-comment"

@@ -57,8 +57,7 @@ export function TicketMetadataEditorState({
   identityVersion,
 }: TicketMetadataEditorStateProps) {
   const router = useRouter();
-  const refreshSavedDetail =
-    onMetadataSavedDetailRefresh ?? noopMetadataSavedDetailRefresh;
+  const refreshSavedDetail = onMetadataSavedDetailRefresh ?? noopMetadataSavedDetailRefresh;
   const [renderedBaseline, setRenderedBaseline] = useState<SelectedTicketDraft>(loadedBaseline);
   const [baseline, setBaseline] = useState<SelectedTicketDraft>(loadedBaseline);
   const [draft, setDraft] = useState<SelectedTicketDraft>(metadataDraftFromBaseline(loadedBaseline));
@@ -116,17 +115,14 @@ export function TicketMetadataEditorState({
     if (!canUpdate) {
       return;
     }
-
     const updatePayload = metadataDraftUpdatePayload(currentBaseline, currentDraft);
     if (!updatePayload) {
       return;
     }
     const submittedCommunication = Boolean(updatePayload.communication);
     const submittedArticleCount = detail.articles.length;
-
     setSaving(true);
     setMutationResult({ status: "idle" });
-
     void updateTicketMetadataAction(updatePayload)
       .then((result) => {
         setMutationResult(result);
@@ -211,7 +207,6 @@ export function TicketMetadataEditorState({
       .catch(() => setMutationResult(actionErrorState()))
       .finally(() => setSaving(false));
   }
-
   return (
     <>
       <section
@@ -227,6 +222,7 @@ export function TicketMetadataEditorState({
             articles={detail.articles}
             communicationDraft={currentDraft.communication}
             communicationCapabilities={communicationCapabilities}
+            conversationHistory={detail.replyPolicy?.conversationHistory}
             disabled={saving}
             draftPersistenceScope={draftPersistenceScope}
             helpdeskConnectionId={helpdeskConnectionId}
@@ -279,12 +275,16 @@ export function TicketMetadataEditorState({
         onComment={communicationSelection.requestComment}
         onDiscard={discardChanges}
         onForward={() => {
-          if (latestForwardSource) communicationSelection.requestForward(latestForwardSource);
+          if (!latestForwardSource) return;
+          communicationSelection.requestForward(
+            latestForwardSource, detail.replyPolicy?.conversationHistory,
+          );
         }}
         onReply={(intent) => {
-          if (latestReplySource) {
-            communicationSelection.requestReply(latestReplySource, intent);
-          }
+          if (!latestReplySource) return;
+          communicationSelection.requestReply(
+            latestReplySource, intent, detail.replyPolicy?.conversationHistory,
+          );
         }}
         onUpdate={submitChanges}
         saving={saving}

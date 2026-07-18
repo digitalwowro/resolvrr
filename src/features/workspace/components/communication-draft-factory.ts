@@ -1,4 +1,9 @@
-import type { TicketReplyIntent } from "@/core/ticket-replies";
+import type {
+  TicketReplyIntent,
+} from "@/core/ticket-replies";
+import type {
+  TicketConversationHistoryContext,
+} from "@/core/ticket-conversation-history";
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
 import type {
   TicketCustomerForwardDraft,
@@ -8,6 +13,7 @@ import type {
 export function replyDraftFromArticle(
   article: WorkspaceArticle,
   intent: TicketReplyIntent,
+  conversationHistory?: TicketConversationHistoryContext,
 ): TicketCustomerReplyDraft | undefined {
   const context = article.replyContext;
   if (!context?.availableIntents.includes(intent)) {
@@ -22,9 +28,14 @@ export function replyDraftFromArticle(
   return {
     body: "",
     cc,
+    conversationHistoryContextVersion: conversationHistory?.contextVersion,
+    conversationHistoryMessageCount: conversationHistory?.messageCount,
+    conversationHistoryScope: conversationHistory?.scope,
     contextVersion: context.contextVersion,
     defaultCc: [...cc],
+    defaultIncludeConversationHistory: Boolean(conversationHistory),
     defaultTo: [...to],
+    includeConversationHistory: Boolean(conversationHistory),
     intent,
     kind: "customer-reply",
     sourceArticleExternalId: context.sourceArticleExternalId,
@@ -42,6 +53,7 @@ export function latestReplyableArticle(
 
 export function forwardDraftFromArticle(
   article: WorkspaceArticle,
+  conversationHistory?: TicketConversationHistoryContext,
 ): TicketCustomerForwardDraft | undefined {
   const context = article.forwardContext;
   if (!context) return undefined;
@@ -50,13 +62,16 @@ export function forwardDraftFromArticle(
     attachmentExternalIds,
     body: "",
     cc: [],
+    conversationHistoryContextVersion: conversationHistory?.contextVersion,
+    conversationHistoryMessageCount: conversationHistory?.messageCount,
+    conversationHistoryScope: conversationHistory?.scope,
     contextVersion: context.contextVersion,
     defaultAttachmentExternalIds: [...attachmentExternalIds],
     defaultCc: [],
-    defaultIncludeOriginal: true,
+    defaultIncludeConversationHistory: Boolean(conversationHistory),
     defaultSubject: context.subject,
     defaultTo: [],
-    includeOriginal: true,
+    includeConversationHistory: Boolean(conversationHistory),
     kind: "customer-forward",
     sourceArticleExternalId: context.sourceArticleExternalId,
     subject: context.subject,

@@ -265,6 +265,7 @@ describe("Zammad ticket article mutations", () => {
         "42",
         {
           body: "Thanks for the report.", cc: [], contextVersion: "v1",
+          includeConversationHistory: false,
           intent: "reply", sourceArticleExternalId: "1", to: ["customer@example.com"],
         },
       ),
@@ -282,6 +283,7 @@ describe("Zammad ticket article mutations", () => {
         "ticket-42",
         {
           body: "Thanks for the report.", cc: [], contextVersion: "v1",
+          includeConversationHistory: false,
           intent: "reply", sourceArticleExternalId: "1", to: ["customer@example.com"],
         },
       ),

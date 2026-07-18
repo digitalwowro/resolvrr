@@ -79,6 +79,7 @@ export function metadataDraftKey(draft: SelectedTicketDraft): string {
       ? [
           draft.communication.sourceArticleExternalId,
           draft.communication.intent,
+          String(draft.communication.includeConversationHistory),
           draft.communication.to.join(","),
           draft.communication.cc.join(","),
         ].join(":")
@@ -90,7 +91,7 @@ export function metadataDraftKey(draft: SelectedTicketDraft): string {
           draft.communication.to.join(","),
           draft.communication.cc.join(","),
           draft.communication.attachmentExternalIds.join(","),
-          String(draft.communication.includeOriginal),
+          String(draft.communication.includeConversationHistory),
         ].join(":")
       : "",
     draft.metadata.ownerExternalId ?? "",
@@ -211,6 +212,35 @@ export function validateMetadataDraft(
       valid: false,
     };
   }
+  const communicationIncludesHistory =
+    draft.communication?.kind === "customer-reply"
+      ? draft.communication.includeConversationHistory
+      : draft.communication?.kind === "customer-forward"
+        ? draft.communication.includeConversationHistory
+        : false;
+  const communicationHistoryContext =
+    draft.communication?.kind === "customer-reply" ||
+      draft.communication?.kind === "customer-forward"
+      ? {
+          contextVersion:
+            draft.communication.conversationHistoryContextVersion,
+          scope: draft.communication.conversationHistoryScope,
+        }
+      : undefined;
+  if (
+    dirtyFields.communication &&
+    draft.communication?.kind !== "internal-comment" &&
+    communicationIncludesHistory &&
+    (
+      !communicationHistoryContext?.contextVersion ||
+      !communicationHistoryContext.scope
+    )
+  ) {
+    return {
+      message: "Refresh the ticket before including conversation history.",
+      valid: false,
+    };
+  }
   if (
     dirtyFields.communication && draft.communication?.kind === "customer-forward" &&
     (!draft.communication.subject.trim() || /[\r\n\0]/u.test(draft.communication.subject))
@@ -219,7 +249,7 @@ export function validateMetadataDraft(
   }
   if (
     dirtyFields.communication && draft.communication?.kind === "customer-forward" &&
-    !draft.communication.includeOriginal && !communicationDraftBody(draft.communication)
+    !draft.communication.includeConversationHistory && !communicationDraftBody(draft.communication)
   ) {
     return { message: "Add a message or include the original email.", valid: false };
   }

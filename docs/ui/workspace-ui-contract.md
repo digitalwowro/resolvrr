@@ -266,12 +266,13 @@ above the newest article, so the thread never implies nested replies.
 
 Forward opens the same ticket-level composer with editable To/Cc and Subject.
 Recipients start empty, the subject defaults exactly to the source subject, and
-the agent can include or omit the original message and each provider-classified
-visible source attachment. Inline body resources and message alternatives never
-appear as attachment rows or choices. The original preview is read-only; only
-the agent introduction is editable and eligible for proofread/rephrase. No Bcc
-control is available. Forward-only controls use the same full-width content
-inset as To/Cc and the editor, without a separate section divider. Opening any
+the agent can include or omit the reviewed conversation history and each
+provider-classified visible source attachment. Inline body resources and
+message alternatives never appear as attachment rows or choices. The collapsed
+history preview is read-only; only the agent introduction is editable and
+eligible for proofread/rephrase. No Bcc control is available. Forward-only
+controls use the same full-width content inset as To/Cc and the editor, without
+a separate section divider. Opening any
 communication mode scrolls only the conversation region; it must never move the
 application viewport or create space below the sticky ticket action bar.
 
@@ -282,10 +283,18 @@ same-origin route; the UI never links directly to a provider URL. Filename,
 content type, and byte size remain visible, while inline body resources and
 message alternatives remain absent from the attachment list.
 
-The reply composer shows editable To and Cc chips and never Bcc. It validates
+The reply/forward composer shows editable To and Cc chips and never Bcc. It validates
 plain email additions, deduplicates across fields with To precedence, requires at
 least one recipient, and warns without blocking when a provider-managed address
-is manually added. Switching mode, source, or intent with body text or recipient
+is manually added. Reply, Reply all, and Forward include reviewed public
+conversation history by default when a provider history context is available.
+An article-level action includes only the selected source and earlier public
+messages; a sticky-footer action includes current public history through now.
+The option and a collapsed, read-only newest-first preview live inside the
+editor shell after the signature. The transcript contains public customer/agent messages,
+omits internal/system content, removes already-quoted history and signatures,
+preserves bounded inline images, and lists historical attachment names without
+reattaching them. Switching mode, source, or intent with body text or recipient
 edits requires confirmation. The editor toolbar is scoped to basic formatting:
 bold, italic, underline, ordered list, unordered list, and link, with undo/redo
 controls on the left. Proofread, Rephrase, and the non-functional AI Reply

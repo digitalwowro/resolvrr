@@ -37,6 +37,7 @@ describe("provider-neutral contextual reply input", () => {
       bodyFormat: "html" as const,
       cc: [],
       contextVersion: "version",
+      includeConversationHistory: false,
       intent: "reply",
       sourceArticleExternalId: "article-1",
       to: ["customer@example.com"],
@@ -45,5 +46,29 @@ describe("provider-neutral contextual reply input", () => {
     expect(customerReplyInput({ ...base, intent: "forward" })).toBeUndefined();
     expect(customerReplyInput({ ...base, to: [] })).toBeUndefined();
     expect(customerReplyInput({ ...base, contextVersion: "" })).toBeUndefined();
+  });
+
+  it("requires a reviewed context version when including conversation history", () => {
+    const base = {
+      body: "Reply",
+      bodyFormat: "html" as const,
+      cc: [],
+      contextVersion: "reply-version",
+      includeConversationHistory: true,
+      intent: "reply",
+      sourceArticleExternalId: "article-1",
+      to: ["customer@example.com"],
+    };
+
+    expect(customerReplyInput(base)).toBeUndefined();
+    expect(customerReplyInput({
+      ...base,
+      conversationHistoryContextVersion: "history-version",
+      conversationHistoryScope: "through-source",
+    })).toMatchObject({
+      conversationHistoryContextVersion: "history-version",
+      conversationHistoryScope: "through-source",
+      includeConversationHistory: true,
+    });
   });
 });

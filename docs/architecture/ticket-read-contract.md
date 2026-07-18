@@ -158,11 +158,11 @@ replies, and email forwarding through the active helpdesk provider:
 - `TicketInternalNoteInput.bodyFormat?: "plain" | "html"`
 - internal comment communication: `kind: "internal-comment"`, `body`, and
   optional `bodyFormat`.
-- customer reply communication: `kind: "customer-reply"`, `body`, optional
-  `bodyFormat`, source article external ID, `reply | reply-all` intent, opaque
-  context version, and explicit `to`/`cc` address arrays.
-- customer forward communication: `kind: "customer-forward"`, optional agent
-  introduction, source/context, subject, To/Cc, original choice, and attachment IDs.
+- customer reply: body/format, source ID, intent, context version, explicit
+  To/Cc, include-public-history choice, and reviewed history version/scope.
+- customer forward: optional introduction, source/context, subject, To/Cc,
+  include-public-history choice, reviewed history version/scope, and source
+  attachment IDs.
 
 All communication kinds are staged in the same selected-ticket draft
 as metadata, but exactly one discriminated communication is allowed per Update.
@@ -173,18 +173,15 @@ normalized and deduplicated with To precedence. Bcc, invalid/control-character
 addresses, empty recipient sets, unsupported payload keys, and provider raw
 fields are rejected at the server boundary. There is no Resolvrr recipient-count
 ceiling.
-
 Each reply-capable article may carry `TicketArticleReplyContext`: channel,
-available intents, defaults per intent, source article external ID, and an
-opaque version. Availability is dynamic per article and does not create new
-provider-wide capabilities. Detail loading derives all article contexts in one
-coordinated provider read. The footer uses the newest reply-capable public
-article and never skips backward merely to enable Reply all. An article hover
-action may intentionally select an older source.
-
+intents, defaults, source ID, opaque version, and optional history bounded
+through that article. Detail loading derives contexts in one provider read. The
+footer uses the newest source plus current history; an article action may select
+an older source and uses history only through it.
 Each public email article may carry `TicketArticleForwardContext` independently
-of Reply eligibility. Forward starts with empty recipients and the exact source
-subject. The server re-fetches the source and never trusts browser-rendered HTML.
+of Reply eligibility. Forward starts with empty recipients and the source
+subject. Article actions use history through that source; sticky actions use
+current history. The server re-fetches the source.
 
 The provider-neutral communication capabilities are:
 
@@ -219,14 +216,16 @@ fresh source-article From/To/Cc/Reply-To data, active system email addresses,
 sender role, and web/phone customer fallback rules. On send it re-fetches the
 ticket, source article, and system-address policy; verifies ticket ownership,
 visibility, channel, intent, and context version; then sends the user-reviewed
-normalized To/Cc set. Context lookup and version mismatches fail closed before
-POST. Delivery-uncertain POST failures are not retried automatically. Zammad raw
-article payload fields must not escape the provider folder.
-
+normalized To/Cc set. Included history is rebuilt from a fresh ticket-wide
+public communication read using the reviewed `through-source` or `current`
+scope; nested quotes/signatures and internal/system entries are excluded.
+Context/version mismatches fail closed before POST. Delivery-uncertain failures
+are not retried automatically. Zammad raw fields stay inside the provider.
 Forward creates one public Zammad email article on the same ticket, preserves the
 source subject by default, omits reply-threading headers, and safely handles the
-original plus bounded attachments. Only visible attachments are selectable;
-referenced inline images may be read provider-privately to preserve the original.
+reviewed conversation transcript plus bounded source attachments. Only visible
+source attachments are selectable; referenced transcript images may be read
+provider-privately.
 Zammad exclusively owns email delivery.
 
 Mutation results distinguish write failure from refresh failure:

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { zammadForwardBody } from "@/providers/zammad/forward-body";
 import { zammadOutboundBody } from "@/providers/zammad/outbound-signature";
 
 const signature = {
@@ -28,21 +27,14 @@ describe("Zammad outbound signature composition", () => {
   });
 
   it("places a forward signature before the forwarded message", () => {
-    const result = zammadForwardBody({
-      article: {
-        attachments: [], body: "<p>Original</p>", created_at: "2026-07-16T10:00:00Z",
-        from: "sender@example.com", id: 2, internal: false, sender: "Customer",
-        subject: "Subject", ticket_id: 1, to: "support@example.com", type: "email",
-      },
+    const result = zammadOutboundBody({
       body: "Please review",
       bodyFormat: "plain",
-      includeOriginal: true,
-      inlineImages: new Map(),
+      conversationHistoryHtml: "<blockquote>Conversation history</blockquote>",
       signature,
-      subject: "Fwd: Subject",
     });
     expect(result.body.indexOf("js-signatureMarker")).toBeLessThan(
-      result.body.indexOf("Forwarded message"),
+      result.body.indexOf("Conversation history"),
     );
   });
 });

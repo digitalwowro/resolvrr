@@ -9,12 +9,18 @@ const zammadSignatureMarkerPattern =
 const neutralSignatureBoundary =
   '<span data-resolvrr-signature-boundary="explicit"></span>';
 
+export function normalizeZammadSignatureBoundaries(html: string): string {
+  return html.replace(
+    zammadSignatureMarkerPattern,
+    neutralSignatureBoundary,
+  );
+}
+
 export function sanitizeZammadArticleBody(
   html: string,
   options?: ProviderHtmlSanitizationOptions,
 ): string {
-  return sanitizeProviderHtml(html, options).replace(
-    zammadSignatureMarkerPattern,
-    neutralSignatureBoundary,
+  return normalizeZammadSignatureBoundaries(
+    sanitizeProviderHtml(html, options),
   );
 }

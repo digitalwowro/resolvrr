@@ -20,6 +20,7 @@ export function replyInput(
     body,
     cc: [],
     contextVersion: "context-v1",
+    includeConversationHistory: false,
     intent: "reply",
     sourceArticleExternalId: "article-1",
     to: ["customer@example.com"],

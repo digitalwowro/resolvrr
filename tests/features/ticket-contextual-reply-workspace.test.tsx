@@ -1,14 +1,28 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { WorkspaceArticle } from "@/features/tickets";
-import { renderWorkspace } from "./ticket-communication-workspace-test-utils";
+import {
+  internalArticle,
+  renderWorkspace,
+} from "./ticket-communication-workspace-test-utils";
 import { selectedDetailProps } from "./ticket-workspace-test-utils";
 
 function articles(): WorkspaceArticle[] {
   const latest = selectedDetailProps().detail.articles[0]!;
+  if (!latest.replyContext) throw new Error("Expected latest reply context");
   return [
-    latest,
+    {
+      ...latest,
+      replyContext: {
+        ...latest.replyContext,
+        conversationHistory: {
+          contextVersion: "history-through-latest",
+          messageCount: 2,
+          scope: "through-source",
+        },
+      },
+    },
     {
       ...latest,
       id: "article-older",
@@ -17,6 +31,11 @@ function articles(): WorkspaceArticle[] {
       replyContext: {
         availableIntents: ["reply", "reply-all"],
         channel: "email",
+        conversationHistory: {
+          contextVersion: "history-through-older",
+          messageCount: 1,
+          scope: "through-source",
+        },
         contextVersion: "context-older",
         defaults: {
           reply: {
@@ -99,6 +118,94 @@ describe("TicketWorkspace contextual replies", () => {
       .toBeTruthy();
     expect(screen.getByText(/Replying to Maya Patel/u)).toBeInTheDocument();
     expect(screen.getByText("watcher@example.com")).toBeInTheDocument();
+  });
+
+  it("includes a collapsed, read-only public conversation transcript by default", async () => {
+    const user = userEvent.setup();
+    const update = vi.fn().mockResolvedValue({ status: "saved" });
+    renderWorkspace({
+      articles: [...articles(), internalArticle()],
+      customerReplies: true,
+      updateTicketMetadataAction: update,
+    });
+    await user.click(
+      within(screen.getAllByRole("article")[0]!)
+        .getByRole("button", { name: "Reply" }),
+    );
+    const composer = screen.getByRole("form", { name: "Reply composer" });
+    const include = within(composer).getByRole("checkbox", {
+      name: "Include conversation history",
+    });
+
+    expect(include).toBeChecked();
+    expect(within(composer).getByText("2 public messages · Read-only"))
+      .toBeInTheDocument();
+    expect(within(composer).getByText("Older message")).not.toBeVisible();
+
+    await user.click(
+      within(composer).getByText("Preview conversation history"),
+    );
+    expect(within(composer).getByText("Older message")).toBeVisible();
+    expect(within(composer).queryByText("Private investigation note."))
+      .not.toBeInTheDocument();
+
+    await user.click(include);
+    await user.type(
+      within(composer).getByRole("textbox", { name: "Reply" }),
+      "Send without history",
+    );
+    await user.click(screen.getByRole("button", { name: "Update" }));
+
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({
+      communication: expect.objectContaining({
+        includeConversationHistory: false,
+      }),
+    }));
+  });
+
+  it("bounds an older article reply but lets the sticky footer use current history", async () => {
+    const user = userEvent.setup();
+    const update = vi.fn().mockResolvedValue({ status: "saved" });
+    renderWorkspace({
+      articles: articles(),
+      conversationHistory: {
+        contextVersion: "history-current",
+        messageCount: 2,
+        scope: "current",
+      },
+      customerReplies: true,
+      updateTicketMetadataAction: update,
+    });
+    const renderedArticles = screen.getAllByRole("article", {
+      name: "Customer reply from Maya Patel",
+    });
+    await user.click(
+      within(renderedArticles[1]!).getByRole("button", { name: "Reply" }),
+    );
+    let composer = screen.getByRole("form", { name: "Reply composer" });
+    expect(within(composer).getByText("1 public message · Read-only"))
+      .toBeInTheDocument();
+    await user.click(within(composer).getByText("Preview conversation history"));
+    expect(within(composer).getByText("Older message")).toBeVisible();
+    expect(within(composer).queryByText("Hello there")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Close composer" }));
+    const footer = screen.getByRole("group", { name: "Ticket actions" });
+    await user.click(within(footer).getByRole("button", { name: "Reply" }));
+    composer = screen.getByRole("form", { name: "Reply composer" });
+    expect(within(composer).getByText("2 public messages · Read-only"))
+      .toBeInTheDocument();
+    await user.type(
+      within(composer).getByRole("textbox", { name: "Reply" }),
+      "Current reply",
+    );
+    await user.click(screen.getByRole("button", { name: "Update" }));
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({
+      communication: expect.objectContaining({
+        conversationHistoryContextVersion: "history-current",
+        conversationHistoryScope: "current",
+      }),
+    }));
   });
 
   it("confirms before replacing a dirty source and preserves the draft on cancel", async () => {

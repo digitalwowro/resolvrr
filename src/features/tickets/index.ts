@@ -26,6 +26,10 @@ export type {
   TicketArticleForwardContext,
   TicketCustomerForwardInput,
 } from "@/core/ticket-forwards";
+export type {
+  TicketConversationHistoryContext,
+  TicketConversationHistoryScope,
+} from "@/core/ticket-conversation-history";
 export {
   formatWorkspaceDateTime,
   formatWorkspaceRelativeTime,

@@ -167,11 +167,25 @@ warned system addresses. Failed revalidation produces no POST, while an
 uncertain POST result is non-retryable and must be verified from refreshed
 provider source.
 
+Reply, Reply all, and Forward may include a provider-derived public conversation
+transcript. The provider versions all eligible public customer/agent email, web,
+and phone articles during detail reads. Every contextual article action receives
+a `through-source` context containing only that article and earlier messages;
+sticky-footer actions receive a `current` context containing everything through
+now. At submit the provider re-reads the complete set, rebuilds the reviewed
+scope, rejects a stale history version, removes nested quotes and signatures
+with the shared provider-neutral content trimmer, preserves bounded referenced
+inline images, lists rather than reattaches historical files, and appends the
+newest-first read-only transcript after the current outbound signature.
+Internal notes, system events, and private articles never enter the transcript.
+Mention conversion applies only to the newly authored body.
+
 Zammad forwarding is independent of reply derivation. Any public email article
 may expose a provider-neutral forward context, including system-originated mail
 whose From/To/Reply-To values are all managed addresses. The provider freshly
 revalidates the ticket and exact source article, subject, recipients, context
-version, and selected attachment IDs before creating one email article. Zammad
+version, reviewed conversation-history scope/version, and selected source
+attachment IDs before creating one email article. Zammad
 attachment visibility mirrors its `attachmentsWithoutInline` behavior: exact
 raw CID or transformed inline-URL body references are excluded, while filenames,
 image MIME types, and inline disposition alone never hide a file. Hidden inline

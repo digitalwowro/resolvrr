@@ -19,7 +19,7 @@ function record(overrides: Partial<PersistedCommunicationDraft> = {}): Persisted
   return {
     attachmentExternalIds: ["91", "deleted"], bodyHtml: "<p>Intro</p>",
     cc: [], contextVersion: "fresh-v2", expiresAt: Date.now() + 1_000,
-    id: "draft", includeOriginal: true, kind: "customer-forward",
+    id: "draft", includeConversationHistory: true, kind: "customer-forward",
     scope: {
       ticketExternalId: "ticket-1", userId: "user-1", workspaceId: "workspace-1",
       helpdeskConnectionId: "connection-1", identityVersion: "identity-v1",
@@ -37,6 +37,8 @@ describe("customer forward draft restoration", () => {
       { customerForwards: true, customerReplies: true, internalNotes: true },
     )).toMatchObject({
       attachmentExternalIds: ["91"], contextVersion: "fresh-v2",
+      defaultIncludeConversationHistory: false,
+      includeConversationHistory: false,
       kind: "customer-forward", subject: "Reviewed subject",
       to: ["customer@example.com"],
     });
@@ -51,5 +53,35 @@ describe("customer forward draft restoration", () => {
       record(), [article()],
       { customerForwards: false, customerReplies: true, internalNotes: true },
     )).toBeUndefined();
+  });
+});
+
+describe("customer reply history draft restoration", () => {
+  it("uses a fresh history version while preserving the reviewed include choice", () => {
+    const source = article();
+    const contextVersion = source.replyContext?.contextVersion;
+    if (!contextVersion) throw new Error("Expected reply context");
+    const restored = restoredCommunicationDraft(
+      record({
+        contextVersion,
+        includeConversationHistory: false,
+        intent: "reply",
+        kind: "customer-reply",
+      }),
+      [source],
+      { customerForwards: true, customerReplies: true, internalNotes: true },
+      {
+        contextVersion: "fresh-history-v2",
+        messageCount: 1,
+        scope: "current",
+      },
+    );
+
+    expect(restored).toMatchObject({
+      conversationHistoryContextVersion: "fresh-history-v2",
+      defaultIncludeConversationHistory: true,
+      includeConversationHistory: false,
+      kind: "customer-reply",
+    });
   });
 });

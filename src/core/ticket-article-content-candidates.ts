@@ -1,14 +1,14 @@
-import { normalizeLine, plainTextFromHtml } from "./ticket-article-body-html";
+import { normalizeLine, plainTextFromHtml } from "./ticket-article-content-html";
 import {
   containsQuotedReply,
   findQuotedReplyCandidate,
-} from "./ticket-article-body-quote";
-import { findSignatureCandidate } from "./ticket-article-body-signature";
+} from "./ticket-article-content-quote";
+import { findSignatureCandidate } from "./ticket-article-content-signature";
 import type {
   ArticleBodyHiddenKind,
   CollapseCandidate,
   HtmlLine,
-} from "./ticket-article-body-trim-types";
+} from "./ticket-article-content-types";
 
 export function findArticleBodyCollapseCandidate(
   html: string,

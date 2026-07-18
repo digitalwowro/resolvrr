@@ -3,12 +3,6 @@ import type { AiSummaryCacheRepository } from "@/features/ai/summary-cache-repos
 import { cacheAgeBucket } from "@/telemetry/cache-age-bucket";
 import { prisma } from "./prisma";
 
-const summaryCacheTtlMs = 24 * 60 * 60 * 1000;
-
-function expiresAt(now: Date) {
-  return new Date(now.getTime() + summaryCacheTtlMs);
-}
-
 function identity(input: Parameters<AiSummaryCacheRepository["readSummary"]>[0]) {
   return {
     ai_summary_cache_identity: {
@@ -34,7 +28,6 @@ export const prismaAiSummaryCacheRepository: AiSummaryCacheRepository = {
       where: identity(input),
       select: {
         encryptedSummary: true,
-        expiresAt: true,
         fetchedAt: true,
         generatedAt: true,
         sourceArticleCount: true,
@@ -47,10 +40,6 @@ export const prismaAiSummaryCacheRepository: AiSummaryCacheRepository = {
     }
 
     const ageBucket = cacheAgeBucket({ fetchedAt: cached.fetchedAt, now });
-    if (cached.expiresAt <= now) {
-      return { ageBucket, status: "stale" };
-    }
-
     return {
       ageBucket,
       result: {
@@ -73,7 +62,6 @@ export const prismaAiSummaryCacheRepository: AiSummaryCacheRepository = {
       where: identity(input),
       create: {
         encryptedSummary: encryptSecret(input.result.summary, input.encryptionKey),
-        expiresAt: expiresAt(now),
         fetchedAt: now,
         generatedAt: new Date(input.result.generatedAt),
         helpdeskConnectionId: input.helpdeskConnectionId,
@@ -93,7 +81,6 @@ export const prismaAiSummaryCacheRepository: AiSummaryCacheRepository = {
       },
       update: {
         encryptedSummary: encryptSecret(input.result.summary, input.encryptionKey),
-        expiresAt: expiresAt(now),
         fetchedAt: now,
         generatedAt: new Date(input.result.generatedAt),
         sourceArticleCount: input.result.source.articleCount,

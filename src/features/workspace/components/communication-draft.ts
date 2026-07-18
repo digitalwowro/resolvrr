@@ -45,6 +45,9 @@ export function communicationDraftNeedsReplacementConfirmation(
   return Boolean(
     communicationDraftBody(draft) ||
       (draft?.kind === "customer-reply" && replyRecipientsEdited(draft)) ||
+      (draft?.kind === "customer-reply" &&
+        draft.includeConversationHistory !==
+          draft.defaultIncludeConversationHistory) ||
       (draft?.kind === "customer-forward" && forwardDraftEdited(draft)),
   );
 }
@@ -54,7 +57,7 @@ export function forwardDraftEdited(
 ): boolean {
   return replyRecipientsEdited(draft) ||
     draft.subject !== draft.defaultSubject ||
-    draft.includeOriginal !== draft.defaultIncludeOriginal ||
+    draft.includeConversationHistory !== draft.defaultIncludeConversationHistory ||
     !sameList(draft.attachmentExternalIds, draft.defaultAttachmentExternalIds);
 }
 

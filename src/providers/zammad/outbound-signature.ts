@@ -20,11 +20,13 @@ export function zammadOutboundSignatureHtml(
 export function zammadOutboundBody(input: {
   body: string;
   bodyFormat?: "plain" | "html";
+  conversationHistoryHtml?: string;
   signature?: ResolvedTicketSignature;
 }): { body: string; contentType: "text/html" | "text/plain" } {
   const body = input.body.trim();
   const signatureHtml = zammadOutboundSignatureHtml(input.signature);
-  if (!signatureHtml) {
+  const conversationHistoryHtml = input.conversationHistoryHtml ?? "";
+  if (!signatureHtml && !conversationHistoryHtml) {
     return {
       body,
       contentType: input.bodyFormat === "html" ? "text/html" : "text/plain",
@@ -33,5 +35,8 @@ export function zammadOutboundBody(input: {
   const messageHtml = input.bodyFormat === "html"
     ? body
     : `<p>${escapeHtml(body).replace(/\n/gu, "<br>")}</p>`;
-  return { body: `${messageHtml}${signatureHtml}`, contentType: "text/html" };
+  return {
+    body: `${messageHtml}${signatureHtml}${conversationHistoryHtml}`,
+    contentType: "text/html",
+  };
 }

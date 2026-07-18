@@ -152,6 +152,11 @@ added, moved, renamed, or removed.
       locator, safe MIME, byte result, and same-origin route-path contracts.
     - `ticket-attachments.ts` (`src/core/ticket-attachments.ts`): provider-neutral visible-file
       locator, bounded byte result, and authenticated same-origin download-path contracts.
+    - `ticket-article-content*.ts` (`src/core/ticket-article-content*.ts`): shared provider-neutral
+      sanitized article quote/signature detection, visible-message extraction, and disclosure
+      result contracts used by both workspace rendering and outbound transcript assembly.
+    - `ticket-conversation-history.ts` (`src/core/ticket-conversation-history.ts`):
+      provider-neutral current/through-source history scope and opaque reviewed context contracts.
     - `ticket-replies.ts` (`src/core/ticket-replies.ts`): focused provider-neutral contextual
       reply intent, channel, recipient, article context, policy, and send-input contracts.
     - `ticket-forwards.ts` (`src/core/ticket-forwards.ts`): provider-neutral public-email forward
@@ -173,7 +178,8 @@ added, moved, renamed, or removed.
       Prisma-backed encrypted workspace/per-user AI settings and workspace-level AI user
       permission default repository.
     - `ai-summary-cache-repository.ts` (`src/data/ai-summary-cache-repository.ts`):
-      Prisma-backed encrypted selected-ticket AI summary output cache repository.
+      Prisma-backed encrypted, fingerprint-valid selected-ticket AI summary cache repository;
+      exact identity matches remain reusable regardless of age.
     - `auth-repository.ts` (`src/data/auth-repository.ts`): Prisma-backed auth repository.
     - `helpdesk-connections-repository.ts` (`src/data/helpdesk-connections-repository.ts`):
       Prisma-backed helpdesk connection, workspace membership, seeded rephrase style, and active
@@ -564,26 +570,9 @@ added, moved, renamed, or removed.
           (`src/features/workspace/components/ticket-article-attachments.tsx`): article attachment
           metadata presentation and keyboard-accessible authenticated download links. It displays
           provider-neutral filename, content type, and byte size without exposing provider URLs.
-        - `ticket-article-body-html.ts`
-          (`src/features/workspace/components/ticket-article-body-html.ts`): sanitized article HTML
-          line extraction, plain-text conversion, trailing-empty-block trimming, and open-tag repair
-          helpers for body trimming.
-        - `ticket-article-body-trim-candidates.ts`
-          (`src/features/workspace/components/ticket-article-body-trim-candidates.ts`): article
-          collapse orchestration and shared collapse eligibility checks.
-        - `ticket-article-body-quote.ts`
-          (`src/features/workspace/components/ticket-article-body-quote.ts`): quoted-reply and
-          forwarded-message structural and header detection.
-        - `ticket-article-body-signature.ts`
-          (`src/features/workspace/components/ticket-article-body-signature.ts`): precision-first,
-          language-neutral explicit-marker, delimiter, compact contact-block, and high-confidence
-          terminal rich-media table plus bounded compound-footer signature detection.
-        - `ticket-article-body-trim-types.ts`
-          (`src/features/workspace/components/ticket-article-body-trim-types.ts`): article body
-          trim result and candidate type contracts.
         - `ticket-article-body-trim.ts`
-          (`src/features/workspace/components/ticket-article-body-trim.ts`): public article body
-          trimming orchestrator used by the article body renderer.
+          (`src/features/workspace/components/ticket-article-body-trim.ts`): compatibility export
+          for the shared core article-content trimmer used by the article body renderer.
         - `ticket-article-body.tsx`
           (`src/features/workspace/components/ticket-article-body.tsx`): sanitized article HTML
           renderer with responsive images, neutral email-layout tables, horizontal overflow
@@ -612,7 +601,8 @@ added, moved, renamed, or removed.
           (`src/features/workspace/components/ticket-inline-communication-composer.tsx`):
           ticket-level Reply/Forward/Comment rich-text composer above the newest article. It
           keeps outbound signature previews visually inside the editor shell but read-only and
-          separate from the authored body, stages text in the selected-ticket draft, exposes
+          separate from the authored body, composes the optional reply-history footer, stages text
+          in the selected-ticket draft, exposes
           draft-only proofread/rephrase controls, and has no local Send/Cancel footer.
         - `ticket-ai-editor-toolbar.tsx`
           (`src/features/workspace/components/ticket-ai-editor-toolbar.tsx`): right-aligned
@@ -639,8 +629,11 @@ added, moved, renamed, or removed.
           versioned communication drafts only against fresh reply or forward article contexts.
         - `ticket-forward-options.tsx`
           (`src/features/workspace/components/ticket-forward-options.tsx`): editable forward
-          subject, include-original, attachment selection, and read-only original preview in the
-          shared full-width composer inset.
+          subject and source-attachment selection in the shared full-width composer inset.
+        - `ticket-conversation-history.tsx`
+          (`src/features/workspace/components/ticket-conversation-history.tsx`): shared default-on
+          Reply/Forward include control plus source-bounded or current, collapsed, read-only
+          public transcript preview inside the editor.
         - `use-communication-draft-scope.ts`
           (`src/features/workspace/components/use-communication-draft-scope.ts`): stable user,
           workspace, and final-ticket IndexedDB communication draft scope.
@@ -1105,13 +1098,14 @@ added, moved, renamed, or removed.
         list parsing, normalization, managed-address cleanup, and To/Cc deduplication.
       - `reply-context.ts` (`src/providers/zammad/reply-context.ts`): pure Zammad-native Reply and
         Reply all eligibility/default derivation plus opaque context versioning.
+      - `reply-conversation-history.ts` and `reply-conversation-history-images.ts`: public
+        ticket-wide history eligibility, `through-source`/`current` scoping and versioning,
+        deduplicated newest-first transcript assembly, attachment-name projection, and bounded
+        provider-private inline-image reads.
       - `forward-context.ts` (`src/providers/zammad/forward-context.ts`): pure public-email forward
         eligibility, exact-subject default, and opaque context version derivation.
-      - `forward-body.ts` (`src/providers/zammad/forward-body.ts`): provider-local forwarded
-        header/original-message assembly with safe inline-image substitution and sanitization.
       - `forward-attachments.ts` (`src/providers/zammad/forward-attachments.ts`): visible
-        attachment selection revalidation plus bounded provider-private inline-resource reads for
-        included originals.
+        source-attachment selection revalidation plus bounded provider-private file reads.
       - `ticket-inline-images.ts` (`src/providers/zammad/ticket-inline-images.ts`): fresh
         ticket/article ownership and inline-resource revalidation plus bounded raster-byte reads.
       - `ticket-attachments.ts` (`src/providers/zammad/ticket-attachments.ts`): fresh
@@ -1125,8 +1119,11 @@ added, moved, renamed, or removed.
         narrow exports for split Zammad article mutation modules.
       - `ticket-customer-reply-mutation.ts`
         (`src/providers/zammad/ticket-customer-reply-mutation.ts`): contextual customer reply
-        revalidation, recipient normalization, subject/thread headers, provider POST, and uncertain
-        delivery mapping.
+        recipient normalization, reviewed transcript assembly, subject/thread headers, provider
+        POST, and uncertain delivery mapping.
+      - `ticket-customer-reply-context.ts`
+        (`src/providers/zammad/ticket-customer-reply-context.ts`): fresh ticket/source/address
+        revalidation plus optional full public-history read and opaque-version comparison input.
       - `ticket-forward-mutation.ts` (`src/providers/zammad/ticket-forward-mutation.ts`): fresh
         forward source/attachment revalidation, bounded provider attachment reads, Zammad article
         creation without reply-threading headers, and uncertain-delivery mapping.
@@ -1308,6 +1305,8 @@ added, moved, renamed, or removed.
       migration for personal taskbar compatibility state and retryable operation outbox.
     - `prisma/migrations/20260717090000_add_taskbar_deactivate`: extends the durable taskbar
       operation kind with explicit List/ticket-deactivation intent.
+    - `prisma/migrations/20260718100000_make_ai_summaries_durable`: removes time-based expiry
+      from fingerprinted encrypted selected-ticket AI summaries while preserving existing rows.
     - `prisma/migrations/20260606003000_add_workspace_ai_settings`: contains related
       20260606003000_add_workspace_ai_settings files.
       - `migration.sql`

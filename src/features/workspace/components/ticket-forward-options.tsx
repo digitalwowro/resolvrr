@@ -2,7 +2,6 @@
 
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
 import type { TicketCustomerForwardDraft } from "./metadata-draft-types";
-import { TicketArticleBody } from "./ticket-article-body";
 
 export function TicketForwardOptions({
   article,
@@ -32,15 +31,6 @@ export function TicketForwardOptions({
           value={draft.subject}
         />
       </label>
-      <label className="flex w-full items-center gap-2 text-xs font-medium text-slate-700">
-        <input
-          checked={draft.includeOriginal}
-          disabled={disabled}
-          onChange={(event) => onChange({ ...draft, includeOriginal: event.currentTarget.checked })}
-          type="checkbox"
-        />
-        Include original message
-      </label>
       {article?.attachments.length ? (
         <fieldset className="space-y-1">
           <legend className="text-xs font-semibold text-slate-600">Attachments</legend>
@@ -61,16 +51,6 @@ export function TicketForwardOptions({
             </label>
           ))}
         </fieldset>
-      ) : null}
-      {draft.includeOriginal && article ? (
-        <details className="w-full rounded-md border border-slate-200 bg-white px-3 py-2">
-          <summary className="cursor-pointer text-xs font-medium text-slate-600">
-            Preview original message
-          </summary>
-          <div className="max-h-64 overflow-y-auto">
-            <TicketArticleBody html={article.sanitizedHtml} />
-          </div>
-        </details>
       ) : null}
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import type {
   AiRephraseStyleOption,
   RewriteDraftAction,
@@ -27,6 +27,7 @@ export type InlineCommunicationMode = "comment" | "forward" | "reply";
 
 type InlineCommunicationComposerProps = {
   body: string;
+  conversationHistoryFooter?: ReactNode;
   editorId: string;
   disabled: boolean;
   draftRestored?: boolean;
@@ -43,6 +44,7 @@ type InlineCommunicationComposerProps = {
 
 export function TicketInlineCommunicationComposer({
   body,
+  conversationHistoryFooter,
   editorId,
   disabled,
   draftRestored = false,
@@ -187,6 +189,12 @@ export function TicketInlineCommunicationComposer({
         preview={signaturePreview}
       />
     ) : undefined;
+  const readOnlyFooter = signatureFooter || conversationHistoryFooter ? (
+    <>
+      {signatureFooter}
+      {conversationHistoryFooter}
+    </>
+  ) : undefined;
 
   return (
     <div
@@ -207,7 +215,7 @@ export function TicketInlineCommunicationComposer({
         placeholder={mode === "comment"
           ? "Write a comment..."
           : mode === "forward" ? "Add a message..." : "Write a reply..."}
-        readOnlyFooter={signatureFooter}
+        readOnlyFooter={readOnlyFooter}
         value={body}
         ref={editorRef}
       />

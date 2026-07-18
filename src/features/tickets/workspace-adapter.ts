@@ -185,6 +185,7 @@ export function workspaceTicketDetail(
       cc: articleRecipients(article, "cc"),
       bcc: articleRecipients(article, "bcc"),
       direction: article.direction,
+      kind: article.kind,
       meta: articleMeta(article),
       sanitizedHtml: article.sanitizedHtml,
       visibility: article.visibility,
