@@ -29,7 +29,7 @@ export type AiSummaryCacheReadResult =
     }
   | {
       ageBucket?: string;
-      status: "miss" | "stale";
+      status: "miss";
     };
 
 export type AiSummaryCacheInvalidateInput = {

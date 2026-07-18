@@ -49,10 +49,13 @@ job queues remain out of scope. Read-only AI behavior is defined separately in
 - Ticket-level composer drafts are recovered locally in the browser. The
   versioned record is scoped by user, active workspace, and selected ticket. It
   may contain communication kind, source/intent/context version, reviewed To/Cc,
-  forward subject/options and attachment IDs, unsent body, and up to three draft
-  AI suggestions, and expires after a short
+  the conversation-history inclusion choice plus reviewed opaque version/scope,
+  forward subject and source attachment IDs, unsent body, and up to three draft AI
+  suggestions, and expires after a short
   retention window. Legacy comments restore directly; legacy replies restore
   only after their source receives a fresh valid context, using fresh defaults.
+  Ticket-history HTML is never persisted; it is re-derived from the current
+  provider-backed detail and rebuilt server-side immediately before the write.
   Mention tokens inside unsent HTML contain only a provider-neutral external
   user reference and the selected display label. Mention suggestion results are
   request-scoped lookups and are not cached or persisted as a directory.
@@ -190,8 +193,9 @@ Future cache implementations may tune exact TTLs, but the default classes are:
 - Thread snapshots: short lived, around 2-5 minutes.
 - Lookup snapshots: medium lived, around 15-60 minutes when the provider does
   not return an explicit freshness hint.
-- Generated AI output: selected-ticket summaries use a medium-lived encrypted
-  cache, currently around 24 hours, keyed by source/model/prompt identity.
+- Generated AI output: selected-ticket summaries use a durable encrypted cache
+  keyed by complete source/model/prompt identity. Age alone never hides an
+  exact matching summary.
 - Browser-local ticket composer drafts: short lived, currently around 7 days,
   and cleared earlier when the user closes the composer, discards changes,
   submits through Update, or closes the ticket tab.
@@ -199,6 +203,8 @@ Future cache implementations may tune exact TTLs, but the default classes are:
 Any TTL can be shortened for sensitive data, provider errors, permission
 changes, or high-churn views. Expired snapshots may be shown only as stale data
 when the UI clearly exposes that state and a refresh path exists.
+Generated summaries are the exception: fingerprint changes and explicit
+invalidation—not elapsed time—control whether they remain reusable.
 
 ## Invalidation Rules
 

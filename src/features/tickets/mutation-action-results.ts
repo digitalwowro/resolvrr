@@ -33,6 +33,12 @@ function communicationErrorMessage(reason: TicketMetadataMutationErrorReason): s
     "invalid-recipient": "Review the To and Cc recipients before updating.",
     "reply-context-stale": "The reply context changed. Reload the ticket and review recipients again.",
     "reply-context-unavailable": "The selected message can no longer be used for a reply.",
+    "reply-history-context-stale":
+      "The public conversation changed. Reload the ticket and review the history before updating.",
+    "reply-history-too-large":
+      "The conversation history is too large to include. Disable it or shorten the ticket before updating.",
+    "reply-history-unavailable":
+      "The public conversation history could not be loaded. Retry or disable it before updating.",
     "signature-context-stale": "The signature changed. Review the refreshed signature before updating.",
     "signature-context-unavailable": "The configured signature could not be loaded. Retry before updating.",
     "forward-context-stale": "The source message changed. Reload the ticket and review the forward again.",

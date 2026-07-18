@@ -95,6 +95,7 @@ export const zammadArticleSchema = z
     in_reply_to: z.string().nullish(),
     references: zammadStringListSchema,
     body: z.string().nullish(),
+    content_type: z.string().nullish(),
     created_at: z.string().nullish(),
     updated_at: z.string().nullish(),
     attachments: z.array(zammadAttachmentSchema).default([]),

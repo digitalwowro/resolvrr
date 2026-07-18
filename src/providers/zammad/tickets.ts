@@ -15,6 +15,9 @@ import { readZammadSecondaryTicketData } from "./ticket-secondary";
 import { readOptionalZammadReplyPolicy } from "./reply-policy";
 import { zammadReplyContext } from "./reply-context";
 import { zammadForwardContext } from "./forward-context";
+import {
+  zammadReplyConversationHistoryContext,
+} from "./reply-conversation-history";
 import { resolveZammadMergedTicket } from "./ticket-merge-resolution";
 import { isZammadMergedTicket } from "./ticket-state";
 import {
@@ -136,8 +139,22 @@ export async function getZammadTicketDetail(
         const mappedArticle = mapArticle(article, assets, {
           helpdeskConnectionId: context.connection.id,
         });
-        const forwardContext = zammadForwardContext(article, mappedTicket.title);
-        const replyContext = managedAddresses
+        const conversationHistory = zammadReplyConversationHistoryContext(
+          rawArticlePayload.articles,
+          "through-source",
+          article.id,
+        );
+        const rawForwardContext = zammadForwardContext(
+          article,
+          mappedTicket.title,
+        );
+        const forwardContext = rawForwardContext
+          ? {
+              ...rawForwardContext,
+              ...(conversationHistory ? { conversationHistory } : {}),
+            }
+          : undefined;
+        const rawReplyContext = managedAddresses
           ? zammadReplyContext({
               article,
               customer: mappedTicket.customer,
@@ -145,12 +162,22 @@ export async function getZammadTicketDetail(
               mappedArticle,
             })
           : undefined;
+        const replyContext = rawReplyContext
+          ? {
+              ...rawReplyContext,
+              ...(conversationHistory ? { conversationHistory } : {}),
+            }
+          : undefined;
         return {
           ...mappedArticle,
           ...(forwardContext ? { forwardContext } : {}),
           ...(replyContext ? { replyContext } : {}),
         };
       });
+      const conversationHistory = zammadReplyConversationHistoryContext(
+        rawArticlePayload.articles,
+        "current",
+      );
 
       return {
         ticket: mappedTicket,
@@ -161,8 +188,13 @@ export async function getZammadTicketDetail(
         links: secondary.links,
         subscription: secondary.subscription,
         measuredAt: new Date(),
-        ...(managedAddresses
-          ? { replyPolicy: { providerManagedAddresses: managedAddresses } }
+        ...(managedAddresses || conversationHistory
+          ? {
+              replyPolicy: {
+                ...(conversationHistory ? { conversationHistory } : {}),
+                providerManagedAddresses: managedAddresses ?? [],
+              },
+            }
           : {}),
       };
     },

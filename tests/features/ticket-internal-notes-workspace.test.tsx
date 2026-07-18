@@ -83,6 +83,7 @@ describe("TicketWorkspace ticket-level communication composer", () => {
         body: "Thanks for the report.",
         cc: [],
         contextVersion: "context-ticket-1",
+        includeConversationHistory: false,
         intent: "reply",
         kind: "customer-reply",
         signatureContext: { contextVersion: "signature-disabled", source: "none" },

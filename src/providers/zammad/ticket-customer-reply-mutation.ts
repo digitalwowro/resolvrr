@@ -2,27 +2,19 @@ import { z } from "zod";
 import { ProviderError, type ProviderContext } from "@/core/providers";
 import type { ProviderTicketCustomerReplyInput } from "@/core/ticket-replies";
 import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
-import { participantFromReference, relationId } from "./participants";
-import { zammadGetJson, zammadSendJson, zammadBaseUrl } from "./client";
-import { mapArticle, mapTicket } from "./mapping";
-import { readOptionalZammadReplyPolicy } from "./reply-policy";
-import { zammadReplyContext } from "./reply-context";
-import {
-  zammadArticleSchema,
-  zammadUserSchema,
-  type ZammadAssets,
-  type ZammadTicket,
-} from "./schemas";
+import { zammadSendJson } from "./client";
+import { zammadArticleSchema } from "./schemas";
 import { zammadTicketId } from "./ticket-id";
-import {
-  assertZammadTicketNotMerged,
-  zammadTicketPayload,
-} from "./ticket-mutation-preflight";
 import { zammadOutboundBody } from "./outbound-signature";
 import {
   rethrowZammadMentionWriteError,
   zammadMentionHtml,
 } from "./ticket-mentions";
+import { zammadReplyConversationHistoryHtml } from "./reply-conversation-history";
+import {
+  loadZammadReplyHistoryInlineImages,
+} from "./reply-conversation-history-images";
+import { freshZammadReplyContext } from "./ticket-customer-reply-context";
 
 const recipientSchema = z.string().trim().toLowerCase().max(254).email();
 
@@ -34,35 +26,6 @@ function providerMismatch(code?: string): ProviderError {
     undefined,
     code,
   );
-}
-
-async function customerForTicket(
-  context: ProviderContext,
-  ticket: ZammadTicket,
-  assets: ZammadAssets | undefined,
-) {
-  const customerId = relationId(ticket.customer_id);
-  let effectiveAssets = assets;
-  if (customerId && !effectiveAssets?.User?.[customerId]) {
-    const response = await zammadGetJson(
-      context,
-      `/api/v1/users/${encodeURIComponent(customerId)}`,
-    );
-    const user = zammadUserSchema.safeParse(response);
-    if (!user.success) {
-      throw providerMismatch();
-    }
-    effectiveAssets = {
-      ...effectiveAssets,
-      User: { ...effectiveAssets?.User, [customerId]: user.data },
-    };
-  }
-  return participantFromReference({
-    assets: effectiveAssets,
-    fallback: ticket.customer,
-    id: ticket.customer_id,
-    role: "customer",
-  });
 }
 
 function normalizedRecipients(input: ProviderTicketCustomerReplyInput) {
@@ -89,55 +52,6 @@ function normalizedRecipients(input: ProviderTicketCustomerReplyInput) {
   return { to, cc };
 }
 
-async function freshReplyContext(
-  context: ProviderContext,
-  ticketExternalId: string,
-  sourceArticleExternalId: string,
-) {
-  const ticketId = zammadTicketId(ticketExternalId);
-  const articleId = zammadTicketId(sourceArticleExternalId);
-  const [rawTicket, rawArticle, managedAddresses] = await Promise.all([
-    zammadGetJson(
-      context,
-      `/api/v1/tickets/${encodeURIComponent(String(ticketId))}?expand=true&full=true`,
-    ),
-    zammadGetJson(
-      context,
-      `/api/v1/ticket_articles/${encodeURIComponent(String(articleId))}`,
-    ),
-    readOptionalZammadReplyPolicy(context),
-  ]);
-  if (!managedAddresses) {
-    throw providerMismatch("reply-context-unavailable");
-  }
-  const payload = zammadTicketPayload(rawTicket);
-  assertZammadTicketNotMerged(payload);
-  const article = zammadArticleSchema.safeParse(rawArticle);
-  if (!article.success || article.data.ticket_id !== ticketId) {
-    throw providerMismatch("reply-context-unavailable");
-  }
-  const customer = await customerForTicket(
-    context,
-    payload.ticket,
-    payload.assets,
-  );
-  const mappedArticle = mapArticle(article.data, payload.assets);
-  const replyContext = zammadReplyContext({
-    article: article.data,
-    customer,
-    managedAddresses,
-    mappedArticle,
-  });
-  if (!replyContext) {
-    throw providerMismatch("reply-context-unavailable");
-  }
-  return {
-    article: article.data,
-    replyContext,
-    ticket: mapTicket(payload.ticket, zammadBaseUrl(context), payload.assets),
-  };
-}
-
 export async function addZammadTicketCustomerReply(
   context: ProviderContext,
   ticketExternalId: string,
@@ -145,6 +59,15 @@ export async function addZammadTicketCustomerReply(
 ): Promise<void> {
   if (!input.body.trim()) {
     throw new ProviderError("validation-failure", "Customer reply body is required.");
+  }
+  if (
+    input.includeConversationHistory &&
+    (
+      !input.conversationHistoryContextVersion ||
+      !input.conversationHistoryScope
+    )
+  ) {
+    throw providerMismatch("reply-history-unavailable");
   }
   const recipients = normalizedRecipients(input);
   const fresh = await measureTicketReadPhase(
@@ -154,10 +77,12 @@ export async function addZammadTicketCustomerReply(
       operation: "mutation",
       providerKey: context.connection.providerKey,
     },
-    () => freshReplyContext(
+    () => freshZammadReplyContext(
       context,
       ticketExternalId,
       input.sourceArticleExternalId,
+      input.includeConversationHistory,
+      input.conversationHistoryScope,
     ),
   );
   if (fresh.replyContext.contextVersion !== input.contextVersion) {
@@ -166,9 +91,49 @@ export async function addZammadTicketCustomerReply(
   if (!fresh.replyContext.availableIntents.includes(input.intent)) {
     throw providerMismatch("unsupported-reply-intent");
   }
+  let conversationHistoryHtml: string | undefined;
+  if (input.includeConversationHistory) {
+    const history = fresh.history;
+    if (
+      !input.conversationHistoryContextVersion ||
+      !history ||
+      history.context.contextVersion !==
+        input.conversationHistoryContextVersion
+    ) {
+      throw providerMismatch("reply-history-context-stale");
+    }
+    const inlineImages = await measureTicketReadPhase(
+      "provider-article-thread-request",
+      {
+        connectionId: context.connection.id,
+        operation: "mutation",
+        providerKey: context.connection.providerKey,
+      },
+      () => loadZammadReplyHistoryInlineImages({
+        articles: history.articles,
+        context,
+        scope: input.conversationHistoryScope,
+        sourceArticleId: fresh.article.id,
+        ticketId: zammadTicketId(ticketExternalId),
+      }),
+    );
+    conversationHistoryHtml = zammadReplyConversationHistoryHtml({
+      articles: history.articles,
+      assets: history.assets,
+      inlineImages,
+      scope: input.conversationHistoryScope,
+      sourceArticleId: fresh.article.id,
+    });
+  }
+  const authoredBody = zammadMentionHtml(
+    context,
+    input.body,
+    input.bodyFormat === "html" ? "html" : "plain",
+  );
   const outboundBody = zammadOutboundBody({
-    body: input.body,
+    body: authoredBody,
     bodyFormat: input.bodyFormat,
+    conversationHistoryHtml,
     signature: input.resolvedSignature,
   });
 
@@ -186,11 +151,7 @@ export async function addZammadTicketCustomerReply(
         to: recipients.to.join(", "),
         cc: recipients.cc.join(", "),
         subject: fresh.article.subject?.trim() || fresh.ticket.title,
-        body: zammadMentionHtml(
-          context,
-          outboundBody.body,
-          outboundBody.contentType === "text/html" ? "html" : "plain",
-        ),
+        body: outboundBody.body,
         content_type: outboundBody.contentType,
         type: "email",
         internal: false,

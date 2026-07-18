@@ -25,7 +25,10 @@ describe("selected ticket communication input", () => {
         bodyFormat: "html",
         body: '<div>See <a href="https://example.com/docs">docs</a>.</div>',
         cc: [" Watcher@Example.com ", "customer@example.com"],
+        conversationHistoryContextVersion: "history-v1",
+        conversationHistoryScope: "through-source",
         contextVersion: "context-v1",
+        includeConversationHistory: true,
         intent: "reply-all",
         kind: "customer-reply",
         sourceArticleExternalId: "article-1",
@@ -38,7 +41,10 @@ describe("selected ticket communication input", () => {
         body: '<p>See <a href="https://example.com/docs" rel="noreferrer noopener" target="_blank">docs</a>.</p>',
         bodyFormat: "html",
         cc: ["watcher@example.com"],
+        conversationHistoryContextVersion: "history-v1",
+        conversationHistoryScope: "through-source",
         contextVersion: "context-v1",
+        includeConversationHistory: true,
         intent: "reply-all",
         kind: "customer-reply",
         sourceArticleExternalId: "article-1",
@@ -89,8 +95,10 @@ describe("selected ticket communication input", () => {
         attachmentExternalIds: ["91", "91"],
         body: "",
         cc: ["Watcher@Example.com"],
+        conversationHistoryContextVersion: "history-v1",
+        conversationHistoryScope: "through-source",
         contextVersion: "forward-v1",
-        includeOriginal: true,
+        includeConversationHistory: true,
         kind: "customer-forward",
         sourceArticleExternalId: "500",
         subject: "Original subject",
@@ -100,7 +108,9 @@ describe("selected ticket communication input", () => {
     })).toMatchObject({
       communication: {
         attachmentExternalIds: ["91"], body: "", cc: ["watcher@example.com"],
-        contextVersion: "forward-v1", includeOriginal: true,
+        conversationHistoryContextVersion: "history-v1",
+        conversationHistoryScope: "through-source",
+        contextVersion: "forward-v1", includeConversationHistory: true,
         kind: "customer-forward", sourceArticleExternalId: "500",
         subject: "Original subject", to: ["customer@example.com"],
       },
@@ -111,7 +121,7 @@ describe("selected ticket communication input", () => {
   it("rejects forward Bcc, control-character subjects, and arbitrary attachment references", () => {
     const base = {
       attachmentExternalIds: ["91"], body: "", cc: [], contextVersion: "v1",
-      includeOriginal: true, kind: "customer-forward", sourceArticleExternalId: "500",
+      includeConversationHistory: true, kind: "customer-forward", sourceArticleExternalId: "500",
       subject: "Subject", to: ["customer@example.com"],
     };
     for (const communication of [
@@ -136,6 +146,22 @@ describe("selected ticket communication input", () => {
     expect(ticketMetadataMutationActionInput({
       communication: {
         body: "Comment", kind: "internal-comment", to: ["customer@example.com"],
+      },
+      ticketExternalId: "ticket-1",
+    })).toEqual({ status: "invalid", field: "communication" });
+  });
+
+  it("rejects conversation history without a reviewed history context", () => {
+    expect(ticketMetadataMutationActionInput({
+      communication: {
+        body: "Reply",
+        cc: [],
+        contextVersion: "v1",
+        includeConversationHistory: true,
+        intent: "reply",
+        kind: "customer-reply",
+        sourceArticleExternalId: "article-1",
+        to: ["customer@example.com"],
       },
       ticketExternalId: "ticket-1",
     })).toEqual({ status: "invalid", field: "communication" });

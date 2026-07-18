@@ -76,6 +76,15 @@ function replyErrorMessage(reason: TicketCommunicationErrorReason): string {
   if (reason === "reply-context-unavailable") {
     return "The selected message can no longer be used for a reply.";
   }
+  if (reason === "reply-history-context-stale") {
+    return "The public conversation changed. Reload the ticket and review the history before sending.";
+  }
+  if (reason === "reply-history-too-large") {
+    return "The conversation history is too large to include. Disable it before sending.";
+  }
+  if (reason === "reply-history-unavailable") {
+    return "The public conversation history could not be loaded. Retry or disable it before sending.";
+  }
   if (reason === "signature-context-stale") {
     return "The signature changed. Review the refreshed signature before sending.";
   }

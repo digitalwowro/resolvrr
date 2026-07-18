@@ -9,6 +9,9 @@ import type {
 import type {
   TicketReplyIntent,
 } from "@/core/ticket-replies";
+import type {
+  TicketConversationHistoryScope,
+} from "@/core/ticket-conversation-history";
 import type { TicketSignatureSelection } from "@/core/ticket-signatures";
 import type { TicketReadUnavailableReason } from "./read-model";
 
@@ -57,7 +60,10 @@ export type SelectedTicketUpdateCustomerReplyPayload = {
   body: string;
   bodyFormat?: TicketCommunicationBodyFormat;
   cc: string[];
+  conversationHistoryContextVersion?: string;
+  conversationHistoryScope?: TicketConversationHistoryScope;
   contextVersion: string;
+  includeConversationHistory: boolean;
   intent: TicketReplyIntent;
   kind: "customer-reply";
   sourceArticleExternalId: string;
@@ -70,8 +76,10 @@ export type SelectedTicketUpdateCustomerForwardPayload = {
   body: string;
   bodyFormat?: TicketCommunicationBodyFormat;
   cc: string[];
+  conversationHistoryContextVersion?: string;
+  conversationHistoryScope?: TicketConversationHistoryScope;
   contextVersion: string;
-  includeOriginal: boolean;
+  includeConversationHistory: boolean;
   kind: "customer-forward";
   sourceArticleExternalId: string;
   signatureContext?: TicketSignatureSelection;
@@ -126,6 +134,9 @@ export type TicketMetadataMutationErrorReason =
   | "invalid-forward-subject"
   | "reply-context-stale"
   | "reply-context-unavailable"
+  | "reply-history-context-stale"
+  | "reply-history-too-large"
+  | "reply-history-unavailable"
   | "signature-context-stale"
   | "signature-context-unavailable"
   | "delivery-uncertain"

@@ -145,6 +145,12 @@ default Generate behavior may reuse a valid cache hit, while Regenerate must
 force a provider call and overwrite the cached summary after successful
 generation.
 
+An exact summary-cache identity remains displayable regardless of age. Ticket
+source, effective prompt, provider/model configuration, or sanitization changes
+produce a different fingerprint; confirmed writes and configuration changes
+also explicitly invalidate affected summaries. Elapsed time alone must not
+hide an otherwise matching encrypted summary.
+
 Tab switching, background refresh, and local state changes must not trigger AI
 provider calls. A detail refresh may perform the same cache-only hydration. A
 temporary summary-cache read failure must not block otherwise available ticket

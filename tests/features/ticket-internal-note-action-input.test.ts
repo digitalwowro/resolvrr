@@ -56,6 +56,7 @@ describe("ticket customer reply action input", () => {
         bodyFormat: "plain",
         cc: ["watcher@example.com"],
         contextVersion: "context-v1",
+        includeConversationHistory: false,
         intent: "reply-all",
         sourceArticleExternalId: "article-1",
         to: ["customer@example.com"],

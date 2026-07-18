@@ -1,8 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { zammadProviderPlugin } from "@/providers/zammad";
 import { zammadForwardContext } from "@/providers/zammad/forward-context";
-import { safeProviderBytes, safeProviderJson } from "@/security/provider-http";
+import {
+  zammadReplyConversationHistoryContext,
+} from "@/providers/zammad/reply-conversation-history";
 import { providerContext } from "./read-helpers";
+import {
+  arrange,
+  arrangeHistory,
+  article,
+  historyFields,
+  mockedBytes,
+  mockedJson,
+  ticket,
+} from "./customer-forward-test-helpers";
 
 vi.mock("@/security/provider-http", () => ({
   safeProviderBytes: vi.fn(),
@@ -16,36 +27,19 @@ vi.mock("@/security/provider-http", () => ({
   },
 }));
 
-const mockedJson = vi.mocked(safeProviderJson);
-const mockedBytes = vi.mocked(safeProviderBytes);
-const ticket = {
-  id: 42, number: "61061", title: "System notification",
-  customer_id: 10, updated_at: "2026-07-14T08:30:00Z",
-};
-
-function article(overrides: Record<string, unknown> = {}) {
-  return {
-    id: 500, ticket_id: 42, type: "email", sender: "Agent", internal: false,
-    from: "System <support@example.com>", to: "Archive <archive@example.com>",
-    cc: null, subject: "System notification", message_id: "source@example.com",
-    body: '<div style="color:#125599"><strong>Hello</strong></div><script>bad()</script>',
-    created_at: "2026-07-14T08:31:00Z", updated_at: "2026-07-14T08:31:00Z",
-    attachments: [], ...overrides,
-  };
-}
-
-function arrange(source = article()) {
-  mockedJson
-    .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: ticket })
-    .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: source });
-}
-
 describe("Zammad customer email forwarding", () => {
   afterEach(() => vi.clearAllMocks());
 
   it("forwards a managed-source article through Zammad with exact subject and no reply headers", async () => {
     const source = article();
+    const later = article({
+      body: "<p>Later message must stay out</p>",
+      created_at: "2026-07-15T08:31:00Z",
+      id: 501,
+      sender: "Customer",
+    });
     arrange(source);
+    arrangeHistory([later, source]);
     mockedJson.mockResolvedValueOnce({
       status: 201, headers: new Headers(),
       data: { ...source, id: 501, to: "customer@example.com" },
@@ -53,12 +47,13 @@ describe("Zammad customer email forwarding", () => {
     const context = zammadForwardContext(source, ticket.title)!;
     await zammadProviderPlugin.forwardTicketEmail?.(providerContext(), "42", {
       attachmentExternalIds: [], body: "Please review", bodyFormat: "plain",
-      cc: [], contextVersion: context.contextVersion, includeOriginal: true,
+      cc: [], contextVersion: context.contextVersion, includeConversationHistory: true,
+      ...historyFields(source),
       sourceArticleExternalId: "500", subject: "System notification",
       to: ["Customer@Example.com"],
     });
 
-    const request = JSON.parse(String(mockedJson.mock.calls[2]?.[1]?.body));
+    const request = JSON.parse(String(mockedJson.mock.calls[3]?.[1]?.body));
     expect(request).toMatchObject({
       ticket_id: 42, to: "customer@example.com", cc: "",
       subject: "System notification", content_type: "text/html",
@@ -66,9 +61,51 @@ describe("Zammad customer email forwarding", () => {
     });
     expect(request).not.toHaveProperty("in_reply_to");
     expect(request).not.toHaveProperty("references");
-    expect(request.body).toContain("Forwarded message");
+    expect(request.body).toContain("Conversation history");
     expect(request.body).toContain('style="color:#125599"');
+    expect(request.body).not.toContain("Later message must stay out");
     expect(request.body).not.toContain("<script");
+  });
+
+  it("includes messages after the source when the sticky action reviewed current history", async () => {
+    const source = article({ body: "<p>Selected older message</p>" });
+    const newer = article({
+      body: "<p>Newer public update</p>",
+      created_at: "2026-07-15T08:31:00Z",
+      id: 501,
+      sender: "Customer",
+    });
+    const history = [newer, source];
+    const historyContext = zammadReplyConversationHistoryContext(
+      history,
+      "current",
+    );
+    if (!historyContext) throw new Error("Expected current history context");
+    arrange(source);
+    arrangeHistory(history);
+    mockedJson.mockResolvedValueOnce({
+      status: 201,
+      headers: new Headers(),
+      data: { ...source, id: 502, to: "customer@example.com" },
+    });
+    const context = zammadForwardContext(source, ticket.title)!;
+
+    await zammadProviderPlugin.forwardTicketEmail?.(providerContext(), "42", {
+      attachmentExternalIds: [],
+      body: "Please review",
+      cc: [],
+      contextVersion: context.contextVersion,
+      conversationHistoryContextVersion: historyContext.contextVersion,
+      conversationHistoryScope: historyContext.scope,
+      includeConversationHistory: true,
+      sourceArticleExternalId: "500",
+      subject: context.subject,
+      to: ["customer@example.com"],
+    });
+
+    const request = JSON.parse(String(mockedJson.mock.calls[3]?.[1]?.body));
+    expect(request.body).toContain("Selected older message");
+    expect(request.body).toContain("Newer public update");
   });
 
   it("revalidates attachment ids and sends bounded Zammad attachment data", async () => {
@@ -79,6 +116,7 @@ describe("Zammad customer email forwarding", () => {
       }],
     });
     arrange(source);
+    arrangeHistory([source]);
     mockedBytes.mockResolvedValueOnce({
       data: new Uint8Array([1, 2, 3, 4]), headers: new Headers(), status: 200,
     });
@@ -88,7 +126,8 @@ describe("Zammad customer email forwarding", () => {
     const context = zammadForwardContext(source, ticket.title)!;
     await zammadProviderPlugin.forwardTicketEmail?.(providerContext(), "42", {
       attachmentExternalIds: ["91"], body: "", cc: [],
-      contextVersion: context.contextVersion, includeOriginal: true,
+      contextVersion: context.contextVersion, includeConversationHistory: true,
+      ...historyFields(source),
       sourceArticleExternalId: "500", subject: context.subject,
       to: ["customer@example.com"],
     });
@@ -96,7 +135,7 @@ describe("Zammad customer email forwarding", () => {
       "https://helpdesk.example.com/api/v1/ticket_attachment/42/500/91",
       expect.objectContaining({ maxResponseBytes: 10 * 1024 * 1024 }),
     );
-    const request = JSON.parse(String(mockedJson.mock.calls[2]?.[1]?.body));
+    const request = JSON.parse(String(mockedJson.mock.calls[3]?.[1]?.body));
     expect(request.attachments).toEqual([{
       data: "AQIDBA==", filename: "report.pdf", "mime-type": "application/pdf",
     }]);
@@ -118,6 +157,7 @@ describe("Zammad customer email forwarding", () => {
       }],
     });
     arrange(source);
+    arrangeHistory([source]);
     mockedBytes.mockResolvedValueOnce({
       data: new Uint8Array([1, 2, 3]), headers: new Headers(), status: 200,
     });
@@ -128,12 +168,13 @@ describe("Zammad customer email forwarding", () => {
 
     await zammadProviderPlugin.forwardTicketEmail?.(providerContext(), "42", {
       attachmentExternalIds: [], body: "Please review", cc: [],
-      contextVersion: context.contextVersion, includeOriginal: true,
+      contextVersion: context.contextVersion, includeConversationHistory: true,
+      ...historyFields(source),
       sourceArticleExternalId: "500", subject: context.subject,
       to: ["customer@example.com"],
     });
 
-    const request = JSON.parse(String(mockedJson.mock.calls[2]?.[1]?.body));
+    const request = JSON.parse(String(mockedJson.mock.calls[3]?.[1]?.body));
     expect(request.attachments).toEqual([]);
     expect(request.body).toContain("data:image/jpeg;base64,AQID");
     expect(request.body).not.toContain("cid:logo@example");
@@ -157,7 +198,7 @@ describe("Zammad customer email forwarding", () => {
 
     await expect(zammadProviderPlugin.forwardTicketEmail?.(providerContext(), "42", {
       attachmentExternalIds: ["92"], body: "Please review", cc: [],
-      contextVersion: context.contextVersion, includeOriginal: false,
+      contextVersion: context.contextVersion, includeConversationHistory: false,
       sourceArticleExternalId: "500", subject: context.subject,
       to: ["customer@example.com"],
     })).rejects.toMatchObject({ diagnosticCode: "invalid-forward-attachment" });
@@ -196,6 +237,7 @@ describe("Zammad customer email forwarding", () => {
       attachments: [{ id: 91, filename: "report.pdf", size: 4, preferences: {} }],
     });
     arrange(source);
+    arrangeHistory([source]);
     mockedBytes.mockResolvedValueOnce({
       data: new Uint8Array([1, 2, 3]), headers: new Headers(), status: 200,
     });
@@ -203,7 +245,8 @@ describe("Zammad customer email forwarding", () => {
 
     await expect(zammadProviderPlugin.forwardTicketEmail?.(providerContext(), "42", {
       attachmentExternalIds: ["91"], body: "", cc: [],
-      contextVersion: context.contextVersion, includeOriginal: true,
+      contextVersion: context.contextVersion, includeConversationHistory: true,
+      ...historyFields(source),
       sourceArticleExternalId: "500", subject: context.subject,
       to: ["customer@example.com"],
     })).rejects.toMatchObject({ diagnosticCode: "forward-context-stale" });
@@ -214,7 +257,7 @@ describe("Zammad customer email forwarding", () => {
     arrange();
     await expect(zammadProviderPlugin.forwardTicketEmail?.(providerContext(), "42", {
       attachmentExternalIds: [], body: "", cc: [], contextVersion: "stale",
-      includeOriginal: true, sourceArticleExternalId: "500",
+      includeConversationHistory: true, sourceArticleExternalId: "500",
       subject: "System notification", to: ["customer@example.com"],
     })).rejects.toMatchObject({ diagnosticCode: "forward-context-stale" });
     expect(mockedJson.mock.calls.some((call) => call[1]?.method === "POST")).toBe(false);
@@ -225,7 +268,7 @@ describe("Zammad customer email forwarding", () => {
       .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: article() });
     await expect(zammadProviderPlugin.forwardTicketEmail?.(providerContext(), "42", {
       attachmentExternalIds: [], body: "", cc: [], contextVersion: "unused",
-      includeOriginal: true, sourceArticleExternalId: "500",
+      includeConversationHistory: true, sourceArticleExternalId: "500",
       subject: "System notification", to: ["customer@example.com"],
     })).rejects.toMatchObject({ diagnosticCode: "ticket-merged" });
     expect(mockedJson.mock.calls.some((call) => call[1]?.method === "POST")).toBe(false);
@@ -238,7 +281,7 @@ describe("Zammad customer email forwarding", () => {
 
     await expect(zammadProviderPlugin.forwardTicketEmail?.(providerContext(), "42", {
       attachmentExternalIds: [], body: "Please review", cc: [],
-      contextVersion: "untrusted", includeOriginal: true,
+      contextVersion: "untrusted", includeConversationHistory: true,
       sourceArticleExternalId: "500", subject: "System notification",
       to: ["customer@example.com"],
     })).rejects.toMatchObject({ diagnosticCode: "forward-context-unavailable" });

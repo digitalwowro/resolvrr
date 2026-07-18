@@ -68,7 +68,17 @@ export function metadataDraftUpdatePayload(
           body,
           bodyFormat: "html" as const,
           cc: draft.communication.cc,
+          ...(draft.communication.conversationHistoryContextVersion
+            ? {
+                conversationHistoryContextVersion:
+                  draft.communication.conversationHistoryContextVersion,
+                conversationHistoryScope:
+                  draft.communication.conversationHistoryScope,
+              }
+            : {}),
           contextVersion: draft.communication.contextVersion,
+          includeConversationHistory:
+            draft.communication.includeConversationHistory,
           intent: draft.communication.intent,
           sourceArticleExternalId: draft.communication.sourceArticleExternalId,
           signatureContext: draft.communication.signatureContext,
@@ -79,8 +89,16 @@ export function metadataDraftUpdatePayload(
           body,
           bodyFormat: "html" as const,
           cc: draft.communication.cc,
+          ...(draft.communication.conversationHistoryContextVersion
+            ? {
+                conversationHistoryContextVersion:
+                  draft.communication.conversationHistoryContextVersion,
+                conversationHistoryScope:
+                  draft.communication.conversationHistoryScope,
+              }
+            : {}),
           contextVersion: draft.communication.contextVersion,
-          includeOriginal: draft.communication.includeOriginal,
+          includeConversationHistory: draft.communication.includeConversationHistory,
           kind: draft.communication.kind,
           sourceArticleExternalId: draft.communication.sourceArticleExternalId,
           signatureContext: draft.communication.signatureContext,

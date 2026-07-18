@@ -3,6 +3,9 @@
 import type { DraftRewriteOperation } from "@/features/ai";
 import type { TicketReplyIntent } from "@/core/ticket-replies";
 import type { TicketSignatureSelection } from "@/core/ticket-signatures";
+import type {
+  TicketConversationHistoryScope,
+} from "@/core/ticket-conversation-history";
 import {
   enqueueCommunicationDraftStorage,
   setCurrentCommunicationDraftPresence,
@@ -15,7 +18,7 @@ export type {
 
 const databaseName = "resolvrr-workspace-drafts";
 const storeName = "communicationDrafts";
-const databaseVersion = 6;
+const databaseVersion = 8;
 export const communicationDraftRetentionMs = 7 * 24 * 60 * 60 * 1_000;
 export const maxPersistedAiSuggestions = 3;
 
@@ -36,11 +39,15 @@ export type PersistedCommunicationDraft = {
   attachmentExternalIds?: string[];
   bodyHtml: string;
   cc?: string[];
+  conversationHistoryContextVersion?: string;
+  conversationHistoryScope?: TicketConversationHistoryScope;
   contextVersion?: string;
   expiresAt: number;
   id: string;
   intent?: TicketReplyIntent;
+  /** Legacy version 7 Forward field, read only during draft restoration. */
   includeOriginal?: boolean;
+  includeConversationHistory?: boolean;
   kind?: "internal-comment" | "customer-forward" | "customer-reply";
   mode?: "comment" | "reply";
   scope: CommunicationDraftPersistenceScope;
@@ -154,9 +161,11 @@ export async function savePersistedCommunicationDraft(input: {
   attachmentExternalIds?: string[];
   bodyHtml: string;
   cc?: string[];
+  conversationHistoryContextVersion?: string;
+  conversationHistoryScope?: TicketConversationHistoryScope;
   contextVersion?: string;
   intent?: TicketReplyIntent;
-  includeOriginal?: boolean;
+  includeConversationHistory?: boolean;
   kind: "internal-comment" | "customer-forward" | "customer-reply";
   recipientEdited?: boolean;
   scope: CommunicationDraftPersistenceScope | undefined;
@@ -186,11 +195,14 @@ export async function savePersistedCommunicationDraft(input: {
       bodyHtml: input.bodyHtml,
       attachmentExternalIds: input.attachmentExternalIds,
       cc: input.cc,
+      conversationHistoryContextVersion:
+        input.conversationHistoryContextVersion,
+      conversationHistoryScope: input.conversationHistoryScope,
       contextVersion: input.contextVersion,
       expiresAt: now + communicationDraftRetentionMs,
       id: draftId(scope),
       intent: input.intent,
-      includeOriginal: input.includeOriginal,
+      includeConversationHistory: input.includeConversationHistory,
       kind: input.kind,
       scope,
       sourceArticleExternalId: input.articleId,

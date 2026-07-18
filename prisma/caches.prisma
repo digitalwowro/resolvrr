@@ -64,11 +64,9 @@ model AiSummaryCache {
   encryptedSummary      String
   generatedAt           DateTime
   fetchedAt             DateTime           @default(now())
-  expiresAt             DateTime
   user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   helpdeskConnection    HelpdeskConnection @relation(fields: [helpdeskConnectionId], references: [id], onDelete: Cascade)
 
   @@unique([userId, helpdeskConnectionId, providerTicketId, operation, providerProtocol, modelFingerprint, promptVersion, sanitizationVersion, sourceFingerprint], name: "ai_summary_cache_identity")
-  @@index([helpdeskConnectionId, expiresAt])
   @@index([userId, helpdeskConnectionId, providerTicketId])
 }

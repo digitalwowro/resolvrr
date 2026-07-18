@@ -1,13 +1,26 @@
 import { z } from "zod";
 import { ProviderError, type ProviderContext } from "@/core/providers";
 import type { ProviderTicketCustomerForwardInput } from "@/core/ticket-forwards";
-import { sanitizeComposerHtml } from "@/security/sanitize-html";
+import {
+  isTicketConversationHistoryScope,
+} from "@/core/ticket-conversation-history";
 import { zammadGetJson, zammadSendJson } from "./client";
 import { prepareZammadForwardAttachments } from "./forward-attachments";
-import { zammadForwardBody } from "./forward-body";
 import { zammadForwardContext } from "./forward-context";
-import { zammadArticleSchema } from "./schemas";
+import { zammadOutboundBody } from "./outbound-signature";
+import {
+  loadZammadReplyHistoryInlineImages,
+} from "./reply-conversation-history-images";
+import {
+  zammadReplyConversationHistoryContext,
+  zammadReplyConversationHistoryHtml,
+} from "./reply-conversation-history";
+import {
+  zammadArticleListResponseSchema,
+  zammadArticleSchema,
+} from "./schemas";
 import { zammadTicketId } from "./ticket-id";
+import { zammadArticlePayloadRecords } from "./ticket-detail-payload";
 import {
   assertZammadTicketNotMerged,
   zammadTicketPayload,
@@ -74,25 +87,71 @@ export async function forwardZammadTicketEmail(
   }
   const subject = validSubject(input.subject);
   if (!subject) throw mismatch("invalid-forward-subject");
-  if (!input.includeOriginal && !input.body.trim()) {
-    throw new ProviderError("validation-failure", "Forward body is required without the original message.");
+  if (!input.includeConversationHistory && !input.body.trim()) {
+    throw new ProviderError(
+      "validation-failure",
+      "Forward body is required without conversation history.",
+    );
+  }
+  let conversationHistoryHtml: string | undefined;
+  if (input.includeConversationHistory) {
+    if (
+      !input.conversationHistoryContextVersion ||
+      !isTicketConversationHistoryScope(input.conversationHistoryScope)
+    ) {
+      throw mismatch("reply-history-unavailable");
+    }
+    const rawHistory = await zammadGetJson(
+      context,
+      `/api/v1/ticket_articles/by_ticket/${ticketId}?expand=true&full=true`,
+    );
+    if (!zammadArticleListResponseSchema.safeParse(rawHistory).success) {
+      throw mismatch("reply-history-unavailable");
+    }
+    const history = zammadArticlePayloadRecords(rawHistory);
+    const historyContext = zammadReplyConversationHistoryContext(
+      history.articles,
+      input.conversationHistoryScope,
+      articleId,
+    );
+    if (
+      !historyContext ||
+      historyContext.contextVersion !== input.conversationHistoryContextVersion
+    ) {
+      throw mismatch("reply-history-context-stale");
+    }
+    const inlineImages = await loadZammadReplyHistoryInlineImages({
+      articles: history.articles,
+      context,
+      scope: input.conversationHistoryScope,
+      sourceArticleId: articleId,
+      ticketId,
+    });
+    conversationHistoryHtml = zammadReplyConversationHistoryHtml({
+      articles: history.articles,
+      assets: history.assets,
+      inlineImages,
+      scope: input.conversationHistoryScope,
+      sourceArticleId: articleId,
+    });
   }
   const normalizedRecipients = recipients(input);
-  const { attachments, inlineImages } = await prepareZammadForwardAttachments({
+  const { attachments } = await prepareZammadForwardAttachments({
     article: article.data,
     context,
-    includeOriginal: input.includeOriginal,
     selectedIds: input.attachmentExternalIds,
     ticketId,
   });
-  const body = zammadForwardBody({
-    article: article.data,
-    body: input.bodyFormat === "html" ? sanitizeComposerHtml(input.body) : input.body.trim(),
-    bodyFormat: input.bodyFormat === "html" ? "html" : "plain",
-    includeOriginal: input.includeOriginal,
-    inlineImages,
+  const authoredBody = zammadMentionHtml(
+    context,
+    input.body,
+    input.bodyFormat === "html" ? "html" : "plain",
+  );
+  const body = zammadOutboundBody({
+    body: authoredBody,
+    bodyFormat: input.bodyFormat,
+    conversationHistoryHtml,
     signature: input.resolvedSignature,
-    subject,
   });
   let response: unknown;
   try {
@@ -101,7 +160,7 @@ export async function forwardZammadTicketEmail(
       to: normalizedRecipients.to.join(", "),
       cc: normalizedRecipients.cc.join(", "),
       subject,
-      body: zammadMentionHtml(context, body.body, "html"),
+      body: body.body,
       content_type: body.contentType,
       type: "email",
       internal: false,

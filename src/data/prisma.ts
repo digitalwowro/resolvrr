@@ -6,7 +6,7 @@ const globalForPrisma = globalThis as typeof globalThis & {
   prisma?: PrismaClient;
   prismaSchemaRevision?: string;
 };
-const prismaSchemaRevision = "20260717090000-add-taskbar-deactivate";
+const prismaSchemaRevision = "20260718100000-durable-ai-summaries";
 
 function isCurrentPrismaClient(
   client: PrismaClient | undefined,

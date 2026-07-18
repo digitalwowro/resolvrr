@@ -3,9 +3,14 @@ import type {
   ResolvedTicketSignature,
   TicketSignatureSelection,
 } from "./ticket-signatures";
+import type {
+  TicketConversationHistoryContext,
+  TicketConversationHistoryScope,
+} from "./ticket-conversation-history";
 
 export type TicketArticleForwardContext = {
   channel: "email";
+  conversationHistory?: TicketConversationHistoryContext;
   contextVersion: string;
   sourceArticleExternalId: string;
   signatureContext?: TicketSignatureSelection;
@@ -21,8 +26,10 @@ export type TicketCustomerForwardInput = {
   body: string;
   bodyFormat?: TicketCommunicationBodyFormat;
   cc: string[];
+  conversationHistoryContextVersion?: string;
+  conversationHistoryScope?: TicketConversationHistoryScope;
   contextVersion: string;
-  includeOriginal: boolean;
+  includeConversationHistory: boolean;
   sourceArticleExternalId: string;
   signatureContext?: TicketSignatureSelection;
   subject: string;

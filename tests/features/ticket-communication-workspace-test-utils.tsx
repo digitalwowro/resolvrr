@@ -11,6 +11,9 @@ import {
   type TicketMetadataMutationActionState,
   type WorkspaceArticle,
 } from "@/features/tickets";
+import type {
+  TicketConversationHistoryContext,
+} from "@/core/ticket-conversation-history";
 import { TicketWorkspace } from "@/features/workspace/components/ticket-workspace";
 import {
   WorkspaceSignatureActionsProvider,
@@ -56,6 +59,7 @@ export function renderWorkspace({
   rephraseStyleOptions,
   rewriteDraftAction,
   providerManagedAddresses,
+  conversationHistory,
   userId,
   workspaceId = "connection-1",
   helpdeskConnectionId = "personal-connection-1",
@@ -71,6 +75,7 @@ export function renderWorkspace({
   rephraseStyleOptions?: AiRephraseStyleOption[];
   rewriteDraftAction?: RewriteDraftAction;
   providerManagedAddresses?: string[];
+  conversationHistory?: TicketConversationHistoryContext;
   updateTicketMetadataAction?: MutationAction;
   userId?: string;
   workspaceId?: string;
@@ -82,8 +87,13 @@ export function renderWorkspace({
   const detail = {
     ...detailProps.detail,
     ...(articles ? { articles } : {}),
-    ...(providerManagedAddresses
-      ? { replyPolicy: { providerManagedAddresses } }
+    ...(providerManagedAddresses || conversationHistory
+      ? {
+          replyPolicy: {
+            ...(conversationHistory ? { conversationHistory } : {}),
+            providerManagedAddresses: providerManagedAddresses ?? [],
+          },
+        }
       : {}),
   };
 

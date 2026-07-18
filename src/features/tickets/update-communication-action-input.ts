@@ -20,7 +20,10 @@ const customerReplyFields = [
   "body",
   "bodyFormat",
   "cc",
+  "conversationHistoryContextVersion",
+  "conversationHistoryScope",
   "contextVersion",
+  "includeConversationHistory",
   "intent",
   "kind",
   "sourceArticleExternalId",
@@ -29,7 +32,8 @@ const customerReplyFields = [
 ] as const;
 const customerForwardFields = [
   "attachmentExternalIds", "body", "bodyFormat", "cc", "contextVersion",
-  "includeOriginal", "kind", "sourceArticleExternalId", "signatureContext",
+  "conversationHistoryContextVersion", "conversationHistoryScope",
+  "includeConversationHistory", "kind", "sourceArticleExternalId", "signatureContext",
   "subject", "to",
 ] as const;
 
@@ -83,8 +87,16 @@ export function selectedTicketCommunicationInput(value: unknown):
       body,
       bodyFormat,
       cc: stringArrayValue(record, "cc") ?? [],
+      conversationHistoryContextVersion: textValue(
+        record,
+        "conversationHistoryContextVersion",
+      ),
+      conversationHistoryScope: textValue(
+        record,
+        "conversationHistoryScope",
+      ),
       contextVersion: textValue(record, "contextVersion"),
-      includeOriginal: record.includeOriginal === true,
+      includeConversationHistory: record.includeConversationHistory === true,
       sourceArticleExternalId: textValue(record, "sourceArticleExternalId"),
       signatureContext,
       subject: textValue(record, "subject"),
@@ -98,7 +110,16 @@ export function selectedTicketCommunicationInput(value: unknown):
     body,
     bodyFormat,
     cc: stringArrayValue(record, "cc") ?? [],
+    conversationHistoryContextVersion: textValue(
+      record,
+      "conversationHistoryContextVersion",
+    ),
+    conversationHistoryScope: textValue(
+      record,
+      "conversationHistoryScope",
+    ),
     contextVersion: textValue(record, "contextVersion"),
+    includeConversationHistory: record.includeConversationHistory === true,
     intent: textValue(record, "intent"),
     sourceArticleExternalId: textValue(record, "sourceArticleExternalId"),
     signatureContext,

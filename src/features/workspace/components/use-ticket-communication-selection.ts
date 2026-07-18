@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { TicketReplyIntent } from "@/core/ticket-replies";
+import type {
+  TicketReplyIntent,
+} from "@/core/ticket-replies";
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
 import {
   communicationDraftNeedsReplacementConfirmation,
@@ -83,12 +85,19 @@ export function useTicketCommunicationSelection({
     },
     pendingReplacement: pending,
     requestComment: () => request({ body: "", kind: "internal-comment" }),
-    requestForward: (article: WorkspaceArticle) => {
-      const next = forwardDraftFromArticle(article);
+    requestForward: (
+      article: WorkspaceArticle,
+      history = article.forwardContext?.conversationHistory,
+    ) => {
+      const next = forwardDraftFromArticle(article, history);
       if (next) request(next);
     },
-    requestReply: (article: WorkspaceArticle, intent: TicketReplyIntent) => {
-      const next = replyDraftFromArticle(article, intent);
+    requestReply: (
+      article: WorkspaceArticle,
+      intent: TicketReplyIntent,
+      history = article.replyContext?.conversationHistory,
+    ) => {
+      const next = replyDraftFromArticle(article, intent, history);
       if (next) request(next);
     },
   };

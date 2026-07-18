@@ -3,7 +3,12 @@ import type {
   TicketPriority,
   TicketMutableState,
 } from "@/core/tickets";
-import type { TicketReplyIntent } from "@/core/ticket-replies";
+import type {
+  TicketReplyIntent,
+} from "@/core/ticket-replies";
+import type {
+  TicketConversationHistoryScope,
+} from "@/core/ticket-conversation-history";
 import type { TicketSignatureSelection } from "@/core/ticket-signatures";
 import type { PendingDateTimeParts } from "./ticket-pending-date-time";
 
@@ -29,9 +34,14 @@ export type TicketInternalCommentDraft = {
 export type TicketCustomerReplyDraft = {
   body: string;
   cc: string[];
+  conversationHistoryContextVersion?: string;
+  conversationHistoryMessageCount?: number;
+  conversationHistoryScope?: TicketConversationHistoryScope;
   contextVersion: string;
   defaultCc: string[];
+  defaultIncludeConversationHistory: boolean;
   defaultTo: string[];
+  includeConversationHistory: boolean;
   intent: TicketReplyIntent;
   kind: "customer-reply";
   sourceArticleExternalId: string;
@@ -43,13 +53,16 @@ export type TicketCustomerForwardDraft = {
   attachmentExternalIds: string[];
   body: string;
   cc: string[];
+  conversationHistoryContextVersion?: string;
+  conversationHistoryMessageCount?: number;
+  conversationHistoryScope?: TicketConversationHistoryScope;
   contextVersion: string;
   defaultAttachmentExternalIds: string[];
   defaultCc: string[];
-  defaultIncludeOriginal: boolean;
+  defaultIncludeConversationHistory: boolean;
   defaultSubject: string;
   defaultTo: string[];
-  includeOriginal: boolean;
+  includeConversationHistory: boolean;
   kind: "customer-forward";
   sourceArticleExternalId: string;
   signatureContext?: TicketSignatureSelection;

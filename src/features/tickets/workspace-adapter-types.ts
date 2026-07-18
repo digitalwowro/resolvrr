@@ -95,6 +95,7 @@ export type WorkspaceArticle = {
   cc: WorkspaceArticleContact[];
   bcc: WorkspaceArticleContact[];
   direction: TicketArticle["direction"];
+  kind?: TicketArticle["kind"];
   meta: string;
   sanitizedHtml: string;
   visibility: string;

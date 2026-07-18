@@ -1,5 +1,8 @@
 import type { TicketCommunicationCapabilities } from "@/features/tickets/communication-model";
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
+import type {
+  TicketConversationHistoryContext,
+} from "@/core/ticket-conversation-history";
 import type { TicketCommunicationDraft } from "./metadata-draft";
 import type { PersistedCommunicationDraft } from "./ticket-communication-draft-persistence";
 
@@ -7,6 +10,7 @@ export function restoredCommunicationDraft(
   record: PersistedCommunicationDraft,
   articles: WorkspaceArticle[],
   capabilities: TicketCommunicationCapabilities,
+  conversationHistory?: TicketConversationHistoryContext,
 ): TicketCommunicationDraft | undefined {
   const kind = record.kind ?? (record.mode === "comment"
     ? "internal-comment"
@@ -24,18 +28,25 @@ export function restoredCommunicationDraft(
     ) return undefined;
     const availableAttachmentIds = new Set(article.attachments.map((item) => item.id));
     const defaultAttachments = article.attachments.map((item) => item.id);
+    const history = record.conversationHistoryScope === "through-source"
+      ? context.conversationHistory
+      : conversationHistory;
     return {
       attachmentExternalIds: (record.attachmentExternalIds ?? defaultAttachments)
         .filter((id) => availableAttachmentIds.has(id)),
       body: record.bodyHtml,
       cc: record.cc ?? [],
+      conversationHistoryContextVersion: history?.contextVersion,
+      conversationHistoryMessageCount: history?.messageCount,
+      conversationHistoryScope: history?.scope,
       contextVersion: context.contextVersion,
       defaultAttachmentExternalIds: defaultAttachments,
       defaultCc: [],
-      defaultIncludeOriginal: true,
+      defaultIncludeConversationHistory: Boolean(history),
       defaultSubject: context.subject,
       defaultTo: [],
-      includeOriginal: record.includeOriginal ?? true,
+      includeConversationHistory: Boolean(history) &&
+        (record.includeConversationHistory ?? record.includeOriginal ?? true),
       kind,
       sourceArticleExternalId: context.sourceArticleExternalId,
       signatureContext: record.signatureContext,
@@ -54,12 +65,21 @@ export function restoredCommunicationDraft(
   if (!defaults) return undefined;
   const defaultTo = defaults.to.map((recipient) => recipient.email);
   const defaultCc = defaults.cc.map((recipient) => recipient.email);
+  const history = record.conversationHistoryScope === "through-source"
+    ? context.conversationHistory
+    : conversationHistory;
   return {
     body: record.bodyHtml,
     cc: record.contextVersion ? record.cc ?? defaultCc : defaultCc,
+    conversationHistoryContextVersion: history?.contextVersion,
+    conversationHistoryMessageCount: history?.messageCount,
+    conversationHistoryScope: history?.scope,
     contextVersion: context.contextVersion,
     defaultCc,
+    defaultIncludeConversationHistory: Boolean(history),
     defaultTo,
+    includeConversationHistory: Boolean(history) &&
+      (record.includeConversationHistory ?? true),
     intent,
     kind,
     sourceArticleExternalId: context.sourceArticleExternalId,

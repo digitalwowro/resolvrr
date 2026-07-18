@@ -1,4 +1,4 @@
-import type { HtmlLine } from "./ticket-article-body-trim-types";
+import type { HtmlLine } from "./ticket-article-content-types";
 
 const BLOCK_START_TAGS = new Set([
   "address",
