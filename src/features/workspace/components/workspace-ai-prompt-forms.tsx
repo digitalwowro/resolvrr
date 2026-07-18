@@ -16,8 +16,8 @@ const textareaClass =
 
 export const promptMessageText: Record<AiPromptActionCode, string> = {
   "ai-disabled": "AI is disabled for this workspace.",
-  "ai-prompt-reset": "Prompt reset.",
-  "ai-prompt-saved": "Prompt saved.",
+  "ai-prompt-reset": "AI configuration reset.",
+  "ai-prompt-saved": "AI configuration saved.",
   "ai-rephrase-style-created": "Rephrase style created.",
   "ai-rephrase-style-deleted": "Rephrase style removed.",
   "ai-rephrase-style-moved": "Rephrase style order updated.",
@@ -100,12 +100,13 @@ export function WorkspacePromptForm({
         </div>
         {prompt.isCustomized ? (
           <span className="rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
-            Custom
+            {prompt.editor.statusLabels.customized}
           </span>
         ) : null}
       </div>
+      <PromptEditorExplanation prompt={prompt} />
       <label className="mt-4 block text-sm font-medium text-slate-700">
-        Prompt
+        {prompt.editor.fieldLabel}
         <textarea
           className={textareaClass}
           defaultValue={prompt.prompt}
@@ -124,14 +125,51 @@ export function WorkspacePromptForm({
             type="button"
             variant="secondary"
           >
-            Reset
+            {prompt.editor.resetLabel}
           </Button>
           <Button disabled={disabled} loading={pending} type="submit" variant="primary">
-            Save prompt
+            {prompt.editor.saveLabel}
           </Button>
         </div>
       </div>
     </form>
+  );
+}
+
+function PromptEditorExplanation({ prompt }: { prompt: AiPromptAdminView }) {
+  const contract = prompt.editor.contract;
+  return (
+    <>
+      <div
+        className={cn(
+          "mt-4 rounded-md border px-3 py-2 text-sm",
+          prompt.editor.kind === "supplemental-guidance"
+            ? "border-indigo-200 bg-indigo-50 text-indigo-950"
+            : "border-amber-200 bg-amber-50 text-amber-900",
+        )}
+      >
+        {prompt.editor.helperText}
+      </div>
+      {contract ? (
+        <section
+          aria-labelledby={`${prompt.key}-contract-title`}
+          className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3"
+        >
+          <h5
+            className="text-sm font-semibold text-slate-900"
+            id={`${prompt.key}-contract-title`}
+          >
+            {contract.title}
+          </h5>
+          <p className="mt-1 text-sm text-slate-600">{contract.description}</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+            {contract.requirements.map((requirement) => (
+              <li key={requirement}>{requirement}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </>
   );
 }
 

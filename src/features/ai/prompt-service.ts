@@ -65,6 +65,21 @@ function adminView(
   return {
     builtInPrompt: definition.defaultPrompt,
     description: definition.description,
+    editor: {
+      contract: definition.editor.contract
+        ? {
+            description: definition.editor.contract.description,
+            requirements: [...definition.editor.contract.requirements],
+            title: definition.editor.contract.title,
+          }
+        : null,
+      fieldLabel: definition.editor.fieldLabel,
+      helperText: definition.editor.helperText,
+      kind: definition.editor.kind,
+      resetLabel: definition.editor.resetLabel,
+      saveLabel: definition.editor.saveLabel,
+      statusLabels: { ...definition.editor.statusLabels },
+    },
     isCustomized: Boolean(prompt),
     key: definition.key,
     label: definition.label,

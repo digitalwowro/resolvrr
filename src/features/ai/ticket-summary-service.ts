@@ -8,6 +8,11 @@ import {
   ticketSummaryDefaultPrompt,
   ticketSummaryPromptVersion,
 } from "./prompt-registry";
+import {
+  parseTicketSummaryOutput,
+  ticketSummarySystemInstruction,
+} from "./ticket-summary-structure";
+import type { TicketAiSummaryContent } from "./ticket-summary-content";
 import type { EffectiveAiPrompt } from "./prompt-service";
 import {
   readCachedSummary,
@@ -20,6 +25,39 @@ import {
   aiGenerationTimingStart,
   recordAiGenerationTiming,
 } from "@/telemetry/ai-generation-timing";
+
+async function generateStructuredSummary(
+  config: Extract<AiRuntimeConfig, { status: "available" }>,
+  workspaceGuidance: string,
+  ticketContext: string,
+): Promise<
+  | { status: "available"; summary: TicketAiSummaryContent }
+  | Exclude<TicketAiSummaryResult, { status: "available" | "unconfigured" }>
+> {
+  for (const repairAttempt of [false, true]) {
+    const result = await generateAiText(config, {
+      maxOutputTokens: 500,
+      systemInstruction: ticketSummarySystemInstruction(
+        workspaceGuidance,
+        repairAttempt,
+      ),
+      telemetryOperation: "ticket-summary",
+      userPrompt: ticketContext,
+    });
+    if (result.status === "unavailable") {
+      return result;
+    }
+    const summary = parseTicketSummaryOutput(result.text);
+    if (summary) {
+      return { status: "available", summary };
+    }
+  }
+  return {
+    status: "unavailable",
+    reason: "provider-invalid-response",
+    retryable: true,
+  };
+}
 
 export async function summarizeTicketDetail(
   config: AiRuntimeConfig,
@@ -110,12 +148,11 @@ export async function summarizeTicketDetail(
     status: "ok",
   });
   const regenerationStart = aiGenerationTimingStart();
-  const result = await generateAiText(config, {
-    maxOutputTokens: 260,
-    systemInstruction: prompt.prompt,
-    telemetryOperation: "ticket-summary",
-    userPrompt: context.prompt,
-  });
+  const result = await generateStructuredSummary(
+    config,
+    prompt.prompt,
+    context.prompt,
+  );
   if (result.status === "unavailable") {
     recordAiGenerationTiming({
       cacheDataKind: "ai-summary",
@@ -165,7 +202,7 @@ export async function summarizeTicketDetail(
       ticketNumber: context.ticketNumber,
       ticketUpdatedAt: context.ticketUpdatedAt,
     },
-    summary: result.text,
+    summary: result.summary,
   } satisfies Extract<TicketAiSummaryResult, { status: "available" }>;
 
   if (cacheKey && cacheOptions) {

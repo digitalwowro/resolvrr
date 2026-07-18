@@ -1,5 +1,9 @@
 import { decryptSecret, encryptSecret } from "@/security/encryption";
 import type { AiSummaryCacheRepository } from "@/features/ai/summary-cache-repository";
+import {
+  parseTicketSummaryOutput,
+  serializeTicketSummary,
+} from "@/features/ai/ticket-summary-structure";
 import { cacheAgeBucket } from "@/telemetry/cache-age-bucket";
 import { prisma } from "./prisma";
 
@@ -39,6 +43,13 @@ export const prismaAiSummaryCacheRepository: AiSummaryCacheRepository = {
       return { status: "miss" };
     }
 
+    const summary = parseTicketSummaryOutput(
+      decryptSecret(cached.encryptedSummary, input.encryptionKey),
+    );
+    if (!summary) {
+      return { status: "miss" };
+    }
+
     const ageBucket = cacheAgeBucket({ fetchedAt: cached.fetchedAt, now });
     return {
       ageBucket,
@@ -50,7 +61,7 @@ export const prismaAiSummaryCacheRepository: AiSummaryCacheRepository = {
           ticketNumber: cached.sourceTicketNumber,
           ticketUpdatedAt: cached.sourceTicketUpdatedAt?.toISOString() ?? "",
         },
-        summary: decryptSecret(cached.encryptedSummary, input.encryptionKey),
+        summary,
       },
       status: "hit",
     };
@@ -61,7 +72,10 @@ export const prismaAiSummaryCacheRepository: AiSummaryCacheRepository = {
     await prisma.aiSummaryCache.upsert({
       where: identity(input),
       create: {
-        encryptedSummary: encryptSecret(input.result.summary, input.encryptionKey),
+        encryptedSummary: encryptSecret(
+          serializeTicketSummary(input.result.summary),
+          input.encryptionKey,
+        ),
         fetchedAt: now,
         generatedAt: new Date(input.result.generatedAt),
         helpdeskConnectionId: input.helpdeskConnectionId,
@@ -80,7 +94,10 @@ export const prismaAiSummaryCacheRepository: AiSummaryCacheRepository = {
         userId: input.userId,
       },
       update: {
-        encryptedSummary: encryptSecret(input.result.summary, input.encryptionKey),
+        encryptedSummary: encryptSecret(
+          serializeTicketSummary(input.result.summary),
+          input.encryptionKey,
+        ),
         fetchedAt: now,
         generatedAt: new Date(input.result.generatedAt),
         sourceArticleCount: input.result.source.articleCount,

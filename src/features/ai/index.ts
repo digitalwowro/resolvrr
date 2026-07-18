@@ -27,6 +27,7 @@ export type {
   TicketAiSummaryRequest,
   TicketAiSummaryResult,
 } from "./model";
+export type { TicketAiSummaryContent } from "./ticket-summary-content";
 export type {
   DraftComposerMode,
   DraftRewriteOperation,

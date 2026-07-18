@@ -3,6 +3,7 @@ import { summarizeWorkspaceTicketAction } from "@/features/ai/ticket-summary-act
 import { resolveWorkspaceAiRuntimeConfig } from "@/features/ai/settings-service";
 import { summarizeTicketDetail } from "@/features/ai/ticket-summary-service";
 import { loadWorkspaceTicketDetail } from "@/features/tickets/service";
+import { ticketSummaryContent } from "./ai-ticket-summary-cache-test-helpers";
 
 vi.mock("@/auth/current-user", () => ({
   requireCurrentUser: vi.fn(async () => ({ id: "user-1" })),
@@ -236,7 +237,7 @@ describe("summarizeWorkspaceTicketAction", () => {
           ticketNumber: "1001",
           ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
         },
-        summary: "Recovered summary",
+        summary: ticketSummaryContent("Recovered summary"),
       });
 
     await expect(
@@ -247,7 +248,7 @@ describe("summarizeWorkspaceTicketAction", () => {
       }),
     ).resolves.toMatchObject({
       status: "available",
-      summary: "Recovered summary",
+      summary: ticketSummaryContent("Recovered summary"),
     });
 
     expect(mockedResolveWorkspaceAiRuntimeConfig).toHaveBeenCalledTimes(2);

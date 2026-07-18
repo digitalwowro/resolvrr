@@ -9,6 +9,10 @@ import {
   noopMutationAction,
   row,
 } from "./ticket-workspace-test-utils";
+import {
+  promptCenterActiveWorkspace,
+  promptCenterData,
+} from "./ticket-workspace-prompt-center-test-data";
 
 const routerPush = vi.fn();
 const routerRefresh = vi.fn();
@@ -28,70 +32,17 @@ describe("TicketWorkspace Prompt Center", () => {
 
   it("lets admins manage workspace prompts and rephrase styles", async () => {
     const user = userEvent.setup();
-    const activeWorkspace = {
-      access: {
-        canEditAiRephraseStyleOverrides: true,
-        canEditMyStyle: true,
-        role: "ADMIN" as const,
-      },
-      id: "connection-1",
-      label: "Support",
-    };
-    const promptCenterData = ({
-      prompt = "Built-in summary prompt.",
-      isCustomized = false,
-      styles = [
-        {
-          id: "style-concise",
-          isBuiltIn: true,
-          isCustomized: false,
-          isEnabled: true,
-          label: "Concise",
-          maxLength: 2_000,
-          prompt: "Make the reply concise.",
-          sortOrder: 10,
-        },
-        {
-          id: "style-friendly",
-          isBuiltIn: true,
-          isCustomized: false,
-          isEnabled: true,
-          label: "Friendly",
-          maxLength: 2_000,
-          prompt: "Make the reply friendly.",
-          sortOrder: 20,
-        },
-      ],
-    } = {}) => ({
-      activeWorkspace,
-      adminPrompts: [
-        {
-          builtInPrompt: "Built-in summary prompt.",
-          description: "Internal selected-ticket summary instructions.",
-          isCustomized,
-          key: "ticket-summary" as const,
-          label: "Ticket summary",
-          maxLength: 2_000,
-          prompt,
-        },
-      ],
-      canManageWorkspace: true,
-      canView: true,
-      policy: "admin-managed" as const,
-      userRephraseStyleOverrides: [],
-      workspaceRephraseStyles: styles,
-    });
     const loadAiPromptCenterAction = vi.fn(async () => ({
       ...promptCenterData(),
     }));
     const saveWorkspaceAiPromptAction = vi.fn(async (formData: FormData) => {
       expect(formData.get("promptKey")).toBe("ticket-summary");
-      expect(formData.get("prompt")).toBe("Updated summary prompt.");
+      expect(formData.get("prompt")).toBe("Updated summary guidance.");
       return {
         code: "ai-prompt-saved" as const,
         data: promptCenterData({
           isCustomized: true,
-          prompt: "Updated summary prompt.",
+          prompt: "Updated summary guidance.",
         }),
         ok: true,
       };
@@ -104,7 +55,7 @@ describe("TicketWorkspace Prompt Center", () => {
           code: "ai-rephrase-style-saved" as const,
           data: promptCenterData({
             isCustomized: true,
-            prompt: "Updated summary prompt.",
+            prompt: "Updated summary guidance.",
             styles: [
               {
                 id: "style-concise",
@@ -139,7 +90,7 @@ describe("TicketWorkspace Prompt Center", () => {
         data: promptCenterData(
           {
             isCustomized: true,
-            prompt: "Updated summary prompt.",
+              prompt: "Updated summary guidance.",
             styles: [
               {
                 id: "style-concise",
@@ -217,7 +168,7 @@ describe("TicketWorkspace Prompt Center", () => {
         columns={defaultWorkspaceTicketColumns}
         connections={[{ id: "connection-1", label: "Support", active: true }]}
         initialAiSettingsData={{
-          activeWorkspace: { id: "connection-1", label: "Support" },
+          activeWorkspace: promptCenterActiveWorkspace,
           canManageWorkspace: true,
           canViewPromptCenter: true,
           policy: "admin-managed",
@@ -256,19 +207,34 @@ describe("TicketWorkspace Prompt Center", () => {
 
     expect(await within(dialog).findByRole("heading", { name: "Prompt Center" }))
       .toBeInTheDocument();
-    expect(within(dialog).getByText("Workspace prompts")).toBeInTheDocument();
+    expect(within(dialog).getByText("AI operations")).toBeInTheDocument();
     expect(within(dialog).getByText("Rephrase styles")).toBeInTheDocument();
     expect(
-      within(dialog).getByRole("button", { name: "Ticket summary, Default" }),
+      within(dialog).getByRole("button", {
+        name: "Ticket summary, Default guidance",
+      }),
     ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("heading", { name: "Output contract" }),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByText("Situation is always required."))
+      .toBeInTheDocument();
     expect(
       within(dialog).getByRole("button", { name: "Concise, Enabled, Built-in" }),
     ).toBeInTheDocument();
 
-    await user.clear(within(dialog).getByLabelText("Prompt"));
-    await user.type(within(dialog).getByLabelText("Prompt"), "Updated summary prompt.");
-    await user.click(within(dialog).getByRole("button", { name: "Save prompt" }));
+    await user.clear(within(dialog).getByLabelText("Summary guidance"));
+    await user.type(
+      within(dialog).getByLabelText("Summary guidance"),
+      "Updated summary guidance.",
+    );
+    await user.click(within(dialog).getByRole("button", { name: "Save guidance" }));
     expect(saveWorkspaceAiPromptAction).toHaveBeenCalledOnce();
+    expect(
+      within(dialog).getByRole("button", {
+        name: "Ticket summary, Custom guidance",
+      }),
+    ).toBeInTheDocument();
 
     await user.click(
       within(dialog).getByRole("button", { name: "Concise, Enabled, Built-in" }),

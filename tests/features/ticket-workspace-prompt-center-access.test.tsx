@@ -101,7 +101,7 @@ describe("TicketWorkspace Prompt Center access", () => {
     await user.click(within(dialog).getByRole("button", { name: "Prompt Center" }));
 
     expect(await within(dialog).findByText("Personal overrides")).toBeInTheDocument();
-    expect(within(dialog).queryByText("Workspace prompts")).not.toBeInTheDocument();
+    expect(within(dialog).queryByText("AI operations")).not.toBeInTheDocument();
     const prompt = await within(dialog).findByLabelText("Personal style prompt");
     await user.clear(prompt);
     await user.type(prompt, "My personal concise prompt.");

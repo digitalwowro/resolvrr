@@ -313,6 +313,9 @@ selected-ticket detail from provider source on the server before prompt
 preparation, then may reuse a generated-summary cache entry only when the
 source fingerprint, prompt version, sanitization version, user scope, connection
 scope, selected-ticket identity, provider protocol, and model fingerprint match.
+Structured summary cache payloads are decrypted and schema-validated before
+hydration. Invalid or legacy free-form payloads are cache misses and never reach
+the client.
 
 Proofread and rephrase use only the current composer draft plus
 workspace-scoped My Style. Rephrase also uses the selected workspace rephrase

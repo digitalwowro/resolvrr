@@ -1,7 +1,19 @@
-import { Info, RefreshCw, Sparkles } from "lucide-react";
+import {
+  Clock3,
+  FileText,
+  Info,
+  RefreshCw,
+  Sparkles,
+  TriangleAlert,
+} from "lucide-react";
+import type { ReactNode } from "react";
 import { Button, Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 import type { TicketAiSummaryResult } from "@/features/ai";
+import {
+  ticketSummaryDisplayDate,
+  type TicketAiSummaryContent,
+} from "@/features/ai/ticket-summary-content";
 import { formatWorkspaceRelativeTime } from "@/features/tickets/date-time-format";
 
 type TicketAiSummaryPanelProps = {
@@ -35,6 +47,9 @@ function summaryStatusText(result: TicketAiSummaryResult) {
   if (result.reason === "provider-rate-limited") {
     return "AI provider is rate limited";
   }
+  if (result.reason === "provider-invalid-response") {
+    return "AI provider returned an invalid summary";
+  }
   if (result.reason === "provider-auth-failed") {
     return "AI provider authentication failed";
   }
@@ -56,11 +71,109 @@ function generatedStatusText(result: TicketAiSummaryResult) {
   return `Generated ${generatedAt}`;
 }
 
-function summaryParagraphs(summary: string) {
-  return summary
-    .split(/\n+/u)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
+function SummarySectionLabel({
+  children,
+  icon,
+  id,
+}: {
+  children: string;
+  icon: ReactNode;
+  id: string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="grid size-5 shrink-0 place-items-center text-indigo-600">
+        {icon}
+      </span>
+      <h4
+        className="text-xs font-semibold uppercase tracking-wide text-slate-600"
+        id={id}
+      >
+        {children}
+      </h4>
+    </div>
+  );
+}
+
+function AvailableSummary({ summary }: { summary: TicketAiSummaryContent }) {
+  return (
+    <div>
+      <section className="px-4 py-4" aria-labelledby="ai-summary-situation">
+        <SummarySectionLabel
+          icon={<FileText aria-hidden="true" className="size-4" />}
+          id="ai-summary-situation"
+        >
+          Situation
+        </SummarySectionLabel>
+        <p
+          className="mt-2 pl-8 text-sm font-medium leading-6 text-slate-900"
+        >
+          {summary.situation}
+        </p>
+      </section>
+      {summary.timeline.length > 0 ? (
+        <section
+          aria-labelledby="ai-summary-timeline"
+          className="border-t border-slate-200 px-4 py-4"
+        >
+          <SummarySectionLabel
+            icon={<Clock3 aria-hidden="true" className="size-4" />}
+            id="ai-summary-timeline"
+          >
+            Timeline
+          </SummarySectionLabel>
+          <ol className="mt-3 ml-8 space-y-3 border-l border-indigo-200 pl-4">
+            {summary.timeline.map((item, index) => (
+              <li
+                className="flex min-w-0 items-start gap-3 text-sm leading-5"
+                key={`${item.date ?? "undated"}-${index}-${item.event}`}
+              >
+                <span
+                  aria-hidden="true"
+                  className="-ml-5 mt-1.5 size-2 shrink-0 rounded-full bg-indigo-600 ring-4 ring-slate-50"
+                />
+                {item.date ? (
+                  <time
+                    className="w-12 shrink-0 font-medium text-slate-500"
+                    dateTime={item.date}
+                  >
+                    {ticketSummaryDisplayDate(item.date)}
+                  </time>
+                ) : (
+                  <span aria-hidden="true" className="w-12 shrink-0" />
+                )}
+                <span className="min-w-0 text-slate-800">{item.event}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+      {summary.nextRisk ? (
+        <section
+          aria-labelledby="ai-summary-next-risk"
+          className="border-t border-amber-100 bg-amber-50/60 px-4 py-3"
+        >
+          <div className="flex items-start gap-3">
+            <TriangleAlert
+              aria-hidden="true"
+              className="mt-0.5 size-5 shrink-0 text-amber-700"
+            />
+            <div className="min-w-0">
+              <h4
+                className="text-xs font-semibold uppercase tracking-wide text-amber-800"
+                id="ai-summary-next-risk"
+              >
+                Next Risk
+              </h4>
+              <p className="mt-1 text-sm leading-5 text-slate-800">
+                {summary.nextRisk}
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : null}
+    </div>
+  );
 }
 
 export function TicketAiSummaryPanel({
@@ -75,9 +188,9 @@ export function TicketAiSummaryPanel({
     <div className="-ml-4 mt-4 border-t border-slate-200 pl-4 pr-4 pt-4">
       <section
         aria-label="AI summary"
-        className="w-full rounded-md border border-indigo-100 bg-indigo-50/40 px-4 py-3"
+        className="w-full overflow-hidden rounded-md border border-indigo-100 border-l-2 border-l-indigo-600 bg-slate-50"
       >
-        <div className="flex min-w-0 items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex min-w-0 items-center gap-2">
             <Sparkles
               aria-hidden="true"
@@ -120,14 +233,10 @@ export function TicketAiSummaryPanel({
             </Button>
           </div>
         </div>
-        <div className="pl-8">
-          {available ? (
-            <div className="space-y-1.5 text-sm leading-6 text-indigo-950">
-              {summaryParagraphs(result.summary).map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
-          ) : (
+        {available ? (
+          <AvailableSummary summary={result.summary} />
+        ) : (
+          <div className="px-4 pb-4 pl-12">
             <p
               className={cn(
                 "text-sm",
@@ -138,8 +247,8 @@ export function TicketAiSummaryPanel({
             >
               {summaryStatusText(result)}
             </p>
-          )}
-        </div>
+          </div>
+        )}
       </section>
     </div>
   );

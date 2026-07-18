@@ -24,7 +24,7 @@ the actor who submits communication or provider updates.
 The v1 AI Assistant surface includes:
 
 - selected-ticket summaries;
-- Prompt Center for workspace prompt defaults, safety/guardrail instructions,
+- Prompt Center for registered workspace prompts, supplemental summary guidance,
   and workspace rephrase styles;
 - My Style for user-specific, workspace-scoped writing guidance;
 - proofread and rephrase actions for user-written internal-note and customer
@@ -42,7 +42,7 @@ AI controls live where the work happens:
   editable draft text until the user submits the reply through the normal
   provider communication path.
 - Prompt Center lives in workspace settings because prompt defaults,
-  safety/guardrail instructions, and rephrase style catalog are workspace
+  supplemental summary guidance, and the rephrase style catalog are workspace
   governance.
 - My Style lives in workspace settings because it is personal writing guidance
   scoped to the active workspace. It is surfaced only when AI is enabled for
@@ -66,12 +66,14 @@ ticket metadata and sanitized thread text. Summary output is advisory, may be
 cached as encrypted generated output, and never changes the selected-ticket
 draft or writes to the helpdesk provider.
 
-Prompt Center lets admins manage workspace prompt defaults, safety/guardrail
-instructions, and workspace rephrase styles for registered AI operations. The
-registry decides which prompt operations exist, which are admin-editable, their
-built-in defaults, and their version identity. Rephrase styles are
-workspace-scoped admin records shown in the inline editor. Workspace membership
-may allow a non-admin user to override a style prompt for their own drafts only.
+Prompt Center lets admins manage complete workspace prompts or supplemental
+guidance, as declared by each registered AI operation, plus workspace rephrase
+styles. The ticket-summary contract remains fixed and read-only while admins may
+adjust its emphasis and wording guidance. The registry decides which prompt
+operations exist, which are admin-editable, their editor semantics, built-in
+defaults, and version identity. Rephrase styles are workspace-scoped admin
+records shown in the inline editor. Workspace membership may allow a non-admin
+user to override a style prompt for their own drafts only.
 
 My Style is user-specific, workspace-scoped writing guidance for drafting
 operations. It is not a workspace prompt default, not an admin-managed policy

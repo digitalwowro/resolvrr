@@ -16,6 +16,7 @@ import {
   row,
   selectedDetailProps,
 } from "./ticket-workspace-test-utils";
+import { ticketSummaryContent } from "./ai-ticket-summary-cache-test-helpers";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
@@ -38,7 +39,7 @@ describe("TicketWorkspace AI summary hydration", () => {
             ticketNumber: "#1002",
             ticketUpdatedAt: "2026-07-17T08:30:00.000Z",
           },
-          summary: "Situation: Hydrated ticket-two summary",
+          summary: ticketSummaryContent("Hydrated ticket-two summary"),
         },
         ticketId: "ticket-2",
       },

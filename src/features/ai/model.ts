@@ -1,3 +1,5 @@
+import type { TicketAiSummaryContent } from "./ticket-summary-content";
+
 export type TicketAiSummaryRequest = {
   forceRefresh?: boolean;
   helpdeskConnectionId: string;
@@ -9,6 +11,7 @@ export type TicketAiSummaryUnavailableReason =
   | "empty-ticket"
   | "provider-auth-failed"
   | "provider-rate-limited"
+  | "provider-invalid-response"
   | "provider-request-rejected"
   | "provider-temporary-failure"
   | "ticket-unavailable";
@@ -22,7 +25,7 @@ export type TicketAiSummaryResult =
         ticketNumber: string;
         ticketUpdatedAt: string;
       };
-      summary: string;
+      summary: TicketAiSummaryContent;
     }
   | {
       status: "unconfigured";

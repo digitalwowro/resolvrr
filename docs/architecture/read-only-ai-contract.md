@@ -87,8 +87,9 @@ state, public logs, or generated output.
 AI prompt operations are registered in code before they can be edited or used.
 Each registered prompt defines its stable key, built-in default, maximum length,
 and whether admins may edit the workspace default. The selected-ticket summary
-prompt is workspace admin-managed so summary output stays governed by the
-workspace.
+prompt is workspace admin-managed so summary emphasis stays governed by the
+workspace. The output schema and factuality rules are code-owned and cannot be
+replaced by an editable prompt.
 
 Prompt defaults are scoped to the active workspace and managed from `Avatar ->
 Settings -> Prompt Center` when AI is enabled. Prompt bodies are encrypted at
@@ -97,18 +98,36 @@ styles and safety/guardrail instructions for draft-focused operations. Personal
 rephrase style overrides are separate user/workspace/style records and do not
 apply to selected-ticket summary generation.
 
-Selected-ticket summary generation resolves only the workspace/admin summary
-prompt, then combines it with the server-built provider-neutral ticket context.
-The ticket context remains non-editable and is still generated from sanitized
-ticket data on the server.
+Selected-ticket summary generation resolves the workspace/admin guidance, then
+combines it with an immutable developer instruction and the server-built
+provider-neutral ticket context. The ticket context remains non-editable and is
+still generated from sanitized ticket data on the server. Ticket content is
+treated as data rather than model instructions.
+
+Successful output must validate as the strict `ticket-summary-v2` object:
+
+- required `situation` plain text;
+- chronological `timeline` entries with an ISO date or `null`;
+- nullable `nextRisk`;
+- no additional keys, markup wrapper, unsafe control characters, invalid dates,
+  or more than 140 human-readable words.
+
+An empty timeline and `null` risk are valid and are omitted from rendering. The
+model must not invent content merely to populate a section. Provider-native
+structured-output extensions are not assumed because compatible gateways vary;
+the server-side schema remains the provider-neutral enforcement boundary.
 
 ## Failure Behavior
 
 The summary UI reports disabled, missing workspace configuration, missing user
 configuration, invalid saved configuration, provider auth failure, rate limit,
-temporary provider failure, or ticket-unavailable states without exposing raw
-provider responses. Failed AI calls must not alter the selected-ticket draft,
-ticket metadata, thread, open tabs, saved views, or helpdesk provider state.
+invalid structured response, temporary provider failure, or ticket-unavailable
+states without exposing raw provider responses. A malformed structured response
+causes one bounded regeneration from the original ticket context with stricter
+format-reminder instructions. If that also fails, the response is rejected and
+is not rendered or cached. Token-limit truncation is rejected before structural
+parsing. Failed AI calls must not alter the selected-ticket draft, ticket
+metadata, thread, open tabs, saved views, or helpdesk provider state.
 After one authentication rejection, the summary action re-reads the scoped
 configuration and makes at most one delayed retry. Only a second authentication
 rejection is returned as a credential failure; other retry outcomes retain
@@ -127,8 +146,8 @@ email addresses, or ticket/thread content.
 
 ## Caching
 
-Successful selected-ticket summaries may be cached in encrypted server-side
-storage. Cache keys include prompt contract version, effective prompt text
+Successful validated selected-ticket summary objects may be serialized and
+cached in encrypted server-side storage. Cache keys include prompt contract version, effective prompt text
 fingerprint, model identity fingerprint, selected-ticket identity, source
 fingerprint/freshness, sanitization version, user, and active helpdesk
 connection. Prompt text, raw provider payloads, model names, and generated
@@ -144,6 +163,10 @@ path that may generate AI output and store a new summary cache entry. Its
 default Generate behavior may reuse a valid cache hit, while Regenerate must
 force a provider call and overwrite the cached summary after successful
 generation.
+
+Cache reads parse and validate the decrypted object again; malformed cache
+content is treated as a miss. The `ticket-summary-prompt-v2` identity prevents
+legacy free-form summaries from hydrating into the structured UI.
 
 An exact summary-cache identity remains displayable regardless of age. Ticket
 source, effective prompt, provider/model configuration, or sanitization changes

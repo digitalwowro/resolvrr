@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { decryptSecret, encryptSecret } from "@/security/encryption";
+import {
+  serializeTicketSummary,
+} from "@/features/ai/ticket-summary-structure";
+import type { TicketAiSummaryContent } from "@/features/ai/ticket-summary-content";
 
 const prismaMocks = vi.hoisted(() => ({
   findUnique: vi.fn(),
@@ -31,13 +35,22 @@ const key = {
   ticketExternalId: "59149",
   userId: "user-1",
 };
+const durableSummary: TicketAiSummaryContent = {
+  schemaVersion: "ticket-summary-v2",
+  situation: "Durable summary",
+  timeline: [],
+  nextRisk: null,
+};
 
 describe("Prisma AI summary cache repository", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns an exact matching summary regardless of its age", async () => {
     prismaMocks.findUnique.mockResolvedValueOnce({
-      encryptedSummary: encryptSecret("Situation: Durable summary", encryptionKey),
+      encryptedSummary: encryptSecret(
+        serializeTicketSummary(durableSummary),
+        encryptionKey,
+      ),
       fetchedAt: new Date("2020-01-01T00:00:00.000Z"),
       generatedAt: new Date("2020-01-01T00:00:00.000Z"),
       sourceArticleCount: 13,
@@ -53,10 +66,27 @@ describe("Prisma AI summary cache repository", () => {
     expect(result).toMatchObject({
       result: {
         generatedAt: "2020-01-01T00:00:00.000Z",
-        summary: "Situation: Durable summary",
+        summary: durableSummary,
       },
       status: "hit",
     });
+  });
+
+  it("treats malformed structured cache content as a miss", async () => {
+    prismaMocks.findUnique.mockResolvedValueOnce({
+      encryptedSummary: encryptSecret(
+        '{"schemaVersion":"ticket-summary-v2","situation":"Incomplete"}',
+        encryptionKey,
+      ),
+      fetchedAt: new Date("2026-07-18T09:00:00.000Z"),
+      generatedAt: new Date("2026-07-18T09:00:00.000Z"),
+      sourceArticleCount: 13,
+      sourceTicketNumber: "#59149",
+      sourceTicketUpdatedAt: new Date("2026-07-16T14:04:09.189Z"),
+    });
+
+    await expect(prismaAiSummaryCacheRepository.readSummary(key))
+      .resolves.toEqual({ status: "miss" });
   });
 
   it("stores fingerprinted summaries without a time-based expiry", async () => {
@@ -72,14 +102,14 @@ describe("Prisma AI summary cache repository", () => {
           ticketUpdatedAt: "2026-07-16T14:04:09.189Z",
         },
         status: "available",
-        summary: "Situation: Stored summary",
+        summary: { ...durableSummary, situation: "Stored summary" },
       },
     });
 
     const call = prismaMocks.upsert.mock.calls[0]?.[0];
     expect(call.create).not.toHaveProperty("expiresAt");
     expect(call.update).not.toHaveProperty("expiresAt");
-    expect(decryptSecret(call.create.encryptedSummary, encryptionKey))
-      .toBe("Situation: Stored summary");
+    expect(JSON.parse(decryptSecret(call.create.encryptedSummary, encryptionKey)))
+      .toEqual({ ...durableSummary, situation: "Stored summary" });
   });
 });

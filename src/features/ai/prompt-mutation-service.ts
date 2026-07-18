@@ -2,6 +2,7 @@ import { encryptSecret } from "@/security/encryption";
 import { invalidateAiSummaryWorkspaceCache } from "./summary-cache-invalidation";
 import {
   findAiPromptDefinition,
+  ticketSummaryPromptKey,
   type AiPromptDefinition,
 } from "./prompt-registry";
 import {
@@ -73,10 +74,12 @@ export async function saveWorkspaceAiPrompt(
     keyVersion: promptSecretKeyVersion,
     promptKey: definition.key,
   });
-  await invalidateAiSummaryWorkspaceCache({
-    cacheRepository: input.aiSummaryCacheRepository,
-    workspaceId: workspace.id,
-  });
+  if (definition.key === ticketSummaryPromptKey) {
+    await invalidateAiSummaryWorkspaceCache({
+      cacheRepository: input.aiSummaryCacheRepository,
+      workspaceId: workspace.id,
+    });
+  }
   return actionResult(
     "ai-prompt-saved",
     await refreshedData(input, workspace),
@@ -107,10 +110,12 @@ export async function resetWorkspaceAiPrompt(
     workspaceId: workspace.id,
     promptKey: definition.key,
   });
-  await invalidateAiSummaryWorkspaceCache({
-    cacheRepository: input.aiSummaryCacheRepository,
-    workspaceId: workspace.id,
-  });
+  if (definition.key === ticketSummaryPromptKey) {
+    await invalidateAiSummaryWorkspaceCache({
+      cacheRepository: input.aiSummaryCacheRepository,
+      workspaceId: workspace.id,
+    });
+  }
   return actionResult(
     "ai-prompt-reset",
     await refreshedData(input, workspace),

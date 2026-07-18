@@ -7,6 +7,8 @@ import {
   cacheScope,
   openAiConfig,
   ticketDetail,
+  ticketSummaryContent,
+  ticketSummaryJson,
 } from "./ai-ticket-summary-cache-test-helpers";
 
 vi.mock("@/security/base-url-validation", () => ({
@@ -40,7 +42,7 @@ describe("AI ticket summary output cache", () => {
         ticketNumber: "#1001",
         ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
       },
-      summary: "Situation: Cached summary",
+      summary: ticketSummaryContent("Cached summary"),
     };
     const cache = aiCacheRepository({
       readSummary: vi.fn(async () => ({
@@ -72,7 +74,7 @@ describe("AI ticket summary output cache", () => {
       ]),
     );
     const logged = JSON.stringify(infoSpy.mock.calls);
-    expect(logged).not.toContain("Situation: Cached summary");
+    expect(logged).not.toContain("Cached summary");
     expect(logged).not.toContain("ticket-1");
     expect(logged).not.toContain("1001");
     expect(logged).not.toContain("support-model");
@@ -98,7 +100,7 @@ describe("AI ticket summary output cache", () => {
         ticketNumber: "#1001",
         ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
       },
-      summary: "Situation: Cached summary",
+      summary: ticketSummaryContent("Cached summary"),
     };
     const cache = aiCacheRepository({
       readSummary: vi.fn(async () => ({
@@ -145,7 +147,7 @@ describe("AI ticket summary output cache", () => {
   it("force refreshes by bypassing a valid cache hit and storing the new summary", async () => {
     vi.mocked(safeProviderJson).mockResolvedValueOnce({
       data: {
-        choices: [{ message: { content: "Situation: Regenerated summary" } }],
+        choices: [{ message: { content: ticketSummaryJson("Regenerated summary") } }],
       },
       headers: new Headers(),
       status: 200,
@@ -161,7 +163,7 @@ describe("AI ticket summary output cache", () => {
             ticketNumber: "#1001",
             ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
           },
-          summary: "Situation: Cached summary",
+          summary: ticketSummaryContent("Cached summary"),
         },
         status: "hit" as const,
       })),
@@ -181,7 +183,7 @@ describe("AI ticket summary output cache", () => {
       ),
     ).resolves.toMatchObject({
       status: "available",
-      summary: "Situation: Regenerated summary",
+      summary: ticketSummaryContent("Regenerated summary"),
     });
 
     expect(cache.readSummary).not.toHaveBeenCalled();
@@ -189,7 +191,7 @@ describe("AI ticket summary output cache", () => {
     expect(cache.storeSummary).toHaveBeenCalledWith(
       expect.objectContaining({
         result: expect.objectContaining({
-          summary: "Situation: Regenerated summary",
+          summary: ticketSummaryContent("Regenerated summary"),
         }),
       }),
     );
@@ -199,7 +201,7 @@ describe("AI ticket summary output cache", () => {
     const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
     vi.mocked(safeProviderJson).mockResolvedValueOnce({
       data: {
-        choices: [{ message: { content: "Situation: Fresh summary" } }],
+        choices: [{ message: { content: ticketSummaryJson("Fresh summary") } }],
       },
       headers: new Headers(),
       status: 200,
@@ -214,7 +216,7 @@ describe("AI ticket summary output cache", () => {
       }),
     ).resolves.toMatchObject({
       status: "available",
-      summary: "Situation: Fresh summary",
+      summary: ticketSummaryContent("Fresh summary"),
     });
 
     expect(cache.storeSummary).toHaveBeenCalledWith(
@@ -222,9 +224,11 @@ describe("AI ticket summary output cache", () => {
         encryptionKey: "test encryption key long enough",
         helpdeskConnectionId: "connection-1",
         modelFingerprint: expect.any(String),
-        promptVersion: "ticket-summary-prompt-v1",
+        promptVersion: "ticket-summary-prompt-v2",
         providerProtocol: "openai-compatible",
-        result: expect.objectContaining({ summary: "Situation: Fresh summary" }),
+        result: expect.objectContaining({
+          summary: ticketSummaryContent("Fresh summary"),
+        }),
         sanitizationVersion: "sanitize-html-plain-text-v1",
         sourceFingerprint: expect.any(String),
         ticketExternalId: "ticket-1",
@@ -267,9 +271,10 @@ describe("AI ticket summary output cache", () => {
       .not.toContain("Hello support");
     const logged = JSON.stringify(infoSpy.mock.calls);
     expect(logged).not.toContain("Hello support");
-    expect(logged).not.toContain("Situation: Fresh summary");
+    expect(logged).not.toContain("Fresh summary");
     expect(logged).not.toContain("ticket-1");
     expect(logged).not.toContain("1001");
     expect(logged).not.toContain("support-model");
   });
+
 });

@@ -89,10 +89,14 @@ export function PromptCenterSidebar({
     <div className="space-y-5">
       {canManageWorkspace ? (
         <>
-          <SidebarGroup title="Workspace prompts">
+          <SidebarGroup title="AI operations">
             {prompts.map((prompt) => (
               <SidebarItem
-                description={prompt.isCustomized ? "Custom" : "Default"}
+                description={
+                  prompt.isCustomized
+                    ? prompt.editor.statusLabels.customized
+                    : prompt.editor.statusLabels.builtIn
+                }
                 key={prompt.key}
                 label={prompt.label}
                 onSelect={() => onSelect({ id: prompt.key, type: "prompt" })}

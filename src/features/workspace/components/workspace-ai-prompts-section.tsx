@@ -129,7 +129,7 @@ export function AiPromptsSection({
           </span>
         </div>
         <p className="text-sm text-slate-600">
-          Review and tune the prompts used by this workspace.
+          Review and tune the prompts and guidance used by this workspace.
         </p>
       </div>
       {!data.canView ? (
@@ -154,12 +154,6 @@ export function AiPromptsSection({
           </aside>
           <div className="min-h-0 overflow-y-auto px-5 py-4">
             <PromptMessage message={message} />
-            {data.canManageWorkspace ? (
-              <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                These base prompts and guardrail instructions control workspace
-                AI safety behavior. Changes apply to all users in this workspace.
-              </div>
-            ) : null}
             {effectiveSelected?.type === "prompt" ? (
               data.adminPrompts
                 .filter((prompt) => prompt.key === effectiveSelected.id)
