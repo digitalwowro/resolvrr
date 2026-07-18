@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 import type { TicketDetail } from "@/core/tickets";
 import type { AiSummaryCacheRepository } from "@/features/ai/summary-cache-repository";
+import type { TicketAiSummaryContent } from "@/features/ai/ticket-summary-content";
 
 export function ticketDetail(): TicketDetail {
   return {
@@ -66,3 +67,23 @@ export const openAiConfig = {
   model: "support-model",
   provider: "openai-compatible" as const,
 };
+
+export function ticketSummaryContent(
+  situation: string,
+  overrides: Partial<TicketAiSummaryContent> = {},
+): TicketAiSummaryContent {
+  return {
+    schemaVersion: "ticket-summary-v2",
+    situation,
+    timeline: [],
+    nextRisk: null,
+    ...overrides,
+  };
+}
+
+export function ticketSummaryJson(
+  situation: string,
+  overrides: Partial<TicketAiSummaryContent> = {},
+): string {
+  return JSON.stringify(ticketSummaryContent(situation, overrides));
+}

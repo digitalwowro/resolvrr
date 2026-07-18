@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { decryptSecret } from "@/security/encryption";
 import {
+  draftProofreadPromptKey,
   findAiPromptDefinition,
   ticketSummaryPromptKey,
 } from "@/features/ai/prompt-registry";
 import { resolveEffectiveAiPrompt } from "@/features/ai/prompt-service";
-import { saveWorkspaceAiPrompt } from "@/features/ai/prompt-mutation-service";
+import {
+  resetWorkspaceAiPrompt,
+  saveWorkspaceAiPrompt,
+} from "@/features/ai/prompt-mutation-service";
 import {
   aiSummaryCache,
   baseWorkspaceSetting,
@@ -22,6 +26,9 @@ describe("AI prompts", () => {
   it("registers the summary prompt as admin-only", () => {
     expect(findAiPromptDefinition(ticketSummaryPromptKey)).toMatchObject({
       adminEditable: true,
+      editor: {
+        kind: "supplemental-guidance",
+      },
     });
   });
 
@@ -67,5 +74,34 @@ describe("AI prompts", () => {
       prompt: "Custom admin summary prompt.",
       source: "workspace",
     });
+  });
+
+  it("does not invalidate summaries for unrelated draft prompt changes", async () => {
+    const prompts = promptRepository();
+    const settings = settingsRepository(baseWorkspaceSetting());
+    const cache = aiSummaryCache();
+    const input = {
+      aiSummaryCacheRepository: cache,
+      connectionRepository: connectionRepository(),
+      encryptionKey,
+      promptRepository: prompts,
+      rephraseStyleRepository: rephraseStyleRepository(),
+      settingsRepository: settings,
+      user: user("ADMIN"),
+    };
+
+    await saveWorkspaceAiPrompt({
+      ...input,
+      formData: form({
+        prompt: "Keep the draft accurate.",
+        promptKey: draftProofreadPromptKey,
+      }),
+    });
+    await resetWorkspaceAiPrompt({
+      ...input,
+      promptKey: draftProofreadPromptKey,
+    });
+
+    expect(cache.invalidateWorkspace).not.toHaveBeenCalled();
   });
 });

@@ -6,6 +6,7 @@ import {
   cacheScope,
   openAiConfig,
   ticketDetail,
+  ticketSummaryJson,
 } from "./ai-ticket-summary-cache-test-helpers";
 
 vi.mock("@/security/base-url-validation", () => ({
@@ -33,14 +34,14 @@ describe("AI ticket summary cache identity", () => {
     vi.mocked(safeProviderJson)
       .mockResolvedValueOnce({
         data: {
-          choices: [{ message: { content: "Situation: First summary" } }],
+          choices: [{ message: { content: ticketSummaryJson("First summary") } }],
         },
         headers: new Headers(),
         status: 200,
       })
       .mockResolvedValueOnce({
         data: {
-          choices: [{ message: { content: "Situation: Second summary" } }],
+          choices: [{ message: { content: ticketSummaryJson("Second summary") } }],
         },
         headers: new Headers(),
         status: 200,
@@ -56,19 +57,19 @@ describe("AI ticket summary cache identity", () => {
       openAiConfig,
       ticketDetail(),
       cacheOptions,
-      { prompt: "First summary prompt.", version: "ticket-summary-prompt-v1" },
+      { prompt: "First summary prompt.", version: "ticket-summary-prompt-v2" },
     );
     await summarizeTicketDetail(
       openAiConfig,
       ticketDetail(),
       cacheOptions,
-      { prompt: "Second summary prompt.", version: "ticket-summary-prompt-v1" },
+      { prompt: "Second summary prompt.", version: "ticket-summary-prompt-v2" },
     );
 
     const firstKey = vi.mocked(cache.storeSummary).mock.calls[0]?.[0];
     const secondKey = vi.mocked(cache.storeSummary).mock.calls[1]?.[0];
-    expect(firstKey?.promptVersion).toBe("ticket-summary-prompt-v1");
-    expect(secondKey?.promptVersion).toBe("ticket-summary-prompt-v1");
+    expect(firstKey?.promptVersion).toBe("ticket-summary-prompt-v2");
+    expect(secondKey?.promptVersion).toBe("ticket-summary-prompt-v2");
     expect(firstKey?.sourceFingerprint).not.toBe(secondKey?.sourceFingerprint);
   });
 });

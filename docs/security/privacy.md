@@ -109,8 +109,9 @@ conversation content.
 - My Style is user-specific writing guidance scoped to a workspace. It is
   private to the owning user, encrypted at rest, and structured around role,
   audience, tone, writing preferences, and constraints. Admins can manage
-  workspace AI policy, base prompts, safety/guardrail instructions, and
-  workspace rephrase styles, but they cannot view another user's My Style
+  workspace AI policy, draft-operation base prompts, supplemental ticket-summary
+  guidance, and workspace rephrase styles, but they cannot replace the
+  code-owned ticket-summary safety contract or view another user's My Style
   content. My Style must follow the same no-logging posture as prompts and
   generated output.
 - Proofread operations use the current composer draft and workspace-scoped My

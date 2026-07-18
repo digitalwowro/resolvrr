@@ -13,7 +13,9 @@ Every registered prompt operation must define:
 - a built-in default prompt;
 - a prompt version used for generated-output identity;
 - a maximum prompt length;
-- whether admins may edit the workspace default.
+- whether admins may edit the workspace default;
+- whether the editable text is a complete prompt or supplemental guidance;
+- editor labels and any read-only contract explanation shown in Prompt Center.
 
 Prompt keys are product contracts. They should be short, stable, and tied to an
 operation, not to a model, vendor, or helpdesk provider. Changing a prompt key
@@ -26,15 +28,18 @@ be reused.
 
 ## Prompt Center Rules
 
-Prompt Center is scoped to the active workspace. Admins manage workspace prompt
-defaults, safety/guardrail instructions, and the workspace rephrase style
-catalog. Non-admin users may see personal rephrase style override controls only
-when their workspace membership allows them.
+Prompt Center is scoped to the active workspace. Admins manage registered
+workspace AI configuration and the workspace rephrase style catalog. The
+registry determines whether an operation exposes a complete prompt or
+supplemental guidance so the UI does not infer semantics from a prompt key.
+Non-admin users may see personal rephrase style override controls only when
+their workspace membership allows them.
 
 The current registered prompts are:
 
-- `ticket-summary`: admin-editable so summary instructions remain governed by
-  the workspace.
+- `ticket-summary`: admin-editable supplemental guidance for summary emphasis
+  and wording. The structured output, factuality, safety, and validation
+  contract remains code-owned and read-only.
 - `draft-proofread`: admin-editable. It applies to draft-only proofread
   operations and may use workspace-scoped My Style.
 - `draft-rephrase`: admin-editable. It applies to draft-only rephrase
@@ -68,9 +73,10 @@ logged, included in telemetry, exposed in client state outside authorized
 settings views, or copied into provider writes.
 
 Prompt Center edits may invalidate generated-output caches when the prompt can
-affect the output. Cache identity must include at least the prompt version and a
-fingerprint of the effective prompt text, not the raw prompt body in logs or
-telemetry.
+affect the output. Ticket-summary caches are invalidated only when ticket-summary
+guidance changes, not when unrelated draft prompts change. Cache identity must
+include at least the prompt version and a fingerprint of the effective prompt
+text, not the raw prompt body in logs or telemetry.
 
 ## Future Prompt Operations
 

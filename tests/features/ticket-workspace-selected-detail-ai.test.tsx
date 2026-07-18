@@ -16,6 +16,7 @@ import {
   row,
   selectedDetailProps,
 } from "./ticket-workspace-test-utils";
+import { ticketSummaryContent } from "./ai-ticket-summary-cache-test-helpers";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -36,7 +37,9 @@ describe("TicketWorkspace selected detail AI summary", () => {
         ticketNumber: "#1001",
         ticketUpdatedAt: new Date(Date.now() - 6.5 * 60 * 1000).toISOString(),
       },
-      summary: "Situation: Login issue\nTimeline: Customer reported it.",
+      summary: ticketSummaryContent("Login issue", {
+        timeline: [{ date: null, event: "Customer reported it." }],
+      }),
     }));
 
     render(
@@ -73,7 +76,7 @@ describe("TicketWorkspace selected detail AI summary", () => {
       workspaceId: "workspace-1",
     });
     expect(await screen.findByText("AI summary")).toBeInTheDocument();
-    expect(await screen.findByText(/Situation: Login issue/u)).toBeInTheDocument();
+    expect(await screen.findByText("Login issue")).toBeInTheDocument();
     expect(screen.getByText("Generated 2m ago")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "AI summary" }).parentElement)
       .toHaveClass("pl-4", "pr-4");
@@ -93,7 +96,7 @@ describe("TicketWorkspace selected detail AI summary", () => {
         ticketNumber: "#1001",
         ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
       },
-      summary: "Situation: Cached summary",
+      summary: ticketSummaryContent("Cached summary"),
     }));
 
     render(
@@ -116,7 +119,7 @@ describe("TicketWorkspace selected detail AI summary", () => {
               ticketNumber: "#1001",
               ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
             },
-            summary: "Situation: Cached summary",
+            summary: ticketSummaryContent("Cached summary"),
           },
           ticketId: "ticket-1",
         }}
@@ -133,7 +136,7 @@ describe("TicketWorkspace selected detail AI summary", () => {
     );
 
     expect(screen.getByText("AI summary")).toBeInTheDocument();
-    expect(screen.getByText(/Situation: Cached summary/u)).toBeInTheDocument();
+    expect(screen.getByText("Cached summary")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Regenerate" })).toBeInTheDocument();
     expect(summarizeTicketAction).not.toHaveBeenCalled();
 
@@ -159,7 +162,7 @@ describe("TicketWorkspace selected detail AI summary", () => {
         ticketNumber: "#1001",
         ticketUpdatedAt: "2026-05-24T08:30:00.000Z",
       },
-      summary: "Situation: Ticket A only summary",
+      summary: ticketSummaryContent("Ticket A only summary"),
     }));
     const loadTicketDetailAction = vi.fn(async (ticketId: string) =>
       ticketId === "ticket-1"
@@ -201,13 +204,13 @@ describe("TicketWorkspace selected detail AI summary", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Generate AI summary" }));
-    expect(await screen.findByText(/Situation: Ticket A only summary/u))
+    expect(await screen.findByText("Ticket A only summary"))
       .toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: /#1002/u }));
 
     expect(await screen.findByLabelText("Ticket detail #1002")).toBeInTheDocument();
-    expect(screen.queryByText(/Situation: Ticket A only summary/u))
+    expect(screen.queryByText("Ticket A only summary"))
       .not.toBeInTheDocument();
     expect(screen.queryByText("No summary generated")).toBeNull();
     expect(screen.getByRole("button", { name: "Generate AI summary" }))
@@ -215,12 +218,12 @@ describe("TicketWorkspace selected detail AI summary", () => {
 
     await user.click(screen.getByRole("tab", { name: /#1001/u }));
 
-    expect(await screen.findByText(/Situation: Ticket A only summary/u))
+    expect(await screen.findByText("Ticket A only summary"))
       .toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Refresh ticket" }));
 
-    expect(await screen.findByText(/Situation: Ticket A only summary/u))
+    expect(await screen.findByText("Ticket A only summary"))
       .toBeInTheDocument();
   });
 });

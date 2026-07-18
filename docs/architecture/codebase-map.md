@@ -237,12 +237,13 @@ added, moved, renamed, or removed.
       - `prompt-mutation-context.ts` (`src/features/ai/prompt-mutation-context.ts`): shared active
         workspace and Prompt Center reload context for prompt and style mutation services.
       - `prompt-model.ts` (`src/features/ai/prompt-model.ts`): serializable Prompt Center data,
-        prompt view models, action codes, and action types.
+        prompt/editor-semantics view models, action codes, and action types.
       - `prompt-mutation-service.ts` (`src/features/ai/prompt-mutation-service.ts`): prompt save,
         reset, rephrase style CRUD, personal style override orchestration, admin/user gating,
-        encryption, and summary-cache invalidation.
+        encryption, and summary-cache invalidation scoped to summary guidance changes.
       - `prompt-registry.ts` (`src/features/ai/prompt-registry.ts`): registered AI prompt keys,
-        defaults, editability, and maximum-length metadata.
+        defaults, editability, complete-prompt versus supplemental-guidance editor semantics,
+        read-only contract descriptions, and maximum-length metadata.
       - `prompt-repository.ts` (`src/features/ai/prompt-repository.ts`): provider-neutral prompt
         persistence contract for encrypted workspace defaults.
       - `prompt-service.ts` (`src/features/ai/prompt-service.ts`): Prompt Center loading and
@@ -286,12 +287,16 @@ added, moved, renamed, or removed.
         provider-neutral generated-summary cache repository contract and disabled no-op repository.
       - `ticket-summary-cache.ts` (`src/features/ai/ticket-summary-cache.ts`): generated-summary
         cache read/write helpers plus cache-only selected-ticket summary hydration.
+      - `ticket-summary-content.ts` (`src/features/ai/ticket-summary-content.ts`):
+        client-safe structured summary type and current plain-text paragraph projection.
       - `text-generation.ts` (`src/features/ai/text-generation.ts`): OpenAI-compatible Chat
         Completions and Anthropic-compatible Messages HTTP adapters for single text generation
-        requests, with pinned-address provider HTTP, safe error mapping, and no prompt/output
-        logging.
+        requests, with pinned-address provider HTTP, safe error mapping, truncation rejection, and
+        no prompt/output logging.
       - `text-generation-errors.ts` (`src/features/ai/text-generation-errors.ts`): provider-neutral
         AI HTTP status classification that distinguishes authentication from request rejection.
+      - `text-generation-response.ts` (`src/features/ai/text-generation-response.ts`): focused
+        provider-response text extraction and token-limit truncation detection.
       - `ticket-summary-actions.ts` (`src/features/ai/ticket-summary-actions.ts`): authenticated
         server action that validates the originating workspace/personal connection, reloads
         selected-ticket detail, and performs one controlled auth-recovery retry.
@@ -302,7 +307,11 @@ added, moved, renamed, or removed.
         selected-ticket summary cache hydration for coordinated detail loads without AI
         generation.
       - `ticket-summary-service.ts` (`src/features/ai/ticket-summary-service.ts`): read-only
-        selected-ticket summary orchestration over AI runtime config and prompt context.
+        selected-ticket summary orchestration over AI runtime config and prompt context, including
+        one bounded structured-output repair attempt.
+      - `ticket-summary-structure.ts` (`src/features/ai/ticket-summary-structure.ts`): immutable
+        provider-neutral summary schema instruction, strict server parsing, sanitization,
+        normalization, chronological validation, and encrypted cache serialization.
     - `src/features/auth`: auth server actions and form messages.
       - `actions.ts` (`src/features/auth/actions.ts`): login, register, and logout server actions.
       - `index.ts` (`src/features/auth/index.ts`): auth feature exports.
@@ -565,7 +574,8 @@ added, moved, renamed, or removed.
           modal candidate/result list and unavailable/empty/searching states.
         - `ticket-ai-summary-panel.tsx`
           (`src/features/workspace/components/ticket-ai-summary-panel.tsx`): selected-ticket AI
-          Assistant summary panel that triggers generation only from an explicit user action.
+          Assistant operational brief with structured Situation, chronological Timeline, optional
+          Next Risk, and generation only from an explicit user action.
         - `ticket-article-attachments.tsx`
           (`src/features/workspace/components/ticket-article-attachments.tsx`): article attachment
           metadata presentation and keyboard-accessible authenticated download links. It displays
@@ -952,18 +962,18 @@ added, moved, renamed, or removed.
           per-workspace AI provider settings form for user-provided-key workspaces.
         - `workspace-ai-prompt-forms.tsx`
           (`src/features/workspace/components/workspace-ai-prompt-forms.tsx`): Prompt Center
-          workspace prompt and action-message form components.
+          workspace prompt/guidance forms, immutable contract explanation, and action messages.
         - `workspace-ai-prompt-center-sidebar.tsx`
           (`src/features/workspace/components/workspace-ai-prompt-center-sidebar.tsx`):
-          grouped Prompt Center sidebar for workspace prompts, ordered rephrase styles, and
+          grouped Prompt Center sidebar for AI operations, ordered rephrase styles, and
           personal overrides.
         - `workspace-ai-rephrase-style-forms.tsx`
           (`src/features/workspace/components/workspace-ai-rephrase-style-forms.tsx`): Prompt
           Center forms for workspace rephrase style CRUD and personal style overrides.
         - `workspace-ai-prompts-section.tsx`
           (`src/features/workspace/components/workspace-ai-prompts-section.tsx`): Settings dialog
-          Prompt Center sidebar/detail section for admin-managed workspace prompts, workspace
-          rephrase styles, and membership-gated personal style overrides.
+          Prompt Center sidebar/detail section for admin-managed workspace prompts or guidance,
+          workspace rephrase styles, and membership-gated personal style overrides.
         - `workspace-notifications-panel.tsx`
           (`src/features/workspace/components/workspace-notifications-panel.tsx`): workspace
           notifications panel workspace UI component.
@@ -1688,6 +1698,9 @@ added, moved, renamed, or removed.
     - `ticket-workspace-selected-detail.test.tsx`
       (`tests/features/ticket-workspace-selected-detail.test.tsx`): verifies selected ticket detail,
       thread rendering, secondary metadata chips/links, article recipients, and attachment display.
+    - `ticket-ai-summary-panel.test.tsx`
+      (`tests/features/ticket-ai-summary-panel.test.tsx`): verifies structured operational-brief
+      sections, semantic timeline dates, visual rail, and omission of unavailable optional sections.
     - `ticket-workspace-selected-detail-ai.test.tsx`
       (`tests/features/ticket-workspace-selected-detail-ai.test.tsx`): verifies selected-ticket AI
       summary generation, cache hydration display, forced regeneration, and ticket-switch resets.

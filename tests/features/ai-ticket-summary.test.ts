@@ -2,8 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TicketDetail } from "@/core/tickets";
 import { summarizeTicketDetail } from "@/features/ai/ticket-summary-service";
 import { ticketSummaryPromptContext } from "@/features/ai/ticket-summary-context";
-import { generateAiText } from "@/features/ai/text-generation";
 import { safeProviderJson } from "@/security/provider-http";
+import {
+  ticketSummaryContent,
+  ticketSummaryJson,
+} from "./ai-ticket-summary-cache-test-helpers";
 
 vi.mock("@/security/base-url-validation", () => ({
   validateProviderBaseUrl: vi.fn(async (input: string) => ({
@@ -91,17 +94,43 @@ describe("AI ticket summaries", () => {
     expect(context.prompt).not.toContain("article-secret-1");
   });
 
-  it("calls OpenAI-compatible chat completions without storing output", async () => {
-    vi.mocked(safeProviderJson).mockResolvedValueOnce({
-      data: {
-        choices: [{ message: { content: "Situation: Login issue" } }],
-      },
-      headers: new Headers(),
-      status: 200,
-    });
+  it("keeps the newest bounded articles when long tickets fill the prompt", () => {
+    const detail = ticketDetail();
+    detail.thread.articles = Array.from({ length: 14 }, (_, index) => ({
+      ...detail.thread.articles[0]!,
+      createdAt: new Date(`2026-05-${String(index + 1).padStart(2, "0")}T08:31:00Z`),
+      externalId: `article-${index + 1}`,
+      sanitizedHtml: `<p>message-${index + 1} ${"detail ".repeat(400)}</p>`,
+    }));
+
+    const context = ticketSummaryPromptContext(detail);
+
+    expect(context.prompt.length).toBeLessThanOrEqual(18_000);
+    expect(context.prompt).toContain("Articles included: 12 of 14");
+    expect(context.prompt).not.toContain("message-1 ");
+    expect(context.prompt).not.toContain("message-2 ");
+    expect(context.prompt).toContain("message-14 ");
+  });
+
+  it("repairs one invalid summary response before accepting structured output", async () => {
+    vi.mocked(safeProviderJson)
+      .mockResolvedValueOnce({
+        data: {
+          choices: [{ message: { content: "Situation: Login issue" } }],
+        },
+        headers: new Headers(),
+        status: 200,
+      })
+      .mockResolvedValueOnce({
+        data: {
+          choices: [{ message: { content: ticketSummaryJson("Login issue") } }],
+        },
+        headers: new Headers(),
+        status: 200,
+      });
 
     await expect(
-      generateAiText(
+      summarizeTicketDetail(
         {
           status: "available",
           apiKey: "openai-key",
@@ -109,33 +138,41 @@ describe("AI ticket summaries", () => {
           model: "support-model",
           provider: "openai-compatible",
         },
-        {
-          maxOutputTokens: 80,
-          systemInstruction: "Summarize.",
-          userPrompt: "Ticket body",
-        },
+        ticketDetail(),
       ),
-    ).resolves.toEqual({ status: "available", text: "Situation: Login issue" });
+    ).resolves.toMatchObject({
+      status: "available",
+      summary: ticketSummaryContent("Login issue"),
+    });
 
-    expect(safeProviderJson).toHaveBeenCalledWith(
-      "https://api.openai.test/v1/chat/completions",
-      expect.objectContaining({
-        allowedAddresses: ["203.0.113.10"],
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: "Bearer openai-key",
-          "Content-Type": "application/json",
-        }),
-        maxResponseBytes: 256 * 1024,
-      }),
+    expect(safeProviderJson).toHaveBeenCalledTimes(2);
+    const firstBody = JSON.parse(
+      String(vi.mocked(safeProviderJson).mock.calls[0]?.[1].body),
+    );
+    const secondBody = JSON.parse(
+      String(vi.mocked(safeProviderJson).mock.calls[1]?.[1].body),
+    );
+    expect(firstBody.messages[0].content).toContain("ticket-summary-v2");
+    expect(secondBody.messages[0].content).toContain(
+      "previous response failed structural validation",
     );
   });
 
-  it("maps malformed OpenAI-compatible 2xx responses to temporary failure", async () => {
-    vi.mocked(safeProviderJson).mockRejectedValueOnce(new Error("invalid-json"));
+  it("fails closed after two invalid summary responses", async () => {
+    vi.mocked(safeProviderJson)
+      .mockResolvedValueOnce({
+        data: { choices: [{ message: { content: "invalid" } }] },
+        headers: new Headers(),
+        status: 200,
+      })
+      .mockResolvedValueOnce({
+        data: { choices: [{ message: { content: '{"still":"invalid"}' } }] },
+        headers: new Headers(),
+        status: 200,
+      });
 
     await expect(
-      generateAiText(
+      summarizeTicketDetail(
         {
           status: "available",
           apiKey: "openai-key",
@@ -143,84 +180,11 @@ describe("AI ticket summaries", () => {
           model: "support-model",
           provider: "openai-compatible",
         },
-        {
-          maxOutputTokens: 80,
-          systemInstruction: "Summarize.",
-          userPrompt: "Ticket body",
-        },
+        ticketDetail(),
       ),
     ).resolves.toEqual({
       status: "unavailable",
-      reason: "provider-temporary-failure",
-      retryable: true,
-    });
-  });
-
-  it("calls Anthropic-compatible messages with the required API version header", async () => {
-    vi.mocked(safeProviderJson).mockResolvedValueOnce({
-      data: {
-        content: [{ type: "text", text: "Situation: Login issue" }],
-      },
-      headers: new Headers(),
-      status: 200,
-    });
-
-    await expect(
-      generateAiText(
-        {
-          status: "available",
-          apiKey: "anthropic-key",
-          baseUrl: "https://api.anthropic.test/v1",
-          model: "support-model",
-          provider: "anthropic-compatible",
-        },
-        {
-          maxOutputTokens: 80,
-          systemInstruction: "Summarize.",
-          userPrompt: "Ticket body",
-        },
-      ),
-    ).resolves.toEqual({ status: "available", text: "Situation: Login issue" });
-
-    expect(safeProviderJson).toHaveBeenCalledWith(
-      "https://api.anthropic.test/v1/messages",
-      expect.objectContaining({
-        allowedAddresses: ["203.0.113.10"],
-        method: "POST",
-        headers: expect.objectContaining({
-          "anthropic-version": "2023-06-01",
-          "Content-Type": "application/json",
-          "x-api-key": "anthropic-key",
-        }),
-      }),
-    );
-  });
-
-  it("maps Anthropic-compatible 2xx responses without text to temporary failure", async () => {
-    vi.mocked(safeProviderJson).mockResolvedValueOnce({
-      data: { content: [{ type: "image" }] },
-      headers: new Headers(),
-      status: 200,
-    });
-
-    await expect(
-      generateAiText(
-        {
-          status: "available",
-          apiKey: "anthropic-key",
-          baseUrl: "https://api.anthropic.test/v1",
-          model: "support-model",
-          provider: "anthropic-compatible",
-        },
-        {
-          maxOutputTokens: 80,
-          systemInstruction: "Summarize.",
-          userPrompt: "Ticket body",
-        },
-      ),
-    ).resolves.toEqual({
-      status: "unavailable",
-      reason: "provider-temporary-failure",
+      reason: "provider-invalid-response",
       retryable: true,
     });
   });
@@ -229,7 +193,7 @@ describe("AI ticket summaries", () => {
     const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
     vi.mocked(safeProviderJson).mockResolvedValueOnce({
       data: {
-        choices: [{ message: { content: "Situation: Login issue" } }],
+        choices: [{ message: { content: ticketSummaryJson("Login issue") } }],
       },
       headers: new Headers(),
       status: 200,
@@ -277,7 +241,7 @@ describe("AI ticket summaries", () => {
 
     const logged = JSON.stringify(infoSpy.mock.calls);
     expect(logged).not.toContain("Hello support");
-    expect(logged).not.toContain("Situation: Login issue");
+    expect(logged).not.toContain("Login issue");
     expect(logged).not.toContain("Maya Patel");
     expect(logged).not.toContain("maya@example.com");
     expect(logged).not.toContain("article-secret-1");

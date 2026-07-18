@@ -427,8 +427,15 @@ permissions for non-admin users; they are separate from a rephrase style's
 editor option.
 
 The summary panel must report disabled, missing workspace setup, missing user
-setup, unavailable, and rate-limited states without exposing raw provider
-responses. A generated summary is advisory text only: it must not update ticket
+setup, unavailable, invalid structured output, and rate-limited states without
+exposing raw provider responses. It renders only server-validated structured
+summary content. Situation is required; empty Timeline and null Next Risk
+sections remain absent rather than displaying invented placeholders. Available
+summaries use one unified, lightly tinted operational-brief surface: a subtle indigo rail,
+prominent Situation, compact chronological Timeline, and restrained amber Next
+Risk footer. The structured hierarchy distinguishes generated synthesis from
+ordinary ticket articles without introducing nested cards or unsupported
+metrics. A generated summary is advisory text only: it must not update ticket
 metadata, staged communication, saved views, open tabs, or provider state.
 Customer-visible communication still requires explicit user review and the
 selected helpdesk provider write path.
@@ -443,10 +450,16 @@ provider writes.
 
 When workspace AI is enabled, admins also see `Prompt Center` in Settings.
 Prompt Center uses the same sidebar/detail pattern as Views: the sidebar groups
-registered workspace prompts, ordered rephrase styles, and personal overrides
-when available, while the detail pane edits the selected item. Admins can edit
-or reset workspace prompt defaults, create/edit/reorder/disable/remove rephrase
-styles, and the inline editor shows active workspace styles in that flat order.
+registered AI operations, ordered rephrase styles, and personal overrides when
+available, while the detail pane edits the selected item. An operation declares
+whether its editable text is a complete prompt or supplemental guidance.
+Ticket-summary guidance is labelled as guidance and is shown beside a read-only
+human-readable output contract. That contract makes the required Situation,
+optional chronological Timeline, optional Next Risk, factuality, sanitization,
+and 140-word limit visible without exposing raw model instructions. Admins can
+edit or reset workspace configuration, create/edit/reorder/disable/remove
+rephrase styles, and the inline editor shows active workspace styles in that
+flat order.
 Regular users see Prompt Center only when their workspace membership allows
 personal rephrase style overrides. Those personal override controls replace the
 selected style prompt only for that user in the active workspace.

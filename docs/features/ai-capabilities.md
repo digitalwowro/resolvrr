@@ -19,9 +19,12 @@ section lets admins decide whether non-admin workspace users may edit My Style
 and whether they may customize rephrase prompts for their own drafts.
 
 Prompt Center is available when workspace AI is enabled. Admins can manage
-workspace prompt defaults for registered prompt operations and workspace
-rephrase styles such as Professional, Friendly, Empathetic, and Concise. These
-styles are the options shown in the inline editor.
+workspace configuration for registered prompt operations and workspace
+rephrase styles such as Professional, Friendly, Empathetic, and Concise. Ticket
+summary configuration is supplemental guidance only: it may adjust emphasis and
+wording, while Resolvrr owns and validates the fixed summary structure,
+factuality, safety rules, and length limit. These styles are the options shown
+in the inline editor.
 
 My Style is available from `Settings -> My Style` under Workspace Settings when
 AI is enabled for the active workspace. It lets each user store private,
@@ -35,9 +38,10 @@ Workspace membership can also allow a user to override rephrase style prompts
 for their own drafts. The workspace-level AI Settings toggles update those
 permissions for non-admin users. A personal rephrase style override replaces
 that style's workspace prompt only for the owning user in the active workspace.
-Admins can view and edit workspace base prompts, safety/guardrail instructions,
-and workspace rephrase styles, but they cannot view another user's My Style or
-personal rephrase style override text.
+Admins can view and edit draft-operation base prompts and workspace rephrase
+styles, plus supplemental ticket-summary guidance, but they cannot replace the
+fixed ticket-summary contract or view another user's My Style or personal
+rephrase style override text.
 
 Admins can also manage per-user workspace access from `Settings -> Users`,
 including workspace role, My Style edit permission, and personal rephrase prompt

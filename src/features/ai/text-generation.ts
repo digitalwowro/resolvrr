@@ -19,6 +19,12 @@ import {
   type AiTextUnavailableResult,
 } from "./text-generation-errors";
 import { providerErrorMetadata } from "./provider-error-metadata";
+import {
+  anthropicResponseWasTruncated,
+  extractAnthropicText,
+  extractOpenAiText,
+  openAiResponseWasTruncated,
+} from "./text-generation-response";
 
 const maxAiProviderResponseBytes = 256 * 1024;
 
@@ -36,10 +42,6 @@ export type AiTextGenerationRequest = {
 function endpoint(baseUrl: string, path: string): string {
   const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
   return new URL(path, normalizedBase).toString();
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
 }
 
 async function postJson(
@@ -70,43 +72,6 @@ async function postJson(
 
 function windowlessTimeout(handler: () => void, timeoutMs: number) {
   return setTimeout(handler, timeoutMs);
-}
-
-function extractOpenAiText(payload: unknown): string | undefined {
-  if (!isRecord(payload) || !Array.isArray(payload.choices)) {
-    return undefined;
-  }
-  const [choice] = payload.choices;
-  if (!isRecord(choice) || !isRecord(choice.message)) {
-    return undefined;
-  }
-  const { content } = choice.message;
-  if (typeof content === "string") {
-    return content.trim();
-  }
-  if (Array.isArray(content)) {
-    return content
-      .map((part) =>
-        isRecord(part) && typeof part.text === "string" ? part.text : "",
-      )
-      .join("")
-      .trim();
-  }
-  return undefined;
-}
-
-function extractAnthropicText(payload: unknown): string | undefined {
-  if (!isRecord(payload) || !Array.isArray(payload.content)) {
-    return undefined;
-  }
-  return payload.content
-    .map((part) =>
-      isRecord(part) && part.type === "text" && typeof part.text === "string"
-        ? part.text
-        : "",
-    )
-    .join("")
-    .trim();
 }
 
 function recordProviderRequestTiming(
@@ -197,7 +162,9 @@ async function openAiCompatibleText(
     );
     return unavailable;
   }
-  const text = extractOpenAiText(payload);
+  const text = openAiResponseWasTruncated(payload)
+    ? undefined
+    : extractOpenAiText(payload);
   const result = text
     ? { status: "available" as const, text }
     : temporaryAiProviderFailure();
@@ -269,7 +236,9 @@ async function anthropicCompatibleText(
     );
     return unavailable;
   }
-  const text = extractAnthropicText(payload);
+  const text = anthropicResponseWasTruncated(payload)
+    ? undefined
+    : extractAnthropicText(payload);
   const result = text
     ? { status: "available" as const, text }
     : temporaryAiProviderFailure();

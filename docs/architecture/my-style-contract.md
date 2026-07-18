@@ -27,9 +27,9 @@ follows the same privacy rules.
 
 My Style belongs only to the user who created it in a specific workspace. It
 must be encrypted at rest and keyed by `user + workspace`. Admins can configure
-workspace AI policy, workspace prompt defaults, safety/guardrail instructions,
-and workspace rephrase styles, but they cannot view or manage another user's My
-Style content.
+workspace AI policy, draft-operation prompt defaults, supplemental
+ticket-summary guidance, and workspace rephrase styles, but they cannot view or
+manage another user's My Style content.
 
 My Style text must not be logged, included in telemetry, exposed to other users,
 or written to the helpdesk provider. If the app later adds an admin reset

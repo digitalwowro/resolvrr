@@ -1,6 +1,6 @@
 import type { ActiveWorkspace } from "./settings-service";
 import type { WorkspaceAiPolicy } from "./settings-model";
-import type { AiPromptKey } from "./prompt-registry";
+import type { AiPromptEditorKind, AiPromptKey } from "./prompt-registry";
 import type {
   UserAiRephraseStyleOverrideView,
   WorkspaceAiRephraseStyleView,
@@ -9,6 +9,22 @@ import type {
 export type AiPromptAdminView = {
   builtInPrompt: string;
   description: string;
+  editor: {
+    contract: {
+      description: string;
+      requirements: string[];
+      title: string;
+    } | null;
+    fieldLabel: string;
+    helperText: string;
+    kind: AiPromptEditorKind;
+    resetLabel: string;
+    saveLabel: string;
+    statusLabels: {
+      builtIn: string;
+      customized: string;
+    };
+  };
   isCustomized: boolean;
   key: AiPromptKey;
   label: string;
