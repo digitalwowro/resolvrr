@@ -248,6 +248,12 @@ export function readUnavailableForProviderError(
   if (error.kind === "unsupported-capability") {
     return unavailableTicketRead("unsupported-capability");
   }
+  if (
+    error.kind === "validation-failure" &&
+    error.diagnosticCode === "invalid-search-query"
+  ) {
+    return unavailableTicketRead("invalid-search-query");
+  }
 
   return unavailableTicketRead("provider-unexpected-response", error.retryable);
 }

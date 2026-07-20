@@ -79,7 +79,7 @@ describe("loadWorkspaceTicketListPageAction", () => {
       {},
       "test-encryption-key",
       "user-1",
-      { cursor: "2" },
+      { cursor: "2", pageSize: 100 },
     );
     expect(result).toMatchObject({
       status: "available",
@@ -141,7 +141,10 @@ describe("loadWorkspaceTicketListPageAction", () => {
       {},
       "test-encryption-key",
       "user-1",
-      { sort: { key: "pendingUntil", direction: "ascending" } },
+      {
+        pageSize: 100,
+        sort: { key: "pendingUntil", direction: "ascending" },
+      },
     );
   });
 
@@ -167,7 +170,7 @@ describe("loadWorkspaceTicketListPageAction", () => {
       {},
       "test-encryption-key",
       "user-1",
-      {},
+      { pageSize: 100 },
     );
     expect(result).toMatchObject({ status: "available", appliedSort: undefined });
   });
@@ -214,7 +217,11 @@ describe("loadWorkspaceTicketListPageAction", () => {
       {},
       "test-encryption-key",
       "user-1",
-      { count: { includeTotal: true }, group: { key: "priority" } },
+      {
+        pageSize: 25,
+        count: { includeTotal: true },
+        group: { key: "priority" },
+      },
     );
     expect(result).toMatchObject({
       status: "available",
@@ -257,7 +264,7 @@ describe("loadWorkspaceTicketListPageAction", () => {
       {},
       "test-encryption-key",
       "user-1",
-      { cursor: "2", filter: { states: ["open"] } },
+      { cursor: "2", filter: { states: ["open"] }, pageSize: 25 },
     );
   });
 });

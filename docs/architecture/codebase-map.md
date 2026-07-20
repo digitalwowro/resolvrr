@@ -143,6 +143,8 @@ added, moved, renamed, or removed.
       query defaults, storage helpers, and metadata.
     - `ticket-list-query.ts` (`src/core/ticket-list-query.ts`): provider-neutral list query, sort,
       count, grouping, pagination, result contracts, and normalization.
+    - `ticket-search.ts` (`src/core/ticket-search.ts`): provider-neutral interactive search
+      length, control-character, whitespace, and advanced-syntax-preserving validation.
     - `ticket-lookups.ts` (`src/core/ticket-lookups.ts`): provider-neutral lookup option,
       contextual assignable-user input, lookup result, and request-scoped lookup cache-policy
       contracts.
@@ -392,8 +394,8 @@ added, moved, renamed, or removed.
       variable rendering, preview actions, and stale-context revalidation.
     - `src/features/tickets`: provider-neutral ticket read, lookup, metadata mutation,
       communication, and adapter workflows.
-      - `actions.ts` (`src/features/tickets/actions.ts`): server action for staged selected-ticket
-        metadata and communication update payloads from `/workspace`.
+      - `actions.ts` (`src/features/tickets/actions.ts`): server-action entrypoint for staged
+        selected-ticket updates plus workspace list, global search, and link-target reads.
       - `cache-repository.ts` (`src/features/tickets/cache-repository.ts`): provider-neutral
         selected-ticket detail cache repository contract and no-cache implementation.
       - `communication-action-input.ts` (`src/features/tickets/communication-action-input.ts`):
@@ -455,9 +457,19 @@ added, moved, renamed, or removed.
         provider-neutral pagination metadata only.
       - `list-page-action-result.ts` (`src/features/tickets/list-page-action-result.ts`):
         client-safe workspace ticket list page action result and loader action function types.
+      - `list-page-sizes.ts` (`src/features/tickets/list-page-sizes.ts`):
+        provider-neutral workload, grouped-bucket, and quick-search page-size policy.
       - `list-query-guardrails.ts` (`src/features/tickets/list-query-guardrails.ts`):
         provider-neutral list query capability derivation and guardrail checks for unsupported or
         expensive query requests before provider dispatch.
+      - `search-action-result.ts` (`src/features/tickets/search-action-result.ts`): client-safe
+        quick/detailed global ticket search request, result, paging, and sort contracts.
+      - `search-actions.ts` (`src/features/tickets/search-actions.ts`): authenticated global ticket
+        search action using the signed-in user's active personal connection and the shared ticket
+        list read boundary.
+      - `workspace-list-sort.ts` (`src/features/tickets/workspace-list-sort.ts`): shared
+        provider-neutral workspace/list sort translation and complete-result relationship-sort
+        guardrails.
       - `lookup-actions.ts` (`src/features/tickets/lookup-actions.ts`): authenticated, strictly
         normalized contextual assignable-owner and mentionable-agent server actions.
       - `metadata-action-input-values.ts` (`src/features/tickets/metadata-action-input-values.ts`):
@@ -818,9 +830,6 @@ added, moved, renamed, or removed.
         - `ticket-workspace-display-derived.ts`
           (`src/features/workspace/components/ticket-workspace-display-derived.ts`): derived
           provider-grouping and active-ticket summary helpers for workspace display composition.
-        - `ticket-workspace-display-filters.ts`
-          (`src/features/workspace/components/ticket-workspace-display-filters.ts`): loaded-ticket
-          search normalization and local loaded-row/group filtering helpers.
         - `ticket-workspace-display-types.ts`
           (`src/features/workspace/components/ticket-workspace-display-types.ts`): type contracts
           for ticket workspace display.
@@ -831,6 +840,19 @@ added, moved, renamed, or removed.
           (`src/features/workspace/components/ticket-workspace-display.tsx`): client-side production
           workspace display composition for controls, tabs, table, and selected-ticket detail
           surfaces.
+        - `ticket-workspace-search-area.tsx`
+          (`src/features/workspace/components/ticket-workspace-search-area.tsx`): flat detailed
+          provider search results using the production ticket table without saved-view grouping,
+          including orientation-aware subsection insets.
+        - `ticket-workspace-search-props.ts`
+          (`src/features/workspace/components/ticket-workspace-search-props.ts`): focused global
+          search action and scope prop contracts shared by workspace composition modules.
+        - `ticket-workspace-scope.ts`
+          (`src/features/workspace/components/ticket-workspace-scope.ts`): derives the active
+          personal-connection search scope without exposing provider credentials.
+        - `close-ticket-with-draft.ts`
+          (`src/features/workspace/components/close-ticket-with-draft.ts`): draft-aware close
+          helper shared by synchronized ticket-tab actions and workspace search transitions.
         - `ticket-workspace-fallbacks.ts`
           (`src/features/workspace/components/ticket-workspace-fallbacks.ts`): ticket workspace
           fallbacks workspace helper module.
@@ -862,8 +884,11 @@ added, moved, renamed, or removed.
           (`src/features/workspace/components/ticket-workspace-types.ts`): type contracts for ticket
           workspace.
         - `ticket-workspace-work-area.tsx`
-          (`src/features/workspace/components/ticket-workspace-work-area.tsx`): ticket workspace
-          work area workspace UI component.
+          (`src/features/workspace/components/ticket-workspace-work-area.tsx`): selected-ticket
+          detail work-area states and rendering.
+        - `ticket-workspace-list-area.tsx`
+          (`src/features/workspace/components/ticket-workspace-list-area.tsx`): list toolbar,
+          status, and results subsections with orientation-aware insets.
         - `ticket-workspace.tsx` (`src/features/workspace/components/ticket-workspace.tsx`):
           provider-backed workspace composition for the real `/workspace` route. It wires
           provider-neutral read models, metadata mutation capabilities, and communication
@@ -884,6 +909,10 @@ added, moved, renamed, or removed.
           and reloading page 1 for provider-backed sort changes or state/priority grouped buckets
           after the provider reload succeeds, while preserving provider-backed total count metadata
           and independent grouped-bucket cursors without touching selected-ticket detail reads.
+        - `use-ticket-search-controller.ts`
+          (`src/features/workspace/components/use-ticket-search-controller.ts`): session-scoped,
+          debounced quick search and independent detailed result paging, sorting, refresh, and
+          stale-response suppression.
         - `use-ticket-list-silent-refresh.ts`
           (`src/features/workspace/components/use-ticket-list-silent-refresh.ts`): use ticket list
           silent refresh workspace helper module.
@@ -947,6 +976,9 @@ added, moved, renamed, or removed.
         - `workspace-header.tsx` (`src/features/workspace/components/workspace-header.tsx`):
           production workspace header presentation with brand, global search, tab layout controls,
           and an avatar/profile menu fed by real connection/action props.
+        - `workspace-ticket-search.tsx`
+          (`src/features/workspace/components/workspace-ticket-search.tsx`): keyboard-accessible
+          header search input and anchored ten-result quick picker.
         - `workspace-ai-settings-admin-form.tsx`
           (`src/features/workspace/components/workspace-ai-settings-admin-form.tsx`): admin-only
           active-workspace AI policy, workspace-default provider settings, and non-admin AI user
@@ -1159,17 +1191,20 @@ added, moved, renamed, or removed.
       - `owner-assignment.ts` (`src/providers/zammad/owner-assignment.ts`): fresh final owner/group
         compatibility revalidation before Zammad ticket writes.
       - `ticket-list.ts` (`src/providers/zammad/ticket-list.ts`): Zammad ticket list endpoint reads,
-        search query composition, pagination, grouped-list dispatch, and read-phase timing.
+        pagination up to 100 rows, grouped-list dispatch, and read-phase timing.
+      - `ticket-list-assets.ts` (`src/providers/zammad/ticket-list-assets.ts`): provider-owned
+        user, group, state, priority, and organization fallback lookups for full list payloads.
+      - `ticket-full-text-search.ts` (`src/providers/zammad/ticket-full-text-search.ts`):
+        provider-owned full-text validation bridge and invalid Zammad search-response mapping.
       - `ticket-list-payload.ts` (`src/providers/zammad/ticket-list-payload.ts`): Zammad ticket list
-        payload parsing, missing user/state/priority lookup, organization backfill, and canonical
-        row mapping.
+        payload parsing, merged-source filtering, pagination metadata, and canonical row mapping.
       - `ticket-lookups.ts` (`src/providers/zammad/ticket-lookups.ts`): paginated Zammad group and
         agent lookup reads, including full-access group scoping, mapped to provider-neutral options.
       - `ticket-mentions.ts` (`src/providers/zammad/ticket-mentions.ts`): Zammad group-scoped
         mention suggestions plus final neutral-token conversion and write-error mapping.
       - `ticket-search-query.ts` (`src/providers/zammad/ticket-search-query.ts`): Zammad ticket
-        search path, sort, state/priority filter, merged-source exclusion, and state/priority bucket
-        query construction.
+        search path using full list assets, sort, state/priority filter,
+        merged-source exclusion, and state/priority bucket query construction.
       - `ticket-state.ts` (`src/providers/zammad/ticket-state.ts`): protected merged-state
         recognition from raw ticket fields and expanded assets.
       - `ticket-secondary-mutations.ts` (`src/providers/zammad/ticket-secondary-mutations.ts`):
@@ -1245,6 +1280,8 @@ added, moved, renamed, or removed.
     - `ticket-read-contract.md` (`docs/architecture/ticket-read-contract.md`): canonical
       provider-neutral ticket read model, controlled metadata mutation contract, thread article
       shape, capabilities, and non-goals.
+    - `ticket-search-contract.md` (`docs/architecture/ticket-search-contract.md`): provider-backed
+      global ticket search behavior, privacy, paging, sorting, and workspace interaction contract.
   - `docs/deploy`: deployment configuration and environment documentation.
     - `docs/deploy/systemd`: systemd service examples for local development and deployment.
       - `resolvrr-dev.service.example` (`docs/deploy/systemd/resolvrr-dev.service.example`):
@@ -1549,6 +1586,9 @@ added, moved, renamed, or removed.
       global/active connection scope, and rejected cross-connection workspace list page loads.
     - `ticket-list-action.test.ts` (`tests/features/ticket-list-action.test.ts`): verifies
       client-safe post-hydration workspace list page action results.
+    - `ticket-search-action.test.ts` (`tests/features/ticket-search-action.test.ts`): verifies
+      authenticated quick/detailed global search validation, paging, sorting, and provider-safe
+      failure mapping.
     - `ticket-list-query-guardrails.test.ts`
       (`tests/features/ticket-list-query-guardrails.test.ts`): verifies provider-neutral list query
       capability derivation and unsupported or too-expensive query rejection before provider
@@ -1689,12 +1729,18 @@ added, moved, renamed, or removed.
     - `ticket-table-display-sort.test.ts`
       (`tests/features/ticket-table-display-sort.test.ts`): verifies natural relationship-label
       ordering and stable placement of unassigned values.
+    - `ticket-table-layout.test.ts` (`tests/features/ticket-table-layout.test.ts`): verifies shared
+      List/Search tracks retain preferred widths without an intrinsic minimum that overflows the
+      workspace pane.
     - `ticket-workspace-sorted-server-refresh.test.tsx`
       (`tests/features/ticket-workspace-sorted-server-refresh.test.tsx`): verifies ticket-removing
       server refreshes retain and reapply the active provider sort.
     - `ticket-workspace-saved-views.test.tsx`
       (`tests/features/ticket-workspace-saved-views.test.tsx`): verifies workspace saved-view
       selection and unsupported options.
+    - `ticket-workspace-search.test.tsx`
+      (`tests/features/ticket-workspace-search.test.tsx`): verifies debounced provider-backed quick
+      search, detailed result activation, clear behavior, paging, and stale-response suppression.
     - `ticket-workspace-selected-detail.test.tsx`
       (`tests/features/ticket-workspace-selected-detail.test.tsx`): verifies selected ticket detail,
       thread rendering, secondary metadata chips/links, article recipients, and attachment display.
@@ -1795,7 +1841,7 @@ added, moved, renamed, or removed.
       - `read-list-users.test.ts` (`tests/providers/zammad/read-list-users.test.ts`): verifies
         Zammad ticket list user and organization fallback lookups when expanded assets are absent.
       - `read-lookup-assets.test.ts` (`tests/providers/zammad/read-lookup-assets.test.ts`): verifies
-        Zammad expanded user display-name asset lookup behavior.
+        Zammad group/state/priority fallback dictionaries and user display-name lookup behavior.
       - `read.test.ts` (`tests/providers/zammad/read.test.ts`): verifies Zammad ticket list endpoint
         calls, search-backed total counts and grouped bucket counts, canonical list mapping, and
         read timing.
@@ -1815,8 +1861,8 @@ added, moved, renamed, or removed.
         ticket-relative ordering without moving non-ticket tasks, post-write confirmation, and
         deactivate-before-activate ordering.
       - `ticket-search-query.test.ts` (`tests/providers/zammad/ticket-search-query.test.ts`):
-        verifies Zammad-owned compilation of provider-neutral saved-view filters, including negative
-        filters, into Zammad search syntax.
+        verifies Zammad-owned compilation of provider-neutral saved-view filters and raw global
+        full-text expressions, including immutable merged-ticket exclusion.
       - `validation.test.ts` (`tests/providers/zammad/validation.test.ts`): verifies
         provider-specific Basic Auth validation request behavior.
   - `tests/unit`: focused unit tests for auth, security, registry, and core contracts.
@@ -1832,6 +1878,8 @@ added, moved, renamed, or removed.
       base URL and SSRF validation rules.
     - `encryption.test.ts` (`tests/unit/encryption.test.ts`): verifies secret envelope encryption.
     - `global-styles.test.ts` (`tests/unit/global-styles.test.ts`): verifies global styles behavior.
+    - `ticket-search.test.ts` (`tests/unit/ticket-search.test.ts`): verifies provider-neutral global
+      search trimming, length, control-character, and advanced-syntax preservation rules.
     - `helpdesk-connections-security.test.ts` (`tests/unit/helpdesk-connections-security.test.ts`):
       verifies personal connection ownership, membership-only denial, connection tamper
       resistance, and active-workspace security rules.

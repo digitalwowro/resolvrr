@@ -113,6 +113,12 @@ List snapshots must not contain raw provider query syntax, raw provider filter
 payloads, provider response bodies, credentials, or communication bodies beyond
 the normalized row preview already returned by the ticket read contract.
 
+Interactive global ticket searches are deliberately not cached in the database.
+The browser may retain only the raw query in `sessionStorage`, scoped by user,
+workspace, personal connection, and provider identity version. Search result
+rows, totals, and cursors remain in active client memory and are discarded on
+reload or identity change.
+
 ### Detail Snapshots
 
 Detail snapshots may contain normalized selected-ticket detail:

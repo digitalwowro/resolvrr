@@ -3,10 +3,14 @@ import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
 import { zammadGetJson } from "./client";
 import { listZammadGroupedTickets } from "./ticket-groups";
 import {
-  fetchZammadNamedAssets,
   mapZammadTicketListPayload,
 } from "./ticket-list-payload";
+import { fetchZammadNamedAssets } from "./ticket-list-assets";
 import { zammadTicketListPath } from "./ticket-search-query";
+import {
+  invalidZammadSearchError,
+  invalidZammadSearchResponse,
+} from "./ticket-full-text-search";
 
 function pageFromCursor(cursor: string | undefined): number {
   if (!cursor) {
@@ -33,11 +37,23 @@ async function readZammadTicketListPage(
 ) {
   const metadata = timingMetadata(context);
   const path = zammadTicketListPath(query, page, limit, searchQuery);
-  const raw = await measureTicketReadPhase(
-    "provider-list-request",
-    { ...metadata, operation: "list" },
-    () => zammadGetJson(context, path),
-  );
+  let raw;
+  try {
+    raw = await measureTicketReadPhase(
+      "provider-list-request",
+      { ...metadata, operation: "list" },
+      () => zammadGetJson(context, path),
+    );
+  } catch (error) {
+    if (query.filter.searchText && invalidZammadSearchResponse(error)) {
+      throw invalidZammadSearchError(
+        error instanceof Error && "statusCode" in error
+          ? (error as { statusCode?: number }).statusCode
+          : undefined,
+      );
+    }
+    throw error;
+  }
 
   return measureTicketReadPhase(
     "provider-mapping-parsing",
@@ -51,7 +67,7 @@ export async function listZammadTickets(
   query: TicketListQuery,
 ) {
   const page = pageFromCursor(query.cursor);
-  const limit = Math.min(Math.max(query.pageSize, 1), 50);
+  const limit = Math.min(Math.max(query.pageSize, 1), 100);
 
   if (query.group) {
     return listZammadGroupedTickets(context, query, page, limit, {

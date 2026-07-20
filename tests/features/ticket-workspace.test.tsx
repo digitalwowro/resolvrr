@@ -5,6 +5,7 @@ import { TicketWorkspace } from "@/features/workspace/components/ticket-workspac
 import { defaultWorkspaceTicketColumns } from "@/features/tickets";
 import {
   availableList,
+  connectedWorkspaceMenu,
   highRow,
   noopAction,
   noopMutationAction,
@@ -94,7 +95,7 @@ describe("TicketWorkspace", () => {
     render(
       <TicketWorkspace
         columns={defaultWorkspaceTicketColumns}
-        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        connections={[connectedWorkspaceMenu]}
         listResult={availableList}
         logoutAction={noopAction}
         rows={[row]}
@@ -102,6 +103,7 @@ describe("TicketWorkspace", () => {
         tabs={[{ ...row }]}
         updateTicketMetadataAction={noopMutationAction}
         userEmail="agent@example.com"
+        userId="user-1"
       />,
     );
 
@@ -112,30 +114,34 @@ describe("TicketWorkspace", () => {
     expect(screen.queryByText("Billing follow-up for annual renewal")).toBeNull();
   });
 
-  it("focuses and filters loaded tickets from the header search", async () => {
+  it("searches all provider tickets without filtering the loaded saved view", async () => {
     const user = userEvent.setup();
+    const searchWorkspaceTicketsAction = vi.fn(async () => ({
+      status: "available" as const,
+      rows: [highRow],
+      loadedCount: 1,
+      totalCount: 1,
+      appliedSort: { key: "updatedAt" as const, direction: "descending" as const },
+    }));
     render(
       <TicketWorkspace
         columns={defaultWorkspaceTicketColumns}
-        connections={[{ id: "connection-1", label: "Support", active: true }]}
+        connections={[connectedWorkspaceMenu]}
         listResult={availableList}
         logoutAction={noopAction}
         rows={[row, highRow]}
+        searchWorkspaceTicketsAction={searchWorkspaceTicketsAction}
         setActiveConnectionAction={noopAction}
         tabs={[{ ...row }, { ...highRow }]}
         updateTicketMetadataAction={noopMutationAction}
         userEmail="agent@example.com"
+        userId="user-1"
       />,
     );
 
-    const search = screen.getByRole("searchbox", {
-      name: "Filter loaded tickets",
-    });
+    const search = screen.getByRole("combobox", { name: "Search all tickets" });
 
-    expect(search).toHaveAttribute(
-      "placeholder",
-      "Filter loaded tickets by number, title, customer, or owner",
-    );
+    expect(search).toHaveAttribute("placeholder", "Search all tickets");
 
     await user.keyboard("{Control>}k{/Control}");
 
@@ -143,9 +149,19 @@ describe("TicketWorkspace", () => {
 
     await user.type(search, "webhook");
 
+    expect(
+      await screen.findByRole("option", { name: /Webhook failed/u }),
+    ).toBeInTheDocument();
     const table = screen.getByRole("table", { name: "Tickets" });
     expect(within(table).getByText("Webhook failed")).toBeInTheDocument();
-    expect(within(table).queryByText("Cannot log in")).toBeNull();
+    expect(within(table).getByText("Cannot log in")).toBeInTheDocument();
+
+    await user.keyboard("{Enter}");
+    expect(
+      await screen.findByText("Search results for “webhook”"),
+    ).toBeInTheDocument();
+    const searchTable = screen.getByRole("table", { name: "Tickets" });
+    expect(within(searchTable).queryByText("Cannot log in")).toBeNull();
   });
 
   it("renders the real workspace profile menu actions", async () => {

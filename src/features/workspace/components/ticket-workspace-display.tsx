@@ -1,6 +1,4 @@
 "use client";
-
-import { useMemo, useState } from "react";
 import { workspaceTicketTabs } from "@/features/tickets/workspace-adapter";
 import { useTicketWorkspaceDisplayState } from "./ticket-workspace-state";
 import { useTicketListPager } from "./use-ticket-list-pager";
@@ -12,20 +10,18 @@ import {
   activeTicketSummaryFromWorkspace,
   isProviderGroupedListActive,
 } from "./ticket-workspace-display-derived";
-import {
-  filterLoadedTicketGroups,
-  filterLoadedTickets,
-  normalizedWorkspaceSearch,
-} from "./ticket-workspace-display-filters";
 import type { TicketWorkspaceDisplayProps } from "./ticket-workspace-display-types";
 import { WorkspaceHeaderChrome, WorkspaceTabsChrome } from "./ticket-workspace-chrome";
 import { useTicketWorkspaceSavedViewSelection } from "./use-ticket-workspace-saved-view-selection";
-import { clearPersistedCommunicationDrafts } from "./ticket-communication-draft-persistence";
 import { TicketWorkspaceDisplayWorkArea } from "./ticket-workspace-display-work-area";
 import { TicketMergeNotice } from "./ticket-merge-notice";
 import { hiddenTaskbarSyncCount, TaskbarSyncNotice } from "./taskbar-sync-notice";
 import { useSynchronizedTicketWorkspaceActions } from "./use-synchronized-ticket-workspace-actions";
 import { isCompleteListSortKey } from "./ticket-table-grouping";
+import { useTicketSearchController } from "./use-ticket-search-controller";
+import { workspaceTicketSearchProps } from "./ticket-workspace-search-props";
+import { ticketWorkspaceScope } from "./ticket-workspace-scope";
+import { closeTicketWithDraftClear } from "./close-ticket-with-draft";
 
 export function TicketWorkspaceDisplay({
   connections,
@@ -35,6 +31,7 @@ export function TicketWorkspaceDisplay({
   detailResult,
   loadTicketDetailAction,
   loadTicketListPageAction,
+  searchWorkspaceTicketsAction,
   loadWorkspaceNotificationsAction,
   logoutAction,
   markWorkspaceNotificationsReadAction,
@@ -72,7 +69,9 @@ export function TicketWorkspaceDisplay({
   identityVersion,
   userLastName,
 }: TicketWorkspaceDisplayProps) {
-  const [workspaceSearchQuery, setWorkspaceSearchQuery] = useState("");
+  const persistenceScope = ticketWorkspaceScope(
+    userId, workspaceId, helpdeskConnectionId, identityVersion,
+  );
   const listPager = useTicketListPager({
     initialSavedViewId: selectedSavedViewId,
     initialRows: rows,
@@ -81,20 +80,19 @@ export function TicketWorkspaceDisplay({
     initialTotalCount: totalListCount,
     loadTicketListPageAction,
   });
+  const ticketSearch = useTicketSearchController({
+    action: searchWorkspaceTicketsAction,
+    scope: persistenceScope,
+  });
   const pagedTicketTabs = mergeTicketTabs(
     ticketTabs,
-    workspaceTicketTabs(listPager.rows),
+    workspaceTicketTabs([
+      ...listPager.rows,
+      ...ticketSearch.quickRows,
+      ...ticketSearch.detailedRows,
+    ]),
   );
-  const normalizedSearchQuery = normalizedWorkspaceSearch(workspaceSearchQuery);
-  const searchFilteredRows = useMemo(
-    () => filterLoadedTickets(listPager.rows, normalizedSearchQuery),
-    [listPager.rows, normalizedSearchQuery],
-  );
-  const searchFilteredGroups = useMemo(
-    () => filterLoadedTicketGroups(listPager.groups, normalizedSearchQuery),
-    [listPager.groups, normalizedSearchQuery],
-  );
-  const searchActive = normalizedSearchQuery.length > 0;
+  const searchActive = ticketSearch.detailedActive;
   function handleListSortChange(sort: Parameters<typeof listPager.reloadFirstPage>[0]) {
     if (sort && isCompleteListSortKey(sort.key)) {
       void listPager.applyCompleteListSort(sort);
@@ -111,7 +109,7 @@ export function TicketWorkspaceDisplay({
     onProviderSortChange: handleListSortChange,
     providerSortEnabled,
     refreshTicketDetailAfterMetadataSave,
-    rows: searchFilteredRows,
+    rows: searchActive ? ticketSearch.detailedRows : listPager.rows,
     initialWorkspaceOpenTabsState,
     saveWorkspaceOpenTabsStateAction,
     selectedTicketId,
@@ -136,14 +134,18 @@ export function TicketWorkspaceDisplay({
     sortedRows,
     tabOrientation,
   } = displayState;
-  const providerGroupedActive = isProviderGroupedListActive({
+  const providerGroupedActive = !searchActive && isProviderGroupedListActive({
     groupBy,
     listGroupBy: listPager.groupBy,
     listGroups: listPager.groups,
     providerGroupingEnabled,
   });
-  const tableGroupedRows = providerGroupedActive ? searchFilteredGroups : groupedRows;
-  const tableRows = providerGroupedActive ? searchFilteredRows : sortedRows;
+  const tableGroupedRows = providerGroupedActive ? listPager.groups : groupedRows;
+  const tableRows = searchActive
+    ? ticketSearch.detailedRows
+    : providerGroupedActive
+      ? listPager.rows
+      : sortedRows;
   const recentlyViewedLinkTargets = recentTicketTabs.map(tabLinkTarget);
   const activeTicketSummary = activeTicketSummaryFromWorkspace({
     activeTicketId,
@@ -158,17 +160,15 @@ export function TicketWorkspaceDisplay({
     saveWorkspaceSelectedSavedViewAction,
     savedViews,
   });
-
   useTicketWorkspaceAutoRefresh({
     activeTicketId,
     isActiveTicketDetailStale,
-    isListRefreshAvailable: Boolean(loadTicketListPageAction),
+    isListRefreshAvailable: Boolean(loadTicketListPageAction) && !searchActive,
     isListStale: listPager.isListStale,
     listActive,
     refreshActiveTicketDetail,
     silentRefreshCurrentPage: listPager.silentRefreshCurrentPage,
   });
-
   function handleWorkspaceGroupByChange(nextGroupBy: typeof groupBy) {
     handleGroupByChange(nextGroupBy);
     if (
@@ -184,21 +184,16 @@ export function TicketWorkspaceDisplay({
   }
 
   function handleRefreshList() {
+    if (searchActive) {
+      ticketSearch.refresh();
+      return;
+    }
     refreshList();
     void listPager.silentRefreshCurrentPage();
   }
 
   function handleCloseTicket(ticketId: string) {
-    if (userId && workspaceId && helpdeskConnectionId && identityVersion) {
-      void clearPersistedCommunicationDrafts({
-        ticketExternalId: ticketId,
-        userId,
-        workspaceId,
-        helpdeskConnectionId,
-        identityVersion,
-      });
-    }
-    closeTicket(ticketId);
+    closeTicketWithDraftClear(ticketId, persistenceScope, closeTicket);
   }
 
   const synchronized = useSynchronizedTicketWorkspaceActions({
@@ -206,10 +201,17 @@ export function TicketWorkspaceDisplay({
     displayState,
     loadTicketDetailAction,
     onExplicitClose: handleCloseTicket,
-    scope: userId && workspaceId && helpdeskConnectionId && identityVersion
-      ? { userId, workspaceId, helpdeskConnectionId, identityVersion }
-      : undefined,
+    scope: persistenceScope,
     ticketTabs: pagedTicketTabs,
+  });
+  const headerSearch = workspaceTicketSearchProps({
+    controller: ticketSearch,
+    onSelectTicket: synchronized.displayState.showTicketFromRow,
+    onSubmit: () => {
+      clearRowSelection();
+      ticketSearch.submitDetailed();
+      synchronized.showList();
+    },
   });
   const workArea = (
     <TicketWorkspaceDisplayWorkArea
@@ -229,7 +231,7 @@ export function TicketWorkspaceDisplay({
       rephraseStyleOptions={rephraseStyleOptions}
       rewriteDraftAction={rewriteDraftAction}
       savedViewOptions={savedViewOptions}
-      searchActive={searchActive}
+      ticketSearch={ticketSearch}
       searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
       summarizeTicketAction={summarizeTicketAction}
       tableGroupedRows={tableGroupedRows}
@@ -251,7 +253,7 @@ export function TicketWorkspaceDisplay({
       onSelectList={synchronized.showList}
       onSelectTicket={synchronized.showOpenTicket}
       orientation={tabOrientation}
-      savedViewLabel={activeSavedView?.label ?? "All tickets"}
+      savedViewLabel={searchActive ? "Search" : activeSavedView?.label ?? "All tickets"}
       tabs={openTicketTabs}
       unsynchronizedTicketIds={synchronized.unsynchronizedIds}
     />
@@ -276,10 +278,9 @@ export function TicketWorkspaceDisplay({
         onOpenNotificationTicket={synchronized.showNotificationTicket}
         onOpenSettings={onOpenSettings}
         onRefreshTicket={refreshTicketDetailById}
-        onSearchQueryChange={setWorkspaceSearchQuery}
         onTabOrientationChange={setTabOrientation}
         recentTickets={recentTicketTabs}
-        searchQuery={workspaceSearchQuery}
+        ticketSearch={headerSearch}
         setActiveConnectionAction={setActiveConnectionAction}
         tabOrientation={tabOrientation}
         userAvatarDataUrl={userAvatarDataUrl}

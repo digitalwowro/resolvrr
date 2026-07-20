@@ -127,6 +127,9 @@ describe("TicketWorkspace selected detail", () => {
     expect(
       screen.getByRole("link", { name: "Download error-report.pdf" }),
     ).toHaveAttribute("download", "error-report.pdf");
+    const articles = screen.getAllByRole("article");
+    expect(articles[0]).toHaveClass("border-b", "border-slate-200");
+    expect(articles.at(-1)).not.toHaveClass("border-b");
     expect(screen.getByText("Explore these links:").parentElement).toHaveClass(
       "whitespace-normal",
     );

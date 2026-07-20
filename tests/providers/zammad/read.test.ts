@@ -55,6 +55,7 @@ describe("Zammad ticket reads", () => {
       "notifications:list",
       "notifications:mark-read",
       "ticket-taskbar:sync",
+      "search:full-text",
     ]);
   });
 
@@ -74,7 +75,7 @@ describe("Zammad ticket reads", () => {
     });
 
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
-      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=10&expand=true&full=true&query=NOT+%28state.name%3A%22merged%22%29",
+      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=10&full=true&query=NOT+%28state.name%3A%22merged%22%29",
       expect.objectContaining({
         allowedAddresses: ["93.184.216.34"],
         headers: expect.objectContaining({
@@ -149,7 +150,7 @@ describe("Zammad ticket reads", () => {
     });
 
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
-      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=10&expand=true&full=true&query=NOT+%28state.name%3A%22merged%22%29&sort_by=updated_at&order_by=desc",
+      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=10&full=true&query=NOT+%28state.name%3A%22merged%22%29&sort_by=updated_at&order_by=desc",
       expect.objectContaining({
         allowedAddresses: ["93.184.216.34"],
         headers: expect.objectContaining({
@@ -180,7 +181,7 @@ describe("Zammad ticket reads", () => {
     });
 
     expect(mockedSafeProviderJson).toHaveBeenCalledWith(
-      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=25&expand=true&full=true&query=NOT+%28state.name%3A%22merged%22%29&with_total_count=true",
+      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=25&full=true&query=NOT+%28state.name%3A%22merged%22%29&with_total_count=true",
       expect.objectContaining({
         allowedAddresses: ["93.184.216.34"],
         headers: expect.objectContaining({
@@ -253,7 +254,7 @@ describe("Zammad ticket reads", () => {
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
       2,
-      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=10&expand=true&full=true&query=%28state.name%3A%22open%22%29+AND+NOT+%28state.name%3A%22merged%22%29&with_total_count=true",
+      "https://helpdesk.example.com/api/v1/tickets/search?page=1&per_page=10&full=true&query=%28state.name%3A%22open%22%29+AND+NOT+%28state.name%3A%22merged%22%29&with_total_count=true",
       expect.any(Object),
     );
     expect(result).toMatchObject({

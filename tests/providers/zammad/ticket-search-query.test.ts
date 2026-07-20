@@ -89,4 +89,38 @@ describe("Zammad saved-view ticket search query", () => {
       ),
     ).toThrowError(ProviderError);
   });
+
+  it("preserves advanced full-text syntax and excludes merged tickets", () => {
+    const query = queryFromPath(
+      zammadTicketListPath(
+        {
+          pageSize: 10,
+          filter: {
+            searchText:
+              'title:"billing issue" AND created_at:[2026-01-01 TO *]',
+          },
+          count: { includeTotal: true },
+        },
+        1,
+        10,
+      ),
+    );
+
+    expect(query).toBe(
+      '(title:"billing issue" AND created_at:[2026-01-01 TO *]) AND NOT (state.name:"merged")',
+    );
+  });
+
+  it("fails closed on invalid full-text input", () => {
+    expect(() =>
+      zammadTicketListPath(
+        {
+          pageSize: 10,
+          filter: { searchText: "billing\nissue" },
+        },
+        1,
+        10,
+      ),
+    ).toThrowError(ProviderError);
+  });
 });

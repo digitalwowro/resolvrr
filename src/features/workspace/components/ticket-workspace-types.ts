@@ -14,6 +14,7 @@ import type {
   WorkspaceTicketDetailHydrationResult,
 } from "@/features/workspace/ticket-detail-hydration";
 import type { LoadWorkspaceTicketListPageAction } from "@/features/tickets/list-page-action-result";
+import type { SearchWorkspaceTicketsAction } from "@/features/tickets/search-action-result";
 import type { SearchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-search-action-result";
 import type {
   LoadWorkspaceNotificationsAction,
@@ -93,6 +94,7 @@ export type TicketWorkspaceProps = {
   listResult: TicketListReadResult;
   loadTicketDetailAction?: LoadWorkspaceTicketDetailHydrationAction;
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
+  searchWorkspaceTicketsAction?: SearchWorkspaceTicketsAction;
   loadSavedViewsSettingsAction?: LoadWorkspaceSavedViewsSettingsAction;
   loadWorkspaceNotificationsAction?: LoadWorkspaceNotificationsAction;
   loadWorkspaceAiSettingsAction?: LoadWorkspaceAiSettingsAction;

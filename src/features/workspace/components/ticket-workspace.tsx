@@ -21,7 +21,6 @@ import {
 import type { TicketWorkspaceProps } from "./ticket-workspace-types";
 import { workspaceSavedViewOptionsFromSettingsData } from "./workspace-saved-view-options";
 import { workspaceSettingsConnectionFromMenu } from "./workspace-settings-connections";
-
 export { workspaceSavedViewOptionsFromSettingsData } from "./workspace-saved-view-options";
 export function TicketWorkspace({
   changePasswordAction,
@@ -40,6 +39,7 @@ export function TicketWorkspace({
   listResult,
   loadTicketDetailAction,
   loadTicketListPageAction,
+  searchWorkspaceTicketsAction,
   loadAiPromptCenterAction,
   loadMyStyleAction,
   loadUserManagementAction,
@@ -174,6 +174,7 @@ export function TicketWorkspace({
           detailResult={detailResult}
           loadTicketDetailAction={effectiveLoadTicketDetailAction}
           loadTicketListPageAction={loadTicketListPageAction}
+          searchWorkspaceTicketsAction={searchWorkspaceTicketsAction}
           loadWorkspaceNotificationsAction={
             effectiveLoadWorkspaceNotificationsAction
           }

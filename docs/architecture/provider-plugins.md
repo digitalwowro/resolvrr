@@ -94,6 +94,14 @@ API syntax. If a query asks for a capability the provider has not advertised,
 or for a guarded expensive combination, the ticket service returns a
 provider-neutral unavailable state before provider code is called.
 
+Zammad list and search reads request `full=true`. Live contract
+characterization confirmed that the full payload supplies rich user assets and
+the requested total count, but can omit group, state, and priority assets.
+Provider-owned parallel lookup reads fill only those missing named dictionaries.
+Adding `expand=true` did not restore the omitted group assets on the connected
+instance, so list/search avoids that redundant payload flag. This list-specific
+choice does not alter detail/thread read behavior.
+
 ## Ticket Metadata Mutations
 
 The approved mutation surface includes state, priority, owner, group, tags,
@@ -288,6 +296,8 @@ advertises `ticket:list`,
 `ticket:forward-customer-email`,
 `lookup:link-targets`, `lookup:assignable-users`, `lookup:groups`,
 `lookup:tags`, `lookup:mentionable-users`, and `ticket-taskbar:sync`.
+Zammad also advertises `search:full-text` for permission-scoped global ticket
+search.
 Assignable-owner lookup is contextual: core supplies only provider-neutral
 group and optional user external IDs. Zammad maps that intent to
 `ticket.agent` users with `full` access to any requested group, paginates the
@@ -331,7 +341,10 @@ misleading empty list.
 Zammad-backed total counts and state/priority grouped bucket counts use the
 documented search `with_total_count=true` response and map only
 provider-neutral `totalCount` and bucket metadata out of the provider layer.
-Zammad still does not advertise full-text search, and owner/customer/group
+Full-text search preserves Zammad's advanced search syntax inside the provider,
+wraps the requested expression, and adds the same immutable merged-state
+exclusion used by normal collections. Invalid Zammad search responses map to a
+provider-neutral, non-retryable invalid-query result. Owner/customer/group
 grouping remains deferred until bucket cardinality and provider support are
 designed.
 Zammad-specific state-transition behavior also stays inside this provider

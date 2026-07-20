@@ -296,7 +296,8 @@ Read-path capabilities:
 - `lookup:tags`: provider can list global tag suggestions. This is separate
   from ticket tag reads/writes; unavailable suggestions must not disable
   freeform `ticket:update-tags` editing.
-- `search:full-text`: provider can compile saved-view full-text search.
+- `search:full-text`: provider can compile saved-view and global ticket
+  full-text search.
 
 Mutation capabilities:
 
@@ -355,12 +356,12 @@ features:
 - `providerGrouping`: backed by `ticket:group`.
 - `groupedTotalCount`: backed by `ticket:group-count`.
 - `fullTextSearch`: backed by `search:full-text`.
-- `maxPageSize`: currently 50.
+- `maxPageSize`: currently 100.
 - `unsupportedCombinations`: currently includes `grouped-total-count` unless
   the provider explicitly advertises `ticket:group-count`.
 
 The ticket service constrains requested page size to the provider-neutral hard
-range of 1 to 50 before provider dispatch. Unsupported count, explicit
+range of 1 to 100 before provider dispatch. Unsupported count, explicit
 provider-backed sort, grouping, and full-text query requests return a
 provider-neutral `unsupported-query` unavailable state before provider code is
 called. Grouped total counts without `ticket:group-count` return
@@ -420,6 +421,9 @@ server action and appends the returned provider-neutral rows in active
 workspace memory. Selected ticket detail/thread loading remains a separate read
 path and is not triggered by loading more list rows.
 
+Global ticket search reuses this list boundary under the focused contracts in
+`docs/architecture/ticket-search-contract.md`.
+
 Manual and scheduled list refreshes follow fresh cursors from the first page to
 re-read the full page window already loaded by the user. Provider-grouped lists
 do the same independently for each expanded bucket. Only a complete successful
@@ -447,16 +451,12 @@ The read path logs sanitized timing metadata for these phases:
 - active connection lookup;
 - credential decrypt;
 - base URL security revalidation;
-- provider list request;
-- provider detail metadata request;
+- provider list/detail metadata request;
 - provider article/thread request;
 - provider merged-ticket history request;
-- provider secondary tags request;
-- provider secondary links request;
-- provider secondary group lookup request;
+- provider secondary tags/links/group-lookup request;
 - provider lookup request;
-- provider user lookup request;
-- provider tag lookup request;
+- provider user/tag lookup request;
 - provider mapping/parsing;
 - total list load;
 - total selected-ticket detail load;

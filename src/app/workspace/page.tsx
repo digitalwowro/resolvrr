@@ -51,10 +51,11 @@ import {
   workspaceTicketTabs,
 } from "@/features/tickets";
 import { updateTicketMetadataAction } from "@/features/tickets/actions";
-import { loadActiveTicketProviderContext } from "@/features/tickets/connection-context";
-import { loadWorkspaceTicketDetailHydrationAction } from "@/features/workspace/ticket-detail-hydration-action";
 import { loadWorkspaceTicketListPageAction } from "@/features/tickets/list-actions";
 import { searchWorkspaceTicketLinkTargetsAction } from "@/features/tickets/link-target-actions";
+import { searchWorkspaceTicketsAction } from "@/features/tickets/search-actions";
+import { loadActiveTicketProviderContext } from "@/features/tickets/connection-context";
+import { loadWorkspaceTicketDetailHydrationAction } from "@/features/workspace/ticket-detail-hydration-action";
 import { dispatchCurrentHelpdeskUserRead } from "@/features/tickets/ticket-lookup-service";
 import { loadWorkspaceNotificationsAction, markWorkspaceNotificationsReadAction } from "@/features/notifications";
 import { saveWorkspaceOpenTabsStateAction } from "@/features/workspace/actions";
@@ -88,12 +89,7 @@ import { TicketWorkspace } from "@/features/workspace/components/ticket-workspac
 import * as workspaceSignatureActions from "@/features/signatures";
 import { WorkspaceSignatureActionsProvider } from "@/features/workspace/components/ticket-signature-preview-action-context";
 import { providerRegistry } from "@/providers";
-import {
-  savedViewTicketListQuery,
-  workspaceDetailSeed,
-  workspaceMenuConnections,
-  workspaceUiPreferenceSeed,
-} from "./workspace-page-helpers";
+import { savedViewTicketListQuery, workspaceDetailSeed, workspaceMenuConnections, workspaceUiPreferenceSeed } from "./workspace-page-helpers";
 type WorkspacePageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 export default async function WorkspacePage({ searchParams }: WorkspacePageProps) {
   const user = await requireCurrentUser();
@@ -223,6 +219,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       loadWorkspaceAiSettingsAction={loadWorkspaceAiSettingsAction}
       loadTicketDetailAction={loadWorkspaceTicketDetailHydrationAction}
       loadTicketListPageAction={loadWorkspaceTicketListPageAction}
+      searchWorkspaceTicketsAction={searchWorkspaceTicketsAction}
       loadWorkspaceNotificationsAction={loadWorkspaceNotificationsAction}
       loadSavedViewsSettingsAction={loadWorkspaceSavedViewsSettingsAction}
       logoutAction={logoutAction}

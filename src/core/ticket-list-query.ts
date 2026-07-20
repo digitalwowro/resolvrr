@@ -113,7 +113,7 @@ export type TicketListResult = {
 export const ticketListPageSizeLimits = {
   min: 1,
   default: 25,
-  max: 50,
+  max: 100,
 } as const;
 
 export const defaultTicketListQueryCapabilities: TicketListQueryCapabilities = {

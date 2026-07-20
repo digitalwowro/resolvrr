@@ -15,6 +15,14 @@ export async function noopMutationAction() {
   return { status: "idle" as const };
 }
 
+export const connectedWorkspaceMenu = {
+  id: "workspace-1",
+  connectionId: "connection-1",
+  identityVersion: "identity-1",
+  label: "Support",
+  active: true,
+};
+
 export const availableList = {
   status: "available",
   helpdeskConnectionId: "connection-1",

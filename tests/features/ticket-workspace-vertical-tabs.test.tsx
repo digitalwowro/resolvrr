@@ -111,9 +111,14 @@ describe("TicketWorkspace vertical tabs", () => {
         "Priority: Medium",
       ),
     ).toBeInTheDocument();
+    const toolbar = screen.getByRole("toolbar", {
+      name: "Ticket list controls",
+    });
+    expect(toolbar.parentElement).toHaveClass("px-4");
     expect(
-      screen.getByRole("toolbar", { name: "Ticket list controls" }),
-    ).toBeInTheDocument();
+      screen.getByRole("table", { name: "Tickets" }).parentElement
+        ?.parentElement,
+    ).toHaveClass("px-4", "pb-4");
     expect(screen.getByRole("checkbox", { name: "Select all tickets" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Refresh list" })).toBeEnabled();
 

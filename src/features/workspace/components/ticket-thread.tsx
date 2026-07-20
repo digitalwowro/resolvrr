@@ -274,6 +274,7 @@ export function TicketThread({
               canForward={Boolean(communicationCapabilities.customerForwards)}
               canReply={communicationCapabilities.customerReplies}
               helpdeskConnectionId={helpdeskConnectionId}
+              isLast={index === articles.length - 1}
               onForward={() => onRequestForward(article)}
               onReply={(intent) => onRequestReply(article, intent)}
               ticketExternalId={ticketExternalId}

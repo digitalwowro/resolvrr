@@ -145,6 +145,6 @@ export const defaultWorkspaceTicketColumns: WorkspaceTicketColumn[] = [
   { key: "owner", label: "Owner" },
   { key: "state", label: "State" },
   { key: "priority", label: "Priority" },
-  { key: "pendingTill", label: "Pending till" },
-  { key: "updatedAt", label: "Updated at" },
+  { key: "pendingTill", label: "Pending" },
+  { key: "updatedAt", label: "Updated" },
 ];

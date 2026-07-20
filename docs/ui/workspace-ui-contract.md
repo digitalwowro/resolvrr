@@ -14,7 +14,15 @@ operational, calm, and keyboard-accessible.
 - Work area: ticket table first, with selected-ticket detail/thread rendered
   read-only when the active provider supports ticket reads.
 - Initial table columns: select, `#`, `Title`, `Customer`, `Owner`, `State`,
-  `Priority`, `Pending till`, and `Updated at`.
+  `Priority`, `Pending`, and `Updated`. List and detailed Search use the
+  same grid: preferred track widths may shrink and truncate within the available
+  pane, but must never expand the workspace or create page-level overflow. The
+  preferred tracks are spacing `11` for selection, spacing `24` for ticket
+  number, flexible remaining width for Title, spacing `34` for Customer and
+  Owner, `36` for State, `30` for Priority, and `28` for both date columns.
+- Ungrouped List and detailed Search initially show up to 100 tickets. Quick
+  search remains limited to ten suggestions. State/priority grouping remains
+  bounded to 25 tickets per bucket, with explicit per-bucket pagination.
 
 ## Time Display
 
@@ -88,6 +96,12 @@ sorts the complete set by its display labels, and then exposes it through the
 normal incremental list window. Unassigned relationship values remain last in
 both directions. A failed complete load leaves the prior list intact and says
 that the requested sort was not applied.
+
+## Global Ticket Search
+
+Header search follows the provider-backed interaction, restoration,
+accessibility, and privacy behavior in
+`docs/architecture/ticket-search-contract.md`.
 
 The Views settings section owns personal/shared visibility, title, appearance,
 condition editing, default selection, ordering, and deletion. Agents can manage
