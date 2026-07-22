@@ -31,13 +31,8 @@ const context = {
   requestSecurity: { validatedAddresses: ["93.184.216.34"] },
 };
 
-function repository(identityVersion = "identity-1") {
-  return {
-    findForUser: vi.fn().mockResolvedValue({
-      id: "connection-1",
-      identityVersion,
-    }),
-  } as unknown as HelpdeskConnectionsRepository;
+function repository() {
+  return {} as HelpdeskConnectionsRepository;
 }
 
 describe("workspace ticket-tab import service", () => {
@@ -46,9 +41,14 @@ describe("workspace ticket-tab import service", () => {
     vi.spyOn(console, "info").mockImplementation(() => undefined);
   });
 
-  it("rejects another or stale personal connection before provider access", async () => {
+  it("passes the expected identity into the owned connection boundary", async () => {
+    vi.mocked(loadTicketProviderContextForConnection).mockResolvedValue({
+      status: "unavailable",
+      reason: "no-active-connection",
+      retryable: false,
+    });
     const result = await importWorkspaceTicketTabs(
-      repository("identity-2"),
+      repository(),
       {} as ProviderRegistry,
       "encryption-key",
       "user-1",
@@ -61,7 +61,15 @@ describe("workspace ticket-tab import service", () => {
       reason: "no-active-connection",
       retryable: false,
     });
-    expect(loadTicketProviderContextForConnection).not.toHaveBeenCalled();
+    expect(loadTicketProviderContextForConnection).toHaveBeenCalledWith(
+      expect.anything(),
+      {},
+      "encryption-key",
+      "user-1",
+      "connection-1",
+      "lookup",
+      "identity-1",
+    );
   });
 
   it("reads ordered tabs through the owned connection without mutation", async () => {
@@ -99,6 +107,7 @@ describe("workspace ticket-tab import service", () => {
       "user-1",
       "connection-1",
       "lookup",
+      "identity-1",
     );
     expect(readTicketTabs).toHaveBeenCalledWith(context);
     expect(result).toEqual({

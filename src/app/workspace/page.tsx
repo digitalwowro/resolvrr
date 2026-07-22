@@ -59,7 +59,7 @@ import { loadWorkspaceTicketDetailHydrationAction } from "@/features/workspace/t
 import { dispatchCurrentHelpdeskUserRead } from "@/features/tickets/ticket-lookup-service";
 import { loadWorkspaceNotificationsAction, markWorkspaceNotificationsReadAction } from "@/features/notifications";
 import { saveWorkspaceOpenTabsStateAction } from "@/features/workspace/actions";
-import { importWorkspaceTicketTabsAction } from "@/features/tab-import/actions";
+import { hydrateWorkspaceTabImportAction, importWorkspaceTicketTabsAction } from "@/features/tab-import/actions";
 import {
   ensureMyWorkSavedViewResult,
   initialWorkspaceSavedViewSelection,
@@ -104,6 +104,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       : [undefined, undefined];
   const activeProvider = activeConnection
     ? providerRegistry.get(activeConnection.providerKey) : undefined;
+  const tabImportEnabled = activeProvider?.capabilities.includes("ticket-tabs:import");
   const activeQueryCapabilities = activeProvider
     ? ticketListQueryCapabilities(activeProvider.capabilities)
     : undefined;
@@ -265,11 +266,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       saveWorkspaceAiPromptAction={saveWorkspaceAiPromptAction}
       searchTicketLinkTargetsAction={searchWorkspaceTicketLinkTargetsAction}
       summarizeTicketAction={summarizeWorkspaceTicketAction}
-      importWorkspaceTicketTabsAction={
-        activeProvider?.capabilities.includes("ticket-tabs:import")
-          ? importWorkspaceTicketTabsAction
-          : undefined
-      }
+      importWorkspaceTicketTabsAction={tabImportEnabled ? importWorkspaceTicketTabsAction : undefined}
+      hydrateWorkspaceTabImportAction={tabImportEnabled ? hydrateWorkspaceTabImportAction : undefined}
       savedViews={workspaceSavedViews(
         savedViews,
         listResult.status === "available"

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { HydrateWorkspaceTabImportAction } from "@/features/tab-import/model";
 import type { WorkspaceTabImportResult } from "@/features/tab-import/model";
 import type { WorkspaceTicketTab } from "@/features/tickets/workspace-adapter";
-import type { LoadWorkspaceTicketDetailHydrationAction } from "@/features/workspace/ticket-detail-hydration";
 import { workspaceOpenTabsLimit } from "@/features/workspace/workspace-tab-state";
 import { hydrateImportedTicketTabs } from "./ticket-tab-import-hydration";
 
@@ -37,25 +37,44 @@ function unavailableMessage(result: Extract<
 
 export function useTicketTabImport({
   action,
+  hydrateAction,
   helpdeskConnectionId,
   identityVersion,
   importOpenTicketTabs,
-  loadTicketDetailAction,
   openTicketTabs,
+  workspaceId,
 }: {
   action?: ImportWorkspaceTicketTabsAction;
+  hydrateAction?: HydrateWorkspaceTabImportAction;
   helpdeskConnectionId?: string;
   identityVersion?: string;
   importOpenTicketTabs(tabs: WorkspaceTicketTab[]): void;
-  loadTicketDetailAction: LoadWorkspaceTicketDetailHydrationAction;
   openTicketTabs: WorkspaceTicketTab[];
+  workspaceId?: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<TicketTabImportNotice>();
-  const available = Boolean(action && helpdeskConnectionId && identityVersion);
+  const openTicketTabsRef = useRef(openTicketTabs);
+  useEffect(() => {
+    openTicketTabsRef.current = openTicketTabs;
+  }, [openTicketTabs]);
+  const available = Boolean(
+    action &&
+    hydrateAction &&
+    helpdeskConnectionId &&
+    identityVersion &&
+    workspaceId,
+  );
 
   async function importTabs() {
-    if (!action || !helpdeskConnectionId || !identityVersion || loading) return;
+    if (
+      !action ||
+      !hydrateAction ||
+      !helpdeskConnectionId ||
+      !identityVersion ||
+      !workspaceId ||
+      loading
+    ) return;
     const capacity = workspaceOpenTabsLimit - openTicketTabs.length;
     if (capacity <= 0) {
       setNotice({
@@ -74,21 +93,46 @@ export function useTicketTabImport({
         return;
       }
       const localIds = new Set(openTicketTabs.map((tab) => tab.id));
-      const candidates = result.ticketExternalIds.filter((id) => !localIds.has(id));
+      const candidates = [...new Set(
+        result.ticketExternalIds.filter((id) => !localIds.has(id)),
+      )];
       if (candidates.length === 0) {
         setNotice({ message: "All Zammad ticket tabs are already open.", tone: "success" });
         return;
       }
       const hydrated = await hydrateImportedTicketTabs({
         candidateTicketIds: candidates,
-        capacity,
+        capacity: workspaceOpenTabsLimit,
+        hydrateAction,
+        hydrationScope: {
+          helpdeskConnectionId,
+          identityVersion,
+          workspaceId,
+        },
         knownTicketIds: localIds,
-        loadTicketDetailAction,
       });
-      importOpenTicketTabs(hydrated.tabs);
+      const latestIds = new Set(
+        openTicketTabsRef.current.map((tab) => tab.id),
+      );
+      const latestCapacity = Math.max(
+        0,
+        workspaceOpenTabsLimit - openTicketTabsRef.current.length,
+      );
+      const newTabs = hydrated.tabs.filter((tab) => !latestIds.has(tab.id));
+      const tabsToImport = newTabs.slice(0, latestCapacity);
+      if (tabsToImport.length > 0) importOpenTicketTabs(tabsToImport);
+      const scannedCandidateCount =
+        candidates.length - hydrated.scanLimitSkippedCount;
       const skippedForCapacity = Math.max(
         0,
-        candidates.length - hydrated.attemptedCount,
+        scannedCandidateCount - hydrated.attemptedCount +
+          newTabs.length - tabsToImport.length,
+      );
+      const deduplicatedCount = Math.max(
+        0,
+        hydrated.attemptedCount -
+          hydrated.unavailableCount -
+          newTabs.length,
       );
       const details = [
         hydrated.unavailableCount > 0
@@ -97,12 +141,18 @@ export function useTicketTabImport({
         skippedForCapacity > 0
           ? `${skippedForCapacity} skipped because the tab limit was reached`
           : undefined,
+        hydrated.scanLimitSkippedCount > 0
+          ? `${hydrated.scanLimitSkippedCount} skipped because the import scan limit was reached`
+          : undefined,
+        deduplicatedCount > 0
+          ? `${deduplicatedCount} duplicate${deduplicatedCount === 1 ? "" : "s"}`
+          : undefined,
       ].filter(Boolean);
       setNotice({
-        message: hydrated.tabs.length > 0
-          ? `Imported ${hydrated.tabs.length} ticket tab${hydrated.tabs.length === 1 ? "" : "s"}${details.length ? `; ${details.join(", ")}` : ""}.`
+        message: tabsToImport.length > 0
+          ? `Imported ${tabsToImport.length} ticket tab${tabsToImport.length === 1 ? "" : "s"}${details.length ? `; ${details.join(", ")}` : ""}.`
           : `No ticket tabs were imported${details.length ? `; ${details.join(", ")}` : ""}.`,
-        tone: hydrated.tabs.length > 0 ? "success" : "error",
+        tone: tabsToImport.length > 0 ? "success" : "error",
       });
     } catch {
       setNotice({

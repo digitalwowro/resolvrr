@@ -25,7 +25,7 @@ import {
   reorderedTicketTabs,
   sameTicketTabs,
   ticketTabsWithOpenedTicket,
-} from "./ticket-workspace-tab-reconciliation";
+} from "./ticket-tab-collection";
 import { useWorkspaceTabsPersistence } from "./use-workspace-tabs-persistence";
 
 type UseTicketWorkspaceTabsStateOptions = {
@@ -245,14 +245,6 @@ export function useTicketWorkspaceTabsState({
 
   function importOpenTicketTabs(importedTabs: WorkspaceTicketTab[]) {
     setOpenTicketTabs((current) => {
-      const currentIds = new Set(current.map((tab) => tab.id));
-      const next = cappedWorkspaceTabs([
-        ...current,
-        ...importedTabs.filter((tab) => !currentIds.has(tab.id)),
-      ]);
-      return sameTicketTabs(current, next) ? current : next;
-    });
-    setRecentTicketTabs((current) => {
       const currentIds = new Set(current.map((tab) => tab.id));
       const next = cappedWorkspaceTabs([
         ...current,

@@ -510,8 +510,8 @@ added, moved, renamed, or removed.
         ticket/detail to workspace render model adapter, including formatted and ISO pending-time
         values for selected-ticket metadata drafts.
     - `src/features/tab-import`: provider-neutral, explicit ticket-tab import workflow.
-      - `actions.ts` (`src/features/tab-import/actions.ts`): authenticated server action with
-        strict personal-connection and identity-version inputs.
+      - `actions.ts` (`src/features/tab-import/actions.ts`): authenticated import and
+        connection/workspace/identity-scoped detail-hydration actions.
       - `model.ts` (`src/features/tab-import/model.ts`): serializable import result contracts.
       - `service.ts` (`src/features/tab-import/service.ts`): ownership-safe read orchestration,
         capability checks, safe diagnostics, and provider error mapping.
@@ -666,7 +666,7 @@ added, moved, renamed, or removed.
           Cancel, Keep draft & close, and Discard & close confirmation surface.
         - `use-communication-draft-close-guard.tsx`
           (`src/features/workspace/components/use-communication-draft-close-guard.tsx`):
-          draft-aware synchronized tab-close coordination.
+          draft-aware local tab-close coordination.
         - `use-clear-communication-draft.ts`
           (`src/features/workspace/components/use-clear-communication-draft.ts`): controller-first
           confirmed communication cleanup with no-controller storage fallback.
@@ -892,9 +892,9 @@ added, moved, renamed, or removed.
           workspace-only state for active pane, open ticket tabs, recently viewed tabs, tab metadata
           patches after successful staged updates, tab orientation, visible columns, row selection,
           grouping, sorting, merged-ticket replacement/notice coordination, and route navigation.
-        - `ticket-workspace-tab-reconciliation.ts`
-          (`src/features/workspace/components/ticket-workspace-tab-reconciliation.ts`): pure
-          provider-order, protected-local-tab, active fallback, and local reorder helpers.
+        - `ticket-tab-collection.ts`
+          (`src/features/workspace/components/ticket-tab-collection.ts`): pure local tab equality,
+          open-with-capacity, and reorder helpers.
         - `ticket-merge-notice.tsx`
           (`src/features/workspace/components/ticket-merge-notice.tsx`): non-modal merged-source to
           survivor workspace notice.
@@ -952,17 +952,18 @@ added, moved, renamed, or removed.
           workspace tabs state workspace helper module.
         - `use-ticket-tab-import.ts`
           (`src/features/workspace/components/use-ticket-tab-import.ts`): explicit import control,
-          capacity handling, result feedback, and local append orchestration.
+          latest-state capacity handling, committed-result feedback, and local append orchestration.
         - `ticket-tab-import-hydration.ts`
-          (`src/features/workspace/components/ticket-tab-import-hydration.ts`): bounded-concurrency
-          provider-neutral detail hydration, merged-source resolution, and deduplication.
+          (`src/features/workspace/components/ticket-tab-import-hydration.ts`): identity-scoped,
+          bounded-concurrency detail hydration, merged-source resolution, deduplication, and
+          explicit scan-limit accounting.
         - `ticket-tab-import-notice.tsx`
           (`src/features/workspace/components/ticket-tab-import-notice.tsx`): accessible import
           success, partial-result, and failure feedback.
         - `ticket-communication-draft-runtime.ts`
           (`src/features/workspace/components/ticket-communication-draft-runtime.ts`): complete
-          personal draft scope keys and ordered IndexedDB work used to close the remote-tab/draft
-          persistence race.
+          personal draft scope keys and ordered IndexedDB work used to close the
+          component-unmount and tab-switch persistence race.
         - `use-saved-view-settings-data.ts`
           (`src/features/workspace/components/use-saved-view-settings-data.ts`): one-time Views
           provider lookup enrichment over immediately available saved-view definitions.
@@ -1450,19 +1451,21 @@ added, moved, renamed, or removed.
       ownership and identity fail-closed behavior, read-only provider dispatch, ordering, and
       incompatible-contract handling.
     - `ticket-tab-import.test.tsx` (`tests/features/ticket-tab-import.test.tsx`): verifies
-      explicit-only import, capacity behavior, unavailable tickets, and merged-target deduplication.
+      explicit-only import, scoped hydration, concurrent local opens, capacity/scan-limit behavior,
+      unavailable tickets, and merged-target deduplication.
     - `ticket-communication-draft-runtime.test.ts`
       (`tests/features/ticket-communication-draft-runtime.test.ts`): verifies exact-scope
       synchronous draft presence and ordered IndexedDB work.
     - `ticket-workspace-local-tabs.test.tsx`
       (`tests/features/ticket-workspace-local-tabs.test.tsx`): verifies normal navigation is local
-      and the provider import action runs only after pressing `Sync tabs`.
+      and the provider import action runs only after pressing `Sync tabs`, without polluting
+      recently viewed tickets.
     - `ai-ticket-summary-action.test.ts` (`tests/features/ai-ticket-summary-action.test.ts`):
       verifies scoped selected-ticket detail reload, blank-request rejection, and the single
       configuration re-read/auth-recovery retry.
     - `ticket-detail-connection-scope.test.ts`
       (`tests/features/ticket-detail-connection-scope.test.ts`): verifies explicit personal
-      connection detail reads and fail-closed workspace-scope mismatches.
+      connection detail reads and fail-closed workspace/identity-scope mismatches.
     - `ai-ticket-summary-cache.test.ts` (`tests/features/ai-ticket-summary-cache.test.ts`):
       verifies generated selected-ticket AI summary output cache hit and write behavior without
       prompt persistence.
@@ -1683,10 +1686,6 @@ added, moved, renamed, or removed.
     - `ticket-workspace-horizontal-tab-reorder.test.tsx`
       (`tests/features/ticket-workspace-horizontal-tab-reorder.test.tsx`): verifies ticket workspace
       horizontal tab reorder behavior.
-    - `ticket-workspace-horizontal-tab-click.test.tsx`
-      (`tests/features/ticket-workspace-horizontal-tab-click.test.tsx`): verifies scoped taskbar
-      activation, List selection, and active-tab successor synchronization without selection
-      bounce.
     - `ticket-workspace-horizontal-tab-pointer.test.tsx`
       (`tests/features/ticket-workspace-horizontal-tab-pointer.test.tsx`): verifies horizontal tab
       activation still works after minor pointer jitter.

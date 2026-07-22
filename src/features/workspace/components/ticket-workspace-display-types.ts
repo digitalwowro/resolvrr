@@ -42,6 +42,7 @@ import type {
 import type { WorkspaceSettingsSection } from "./workspace-settings-dialog";
 import type { WorkspaceMenuConnection } from "./workspace-header";
 import type { ImportWorkspaceTicketTabsAction } from "./use-ticket-tab-import";
+import type { HydrateWorkspaceTabImportAction } from "@/features/tab-import/model";
 
 export type TicketWorkspaceDisplayProps = {
   connections: WorkspaceMenuConnection[];
@@ -68,6 +69,7 @@ export type TicketWorkspaceDisplayProps = {
   rephraseStyleOptions?: AiRephraseStyleOption[];
   summarizeTicketAction: SummarizeWorkspaceTicketAction;
   importWorkspaceTicketTabsAction?: ImportWorkspaceTicketTabsAction;
+  hydrateWorkspaceTabImportAction?: HydrateWorkspaceTabImportAction;
   initialTicketAiSummary?: {
     result: Extract<TicketAiSummaryResult, { status: "available" }>;
     ticketId: string;

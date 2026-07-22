@@ -45,6 +45,7 @@ describe("ticket detail personal-connection scope", () => {
       {
         cacheMode: "bypass",
         helpdeskConnectionId: "connection-1",
+        identityVersion: "identity-v1",
         workspaceId: "workspace-1",
       },
     );
@@ -55,6 +56,31 @@ describe("ticket detail personal-connection scope", () => {
       workspaceId: "workspace-1",
     });
     expect(getTicketDetail).toHaveBeenCalledOnce();
+  });
+
+  it("rejects a stale identity before reading ticket data", async () => {
+    const getTicketDetail = vi.fn();
+
+    const result = await loadWorkspaceTicketDetail(
+      repository({ activeConnectionId: null, connection: connection() }),
+      createProviderRegistry([provider({ getTicketDetail })]),
+      encryptionKey,
+      "user-1",
+      "ticket-1",
+      noTicketDetailCacheRepository,
+      {
+        cacheMode: "bypass",
+        helpdeskConnectionId: "connection-1",
+        identityVersion: "identity-v2",
+        workspaceId: "workspace-1",
+      },
+    );
+
+    expect(result).toMatchObject({
+      status: "unavailable",
+      reason: "no-active-connection",
+    });
+    expect(getTicketDetail).not.toHaveBeenCalled();
   });
 
   it("rejects a workspace mismatch before reading ticket data", async () => {

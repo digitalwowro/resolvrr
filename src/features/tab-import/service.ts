@@ -46,17 +46,6 @@ export async function importWorkspaceTicketTabs(
   expectedIdentityVersion: string,
 ): Promise<WorkspaceTabImportResult> {
   const startedAt = performance.now();
-  const ownedConnection = await repository.findForUser(
-    userId,
-    helpdeskConnectionId,
-  );
-  if (
-    !ownedConnection ||
-    ownedConnection.identityVersion !== expectedIdentityVersion
-  ) {
-    return unavailable(startedAt, "no-active-connection");
-  }
-
   const provider = await loadTicketProviderContextForConnection(
     repository,
     registry,
@@ -64,17 +53,11 @@ export async function importWorkspaceTicketTabs(
     userId,
     helpdeskConnectionId,
     "lookup",
+    expectedIdentityVersion,
   );
   if (provider.status === "unavailable") {
     return unavailable(startedAt, provider.reason, provider.retryable);
   }
-  if (
-    provider.value.context.connection.identityVersion !==
-      expectedIdentityVersion
-  ) {
-    return unavailable(startedAt, "no-active-connection");
-  }
-
   const { context, plugin } = provider.value;
   if (
     !plugin.capabilities.includes("ticket-tabs:import") ||

@@ -77,6 +77,7 @@ import type {
   UpdateProfileAction,
 } from "./workspace-settings-profile-section";
 import type { ImportWorkspaceTicketTabsAction } from "./use-ticket-tab-import";
+import type { HydrateWorkspaceTabImportAction } from "@/features/tab-import/model";
 
 export type TicketWorkspaceProps = {
   changePasswordAction?: ChangePasswordAction;
@@ -106,6 +107,7 @@ export type TicketWorkspaceProps = {
   rewriteDraftAction?: RewriteDraftAction;
   summarizeTicketAction?: SummarizeWorkspaceTicketAction;
   importWorkspaceTicketTabsAction?: ImportWorkspaceTicketTabsAction;
+  hydrateWorkspaceTabImportAction?: HydrateWorkspaceTabImportAction;
   initialTicketAiSummary?: {
     result: Extract<TicketAiSummaryResult, { status: "available" }>;
     ticketId: string;

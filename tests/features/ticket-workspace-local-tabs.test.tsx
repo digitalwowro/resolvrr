@@ -42,6 +42,8 @@ describe("TicketWorkspace local tabs", () => {
         detail={detailPropsFor(row).detail}
         detailResult={detailPropsFor(row).detailResult}
         importWorkspaceTicketTabsAction={importWorkspaceTicketTabsAction}
+        hydrateWorkspaceTabImportAction={async ({ ticketExternalId }) =>
+          detailPropsFor(ticketExternalId === highRow.id ? highRow : row).detailResult}
         initialWorkspaceOpenTabsState={initialWorkspaceOpenTabsState}
         listResult={availableList}
         loadTicketDetailAction={async () => detailPropsFor(highRow).detailResult}
@@ -77,6 +79,7 @@ describe("TicketWorkspace local tabs", () => {
   });
 
   it("appends imported tabs without changing the active ticket", async () => {
+    const saveWorkspaceOpenTabsStateAction = vi.fn().mockResolvedValue(undefined);
     render(
       <TicketWorkspace
         columns={defaultWorkspaceTicketColumns}
@@ -87,6 +90,8 @@ describe("TicketWorkspace local tabs", () => {
           status: "available" as const,
           ticketExternalIds: [highRow.id],
         })}
+        hydrateWorkspaceTabImportAction={async ({ ticketExternalId }) =>
+          detailPropsFor(ticketExternalId === highRow.id ? highRow : row).detailResult}
         initialWorkspaceOpenTabsState={{
           activePane: row.id,
           openTabs: [row],
@@ -99,6 +104,7 @@ describe("TicketWorkspace local tabs", () => {
         loadTicketDetailAction={async () => detailPropsFor(highRow).detailResult}
         logoutAction={noopAction}
         rows={[row, highRow]}
+        saveWorkspaceOpenTabsStateAction={saveWorkspaceOpenTabsStateAction}
         selectedTicketId={row.id}
         setActiveConnectionAction={noopAction}
         tabs={[row, highRow]}
@@ -116,5 +122,13 @@ describe("TicketWorkspace local tabs", () => {
       "aria-selected",
       "true",
     );
+    await waitFor(() => {
+      const latestState = saveWorkspaceOpenTabsStateAction.mock.calls.at(-1)?.[0];
+      expect(latestState.openTabs.map((tab: { id: string }) => tab.id)).toContain(
+        highRow.id,
+      );
+      expect(latestState.recentTabs.map((tab: { id: string }) => tab.id))
+        .not.toContain(highRow.id);
+    });
   });
 });

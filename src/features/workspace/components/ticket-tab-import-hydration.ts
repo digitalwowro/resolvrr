@@ -1,5 +1,5 @@
 import type { WorkspaceTicketTab } from "@/features/tickets/workspace-adapter";
-import type { LoadWorkspaceTicketDetailHydrationAction } from "@/features/workspace/ticket-detail-hydration";
+import type { HydrateWorkspaceTabImportAction } from "@/features/tab-import/model";
 import { workspaceTabFromDetail } from "@/features/workspace/workspace-tab-state";
 
 const hydrationConcurrency = 4;
@@ -7,6 +7,7 @@ const maximumCandidates = 100;
 
 export type TicketTabHydrationResult = {
   attemptedCount: number;
+  scanLimitSkippedCount: number;
   tabs: WorkspaceTicketTab[];
   unavailableCount: number;
 };
@@ -14,15 +15,23 @@ export type TicketTabHydrationResult = {
 export async function hydrateImportedTicketTabs({
   candidateTicketIds,
   capacity,
+  hydrationScope,
   knownTicketIds,
-  loadTicketDetailAction,
+  hydrateAction,
 }: {
   candidateTicketIds: string[];
   capacity: number;
+  hydrationScope: {
+    helpdeskConnectionId: string;
+    identityVersion: string;
+    workspaceId: string;
+  };
   knownTicketIds: Set<string>;
-  loadTicketDetailAction: LoadWorkspaceTicketDetailHydrationAction;
+  hydrateAction: HydrateWorkspaceTabImportAction;
 }): Promise<TicketTabHydrationResult> {
-  const candidates = [...new Set(candidateTicketIds)].slice(0, maximumCandidates);
+  const uniqueCandidates = [...new Set(candidateTicketIds)];
+  const candidates = uniqueCandidates.slice(0, maximumCandidates);
+  const scanLimitSkippedCount = uniqueCandidates.length - candidates.length;
   const imported: WorkspaceTicketTab[] = [];
   const importedIds = new Set(knownTicketIds);
   let attemptedCount = 0;
@@ -36,7 +45,10 @@ export async function hydrateImportedTicketTabs({
     cursor += batch.length;
     attemptedCount += batch.length;
     const results = await Promise.all(
-      batch.map((ticketId) => loadTicketDetailAction(ticketId)),
+      batch.map((ticketExternalId) => hydrateAction({
+        ...hydrationScope,
+        ticketExternalId,
+      })),
     );
     for (const result of results) {
       if (result.status !== "available") {
@@ -51,5 +63,10 @@ export async function hydrateImportedTicketTabs({
     }
   }
 
-  return { attemptedCount, tabs: imported, unavailableCount };
+  return {
+    attemptedCount,
+    scanLimitSkippedCount,
+    tabs: imported,
+    unavailableCount,
+  };
 }

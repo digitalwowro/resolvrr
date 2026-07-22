@@ -49,6 +49,7 @@ export function TicketWorkspaceDisplay({
   savedViews,
   summarizeTicketAction,
   importWorkspaceTicketTabsAction,
+  hydrateWorkspaceTabImportAction,
   initialTicketAiSummary,
   initialWorkspaceOpenTabsState,
   saveWorkspaceOpenTabsStateAction,
@@ -197,11 +198,12 @@ export function TicketWorkspaceDisplay({
     useCommunicationDraftCloseGuard(closeTicket);
   const tabImport = useTicketTabImport({
     action: importWorkspaceTicketTabsAction,
+    hydrateAction: hydrateWorkspaceTabImportAction,
     helpdeskConnectionId,
     identityVersion,
     importOpenTicketTabs,
-    loadTicketDetailAction,
     openTicketTabs,
+    workspaceId,
   });
   const headerSearch = workspaceTicketSearchProps({
     controller: ticketSearch,

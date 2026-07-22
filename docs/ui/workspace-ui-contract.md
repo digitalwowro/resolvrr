@@ -151,13 +151,16 @@ order, the active Resolvrr pane never changes, and missing provider tabs are
 appended in provider order. Non-ticket and non-desktop provider tasks are
 ignored. Resolvrr never closes, reorders, or evicts a local tab to match the
 provider, and it never pushes Resolvrr tabs back. The 20-tab cap remains
-authoritative; excess provider tabs are skipped with visible feedback.
+authoritative; excess provider tabs are skipped with visible feedback. Imported
+tabs do not become recently viewed until the user actually opens them.
 
-Imported identifiers are hydrated through the normal ticket-detail boundary.
-Merged sources resolve to their final accessible survivor, duplicates are
-removed, and inaccessible/deleted tickets are skipped. Import reports imported,
-unavailable, and capacity-skipped counts. A failed or incompatible read is
-shown once and is retried only when the user presses `Sync tabs` again.
+Imported identifiers are hydrated through the same personal connection,
+workspace, and identity version used for the initial import read. Merged sources
+resolve to their final accessible survivor, duplicates are removed, and
+inaccessible/deleted tickets are skipped. Import reports committed imports,
+unavailable items, duplicates, capacity skips, and bounded-scan skips separately.
+A failed or incompatible read is shown once and is retried only when the user
+presses `Sync tabs` again.
 
 Notification reads remain available when one stale notification references a
 ticket that was deleted or is no longer accessible. Only that item is omitted;

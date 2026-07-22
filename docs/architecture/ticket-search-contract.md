@@ -28,7 +28,7 @@ responses for a full-text request map to a provider-neutral, non-retryable
 After a 500 ms pause, the header shows up to ten quick results with the real
 provider total. `Enter` or `View all results` opens a separate, flat detailed
 result list that requests 100 rows and follows provider cursors. Selecting a
-result opens the normal synchronized ticket tab.
+result opens the normal local ticket tab.
 
 Search owns a separate controller from saved-view paging. Clearing it restores
 the unchanged saved-view rows, grouping, sorting, and selection context.

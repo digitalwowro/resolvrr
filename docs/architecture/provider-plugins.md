@@ -252,10 +252,12 @@ taskbar endpoint, and ordinary workspace activity never calls it.
 
 The server action requires ownership of the personal helpdesk connection and
 an exact identity-version match before decrypting credentials or calling the
-provider. An incompatible contract disables only that import attempt. Errors
-are not retried automatically. Safe telemetry records only status, duration,
-retryability, and counts—never ticket IDs, titles, credentials, or raw taskbar
-payloads.
+provider. Every imported ticket is hydrated through that same explicit
+connection, workspace, and identity version; hydration never falls back to the
+user's subsequently active workspace. An incompatible contract disables only
+that import attempt. Errors are not retried automatically. Safe telemetry
+records only status, duration, retryability, and counts—never ticket IDs,
+titles, credentials, or raw taskbar payloads.
 
 Personal composer drafts are deliberately not part of the provider contract.
 Live characterization disproved the assumption that the REST taskbar record
