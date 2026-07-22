@@ -99,7 +99,13 @@ export function TicketWorkspaceDetailArea({
   }
 
   if (activeDetail?.status === "unavailable") {
-    return <DetailUnavailableState key="work-area" reason={activeDetail.reason} />;
+    return (
+      <DetailUnavailableState
+        key="work-area"
+        onRetry={activeDetail.retryable ? onRefresh : undefined}
+        reason={activeDetail.reason}
+      />
+    );
   }
 
   if (activeDetail?.status === "available") {

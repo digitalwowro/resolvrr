@@ -66,10 +66,8 @@ import {
   workspaceSavedViews,
   type EnsureMyWorkSavedViewResult,
 } from "@/features/saved-views";
-import {
-  unavailableTicketRead,
-  type TicketReadUnavailable,
-} from "@/features/tickets/read-model";
+import { unavailableTicketRead,
+  type TicketReadUnavailable } from "@/features/tickets/read-model";
 import {
   deleteWorkspaceSavedViewAction,
   loadWorkspaceSavedViewsSettingsAction,

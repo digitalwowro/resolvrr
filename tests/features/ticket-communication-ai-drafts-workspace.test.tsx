@@ -11,13 +11,17 @@ import {
 const persistence = vi.hoisted(() => ({
   clearPersistedCommunicationDrafts: vi.fn(),
   loadPersistedCommunicationDrafts: vi.fn(),
-  pruneExpiredCommunicationDrafts: vi.fn(),
+  putPersistedCommunicationDraft: vi.fn(),
+  readPersistedCommunicationDraft: vi.fn(),
   savePersistedCommunicationDraft: vi.fn(),
 }));
 
 vi.mock(
   "@/features/workspace/components/ticket-communication-draft-persistence",
-  () => persistence,
+  async (importOriginal) => ({
+    ...await importOriginal(),
+    ...persistence,
+  }),
 );
 
 const scope = {
@@ -34,6 +38,18 @@ beforeEach(() => {
     mocked.mockResolvedValue(undefined);
   }
   persistence.loadPersistedCommunicationDrafts.mockResolvedValue([]);
+  persistence.readPersistedCommunicationDraft.mockResolvedValue({
+    status: "available",
+    value: undefined,
+  });
+  persistence.putPersistedCommunicationDraft.mockResolvedValue({
+    status: "available",
+    value: undefined,
+  });
+  persistence.clearPersistedCommunicationDrafts.mockResolvedValue({
+    status: "available",
+    value: undefined,
+  });
 });
 
 describe("TicketWorkspace communication AI drafts", () => {
@@ -44,6 +60,7 @@ describe("TicketWorkspace communication AI drafts", () => {
       bodyHtml: "<p>Saved reply body</p>",
       expiresAt: Date.now() + 60_000,
       id: "v1:user-1:connection-1:ticket-1:reply",
+      localRevision: 1,
       mode: "reply",
       scope,
       suggestions: [
@@ -58,9 +75,10 @@ describe("TicketWorkspace communication AI drafts", () => {
       ],
       updatedAt: Date.now(),
     } satisfies PersistedCommunicationDraft;
-    persistence.loadPersistedCommunicationDrafts.mockResolvedValue([
-      persistedDraft,
-    ]);
+    persistence.readPersistedCommunicationDraft.mockResolvedValue({
+      status: "available",
+      value: persistedDraft,
+    });
 
     renderWorkspace({
       customerReplies: true,
@@ -69,7 +87,7 @@ describe("TicketWorkspace communication AI drafts", () => {
     });
 
     await waitFor(() =>
-      expect(persistence.loadPersistedCommunicationDrafts).toHaveBeenCalledWith(
+      expect(persistence.readPersistedCommunicationDraft).toHaveBeenCalledWith(
         scope,
       ),
     );
@@ -131,7 +149,7 @@ describe("TicketWorkspace communication AI drafts", () => {
       await screen.findByText("Please check the logs."),
     ).toBeInTheDocument();
     await waitFor(() =>
-      expect(persistence.savePersistedCommunicationDraft).toHaveBeenCalledWith(
+      expect(persistence.putPersistedCommunicationDraft).toHaveBeenCalledWith(
         expect.objectContaining({
           kind: "customer-reply",
           scope,

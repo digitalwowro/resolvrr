@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { TicketReplyIntent } from "@/core/ticket-replies";
 import type { TicketConversationHistoryContext } from "@/core/ticket-conversation-history";
 import type { AiRephraseStyleOption, RewriteDraftAction } from "@/features/ai";
@@ -9,8 +9,6 @@ import type { TicketCommunicationCapabilities } from "@/features/tickets/communi
 import type { WorkspaceArticle } from "@/features/tickets/workspace-adapter";
 import type { TicketCommunicationDraft } from "./metadata-draft";
 import type { TicketSignaturePreviewState } from "./use-ticket-signature-preview";
-import { replyRecipientsEdited } from "./communication-draft";
-import { forwardDraftEdited } from "./communication-draft";
 import { TicketThreadArticle } from "./ticket-thread-article";
 import { TicketInlineCommunicationComposer } from "./ticket-inline-communication-composer";
 import { TicketReplyRecipientEditor } from "./ticket-reply-recipient-editor";
@@ -19,15 +17,17 @@ import { TicketThreadConversationHistory } from "./ticket-thread-conversation-hi
 import { restoredCommunicationDraft } from "./ticket-communication-draft-restore";
 import {
   clearPersistedCommunicationDrafts,
-  loadPersistedCommunicationDrafts,
-  pruneExpiredCommunicationDrafts,
   savePersistedCommunicationDraft,
   type CommunicationDraftPersistenceScope,
   type PersistedDraftAiSuggestion,
 } from "./ticket-communication-draft-persistence";
 import {
-  setCurrentCommunicationDraftPresence,
-} from "./ticket-communication-draft-runtime";
+  draftPersistenceInput,
+} from "./communication-draft-serialization";
+import {
+  useWorkspaceCommunicationDraft,
+} from "./workspace-communication-draft-context";
+import { CommunicationDraftStorageStatus } from "./communication-draft-storage-status";
 
 type TicketThreadProps = {
   articles: WorkspaceArticle[];
@@ -75,94 +75,61 @@ export function TicketThread({
   const [suggestions, setSuggestions] = useState<PersistedDraftAiSuggestion[]>([]);
   const [draftRestored, setDraftRestored] = useState(false);
   const latestArticleRef = useRef<HTMLDivElement | null>(null);
-  const restoredScopeRef = useRef("");
+  const restoredRevisionRef = useRef(0);
   const draftRef = useRef(communicationDraft);
   const onDraftChangeRef = useRef(onCommunicationDraftChange);
+  const { controller, entry } = useWorkspaceCommunicationDraft(ticketExternalId);
 
   useEffect(() => { draftRef.current = communicationDraft; }, [communicationDraft]);
   useEffect(() => { onDraftChangeRef.current = onCommunicationDraftChange; }, [onCommunicationDraftChange]);
-  useEffect(() => { void pruneExpiredCommunicationDrafts(); }, []);
-  useEffect(
-    () => () => {
-      setCurrentCommunicationDraftPresence(draftPersistenceScope, false);
-    },
-    [draftPersistenceScope],
-  );
-
+  useEffect(() => () => {
+    if (controller) void controller.flush(ticketExternalId);
+  }, [controller, ticketExternalId]);
   useEffect(() => {
     if (scrollAfterArticleCount === undefined || articles.length <= scrollAfterArticleCount) return;
     latestArticleRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
     onScrolledToLatest();
   }, [articles.length, onScrolledToLatest, scrollAfterArticleCount]);
 
-  useEffect(() => {
-    let cancelled = false;
-    const scopeKey = draftPersistenceScope
-      ? `${draftPersistenceScope.userId}:${draftPersistenceScope.workspaceId}:${draftPersistenceScope.helpdeskConnectionId}:${draftPersistenceScope.identityVersion}:${draftPersistenceScope.ticketExternalId}`
-      : "";
-    if (!scopeKey || restoredScopeRef.current === scopeKey) return;
-    restoredScopeRef.current = scopeKey;
-    void loadPersistedCommunicationDrafts(draftPersistenceScope).then((records) => {
-      if (cancelled || draftRef.current || !records[0]) return;
-      const draft = restoredCommunicationDraft(
-        records[0],
-        articles,
-        communicationCapabilities,
-        conversationHistory,
-      );
-      if (!draft) return;
-      setSuggestions(records[0].suggestions);
-      setDraftRestored(true);
-      onDraftChangeRef.current(draft);
-    });
-    return () => { cancelled = true; };
+  useLayoutEffect(() => {
+    const record = entry.record;
+    if (
+      !entry.loaded ||
+      !record ||
+      restoredRevisionRef.current === record.localRevision
+    ) return;
+    restoredRevisionRef.current = record.localRevision;
+    if (draftRef.current) return;
+    setSuggestions(record.suggestions);
+    const draft = restoredCommunicationDraft(
+      record,
+      articles,
+      communicationCapabilities,
+      conversationHistory,
+    );
+    if (!draft) return;
+    queueMicrotask(() => setDraftRestored(true));
+    onDraftChangeRef.current(draft);
   }, [
     articles,
     communicationCapabilities,
     conversationHistory,
-    draftPersistenceScope,
+    entry.loaded,
+    entry.record,
   ]);
 
   function persist(
     draft: TicketCommunicationDraft,
     nextSuggestions = suggestions,
   ) {
-    void savePersistedCommunicationDraft({
-      articleId: draft.kind !== "internal-comment"
-        ? draft.sourceArticleExternalId
-        : undefined,
-      attachmentExternalIds: draft.kind === "customer-forward"
-        ? draft.attachmentExternalIds
-        : undefined,
-      bodyHtml: draft.body,
-      cc: draft.kind !== "internal-comment" ? draft.cc : undefined,
-      conversationHistoryContextVersion: draft.kind === "customer-reply"
-        ? draft.conversationHistoryContextVersion
-        : draft.kind === "customer-forward"
-          ? draft.conversationHistoryContextVersion
-          : undefined,
-      conversationHistoryScope: draft.kind === "internal-comment"
-        ? undefined
-        : draft.conversationHistoryScope,
-      contextVersion: draft.kind !== "internal-comment"
-        ? draft.contextVersion
-        : undefined,
-      intent: draft.kind === "customer-reply" ? draft.intent : undefined,
-      includeConversationHistory: draft.kind === "internal-comment"
-        ? undefined
-        : draft.includeConversationHistory,
-      kind: draft.kind,
-      recipientEdited: draft.kind === "customer-reply"
-        ? replyRecipientsEdited(draft)
-        : draft.kind === "customer-forward" ? forwardDraftEdited(draft) : false,
+    if (!draftPersistenceScope) return;
+    const input = draftPersistenceInput({
+      draft,
       scope: draftPersistenceScope,
       suggestions: nextSuggestions,
-      subject: draft.kind === "customer-forward" ? draft.subject : undefined,
-      signatureContext: draft.kind !== "internal-comment"
-        ? draft.signatureContext
-        : undefined,
-      to: draft.kind !== "internal-comment" ? draft.to : undefined,
     });
+    if (controller) controller.save(input);
+    else void savePersistedCommunicationDraft(input);
   }
 
   function changeDraft(draft: TicketCommunicationDraft) {
@@ -171,11 +138,18 @@ export function TicketThread({
     persist(draft);
   }
 
-  function closeComposer() {
+  async function closeComposer() {
+    if (controller) {
+      if (!await controller.clear(ticketExternalId)) return;
+    } else if (draftPersistenceScope) {
+      const cleared = await clearPersistedCommunicationDrafts(
+        draftPersistenceScope,
+      );
+      if (cleared.status === "unavailable") return;
+    }
     setSuggestions([]);
     setDraftRestored(false);
     onCommunicationDraftChange(undefined);
-    void clearPersistedCommunicationDrafts(draftPersistenceScope);
   }
 
   const sourceArticle = communicationDraft?.kind !== "internal-comment" && communicationDraft
@@ -197,11 +171,14 @@ export function TicketThread({
                 ? "Internal comment"
                 : `${communicationDraft.kind === "customer-forward" ? "Forwarding" : "Replying to"} ${sourceArticle?.author ?? "selected message"} · ${sourceArticle?.meta ?? ""}`}
             </span>
+            <CommunicationDraftStorageStatus
+              entry={entry}
+            />
             <button
               aria-label="Close composer"
               className="inline-grid size-7 shrink-0 place-items-center rounded-md border border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={disabled}
-              onClick={closeComposer}
+              onClick={() => void closeComposer()}
               type="button"
             >
               <X aria-hidden="true" className="size-4" />

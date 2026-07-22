@@ -155,8 +155,9 @@ added, moved, renamed, or removed.
     - `ticket-attachments.ts` (`src/core/ticket-attachments.ts`): provider-neutral visible-file
       locator, bounded byte result, and authenticated same-origin download-path contracts.
     - `ticket-article-content*.ts` (`src/core/ticket-article-content*.ts`): shared provider-neutral
-      sanitized article quote/signature detection, visible-message extraction, and disclosure
-      result contracts used by both workspace rendering and outbound transcript assembly.
+      sanitized article quote/signature detection, containment-aware structural, sibling-cluster,
+      and nested-envelope ranking, visible-message extraction, and disclosure contracts used by
+      workspace rendering and outbound transcript assembly.
     - `ticket-conversation-history.ts` (`src/core/ticket-conversation-history.ts`):
       provider-neutral current/through-source history scope and opaque reviewed context contracts.
     - `ticket-replies.ts` (`src/core/ticket-replies.ts`): focused provider-neutral contextual
@@ -644,8 +645,36 @@ added, moved, renamed, or removed.
           Resolvrr default/group template editor with safe variables and bounded images.
         - `ticket-communication-draft-persistence.ts`
           (`src/features/workspace/components/ticket-communication-draft-persistence.ts`):
-          versioned browser-local IndexedDB persistence for one contextual communication draft and
-          small AI suggestion history, scoped by user, workspace, and ticket.
+          versioned identity-scoped local communication record serialization and durable browser
+          recovery operations.
+        - `ticket-communication-draft-indexeddb.ts`
+          (`src/features/workspace/components/ticket-communication-draft-indexeddb.ts`): focused
+          IndexedDB v9 shared connection, serialized transaction, and storage-error boundary.
+        - `communication-draft-serialization.ts`
+          (`src/features/workspace/components/communication-draft-serialization.ts`): maps the
+          complete workspace communication draft to browser persistence.
+        - `workspace-communication-draft-controller.ts`
+          (`src/features/workspace/components/workspace-communication-draft-controller.ts`):
+          workspace-lifetime registry, load deduplication, coalesced memory-first persistence,
+          lifecycle flushing, and synchronous confirmed-send cleanup across ticket mounts.
+        - `workspace-communication-draft-context.tsx`
+          (`src/features/workspace/components/workspace-communication-draft-context.tsx`):
+          controller context and per-ticket external-store subscription.
+        - `workspace-communication-draft-boundary.tsx`
+          (`src/features/workspace/components/workspace-communication-draft-boundary.tsx`):
+          complete personal identity scope construction and workspace controller provider.
+        - `communication-draft-storage-status.tsx`
+          (`src/features/workspace/components/communication-draft-storage-status.tsx`): local
+          browser recovery and storage-unavailable status.
+        - `communication-draft-close-dialog.tsx`
+          (`src/features/workspace/components/communication-draft-close-dialog.tsx`): explicit
+          Cancel, Keep draft & close, and Discard & close confirmation surface.
+        - `use-communication-draft-close-guard.tsx`
+          (`src/features/workspace/components/use-communication-draft-close-guard.tsx`):
+          draft-aware synchronized tab-close coordination.
+        - `use-clear-communication-draft.ts`
+          (`src/features/workspace/components/use-clear-communication-draft.ts`): controller-first
+          confirmed communication cleanup with no-controller storage fallback.
         - `ticket-communication-draft-restore.ts`
           (`src/features/workspace/components/ticket-communication-draft-restore.ts`): restores
           versioned communication drafts only against fresh reply or forward article contexts.
@@ -850,9 +879,6 @@ added, moved, renamed, or removed.
         - `ticket-workspace-scope.ts`
           (`src/features/workspace/components/ticket-workspace-scope.ts`): derives the active
           personal-connection search scope without exposing provider credentials.
-        - `close-ticket-with-draft.ts`
-          (`src/features/workspace/components/close-ticket-with-draft.ts`): draft-aware close
-          helper shared by synchronized ticket-tab actions and workspace search transitions.
         - `ticket-workspace-fallbacks.ts`
           (`src/features/workspace/components/ticket-workspace-fallbacks.ts`): ticket workspace
           fallbacks workspace helper module.
@@ -946,8 +972,8 @@ added, moved, renamed, or removed.
           (`src/features/workspace/components/ticket-taskbar-runtime.ts`): isolated per-user,
           workspace, personal-connection, and identity-version queues and merge-correction state.
         - `ticket-communication-draft-runtime.ts`
-          (`src/features/workspace/components/ticket-communication-draft-runtime.ts`): synchronous
-          per-scope draft presence and ordered IndexedDB work used to close the remote-tab/draft
+          (`src/features/workspace/components/ticket-communication-draft-runtime.ts`): complete
+          personal draft scope keys and ordered IndexedDB work used to close the remote-tab/draft
           persistence race.
         - `ticket-taskbar-sync-requests.ts`
           (`src/features/workspace/components/ticket-taskbar-sync-requests.ts`): focused local
@@ -1115,8 +1141,8 @@ added, moved, renamed, or removed.
         message-alternative, referenced-inline-resource, and user-visible attachment
         classification for raw CID and transformed inline-URL article bodies.
       - `article-body.ts` (`src/providers/zammad/article-body.ts`): sanitized Zammad article-body
-        mapping that replaces provider signature markers with a provider-neutral boundary and
-        accepts provider-owned inline-image source rewriting.
+        mapping that normalizes explicit signature containers and learned signature positions to
+        a provider-neutral boundary and accepts provider-owned inline-image source rewriting.
       - `mutation-policy.ts` (`src/providers/zammad/mutation-policy.ts`): Zammad-only state mutation
         availability rules, exposed to core/UI as canonical hidden state keys and pending-date
         requirements.
@@ -1272,6 +1298,10 @@ added, moved, renamed, or removed.
     - `overview.md` (`docs/architecture/overview.md`): core product and architecture boundaries.
     - `provider-plugins.md` (`docs/architecture/provider-plugins.md`): provider plugin ownership and
       registration rules.
+    - `zammad-personal-draft-sync-deferred.md`
+      (`docs/architecture/zammad-personal-draft-sync-deferred.md`): live contract invalidation,
+      contained local-only behavior, future characterization procedure, and decision gate for
+      personal cross-application draft synchronization.
     - `read-only-ai-contract.md` (`docs/architecture/read-only-ai-contract.md`): implemented
       selected-ticket AI Assistant summary boundary, prompt data, runtime configuration, failure,
       and cache rules.
@@ -1435,6 +1465,9 @@ added, moved, renamed, or removed.
     - `tooltip.test.tsx` (`tests/components/tooltip.test.tsx`): verifies tooltip hover,
       keyboard-visible focus, viewport positioning, portal rendering, and close behavior.
   - `tests/features`: feature workflow, workspace behavior, saved-view, and ticket-service tests.
+    - `workspace-communication-draft-controller.test.ts`
+      (`tests/features/workspace-communication-draft-controller.test.ts`): verifies exact personal
+      browser scope, memory-first publishing, local revisioning, restore, and storage-safe clear.
     - `taskbar-sync-model.test.ts` (`tests/features/taskbar-sync-model.test.ts`): verifies strict,
       bounded provider-neutral taskbar command parsing.
     - `ticket-taskbar-reconciliation.test.tsx`

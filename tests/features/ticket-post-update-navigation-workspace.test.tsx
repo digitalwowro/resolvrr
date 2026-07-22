@@ -157,7 +157,10 @@ describe("TicketWorkspace post-update navigation", () => {
     await chooseNavigation(user, "Close tab & go to List");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
-    await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Ticket detail #1001")).not.toBeInTheDocument(),
+    );
+    expect(routerRefresh).not.toHaveBeenCalled();
     expect(routerPush).not.toHaveBeenCalled();
     expect(replaceState).toHaveBeenLastCalledWith(null, "", "/workspace");
     expect(screen.queryByLabelText("Ticket detail #1001")).not.toBeInTheDocument();
@@ -176,7 +179,10 @@ describe("TicketWorkspace post-update navigation", () => {
     await chooseNavigation(user, "Close tab if state is Closed");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
-    await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Ticket detail #1001")).not.toBeInTheDocument(),
+    );
+    expect(routerRefresh).not.toHaveBeenCalled();
     expect(routerPush).not.toHaveBeenCalled();
     expect(replaceState).toHaveBeenLastCalledWith(null, "", "/workspace");
     expect(screen.queryByLabelText("Ticket detail #1001")).not.toBeInTheDocument();
@@ -209,7 +215,10 @@ describe("TicketWorkspace post-update navigation", () => {
     await chooseNavigation(user, "Close tab if state is Closed");
     await user.click(screen.getByRole("button", { name: "Update" }));
 
-    await waitFor(() => expect(routerRefresh).toHaveBeenCalledOnce());
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Ticket detail #1001")).not.toBeInTheDocument(),
+    );
+    expect(routerRefresh).not.toHaveBeenCalled();
     expect(routerPush).not.toHaveBeenCalled();
     expect(replaceState).toHaveBeenLastCalledWith(null, "", "/workspace");
   });

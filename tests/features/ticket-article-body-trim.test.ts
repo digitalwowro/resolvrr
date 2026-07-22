@@ -220,6 +220,55 @@ describe("trimArticleBodyHtml", () => {
     expect(result.hiddenHtml).toContain("Earlier customer message");
   });
 
+  it("keeps authored content after an inline quoted line", () => {
+    const result = trimArticleBodyHtml(`
+      <p>Hi Remon,</p>
+      <p>&gt; A selected sentence from the earlier message.</p>
+      <p>Could you confirm how many deployments are planned?</p>
+      <p>The required training must be completed before access.</p>
+      <span data-resolvrr-signature-boundary="explicit"></span>
+      <div><p>Regards,<br>Example Agent<br>example.test</p></div>
+    `);
+
+    expect(result.collapsed).toBe(true);
+    if (!result.collapsed) return;
+    expect(result.hiddenKind).toBe("signature");
+    expect(result.visibleHtml).toContain("A selected sentence");
+    expect(result.visibleHtml).toContain("how many deployments");
+    expect(result.visibleHtml).toContain("required training");
+    expect(result.hiddenHtml).toContain("Example Agent");
+  });
+
+  it("does not let an earlier ordinary table override an explicit boundary", () => {
+    const result = trimArticleBodyHtml(`
+      <p>Authored message with enough context to remain visible.</p>
+      <table><tbody><tr><td>Ordinary business data</td></tr></tbody></table>
+      <p>Additional authored content after the table.</p>
+      <span data-resolvrr-signature-boundary="explicit"></span>
+      <div><p>Regards,<br>Example Agent<br>example.test</p></div>
+    `);
+
+    expect(result.collapsed).toBe(true);
+    if (!result.collapsed) return;
+    expect(result.visibleHtml).toContain("Additional authored content");
+    expect(result.hiddenHtml).toContain("Example Agent");
+  });
+
+  it("collapses a terminal block of plain-text quote lines", () => {
+    const result = trimArticleBodyHtml(`
+      <p>Here is my answer.</p>
+      <p>&gt; Earlier line one</p>
+      <p>&gt; Earlier line two with enough context to identify the quoted block.</p>
+      <p>&gt; Earlier line three with additional historical context.</p>
+    `);
+
+    expect(result.collapsed).toBe(true);
+    if (!result.collapsed) return;
+    expect(result.hiddenKind).toBe("quoted-reply");
+    expect(result.visibleHtml).toContain("Here is my answer");
+    expect(result.hiddenHtml).toContain("Earlier line one");
+  });
+
   it("does not collapse short messages with an early dash marker", () => {
     const result = trimArticleBodyHtml("<p>--</p><p>Short note.</p>");
 

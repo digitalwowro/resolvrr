@@ -15,6 +15,7 @@ export type SynchronizeWorkspaceTaskbarAction = (
 export type TicketTaskbarSyncOptions = {
   action?: SynchronizeWorkspaceTaskbarAction;
   activeTicketId?: string;
+  initialSelectedTicketId?: string;
   loadTicketDetailAction: LoadWorkspaceTicketDetailAction;
   openTicketTabs: WorkspaceTicketTab[];
   reconcileOpenTicketTabs(

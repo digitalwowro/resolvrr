@@ -21,7 +21,7 @@ import { isCompleteListSortKey } from "./ticket-table-grouping";
 import { useTicketSearchController } from "./use-ticket-search-controller";
 import { workspaceTicketSearchProps } from "./ticket-workspace-search-props";
 import { ticketWorkspaceScope } from "./ticket-workspace-scope";
-import { closeTicketWithDraftClear } from "./close-ticket-with-draft";
+import { useCommunicationDraftCloseGuard } from "./use-communication-draft-close-guard";
 
 export function TicketWorkspaceDisplay({
   connections,
@@ -192,15 +192,14 @@ export function TicketWorkspaceDisplay({
     void listPager.silentRefreshCurrentPage();
   }
 
-  function handleCloseTicket(ticketId: string) {
-    closeTicketWithDraftClear(ticketId, persistenceScope, closeTicket);
-  }
-
+  const communicationDraftCloseGuard =
+    useCommunicationDraftCloseGuard(closeTicket);
   const synchronized = useSynchronizedTicketWorkspaceActions({
     action: synchronizeWorkspaceTaskbarAction,
     displayState,
+    initialSelectedTicketId: selectedTicketId,
     loadTicketDetailAction,
-    onExplicitClose: handleCloseTicket,
+    onExplicitClose: communicationDraftCloseGuard.requestClose,
     scope: persistenceScope,
     ticketTabs: pagedTicketTabs,
   });
@@ -261,6 +260,7 @@ export function TicketWorkspaceDisplay({
 
   return (
     <>
+      {communicationDraftCloseGuard.dialog(synchronized.closeTicket)}
       <TicketMergeNotice message={displayState.mergeNotice} />
       <TaskbarSyncNotice
         conflictIds={synchronized.draftConflictIds}

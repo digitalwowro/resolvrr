@@ -15,8 +15,9 @@ export const QUOTE_HEADER_PATTERNS = [
   /^On .+\bwrote:?$/i,
   /^-{2,}\s*Original Message\s*-{2,}$/i,
   /^Begin forwarded message:?$/i,
-  /^>+/,
 ];
+
+const inlineQuotePattern = /^>+/u;
 
 export function findQuotedReplyCandidate(
   html: string,
@@ -60,12 +61,15 @@ function findStructuralQuoteCandidate(html: string): CollapseCandidate | null {
 }
 
 function findQuoteHeaderCandidate(lines: HtmlLine[]): CollapseCandidate | null {
+  const normalizedLines = lines.map((line) => normalizeLine(line.text));
   for (let index = 0; index < lines.length; index += 1) {
-    const text = normalizeLine(lines[index]?.text ?? "");
+    const text = normalizedLines[index] ?? "";
     if (
       QUOTE_HEADER_PATTERNS.some((pattern) => pattern.test(text)) ||
+      (inlineQuotePattern.test(text) &&
+        isTerminalInlineQuote(normalizedLines, index)) ||
       isMailHeader(
-        lines.map((line) => normalizeLine(line.text)),
+        normalizedLines,
         text,
         index,
       )
@@ -78,6 +82,16 @@ function findQuoteHeaderCandidate(lines: HtmlLine[]): CollapseCandidate | null {
     }
   }
   return null;
+}
+
+function isTerminalInlineQuote(lines: string[], startIndex: number) {
+  let foundQuote = false;
+  for (const line of lines.slice(startIndex)) {
+    if (!line) continue;
+    if (!inlineQuotePattern.test(line)) return false;
+    foundQuote = true;
+  }
+  return foundQuote;
 }
 
 function isMailHeader(lines: string[], line: string, index: number) {

@@ -20,12 +20,14 @@ function record(overrides: Partial<PersistedCommunicationDraft> = {}): Persisted
     attachmentExternalIds: ["91", "deleted"], bodyHtml: "<p>Intro</p>",
     cc: [], contextVersion: "fresh-v2", expiresAt: Date.now() + 1_000,
     id: "draft", includeConversationHistory: true, kind: "customer-forward",
+    localRevision: 1,
     scope: {
       ticketExternalId: "ticket-1", userId: "user-1", workspaceId: "workspace-1",
       helpdeskConnectionId: "connection-1", identityVersion: "identity-v1",
     },
     sourceArticleExternalId: "article-ticket-1", subject: "Reviewed subject",
-    suggestions: [], to: ["customer@example.com"], updatedAt: Date.now(),
+    suggestions: [],
+    to: ["customer@example.com"], updatedAt: Date.now(),
     ...overrides,
   };
 }
@@ -44,11 +46,25 @@ describe("customer forward draft restoration", () => {
     });
   });
 
-  it("fails closed for stale forward context or unavailable capability", () => {
+  it("refreshes stale forward context while preserving the body", () => {
     expect(restoredCommunicationDraft(
       record({ contextVersion: "stale" }), [article()],
       { customerForwards: true, customerReplies: true, internalNotes: true },
+    )).toMatchObject({
+      body: "<p>Intro</p>",
+      contextVersion: "fresh-v2",
+    });
+  });
+
+  it("never moves a local draft to a different source article", () => {
+    expect(restoredCommunicationDraft(
+      record({ contextVersion: "stale" }),
+      [{ ...article(), id: "different-article" }],
+      { customerForwards: true, customerReplies: true, internalNotes: true },
     )).toBeUndefined();
+  });
+
+  it("fails closed for an unavailable capability", () => {
     expect(restoredCommunicationDraft(
       record(), [article()],
       { customerForwards: false, customerReplies: true, internalNotes: true },

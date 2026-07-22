@@ -14,14 +14,10 @@ import {
 import {
   actionErrorState,
   mergeRefreshedDraft,
-  mutationStatusText,
   noopMetadataSavedDetailRefresh,
   updatePayloadNeedsDetailRefresh,
 } from "./ticket-metadata-editor-submit";
-import {
-  shouldReturnToListAfterUpdate,
-  type PostUpdateNavigation,
-} from "./post-update-navigation";
+import { shouldReturnToListAfterUpdate, type PostUpdateNavigation } from "./post-update-navigation";
 import { assignmentLabel } from "./ticket-assignment-fields";
 import { TicketMetadataActionBar } from "./ticket-metadata-action-bar";
 import { TicketMetadataEditorSidebar } from "./ticket-metadata-editor-sidebar";
@@ -29,14 +25,13 @@ import { TicketThread } from "./ticket-thread";
 import { latestForwardableArticle, latestReplyableArticle } from "./communication-draft-factory";
 import { CommunicationDraftReplacementDialog } from "./communication-draft-replacement-dialog";
 import { useTicketCommunicationSelection } from "./use-ticket-communication-selection";
-import { clearPersistedCommunicationDrafts } from "./ticket-communication-draft-persistence";
 import { useCommunicationDraftScope } from "./use-communication-draft-scope";
 import type { TicketMetadataEditorStateProps } from "./ticket-metadata-editor-state-types";
-import {
-  ticketCommunicationSignatureReady,
-  useSelectedTicketSignaturePreview,
-} from "./use-ticket-signature-preview";
+import { ticketCommunicationSignatureReady, useSelectedTicketSignaturePreview } from "./use-ticket-signature-preview";
 import { useWorkspaceSignatureActions } from "./ticket-signature-preview-action-context";
+import { useClearCommunicationDraft } from "./use-clear-communication-draft";
+import { TicketMetadataMutationBanner } from
+  "./ticket-metadata-mutation-banner";
 export function TicketMetadataEditorState({
   communicationCapabilities,
   detail,
@@ -83,9 +78,11 @@ export function TicketMetadataEditorState({
   const dirtyFields = metadataDraftDirtyFields(currentBaseline, currentDraft);
   const hasChanges = metadataDraftHasChanges(dirtyFields);
   const validation = validateMetadataDraft(detail, dirtyFields, currentDraft);
-  const statusText = mutationStatusText(saving, mutationResult);
   const draftPersistenceScope = useCommunicationDraftScope(
     detail.id, userId, workspaceId, helpdeskConnectionId, identityVersion,
+  );
+  const clearCommunicationDraft = useClearCommunicationDraft(
+    detail.id, draftPersistenceScope,
   );
   function changeDraft(nextDraft: SelectedTicketDraft) {
     setDraft(nextDraft);
@@ -109,7 +106,7 @@ export function TicketMetadataEditorState({
     const nextDraft = metadataDraftFromBaseline(currentBaseline);
     setDraft(nextDraft);
     setMutationResult({ status: "idle" });
-    void clearPersistedCommunicationDrafts(draftPersistenceScope);
+    clearCommunicationDraft();
   }
   function submitChanges(navigation: PostUpdateNavigation) {
     if (!canUpdate) {
@@ -153,6 +150,10 @@ export function TicketMetadataEditorState({
           result.status === "saved-refresh-failed"
         ) {
           const submittedBaseline = metadataDraftSubmittedBaseline(currentDraft);
+          const returnToList = shouldReturnToListAfterUpdate({
+            finalState: submittedBaseline.metadata.state,
+            navigation,
+          });
           onMetadataSaved({
             group: dirtyFields.group
               ? assignmentLabel(
@@ -180,28 +181,23 @@ export function TicketMetadataEditorState({
             if (submittedCommunication) {
               setScrollAfterArticleCount(submittedArticleCount);
             }
-            if (updatePayloadNeedsDetailRefresh(updatePayload)) {
+            if (!returnToList && updatePayloadNeedsDetailRefresh(updatePayload)) {
               refreshSavedDetail(submittedBaseline.ticketExternalId);
             }
           }
           if (submittedCommunication) {
-            void clearPersistedCommunicationDrafts(draftPersistenceScope);
+            clearCommunicationDraft({ restoreOnFailure: false });
             setThreadComposerResetKey((current) => current + 1);
           }
           const nextDraft = metadataDraftFromBaseline(submittedBaseline);
           setBaseline(submittedBaseline);
           setDraft(nextDraft);
-          if (
-            shouldReturnToListAfterUpdate({
-              finalState: submittedBaseline.metadata.state,
-              navigation,
-            })
-          ) {
+          if (returnToList) {
             onReturnToListAfterUpdate();
           }
-        }
-        if (result.status === "saved") {
-          router.refresh();
+          if (result.status === "saved" && !returnToList) {
+            router.refresh();
+          }
         }
       })
       .catch(() => setMutationResult(actionErrorState()))
@@ -249,15 +245,14 @@ export function TicketMetadataEditorState({
           draft={currentDraft}
           hasChanges={hasChanges}
           metadataMutationCapabilities={metadataMutationCapabilities}
-          mutationResult={mutationResult}
           onDraftChange={changeDraft}
           recentlyViewedLinkTargets={recentlyViewedLinkTargets}
           saving={saving}
           searchTicketLinkTargetsAction={searchTicketLinkTargetsAction}
-          statusText={statusText}
           validationMessage={validation.message}
         />
       </section>
+      <TicketMetadataMutationBanner result={mutationResult} />
       <TicketMetadataActionBar
         canComment={communicationCapabilities.internalNotes}
         canForward={Boolean(

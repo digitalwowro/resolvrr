@@ -62,13 +62,26 @@ export function UnavailableState({
 }
 
 export function DetailUnavailableState({
+  onRetry,
   reason,
 }: {
+  onRetry?(): void;
   reason: TicketReadUnavailableReason;
 }) {
   return (
     <section className="flex min-h-0 flex-1 items-center justify-center border-x border-t border-slate-200 bg-white px-4 text-center">
-      <p className="max-w-sm text-sm text-slate-600">{unavailableMessages[reason]}</p>
+      <div className="max-w-sm">
+        <p className="text-sm text-slate-600">{unavailableMessages[reason]}</p>
+        {onRetry ? (
+          <button
+            className="mt-4 inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            onClick={onRetry}
+            type="button"
+          >
+            Retry
+          </button>
+        ) : null}
+      </div>
     </section>
   );
 }

@@ -190,6 +190,7 @@ export function useTicketWorkspaceTabsState({
     rememberOpenTicket(ticketId);
     setActiveWorkspacePane({ ticketId });
     replaceWorkspaceUrl(ticketId);
+    ensureTicketDetail(ticketId);
   }
 
   function showNotificationTicket(tab: WorkspaceTicketTab) {

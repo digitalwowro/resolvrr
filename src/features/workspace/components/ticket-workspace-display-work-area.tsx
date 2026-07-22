@@ -164,7 +164,10 @@ export function TicketWorkspaceDisplayWorkArea({
       onMetadataSaved={displayState.updateOpenTicketTabMetadata}
       onMetadataSavedDetailRefresh={displayState.refreshSavedTicketDetail}
       onRefresh={displayState.refreshActiveTicketDetail}
-      onReturnToListAfterUpdate={displayState.returnActiveTicketToList}
+      onReturnToListAfterUpdate={() => {
+        displayState.returnActiveTicketToList();
+        handleRefreshList();
+      }}
       recentlyViewedLinkTargets={recentlyViewedLinkTargets}
       rephraseStyleOptions={rephraseStyleOptions}
       roundedTop={displayState.tabOrientation === "vertical"}

@@ -46,19 +46,27 @@ job queues remain out of scope. Read-only AI behavior is defined separately in
   cache keys include user, active helpdesk connection, selected ticket, prompt
   version, sanitization version, provider protocol, model fingerprint, and
   source fingerprint/freshness metadata.
-- Ticket-level composer drafts are recovered locally in the browser. The
-  versioned record is scoped by user, active workspace, and selected ticket. It
+- Ticket-level composer drafts use a workspace-lifetime memory controller with
+  a versioned IndexedDB recovery buffer. Records are scoped by user, active
+  workspace, personal helpdesk connection, provider identity version, and
+  selected ticket. They
   may contain communication kind, source/intent/context version, reviewed To/Cc,
   the conversation-history inclusion choice plus reviewed opaque version/scope,
   forward subject and source attachment IDs, unsent body, and up to three draft AI
-  suggestions, and expires after a short
-  retention window. Legacy comments restore directly; legacy replies restore
+  suggestions. Draft records do not expire by age. Legacy comments
+  restore directly; legacy replies restore
   only after their source receives a fresh valid context, using fresh defaults.
   Ticket-history HTML is never persisted; it is re-derived from the current
   provider-backed detail and rebuilt server-side immediately before the write.
   Mention tokens inside unsent HTML contain only a provider-neutral external
   user reference and the selected display label. Mention suggestion results are
   request-scoped lookups and are not cached or persisted as a directory.
+- Composer drafts are local-only. The controller performs no provider draft
+  reads, writes, polling, or focus reconciliation. It stages each edit in memory,
+  coalesces browser recovery writes after typing pauses, and flushes pending work
+  on ticket or page lifecycle changes. Healthy persistence stays visually silent;
+  only recovery-storage failures are surfaced. IndexedDB is not cross-browser,
+  cross-device, or cross-application synchronization.
 - Workspace and per-user AI settings are encrypted server-side configuration,
   not cache data. Changing active-workspace AI policy/default config invalidates
   generated summaries for that workspace; changing a user's per-workspace AI
@@ -68,9 +76,10 @@ job queues remain out of scope. Read-only AI behavior is defined separately in
 
 ## Non-Goals
 
-- No server-side draft suggestions, customer replies, or assisted-action output
-  cache in this phase. Browser-local inline draft recovery is allowed only for
-  unsent composer text and short-lived suggestion history.
+- No server-side Resolvrr draft cache, provider draft synchronization, customer
+  replies, or assisted-action output cache exists in this phase. Authored
+  content and AI suggestions remain only in the identity-scoped browser
+  recovery record until the user submits Update.
 - No background sync, webhooks, scheduled refresh jobs, or hidden provider
   writes in this phase.
 - No provider-specific cache keys, query syntax, raw API paths, or raw payload
@@ -183,10 +192,11 @@ Cached data must be classified before persistence:
 - Customer content: ticket titles, previews, sanitized thread content,
   recipients, note bodies, reply bodies, and generated text based on customer
   content. This must not be logged and must be encrypted at rest if persisted.
-- Browser-local draft content: unsent comment/reply/forward bodies, recipient selections,
-  source context identifiers/versions, and local AI suggestion alternatives.
-  This must not be logged or sent to the server except through explicit AI
-  generation or Update actions chosen by the user.
+- Personal draft content: unsent comment/reply/forward bodies, recipient
+  selections, source context identifiers/versions, and local AI suggestion
+  alternatives. It must never be logged. The authored communication projection
+  may cross the authenticated server boundary only for the signed-in user's
+  provider taskbar synchronization; local AI alternatives are excluded.
 - Secrets: provider credentials, session tokens, cookies, password material, and
   AI credentials. These are never cache data.
 
@@ -202,9 +212,9 @@ Future cache implementations may tune exact TTLs, but the default classes are:
 - Generated AI output: selected-ticket summaries use a durable encrypted cache
   keyed by complete source/model/prompt identity. Age alone never hides an
   exact matching summary.
-- Browser-local ticket composer drafts: short lived, currently around 7 days,
-  and cleared earlier when the user closes the composer, discards changes,
-  submits through Update, or closes the ticket tab.
+- Browser-local ticket composer drafts: retained until confirmed communication
+  success or an explicit, confirmed discard. Closing a tab may retain the draft;
+  age alone never removes the recovery record.
 
 Any TTL can be shortened for sensitive data, provider errors, permission
 changes, or high-churn views. Expired snapshots may be shown only as stale data
@@ -235,14 +245,16 @@ confirms the write:
 - AI settings changes invalidate generated selected-ticket summaries scoped to
   the affected workspace or user/connection.
 - Ticket composer drafts survive validation, provider, partial-success, and
-  uncertain-delivery failures. They are cleared only after confirmed
-  communication success or an explicit local discard/close action.
+  uncertain-delivery failures. A clear is first persisted as pending, then
+  removed locally only after the personal provider confirms its task draft was
+  cleared. Provider conflicts retain the recovery copy and require an explicit
+  local/provider choice.
 - Browser drafts are keyed by user, workspace, personal helpdesk connection,
   connection identity version, and ticket. Disconnect/reconnect, provider URL
   replacement, or provider identity rotation prevents an older draft from
   restoring. Legacy drafts from shared credentials are intentionally ignored.
 - A merged source draft is never transferred to its survivor. It remains scoped
-  to the retired source until explicit discard or retention expiry, and any
+  to the retired source until explicit discard, and any
   attempted source write is rejected by provider lifecycle preflight.
 
 Invalidation must not be treated as provider write success. Provider write

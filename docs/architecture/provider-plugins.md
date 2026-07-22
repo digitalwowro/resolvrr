@@ -188,6 +188,13 @@ newest-first read-only transcript after the current outbound signature.
 Internal notes, system events, and private articles never enter the transcript.
 Mention conversion applies only to the newly authored body.
 
+Inbound Zammad article mapping treats explicit signature marker containers and
+the provider's learned signature position as authoritative anchors. Those raw
+signals become one provider-neutral marker before workspace rendering; a strong
+adjacent signature structure may extend the hidden range to include the complete
+current signature before an older quoted marker. A plain-text `>` line collapses
+only when it begins a terminal quoted suffix, so it cannot hide later authored text.
+
 Zammad forwarding is independent of reply derivation. Any public email article
 may expose a provider-neutral forward context, including system-originated mail
 whose From/To/Reply-To values are all managed addresses. The provider freshly
@@ -276,6 +283,16 @@ status. Requests carry the originating personal connection through the server
 boundary together with its identity version and are ownership-checked there, so
 a queued action cannot drift to a newly selected workspace or reconnected
 identity. An incompatible runtime contract clears its disabled outbox.
+
+Personal composer drafts are deliberately not part of the provider contract.
+Live characterization disproved the assumption that the REST taskbar record
+reliably exposes the currently edited article body and recipients. Resolvrr
+therefore neither reads nor writes provider draft state and advertises no
+personal-draft capability. Drafts remain local to the identity-scoped browser
+recovery store until Update submits the final reviewed communication through
+the normal ticket mutation contract. The deferred investigation and acceptance
+gate are recorded in
+`docs/architecture/zammad-personal-draft-sync-deferred.md`.
 
 ## Zammad Boundary
 

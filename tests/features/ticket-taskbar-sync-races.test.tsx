@@ -3,15 +3,23 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { WorkspaceTicketTab } from "@/features/tickets/workspace-adapter";
 import { useTicketTaskbarSync } from "@/features/workspace/components/use-ticket-taskbar-sync";
-import { loadPersistedCommunicationDrafts } from "@/features/workspace/components/ticket-communication-draft-persistence";
+import { readPersistedCommunicationDraft } from "@/features/workspace/components/ticket-communication-draft-persistence";
+import {
+  WorkspaceCommunicationDraftProvider,
+} from "@/features/workspace/components/workspace-communication-draft-context";
 import {
   taskbarTestActionArgs,
   taskbarTestScope,
 } from "./ticket-taskbar-test-scope";
+import { detailPropsFor, row } from "./ticket-workspace-test-utils";
 
-vi.mock("@/features/workspace/components/ticket-communication-draft-persistence", () => ({
-  loadPersistedCommunicationDrafts: vi.fn(),
-}));
+vi.mock(
+  "@/features/workspace/components/ticket-communication-draft-persistence",
+  async (importOriginal) => ({
+    ...await importOriginal(),
+    readPersistedCommunicationDraft: vi.fn(),
+  }),
+);
 
 const ticketTab: WorkspaceTicketTab = {
   id: "1",
@@ -156,10 +164,13 @@ describe("ticket taskbar synchronization races", () => {
   });
 
   it("does not apply an old remote close after a newer local action", async () => {
-    let resolveDraftCheck: ((drafts: []) => void) | undefined;
-    vi.mocked(loadPersistedCommunicationDrafts).mockImplementationOnce(
+    let resolveDraftCheck: (() => void) | undefined;
+    vi.mocked(readPersistedCommunicationDraft).mockImplementationOnce(
       () => new Promise((resolve) => {
-        resolveDraftCheck = resolve;
+        resolveDraftCheck = () => resolve({
+          status: "available",
+          value: undefined,
+        });
       }),
     );
     const reconcile = vi.fn();
@@ -191,10 +202,14 @@ describe("ticket taskbar synchronization races", () => {
       );
     }
 
-    render(<Harness />);
-    await waitFor(() => expect(loadPersistedCommunicationDrafts).toHaveBeenCalled());
+    render(
+      <WorkspaceCommunicationDraftProvider scope={taskbarTestScope}>
+        <Harness />
+      </WorkspaceCommunicationDraftProvider>,
+    );
+    await waitFor(() => expect(readPersistedCommunicationDraft).toHaveBeenCalled());
     await userEvent.click(screen.getByRole("button", { name: "Keep ticket active" }));
-    resolveDraftCheck?.([]);
+    resolveDraftCheck?.();
 
     await waitFor(() => expect(action).toHaveBeenCalledWith(
       { kind: "activate", ticketExternalId: "1" },
@@ -253,6 +268,76 @@ describe("ticket taskbar synchronization races", () => {
     expect(action).not.toHaveBeenCalledWith(
       ...taskbarTestActionArgs({ kind: "activate", ticketExternalId: "1" }),
     );
+  });
+
+  it("ignores a recent close echo and freshly hydrates a later remote reopen", async () => {
+    let now = Date.parse("2026-07-21T12:00:00.000Z");
+    const dateNow = vi.spyOn(Date, "now").mockImplementation(() => now);
+    let closeAttempted = false;
+    const action = vi.fn(async (request: { kind: string }) => {
+      if (request.kind === "close") {
+        closeAttempted = true;
+        return {
+          ...available,
+          ticketExternalIds: [],
+          activeTicketExternalId: undefined,
+        };
+      }
+      return closeAttempted ? available : available;
+    });
+    const closedDetail = detailPropsFor({
+      ...row,
+      id: "1",
+      number: "#1",
+      title: "Ticket 1",
+      state: "Closed",
+      stateKey: "closed",
+    });
+    const loadTicketDetailAction = vi.fn(async () => closedDetail.detailResult);
+    const reconcile = vi.fn();
+
+    function Harness() {
+      const state = useTicketTaskbarSync({
+        action,
+        activeTicketId: "1",
+        loadTicketDetailAction,
+        openTicketTabs: [ticketTab],
+        reconcileOpenTicketTabs: reconcile,
+        scope: taskbarTestScope,
+        ticketTabs: [ticketTab],
+      });
+      return (
+        <button onClick={() => void state.close("1")} type="button">
+          Close ticket
+        </button>
+      );
+    }
+
+    render(<Harness />);
+    await waitFor(() => expect(action).toHaveBeenCalledWith(
+      ...taskbarTestActionArgs({ kind: "reconcile" }),
+    ));
+    await userEvent.click(screen.getByRole("button", { name: "Close ticket" }));
+    await waitFor(() => expect(action).toHaveBeenCalledWith(
+      ...taskbarTestActionArgs({ kind: "close", ticketExternalId: "1" }),
+    ));
+
+    reconcile.mockClear();
+    loadTicketDetailAction.mockClear();
+    window.dispatchEvent(new Event("focus"));
+    await waitFor(() => expect(reconcile).toHaveBeenCalled());
+    expect(reconcile).toHaveBeenLastCalledWith([], [], undefined);
+    expect(loadTicketDetailAction).not.toHaveBeenCalled();
+
+    now += 10_001;
+    window.dispatchEvent(new Event("focus"));
+    await waitFor(() => expect(loadTicketDetailAction).toHaveBeenCalledWith("1"));
+    expect(reconcile).toHaveBeenLastCalledWith(
+      [expect.objectContaining({ id: "1", stateKey: "closed" })],
+      [],
+      "1",
+    );
+    dateNow.mockRestore();
   });
 
 });

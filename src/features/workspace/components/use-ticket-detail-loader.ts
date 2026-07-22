@@ -6,6 +6,7 @@ import type {
   LoadWorkspaceTicketDetailHydrationAction,
   WorkspaceTicketDetailHydrationResult,
 } from "@/features/workspace/ticket-detail-hydration";
+import { withTicketDetailRequestTimeout } from "./ticket-detail-request-timeout";
 
 type TicketDetailCacheEntry = WorkspaceTicketDetailHydrationResult | { status: "loading" };
 
@@ -24,6 +25,14 @@ const clientLoadFailure: WorkspaceTicketDetailHydrationResult = {
   reason: "provider-temporary-failure",
   retryable: true,
 };
+
+function canReuseDetail(entry?: TicketDetailCacheEntry) {
+  return Boolean(
+    entry &&
+      entry.status !== "loading" &&
+      !(entry.status === "unavailable" && entry.retryable),
+  );
+}
 
 function initialDetailCache({
   initialDetailResult,
@@ -117,7 +126,7 @@ export function useTicketDetailLoader({
   }
 
   function loadTicketDetail(ticketId: string, { force }: { force: boolean }) {
-    if (!force && detailCache[ticketId]) {
+    if (!force && canReuseDetail(detailCache[ticketId])) {
       return;
     }
     if (inFlightRef.current.has(ticketId)) {
@@ -131,7 +140,7 @@ export function useTicketDetailLoader({
     }
     setDetailCacheState((current) => {
       const currentEntry = current[ticketId];
-      if (!force && currentEntry) {
+      if (!force && canReuseDetail(currentEntry)) {
         return current;
       }
 
@@ -145,9 +154,11 @@ export function useTicketDetailLoader({
       };
     });
 
-    const detailRequest = force
-      ? loadTicketDetailAction(ticketId, { cacheMode: "bypass" })
-      : loadTicketDetailAction(ticketId);
+    const detailRequest = withTicketDetailRequestTimeout(
+      force
+        ? loadTicketDetailAction(ticketId, { cacheMode: "bypass" })
+        : loadTicketDetailAction(ticketId),
+    );
 
     void detailRequest
       .then((result) => {
