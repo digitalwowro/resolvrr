@@ -8,8 +8,12 @@ import type { ProviderRegistry } from "@/providers";
 import { safeLogMetadata } from "@/security/safe-log";
 import type {
   WorkspaceTabImportResult,
-  WorkspaceTabImportUnavailable,
 } from "./model";
+
+type WorkspaceTabImportUnavailableReason = Extract<
+  WorkspaceTabImportResult,
+  { status: "unavailable" }
+>["reason"];
 
 function recordImport(
   status: "available" | "unavailable",
@@ -30,7 +34,7 @@ function recordImport(
 
 function unavailable(
   startedAt: number,
-  reason: WorkspaceTabImportUnavailable["reason"],
+  reason: WorkspaceTabImportUnavailableReason,
   retryable = false,
 ): WorkspaceTabImportResult {
   recordImport("unavailable", startedAt, { reason, retryable });
@@ -68,9 +72,7 @@ export async function importWorkspaceTicketTabs(
 
   try {
     const snapshot = await plugin.readTicketTabs(context);
-    const ticketExternalIds = snapshot.items
-      .toSorted((left, right) => left.position - right.position)
-      .map((item) => item.ticketExternalId);
+    const ticketExternalIds = snapshot.ticketExternalIds;
     recordImport("available", startedAt, { count: ticketExternalIds.length });
     return { status: "available", ticketExternalIds };
   } catch (error) {

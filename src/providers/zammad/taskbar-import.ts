@@ -7,8 +7,6 @@ import {
   type ZammadTaskbarItem,
 } from "./taskbar-schema";
 
-const contractVersion = "zammad-rest-desktop-ticket-tabs-v1";
-
 function incompatible(error: unknown): never {
   if (error instanceof ProviderError && error.kind !== "provider-data-mismatch") {
     throw error;
@@ -41,12 +39,8 @@ export async function readZammadTicketTabs(
   try {
     const raw = await zammadGetJson(context, "/api/v1/taskbar");
     return {
-      contractVersion,
-      items: orderedDesktopTickets(parseZammadTaskbar(raw)).map(
-        (ticketId, position) => ({
-          position,
-          ticketExternalId: String(ticketId),
-        }),
+      ticketExternalIds: orderedDesktopTickets(parseZammadTaskbar(raw)).map(
+        String,
       ),
     };
   } catch (error) {

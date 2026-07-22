@@ -152,13 +152,20 @@ appended in provider order. Non-ticket and non-desktop provider tasks are
 ignored. Resolvrr never closes, reorders, or evicts a local tab to match the
 provider, and it never pushes Resolvrr tabs back. The 20-tab cap remains
 authoritative; excess provider tabs are skipped with visible feedback. Imported
-tabs do not become recently viewed until the user actually opens them.
+tabs do not become recently viewed until the user actually opens them. Each
+import hydrates no more tickets than the free capacity present when the action
+starts, and a second click cannot start a concurrent import.
 
 Imported identifiers are hydrated through the same personal connection,
 workspace, and identity version used for the initial import read. Merged sources
 resolve to their final accessible survivor, duplicates are removed, and
 inaccessible/deleted tickets are skipped. Import reports committed imports,
 unavailable items, duplicates, capacity skips, and bounded-scan skips separately.
+Ticket-specific unavailable results do not prevent later candidates from being
+considered. An import-wide connection, credential, rate-limit, or temporary
+provider failure stops further hydration after the current bounded batch and
+shows the applicable retry guidance. If the scoped workspace component unmounts,
+the obsolete in-flight generation cannot append tabs or publish late feedback.
 A failed or incompatible read is shown once and is retried only when the user
 presses `Sync tabs` again.
 

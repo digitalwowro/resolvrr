@@ -952,11 +952,13 @@ added, moved, renamed, or removed.
           workspace tabs state workspace helper module.
         - `use-ticket-tab-import.ts`
           (`src/features/workspace/components/use-ticket-tab-import.ts`): explicit import control,
-          latest-state capacity handling, committed-result feedback, and local append orchestration.
+          single-flight/cancellation guards, exact free-capacity handling, committed-result
+          feedback, and local append orchestration.
         - `ticket-tab-import-hydration.ts`
           (`src/features/workspace/components/ticket-tab-import-hydration.ts`): identity-scoped,
-          bounded-concurrency detail hydration, merged-source resolution, deduplication, and
-          explicit scan-limit accounting.
+          bounded-concurrency detail hydration, import-wide failure short-circuiting,
+          merged-source resolution, deduplication, cancellation checks, and explicit scan-limit
+          accounting.
         - `ticket-tab-import-notice.tsx`
           (`src/features/workspace/components/ticket-tab-import-notice.tsx`): accessible import
           success, partial-result, and failure feedback.
@@ -1451,8 +1453,15 @@ added, moved, renamed, or removed.
       ownership and identity fail-closed behavior, read-only provider dispatch, ordering, and
       incompatible-contract handling.
     - `ticket-tab-import.test.tsx` (`tests/features/ticket-tab-import.test.tsx`): verifies
-      explicit-only import, scoped hydration, concurrent local opens, capacity/scan-limit behavior,
-      unavailable tickets, and merged-target deduplication.
+      explicit-only import, scoped hydration, concurrent local opens, exact-capacity behavior,
+      import-wide failure feedback, bounded-scan feedback, and committed-result accounting.
+    - `ticket-tab-import-hydration.test.ts`
+      (`tests/features/ticket-tab-import-hydration.test.ts`): verifies import-wide failure
+      short-circuiting, ticket-specific continuation, merged-target deduplication, and bounded
+      candidate scanning.
+    - `ticket-tab-import-lifecycle.test.tsx`
+      (`tests/features/ticket-tab-import-lifecycle.test.tsx`): verifies unmount and workspace-scope
+      cancellation prevent late hydration batches, tab imports, and feedback.
     - `ticket-communication-draft-runtime.test.ts`
       (`tests/features/ticket-communication-draft-runtime.test.ts`): verifies exact-scope
       synchronous draft presence and ordered IndexedDB work.

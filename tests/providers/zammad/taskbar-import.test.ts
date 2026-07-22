@@ -47,11 +47,7 @@ describe("Zammad ticket-tab import", () => {
     );
 
     expect(result).toEqual({
-      contractVersion: "zammad-rest-desktop-ticket-tabs-v1",
-      items: [
-        { position: 0, ticketExternalId: "4" },
-        { position: 1, ticketExternalId: "9" },
-      ],
+      ticketExternalIds: ["4", "9"],
     });
     expect(JSON.stringify(result)).not.toContain("TicketZoom");
   });

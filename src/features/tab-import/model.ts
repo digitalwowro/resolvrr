@@ -1,12 +1,12 @@
 import type { TicketReadUnavailableReason } from "@/features/tickets/read-model";
 import type { WorkspaceTicketDetailLoadResult } from "@/features/tickets/detail-action-result";
 
-export type WorkspaceTabImportAvailable = {
+type WorkspaceTabImportAvailable = {
   status: "available";
   ticketExternalIds: string[];
 };
 
-export type WorkspaceTabImportUnavailable = {
+type WorkspaceTabImportUnavailable = {
   status: "unavailable";
   reason: TicketReadUnavailableReason | "tab-import-incompatible";
   retryable: boolean;

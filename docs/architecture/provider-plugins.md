@@ -239,7 +239,7 @@ cache. UI components must not introduce provider fetch fan-out.
 ## Ticket Tab Import
 
 `ticket-tabs:import` is an optional, read-only provider capability. Core exposes
-only an ordered set of ticket external IDs and an opaque contract version.
+only an ordered set of ticket external IDs.
 Provider task IDs, callback names, application names, parameter fields,
 endpoint paths, and non-ticket task types never cross the plugin boundary.
 
@@ -255,9 +255,12 @@ an exact identity-version match before decrypting credentials or calling the
 provider. Every imported ticket is hydrated through that same explicit
 connection, workspace, and identity version; hydration never falls back to the
 user's subsequently active workspace. An incompatible contract disables only
-that import attempt. Errors are not retried automatically. Safe telemetry
-records only status, duration, retryability, and counts—never ticket IDs,
-titles, credentials, or raw taskbar payloads.
+that import attempt. Ticket-specific unavailable results are skipped, while an
+import-wide connection, credential, rate-limit, or temporary provider failure
+stops further hydration after the current bounded batch and is reported
+visibly. Errors are not retried automatically. Safe telemetry records only
+status, duration, retryability, and counts—never ticket IDs, titles,
+credentials, or raw taskbar payloads.
 
 Personal composer drafts are deliberately not part of the provider contract.
 Live characterization disproved the assumption that the REST taskbar record

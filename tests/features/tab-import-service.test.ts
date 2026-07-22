@@ -74,11 +74,7 @@ describe("workspace ticket-tab import service", () => {
 
   it("reads ordered tabs through the owned connection without mutation", async () => {
     const readTicketTabs = vi.fn().mockResolvedValue({
-      contractVersion: "contract-1",
-      items: [
-        { position: 1, ticketExternalId: "2" },
-        { position: 0, ticketExternalId: "1" },
-      ],
+      ticketExternalIds: ["1", "2"],
     });
     vi.mocked(loadTicketProviderContextForConnection).mockResolvedValue({
       status: "available",
