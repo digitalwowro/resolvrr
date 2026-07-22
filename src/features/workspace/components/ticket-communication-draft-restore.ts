@@ -23,8 +23,7 @@ export function restoredCommunicationDraft(
   if (kind === "customer-forward") {
     const context = article?.forwardContext;
     if (
-      !capabilities.customerForwards || !article || !context ||
-      record.contextVersion !== context.contextVersion
+      !capabilities.customerForwards || !article || !context
     ) return undefined;
     const availableAttachmentIds = new Set(article.attachments.map((item) => item.id));
     const defaultAttachments = article.attachments.map((item) => item.id);
@@ -55,11 +54,13 @@ export function restoredCommunicationDraft(
     };
   }
   const context = article?.replyContext;
-  const intent = record.intent ?? "reply";
+  const requestedIntent = record.intent ?? "reply";
+  const intent = context?.availableIntents.includes(requestedIntent)
+    ? requestedIntent
+    : "reply";
   if (
     kind !== "customer-reply" || !capabilities.customerReplies || !context ||
-    !context.availableIntents.includes(intent) ||
-    (record.contextVersion && record.contextVersion !== context.contextVersion)
+    !context.availableIntents.includes(intent)
   ) return undefined;
   const defaults = intent === "reply-all" ? context.defaults.replyAll : context.defaults.reply;
   if (!defaults) return undefined;

@@ -3,6 +3,10 @@ import { prismaSavedViewSelectionRepository } from "@/data/saved-view-selection-
 import { prismaWorkspaceTabsRepository } from "@/data/workspace-tabs-repository";
 import type { StoredSavedView } from "@/features/saved-views";
 import type { ConnectionListItem } from "@/features/helpdesk-connections/service-types";
+import {
+  workspaceGroupedTicketListPageSize,
+  workspaceTicketListPageSize,
+} from "@/features/tickets/list-page-sizes";
 import type { TicketDetailReadResult } from "@/features/tickets/read-model";
 import { workspaceTicketDetail } from "@/features/tickets/workspace-adapter";
 
@@ -38,9 +42,9 @@ export function workspaceDetailSeed(
 
 export function savedViewTicketListQuery(
   savedView: StoredSavedView | undefined,
-): TicketListQueryInput | undefined {
+): TicketListQueryInput {
   if (!savedView) {
-    return undefined;
+    return { pageSize: workspaceTicketListPageSize };
   }
 
   const providerBackedGroup =
@@ -51,6 +55,9 @@ export function savedViewTicketListQuery(
 
   return {
     filter: savedView.query.filter,
+    pageSize: providerBackedGroup
+      ? workspaceGroupedTicketListPageSize
+      : workspaceTicketListPageSize,
     ...(savedView.query.sort ? { sort: savedView.query.sort } : {}),
     ...(providerBackedGroup
       ? { count: { includeTotal: true }, group: providerBackedGroup }

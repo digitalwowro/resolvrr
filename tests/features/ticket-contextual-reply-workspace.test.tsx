@@ -76,7 +76,7 @@ describe("TicketWorkspace contextual replies", () => {
     });
 
     expect(inbound).toHaveClass("border-b", "border-slate-200");
-    expect(outbound).toHaveClass("border-b", "border-slate-200");
+    expect(outbound).not.toHaveClass("border-b");
     expect(inbound.querySelector("[data-article-rail]"))
       .toHaveClass("w-px", "bg-indigo-500");
     expect(outbound.querySelector("[data-article-rail]"))

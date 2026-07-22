@@ -3,24 +3,15 @@ import {
   type ProviderContext,
   type TicketListQuery,
 } from "@/core/providers";
-import { measureTicketReadPhase } from "@/telemetry/ticket-read-timing";
-import { zammadBaseUrl, zammadGetJson } from "./client";
+import { zammadBaseUrl } from "./client";
 import { mapTicketListItem } from "./mapping";
 import {
-  missingZammadOrganizationIds,
-  readOptionalZammadOrganizationAssets,
-} from "./organization-assets";
-import { namedAssetValue, namedReferenceValue, relationId } from "./participants";
-import {
-  zammadGenericNamedAssetListResponseSchema,
   zammadFullTicketPayloadSchema,
   zammadTicketListResponseSchema,
-  zammadUserSchema,
   type ZammadAssets,
-  type ZammadGenericNamedAsset,
   type ZammadTicket,
-  type ZammadUser,
 } from "./schemas";
+import { resolveZammadTicketListAssets } from "./ticket-list-assets";
 import { isZammadMergedTicket } from "./ticket-state";
 
 function providerDataMismatch(): ProviderError {
@@ -28,13 +19,6 @@ function providerDataMismatch(): ProviderError {
     "provider-data-mismatch",
     "The helpdesk provider returned an unexpected response.",
   );
-}
-
-function timingMetadata(context: ProviderContext) {
-  return {
-    connectionId: context.connection.id,
-    providerKey: context.connection.providerKey,
-  };
 }
 
 function isFullPayload(
@@ -91,141 +75,6 @@ function nextTicketListCursor(
   return loadedCount === limit ? String(page + 1) : undefined;
 }
 
-function collectUserIdsFromTickets(tickets: ZammadTicket[]): string[] {
-  return [
-    ...new Set(
-      tickets
-        .flatMap((ticket) => [ticket.customer_id, ticket.owner_id])
-        .filter((id): id is string | number => id !== null && id !== undefined)
-        .map(String),
-    ),
-  ];
-}
-
-function collectNamedAssetIds(
-  tickets: ZammadTicket[],
-  idField: "state_id" | "priority_id",
-) {
-  return [
-    ...new Set(
-      tickets
-        .map((ticket) => ticket[idField])
-        .filter((id): id is string | number => id !== null && id !== undefined)
-        .map(String),
-    ),
-  ];
-}
-
-function namedAssetMap(
-  assets: ZammadGenericNamedAsset[],
-): Record<string, ZammadGenericNamedAsset> {
-  return Object.fromEntries(
-    assets
-      .map((asset) => [relationId(asset.id), asset] as const)
-      .filter((entry): entry is [string, ZammadGenericNamedAsset] =>
-        Boolean(entry[0]),
-      ),
-  );
-}
-
-async function fetchZammadUsers(
-  context: ProviderContext,
-  userIds: string[],
-): Promise<Record<string, ZammadUser>> {
-  if (userIds.length === 0) {
-    return {};
-  }
-
-  return measureTicketReadPhase(
-    "provider-user-lookup-request",
-    { ...timingMetadata(context), operation: "list" },
-    async () => {
-      const entries = await Promise.all(
-        userIds.map(async (userId) => {
-          const rawUser = await zammadGetJson(
-            context,
-            `/api/v1/users/${encodeURIComponent(userId)}`,
-          );
-          const parsed = zammadUserSchema.safeParse(rawUser);
-          if (!parsed.success) {
-            throw providerDataMismatch();
-          }
-          return [userId, parsed.data] as const;
-        }),
-      );
-
-      return Object.fromEntries(entries);
-    },
-  );
-}
-
-export async function fetchZammadNamedAssets(
-  context: ProviderContext,
-  path: string,
-): Promise<Record<string, ZammadGenericNamedAsset>> {
-  return measureTicketReadPhase(
-    "provider-lookup-request",
-    { ...timingMetadata(context), operation: "list" },
-    async () => {
-      const rawAssets = await zammadGetJson(context, path);
-      const parsed =
-        zammadGenericNamedAssetListResponseSchema.safeParse(rawAssets);
-      if (!parsed.success) {
-        throw providerDataMismatch();
-      }
-      return namedAssetMap(parsed.data);
-    },
-  );
-}
-
-function mergeListAssets(
-  assets: ZammadAssets | undefined,
-  users: Record<string, ZammadUser>,
-  states: Record<string, ZammadGenericNamedAsset>,
-  priorities: Record<string, ZammadGenericNamedAsset>,
-  organizationAssets?: ZammadAssets,
-): ZammadAssets {
-  return {
-    ...assets,
-    ...organizationAssets,
-    User: { ...assets?.User, ...users },
-    Organization: {
-      ...assets?.Organization,
-      ...organizationAssets?.Organization,
-    },
-    State: { ...assets?.State, ...states },
-    TicketPriority: { ...assets?.TicketPriority, ...priorities },
-  };
-}
-
-function missingUserIds(assets: ZammadAssets | undefined, userIds: string[]) {
-  return userIds.filter((userId) => !assets?.User?.[userId]);
-}
-
-function missingStateIds(assets: ZammadAssets | undefined, tickets: ZammadTicket[]) {
-  return collectNamedAssetIds(tickets, "state_id").filter((stateId) =>
-    tickets.some(
-      (ticket) => relationId(ticket.state_id) === stateId &&
-        !namedReferenceValue(ticket.state) &&
-        !namedAssetValue(assets?.State, stateId),
-    ),
-  );
-}
-
-function missingPriorityIds(
-  assets: ZammadAssets | undefined,
-  tickets: ZammadTicket[],
-) {
-  return collectNamedAssetIds(tickets, "priority_id").filter((priorityId) =>
-    tickets.some(
-      (ticket) => relationId(ticket.priority_id) === priorityId &&
-        !namedReferenceValue(ticket.priority) &&
-        !namedAssetValue(assets?.TicketPriority, priorityId) &&
-        !namedAssetValue(assets?.Priority, priorityId),
-      ),
-  );
-}
-
 export async function mapZammadTicketListPayload(
   context: ProviderContext,
   query: TicketListQuery,
@@ -244,38 +93,10 @@ export async function mapZammadTicketListPayload(
   const visibleTickets = payload.tickets.filter(
     (ticket) => !isZammadMergedTicket(ticket, payload.assets),
   );
-  const [users, states, priorities] = await Promise.all([
-    fetchZammadUsers(context, missingUserIds(
-      payload.assets,
-      collectUserIdsFromTickets(visibleTickets),
-    )),
-    missingStateIds(payload.assets, visibleTickets).length > 0
-      ? fetchZammadNamedAssets(context, "/api/v1/ticket_states")
-      : Promise.resolve({}),
-    missingPriorityIds(payload.assets, visibleTickets).length > 0
-      ? fetchZammadNamedAssets(context, "/api/v1/ticket_priorities")
-      : Promise.resolve({}),
-  ]);
-  const assetsWithLookups = mergeListAssets(
-    payload.assets,
-    users,
-    states,
-    priorities,
-  );
-  const organizationAssets = await readOptionalZammadOrganizationAssets(
+  const assets = await resolveZammadTicketListAssets(
     context,
-    missingZammadOrganizationIds({
-      assets: assetsWithLookups,
-      tickets: visibleTickets,
-    }),
-    "list",
-  );
-  const assets = mergeListAssets(
     payload.assets,
-    users,
-    states,
-    priorities,
-    organizationAssets,
+    visibleTickets,
   );
   const totalCount = query.count?.includeTotal ? payload.totalCount : undefined;
 

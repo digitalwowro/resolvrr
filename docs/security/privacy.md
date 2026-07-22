@@ -89,6 +89,9 @@ conversation content.
   v1 AI context.
 - Prompts, generated summaries, draft suggestions, generated replies, My Style
   text, and reviewed-action suggestions must not be logged.
+- Global ticket search terms and result contents must not be logged, placed in
+  URLs, or persisted server-side. Session storage may retain only the query,
+  scoped by user, workspace, personal connection, and identity version.
 - AI telemetry may include only operation, phase, provider protocol family,
   numeric provider HTTP status, a bounded opaque configuration version, safe
   provider error code/type tokens, duration, status, unavailable reason, and

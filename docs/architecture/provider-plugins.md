@@ -94,6 +94,14 @@ API syntax. If a query asks for a capability the provider has not advertised,
 or for a guarded expensive combination, the ticket service returns a
 provider-neutral unavailable state before provider code is called.
 
+Zammad list and search reads request `full=true`. Live contract
+characterization confirmed that the full payload supplies rich user assets and
+the requested total count, but can omit group, state, and priority assets.
+Provider-owned parallel lookup reads fill only those missing named dictionaries.
+Adding `expand=true` did not restore the omitted group assets on the connected
+instance, so list/search avoids that redundant payload flag. This list-specific
+choice does not alter detail/thread read behavior.
+
 ## Ticket Metadata Mutations
 
 The approved mutation surface includes state, priority, owner, group, tags,
@@ -179,6 +187,13 @@ inline images, lists rather than reattaches historical files, and appends the
 newest-first read-only transcript after the current outbound signature.
 Internal notes, system events, and private articles never enter the transcript.
 Mention conversion applies only to the newly authored body.
+
+Inbound Zammad article mapping treats explicit signature marker containers and
+the provider's learned signature position as authoritative anchors. Those raw
+signals become one provider-neutral marker before workspace rendering; a strong
+adjacent signature structure may extend the hidden range to include the complete
+current signature before an older quoted marker. A plain-text `>` line collapses
+only when it begins a terminal quoted suffix, so it cannot hide later authored text.
 
 Zammad forwarding is independent of reply derivation. Any public email article
 may expose a provider-neutral forward context, including system-originated mail
@@ -269,6 +284,16 @@ boundary together with its identity version and are ownership-checked there, so
 a queued action cannot drift to a newly selected workspace or reconnected
 identity. An incompatible runtime contract clears its disabled outbox.
 
+Personal composer drafts are deliberately not part of the provider contract.
+Live characterization disproved the assumption that the REST taskbar record
+reliably exposes the currently edited article body and recipients. Resolvrr
+therefore neither reads nor writes provider draft state and advertises no
+personal-draft capability. Drafts remain local to the identity-scoped browser
+recovery store until Update submits the final reviewed communication through
+the normal ticket mutation contract. The deferred investigation and acceptance
+gate are recorded in
+`docs/architecture/zammad-personal-draft-sync-deferred.md`.
+
 ## Zammad Boundary
 
 Zammad ticket list, detail, thread DTO validation, endpoint construction,
@@ -288,6 +313,8 @@ advertises `ticket:list`,
 `ticket:forward-customer-email`,
 `lookup:link-targets`, `lookup:assignable-users`, `lookup:groups`,
 `lookup:tags`, `lookup:mentionable-users`, and `ticket-taskbar:sync`.
+Zammad also advertises `search:full-text` for permission-scoped global ticket
+search.
 Assignable-owner lookup is contextual: core supplies only provider-neutral
 group and optional user external IDs. Zammad maps that intent to
 `ticket.agent` users with `full` access to any requested group, paginates the
@@ -331,7 +358,10 @@ misleading empty list.
 Zammad-backed total counts and state/priority grouped bucket counts use the
 documented search `with_total_count=true` response and map only
 provider-neutral `totalCount` and bucket metadata out of the provider layer.
-Zammad still does not advertise full-text search, and owner/customer/group
+Full-text search preserves Zammad's advanced search syntax inside the provider,
+wraps the requested expression, and adds the same immutable merged-state
+exclusion used by normal collections. Invalid Zammad search responses map to a
+provider-neutral, non-retryable invalid-query result. Owner/customer/group
 grouping remains deferred until bucket cardinality and provider support are
 designed.
 Zammad-specific state-transition behavior also stays inside this provider

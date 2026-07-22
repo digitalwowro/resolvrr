@@ -1,15 +1,26 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { useLayoutEffect } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { WorkspaceTicketTab } from "@/features/tickets/workspace-adapter";
-import { loadPersistedCommunicationDrafts } from "@/features/workspace/components/ticket-communication-draft-persistence";
 import {
-  setCurrentCommunicationDraftPresence,
-} from "@/features/workspace/components/ticket-communication-draft-runtime";
+  WorkspaceCommunicationDraftProvider,
+  useWorkspaceCommunicationDraftController,
+} from "@/features/workspace/components/workspace-communication-draft-context";
 import { useTicketTaskbarSync } from "@/features/workspace/components/use-ticket-taskbar-sync";
 
-vi.mock("@/features/workspace/components/ticket-communication-draft-persistence", () => ({
-  loadPersistedCommunicationDrafts: vi.fn(),
+const persistence = vi.hoisted(() => ({
+  clearPersistedCommunicationDrafts: vi.fn(),
+  putPersistedCommunicationDraft: vi.fn(),
+  readPersistedCommunicationDraft: vi.fn(),
 }));
+
+vi.mock(
+  "@/features/workspace/components/ticket-communication-draft-persistence",
+  async (importOriginal) => ({
+    ...await importOriginal(),
+    ...persistence,
+  }),
+);
 
 const tab = (id: string): WorkspaceTicketTab => ({
   id,
@@ -22,6 +33,17 @@ const tab = (id: string): WorkspaceTicketTab => ({
   stateKey: "open",
   priority: "Normal",
   priorityKey: "medium",
+});
+
+beforeEach(() => {
+  persistence.clearPersistedCommunicationDrafts.mockResolvedValue({
+    status: "available",
+    value: undefined,
+  });
+  persistence.putPersistedCommunicationDraft.mockResolvedValue({
+    status: "available",
+    value: undefined,
+  });
 });
 
 function availableTaskbar() {
@@ -42,10 +64,14 @@ function availableTaskbar() {
 
 describe("ticket taskbar draft protection", () => {
   it("adopts Zammad ordering while protecting a persisted local draft", async () => {
-    vi.mocked(loadPersistedCommunicationDrafts).mockResolvedValue([{
+    persistence.readPersistedCommunicationDraft.mockResolvedValue({
+      status: "available",
+      value: {
       bodyHtml: "draft",
       expiresAt: Date.now() + 1000,
       id: "draft-1",
+      localRevision: 1,
+      kind: "internal-comment",
       scope: {
         userId: "user-1",
         workspaceId: "workspace-1",
@@ -55,7 +81,8 @@ describe("ticket taskbar draft protection", () => {
       },
       suggestions: [],
       updatedAt: Date.now(),
-    }]);
+      },
+    });
     const action = vi.fn().mockResolvedValue(availableTaskbar());
     const reconcile = vi.fn();
 
@@ -77,7 +104,18 @@ describe("ticket taskbar draft protection", () => {
       return <span>{state.draftConflictIds.join(",")}</span>;
     }
 
-    render(<Harness />);
+    render(
+      <WorkspaceCommunicationDraftProvider
+        scope={{
+          userId: "user-1",
+          workspaceId: "workspace-1",
+          helpdeskConnectionId: "connection-1",
+          identityVersion: "identity-1",
+        }}
+      >
+        <Harness />
+      </WorkspaceCommunicationDraftProvider>,
+    );
 
     await waitFor(() => expect(reconcile).toHaveBeenCalled());
     expect(reconcile).toHaveBeenCalledWith(
@@ -89,7 +127,10 @@ describe("ticket taskbar draft protection", () => {
   });
 
   it("protects an in-memory draft before IndexedDB confirms its write", async () => {
-    vi.mocked(loadPersistedCommunicationDrafts).mockResolvedValue([]);
+    persistence.readPersistedCommunicationDraft.mockResolvedValue({
+      status: "available",
+      value: undefined,
+    });
     const scope = {
       userId: "user-in-memory",
       workspaceId: "workspace-in-memory",
@@ -97,11 +138,19 @@ describe("ticket taskbar draft protection", () => {
       identityVersion: "identity-in-memory",
       ticketExternalId: "1",
     };
-    setCurrentCommunicationDraftPresence(scope, true);
     const reconcile = vi.fn();
     const action = vi.fn().mockResolvedValue(availableTaskbar());
 
     function Harness() {
+      const controller = useWorkspaceCommunicationDraftController();
+      useLayoutEffect(() => {
+        controller?.save({
+          bodyHtml: "<p>In-memory draft</p>",
+          kind: "internal-comment",
+          scope,
+          suggestions: [],
+        });
+      }, [controller]);
       const state = useTicketTaskbarSync({
         action,
         activeTicketId: "1",
@@ -119,10 +168,20 @@ describe("ticket taskbar draft protection", () => {
       return <span>{state.draftConflictIds.join(",")}</span>;
     }
 
-    render(<Harness />);
+    render(
+      <WorkspaceCommunicationDraftProvider
+        scope={{
+          userId: scope.userId,
+          workspaceId: scope.workspaceId,
+          helpdeskConnectionId: scope.helpdeskConnectionId,
+          identityVersion: scope.identityVersion,
+        }}
+      >
+        <Harness />
+      </WorkspaceCommunicationDraftProvider>,
+    );
 
     await waitFor(() => expect(reconcile).toHaveBeenCalled());
     expect(screen.getByText("1")).toBeInTheDocument();
-    setCurrentCommunicationDraftPresence(scope, false);
   });
 });

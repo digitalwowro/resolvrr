@@ -15,6 +15,7 @@ import type { WorkspaceSettingsSection } from "./workspace-settings-dialog";
 import { WorkspaceNotifications } from "./workspace-notifications";
 import { TicketTabsPanel } from "./ticket-tabs-panel";
 import type { TicketTabOrientation } from "./ticket-tabs-panel";
+import type { WorkspaceTicketSearchProps } from "./workspace-ticket-search";
 
 type WorkspaceHeaderChromeProps = {
   activeTicketId?: string;
@@ -25,10 +26,9 @@ type WorkspaceHeaderChromeProps = {
   onOpenSettings(section: WorkspaceSettingsSection): void;
   onOpenNotificationTicket(tab: WorkspaceTicketTab): void;
   onRefreshTicket(ticketId: string): void;
-  onSearchQueryChange(query: string): void;
   onTabOrientationChange(orientation: TicketTabOrientation): void;
   recentTickets: WorkspaceTicketTab[];
-  searchQuery: string;
+  ticketSearch: WorkspaceTicketSearchProps;
   setActiveConnectionAction(
     formData: FormData,
   ): void | Promise<void | HelpdeskConnectionActionResult>;
@@ -49,10 +49,9 @@ export function WorkspaceHeaderChrome({
   onOpenNotificationTicket,
   onOpenSettings,
   onRefreshTicket,
-  onSearchQueryChange,
   onTabOrientationChange,
   recentTickets,
-  searchQuery,
+  ticketSearch,
   setActiveConnectionAction,
   tabOrientation,
   userAvatarDataUrl,
@@ -87,8 +86,7 @@ export function WorkspaceHeaderChrome({
       notifications={notifications}
       logoutAction={logoutAction}
       onOpenSettings={onOpenSettings}
-      onSearchQueryChange={onSearchQueryChange}
-      searchQuery={searchQuery}
+      ticketSearch={ticketSearch}
       setActiveConnectionAction={setActiveConnectionAction}
       userAvatarDataUrl={userAvatarDataUrl}
       userDisplayName={userDisplayName}

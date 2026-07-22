@@ -86,7 +86,7 @@ describe("ticket read service query handling", () => {
         providerGrouping: true,
         groupedTotalCount: true,
         fullTextSearch: false,
-        maxPageSize: 50,
+        maxPageSize: 100,
         unsupportedCombinations: [],
       },
       loadedCount: 0,
@@ -167,7 +167,7 @@ describe("ticket read service query handling", () => {
 
     expect(listTickets).toHaveBeenCalledWith(
       expect.any(Object),
-      expect.objectContaining({ pageSize: 50 }),
+      expect.objectContaining({ pageSize: 100 }),
     );
   });
 

@@ -3,12 +3,16 @@
 import type { useTicketWorkspaceDisplayState } from "./ticket-workspace-state";
 import type { useTicketListPager } from "./use-ticket-list-pager";
 import type { TicketWorkspaceDisplayProps } from "./ticket-workspace-display-types";
+import type { useTicketSearchController } from "./use-ticket-search-controller";
 import {
   TicketWorkspaceDetailArea,
   type TicketWorkspaceDetailAreaProps,
+} from "./ticket-workspace-work-area";
+import {
   TicketWorkspaceListArea,
   type TicketWorkspaceListAreaProps,
-} from "./ticket-workspace-work-area";
+} from "./ticket-workspace-list-area";
+import { TicketWorkspaceSearchArea } from "./ticket-workspace-search-area";
 
 type TicketWorkspaceDisplayWorkAreaProps = {
   activeTicketSummary: TicketWorkspaceDetailAreaProps["activeTicketSummary"];
@@ -27,7 +31,7 @@ type TicketWorkspaceDisplayWorkAreaProps = {
   rephraseStyleOptions: TicketWorkspaceDisplayProps["rephraseStyleOptions"];
   rewriteDraftAction: TicketWorkspaceDisplayProps["rewriteDraftAction"];
   savedViewOptions: TicketWorkspaceListAreaProps["savedViewOptions"];
-  searchActive: boolean;
+  ticketSearch: ReturnType<typeof useTicketSearchController>;
   searchTicketLinkTargetsAction: TicketWorkspaceDisplayProps["searchTicketLinkTargetsAction"];
   summarizeTicketAction: TicketWorkspaceDisplayProps["summarizeTicketAction"];
   tableGroupedRows: TicketWorkspaceListAreaProps["groupedRows"];
@@ -56,7 +60,7 @@ export function TicketWorkspaceDisplayWorkArea({
   rephraseStyleOptions,
   rewriteDraftAction,
   savedViewOptions,
-  searchActive,
+  ticketSearch,
   searchTicketLinkTargetsAction,
   summarizeTicketAction,
   tableGroupedRows,
@@ -68,26 +72,51 @@ export function TicketWorkspaceDisplayWorkArea({
   identityVersion,
 }: TicketWorkspaceDisplayWorkAreaProps) {
   if (displayState.listActive) {
+    if (ticketSearch.detailedActive) {
+      return (
+        <TicketWorkspaceSearchArea
+          activeTicketId={displayState.activeTicketId}
+          allSelected={displayState.allSelected}
+          canLoadMore={ticketSearch.canLoadMore}
+          columns={columns}
+          error={ticketSearch.detailedError}
+          insetContent={displayState.tabOrientation === "vertical"}
+          loading={ticketSearch.detailedLoading}
+          loadedCount={ticketSearch.detailedRows.length}
+          onClear={ticketSearch.clear}
+          onLoadMore={ticketSearch.loadMore}
+          onRefresh={ticketSearch.refresh}
+          onRowSelect={displayState.showTicketFromRow}
+          onSelectAll={displayState.toggleSelectAll}
+          onSort={ticketSearch.toggleSort}
+          onToggleRow={displayState.toggleRow}
+          partiallySelected={displayState.partiallySelected}
+          query={ticketSearch.detailedQuery || ticketSearch.query}
+          rows={ticketSearch.detailedRows}
+          selectedRowIds={displayState.selectedRowIds}
+          sortingEnabled
+          sortDirectionFor={ticketSearch.sortDirectionFor}
+          totalCount={ticketSearch.detailedTotalCount}
+          visibleColumns={displayState.visibleColumnSet}
+        />
+      );
+    }
     return (
       <TicketWorkspaceListArea
         activeTicketId={displayState.activeTicketId}
         allSelected={displayState.allSelected}
-        canLoadMore={
-          !searchActive && !providerGroupedActive && listPager.canLoadMore
-        }
+        canLoadMore={!providerGroupedActive && listPager.canLoadMore}
         columns={columns}
         completeSortError={listPager.completeSortError}
         completeSortProgress={listPager.completeSortProgress}
-        emptyMessage={
-          searchActive ? "No loaded tickets match this filter." : undefined
-        }
         groupedRows={tableGroupedRows}
         groupBy={displayState.groupBy}
         groupLoadMoreError={listPager.groupError}
+        insetContent={displayState.tabOrientation === "vertical"}
         loadingGroupId={listPager.loadingGroupId}
         loadingMore={listPager.loading}
         loadMoreError={listPager.errorReason}
-        loadedCount={searchActive ? tableRows.length : listPager.loadedCount}
+        loadedCount={listPager.loadedCount}
         onColumnToggle={displayState.toggleColumn}
         onGroupByChange={handleWorkspaceGroupByChange}
         onLoadMore={listPager.loadMore}
@@ -111,7 +140,7 @@ export function TicketWorkspaceDisplayWorkArea({
           !listPager.loading
         }
         sortDirectionFor={displayState.sortDirectionFor}
-        totalCount={searchActive ? undefined : listPager.totalCount}
+        totalCount={listPager.totalCount}
         visibleColumns={displayState.visibleColumnSet}
       />
     );
@@ -135,7 +164,10 @@ export function TicketWorkspaceDisplayWorkArea({
       onMetadataSaved={displayState.updateOpenTicketTabMetadata}
       onMetadataSavedDetailRefresh={displayState.refreshSavedTicketDetail}
       onRefresh={displayState.refreshActiveTicketDetail}
-      onReturnToListAfterUpdate={displayState.returnActiveTicketToList}
+      onReturnToListAfterUpdate={() => {
+        displayState.returnActiveTicketToList();
+        handleRefreshList();
+      }}
       recentlyViewedLinkTargets={recentlyViewedLinkTargets}
       rephraseStyleOptions={rephraseStyleOptions}
       roundedTop={displayState.tabOrientation === "vertical"}

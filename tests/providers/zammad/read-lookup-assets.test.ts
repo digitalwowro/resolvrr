@@ -23,7 +23,7 @@ describe("Zammad ticket read lookup assets", () => {
     vi.clearAllMocks();
   });
 
-  it("resolves list state and priority names when Zammad only returns ids", async () => {
+  it("resolves list group, state, and priority names when Zammad only returns ids", async () => {
     mockedSafeProviderJson
       .mockResolvedValueOnce({
         status: 200,
@@ -31,11 +31,20 @@ describe("Zammad ticket read lookup assets", () => {
         data: [
           {
             ...rawTicket,
+            group: undefined,
+            group_id: 4,
             state: undefined,
             state_id: 2,
             priority: undefined,
             priority_id: 3,
           },
+        ],
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: [
+          { id: 4, name: "Channel Team" },
         ],
       })
       .mockResolvedValueOnce({
@@ -63,15 +72,24 @@ describe("Zammad ticket read lookup assets", () => {
 
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
       2,
-      "https://helpdesk.example.com/api/v1/ticket_states",
+      "https://helpdesk.example.com/api/v1/groups",
       expect.any(Object),
     );
     expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
       3,
+      "https://helpdesk.example.com/api/v1/ticket_states",
+      expect.any(Object),
+    );
+    expect(mockedSafeProviderJson).toHaveBeenNthCalledWith(
+      4,
       "https://helpdesk.example.com/api/v1/ticket_priorities",
       expect.any(Object),
     );
     expect(result?.tickets[0]).toMatchObject({
+      group: {
+        externalId: "4",
+        name: "Channel Team",
+      },
       state: "open",
       priority: "high",
     });

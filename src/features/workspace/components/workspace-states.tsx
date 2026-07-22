@@ -13,6 +13,7 @@ const unavailableMessages: Record<TicketReadUnavailableReason, string> = {
   "provider-rate-limited": "The helpdesk workspace is rate limiting ticket reads.",
   "provider-temporary-failure": "The helpdesk workspace could not be reached.",
   "provider-unexpected-response": "The helpdesk workspace returned an unexpected response.",
+  "invalid-search-query": "The ticket search query is invalid.",
   "unsupported-query": "The active helpdesk workspace cannot run this ticket query.",
   "query-too-expensive": "This ticket query is too expensive for the active helpdesk workspace.",
   "invalid-connection": "The active helpdesk workspace URL is no longer valid.",
@@ -61,13 +62,26 @@ export function UnavailableState({
 }
 
 export function DetailUnavailableState({
+  onRetry,
   reason,
 }: {
+  onRetry?(): void;
   reason: TicketReadUnavailableReason;
 }) {
   return (
     <section className="flex min-h-0 flex-1 items-center justify-center border-x border-t border-slate-200 bg-white px-4 text-center">
-      <p className="max-w-sm text-sm text-slate-600">{unavailableMessages[reason]}</p>
+      <div className="max-w-sm">
+        <p className="text-sm text-slate-600">{unavailableMessages[reason]}</p>
+        {onRetry ? (
+          <button
+            className="mt-4 inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            onClick={onRetry}
+            type="button"
+          >
+            Retry
+          </button>
+        ) : null}
+      </div>
     </section>
   );
 }

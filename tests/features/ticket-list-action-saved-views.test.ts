@@ -91,6 +91,7 @@ describe("loadWorkspaceTicketListPageAction saved views", () => {
       "test-encryption-key",
       "user-1",
       {
+        pageSize: 25,
         count: { includeTotal: true },
         filter: { states: ["open"] },
         group: { key: "priority" },
@@ -143,7 +144,7 @@ describe("loadWorkspaceTicketListPageAction saved views", () => {
       {},
       "test-encryption-key",
       "user-1",
-      { filter: { priorities: ["high"] } },
+      { filter: { priorities: ["high"] }, pageSize: 100 },
     );
     expect(result).toMatchObject({
       status: "available",

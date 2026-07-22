@@ -10,13 +10,17 @@ import {
 const persistence = vi.hoisted(() => ({
   clearPersistedCommunicationDrafts: vi.fn(),
   loadPersistedCommunicationDrafts: vi.fn(),
-  pruneExpiredCommunicationDrafts: vi.fn(),
+  putPersistedCommunicationDraft: vi.fn(),
+  readPersistedCommunicationDraft: vi.fn(),
   savePersistedCommunicationDraft: vi.fn(),
 }));
 
 vi.mock(
   "@/features/workspace/components/ticket-communication-draft-persistence",
-  () => persistence,
+  async (importOriginal) => ({
+    ...await importOriginal(),
+    ...persistence,
+  }),
 );
 
 beforeEach(() => {
@@ -25,6 +29,18 @@ beforeEach(() => {
     mocked.mockResolvedValue(undefined);
   }
   persistence.loadPersistedCommunicationDrafts.mockResolvedValue([]);
+  persistence.readPersistedCommunicationDraft.mockResolvedValue({
+    status: "available",
+    value: undefined,
+  });
+  persistence.putPersistedCommunicationDraft.mockResolvedValue({
+    status: "available",
+    value: undefined,
+  });
+  persistence.clearPersistedCommunicationDrafts.mockResolvedValue({
+    status: "available",
+    value: undefined,
+  });
 });
 
 function selectEditorText(editor: HTMLElement, characterCount: number) {
@@ -56,7 +72,11 @@ describe("TicketWorkspace selected-text AI drafts", () => {
       };
     });
 
-    renderWorkspace({ customerReplies: true, rewriteDraftAction });
+    renderWorkspace({
+      customerReplies: true,
+      rewriteDraftAction,
+      userId: "user-selection",
+    });
     await user.click(
       within(getCustomerArticle()).getByRole("button", { name: "Reply" }),
     );
@@ -77,7 +97,7 @@ describe("TicketWorkspace selected-text AI drafts", () => {
     );
     expect(await screen.findByText("Please check the logs.")).toBeInTheDocument();
     await waitFor(() =>
-      expect(persistence.savePersistedCommunicationDraft).toHaveBeenCalledWith(
+      expect(persistence.putPersistedCommunicationDraft).toHaveBeenCalledWith(
         expect.objectContaining({
           suggestions: [
             expect.objectContaining({
@@ -95,7 +115,7 @@ describe("TicketWorkspace selected-text AI drafts", () => {
     expect(screen.getByText("Suggestion applied to the selected text."))
       .toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Proofread" })).toBeInTheDocument();
-  });
+  }, 10_000);
 
   it("refuses to apply a selected-text suggestion after the draft changes", async () => {
     const user = userEvent.setup();

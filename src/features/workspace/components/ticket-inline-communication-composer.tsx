@@ -67,9 +67,8 @@ export function TicketInlineCommunicationComposer({
   const [selectedSuggestionId, setSelectedSuggestionId] = useState(
     suggestions[0]?.id ?? "",
   );
-  const [message, setMessage] = useState<string | null>(
-    draftRestored ? "Draft restored." : null,
-  );
+  const [message, setMessage] = useState<string | null>(null);
+  const displayedMessage = message ?? (draftRestored ? "Draft restored." : null);
   const selectedSuggestion =
     suggestions.find((suggestion) => suggestion.id === selectedSuggestionId) ??
     suggestions[0];
@@ -219,9 +218,9 @@ export function TicketInlineCommunicationComposer({
         value={body}
         ref={editorRef}
       />
-      {message ? (
+      {displayedMessage ? (
         <p className="mt-2 text-xs text-slate-600" role="status">
-          {message}
+          {displayedMessage}
         </p>
       ) : null}
       {selectedSuggestion ? (

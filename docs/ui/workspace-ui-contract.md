@@ -14,7 +14,15 @@ operational, calm, and keyboard-accessible.
 - Work area: ticket table first, with selected-ticket detail/thread rendered
   read-only when the active provider supports ticket reads.
 - Initial table columns: select, `#`, `Title`, `Customer`, `Owner`, `State`,
-  `Priority`, `Pending till`, and `Updated at`.
+  `Priority`, `Pending`, and `Updated`. List and detailed Search use the
+  same grid: preferred track widths may shrink and truncate within the available
+  pane, but must never expand the workspace or create page-level overflow. The
+  preferred tracks are spacing `11` for selection, spacing `24` for ticket
+  number, flexible remaining width for Title, spacing `34` for Customer and
+  Owner, `36` for State, `30` for Priority, and `28` for both date columns.
+- Ungrouped List and detailed Search initially show up to 100 tickets. Quick
+  search remains limited to ten suggestions. State/priority grouping remains
+  bounded to 25 tickets per bucket, with explicit per-bucket pagination.
 
 ## Time Display
 
@@ -89,6 +97,12 @@ normal incremental list window. Unassigned relationship values remain last in
 both directions. A failed complete load leaves the prior list intact and says
 that the requested sort was not applied.
 
+## Global Ticket Search
+
+Header search follows the provider-backed interaction, restoration,
+accessibility, and privacy behavior in
+`docs/architecture/ticket-search-contract.md`.
+
 The Views settings section owns personal/shared visibility, title, appearance,
 condition editing, default selection, ordering, and deletion. Agents can manage
 personal views only. Admins can manage shared workspace views and their own
@@ -162,11 +176,11 @@ provider authentication, connectivity, and contract failures continue to show
 the notification error state.
 
 Provider absence closes a clean local tab unless a newer local open remains
-pending. A tab with an unsaved communication draft stays open and displays a
-conflict offering only `Close in Resolvrr`; accepting retains the browser draft
-for later restoration. Draft presence is published synchronously before its
-ordered IndexedDB write settles, so reconciliation cannot close the tab during
-the brief save interval. This rule also overrides initial provider replacement.
+pending. Unsent communication keeps its tab open as a conflict; explicit close
+offers Cancel, Keep draft & close, and Discard & close. Keep retains the local
+browser recovery record; Discard clears it locally before closing. Draft
+presence publishes before IndexedDB settles, preventing reconciliation or
+initial replacement from closing the tab.
 A positively identified provider active ticket switches every visible Resolvrr
 session on its next reconciliation. Missing, multiple, or indeterminate active
 values never force Resolvrr to List. An active non-ticket Zammad task also makes
@@ -251,19 +265,21 @@ images render in place through authenticated same-origin URLs and retain safe
 provider dimensions; remote images stay blocked. Wide layouts scroll within the article.
 Public reply-capable articles expose provider-neutral Reply and, for email,
 enabled or disabled Reply all. Internal/system/unsupported articles expose no reply action.
-Article signature collapse is precision-first and language-neutral: explicit
-provider-normalized boundaries, standard signature delimiters, and strongly isolated
-compact contact blocks may collapse. Terminal rich-media contact tables require
-multiple images, multiple image links, a displayed contact link, and phone-shaped
-text before they qualify; this keeps ordinary embedded documents and galleries
-visible. A strong image contact block may include a bounded, unstructured terminal
-footer. Ambiguous text remains visible, and sign-off wording is never evidence.
+Article signature collapse is precision-first and language-neutral: provider-normalized
+explicit containers and learned boundaries are authoritative anchors; a strongly isolated
+adjacent signature block may extend their range. A plain-text `>` quote collapses
+only as a terminal quoted suffix. Terminal rich-media contact tables require multiple
+images and links, a displayed contact link, and phone-shaped text; this keeps galleries
+visible. Structural candidates rank local evidence and nesting depth. Sibling clusters
+may join contact, branding, and footer tables; a dense nested envelope may move an
+end-positioned marker to its start. Boundaries must leave more than only a greeting.
+A strong image contact block may include a bounded terminal footer. Ambiguous
+text remains visible, and sign-off wording is never evidence.
 Public email articles expose Forward independently of Reply eligibility.
 Comment exists only in the ticket footer. Footer Reply and Reply all use the
 newest reply-capable public article; an older article action explicitly overrides
 that source. Every action scrolls to and focuses the single ticket-level composer
 above the newest article, so the thread never implies nested replies.
-
 Forward opens the same ticket-level composer with editable To/Cc and Subject.
 Recipients start empty, the subject defaults exactly to the source subject, and
 the agent can include or omit the reviewed conversation history and each
@@ -271,11 +287,9 @@ provider-classified visible source attachment. Inline body resources and
 message alternatives never appear as attachment rows or choices. The collapsed
 history preview is read-only; only the agent introduction is editable and
 eligible for proofread/rephrase. No Bcc control is available. Forward-only
-controls use the same full-width content inset as To/Cc and the editor, without
-a separate section divider. Opening any
-communication mode scrolls only the conversation region; it must never move the
-application viewport or create space below the sticky ticket action bar.
-
+controls use the same full-width content inset as To/Cc and the editor, without a
+separate divider. Opening any communication mode scrolls only the conversation
+region; it never moves the viewport or creates space below the sticky action bar.
 Article attachment rows are keyboard-focusable download links when the current
 user has an active personal helpdesk connection. Clicking a row downloads the
 exact provider-classified visible file through Resolvrr's authenticated,
@@ -298,17 +312,21 @@ reattaching them. Switching mode, source, or intent with body text or recipient
 edits requires confirmation. The editor toolbar is scoped to basic formatting:
 bold, italic, underline, ordered list, unordered list, and link, with undo/redo
 controls on the left. Proofread, Rephrase, and the non-functional AI Reply
-placeholder align on the right at 14px. Rephrase opens the configured style
-menu and selecting one style immediately prepares that rephrase request. A
-non-empty editor selection scopes Proofread or Rephrase to that text; otherwise
-the complete authored draft is used. While that selection is active, the
-buttons read `Proofread selection` and `Rephrase selection`. Toolbar focus must preserve the captured
-selection, Apply must replace only an unchanged captured range, and stale or
-non-editable mention selections must fail closed without changing the draft.
+placeholder align on the right at 14px. Rephrase opens the configured style menu;
+selecting a style immediately prepares that request. A non-empty editor selection
+scopes Proofread or Rephrase to that text; otherwise the complete draft is used.
+The buttons then read `Proofread selection` and `Rephrase selection`. Toolbar focus
+preserves the captured selection; Apply replaces only an unchanged captured range,
+and stale or non-editable mention selections fail closed.
 Visually selected text must retain neighboring paragraph/list boundaries even
 when the browser's internal selection includes an adjacent block separator.
 Staged communication HTML is part of the selected-ticket draft and is sent by
 the main workspace `Update` action alongside metadata.
+Failed communication updates render a full-width assertive banner above the sticky action bar; warnings use the same placement, and the draft remains intact.
+One workspace controller owns staged communication across ticket mounts, stages
+changes memory-first, and coalesces identity-scoped IndexedDB writes after typing
+pauses or lifecycle flushes. Healthy saves stay visually silent; storage failures
+remain visible. Provider drafts are never reconciled; AI suggestions remain local.
 Typing `@@` followed by a query opens a keyboard-accessible mention picker for
 active helpdesk agents with read access to the staged ticket group. Selecting an
 agent inserts a provider-neutral, non-editable mention token into the same

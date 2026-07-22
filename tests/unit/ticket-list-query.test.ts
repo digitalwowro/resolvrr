@@ -85,11 +85,11 @@ describe("ticket list query contract", () => {
   });
 
   it("constrains page size to the provider-neutral hard limits", () => {
-    expect(ticketListPageSizeLimits).toEqual({ min: 1, default: 25, max: 50 });
+    expect(ticketListPageSizeLimits).toEqual({ min: 1, default: 25, max: 100 });
     expect(constrainTicketListPageSize(0)).toBe(1);
     expect(constrainTicketListPageSize(7.8)).toBe(7);
-    expect(constrainTicketListPageSize(500)).toBe(50);
+    expect(constrainTicketListPageSize(500)).toBe(100);
     expect(constrainTicketListPageSize(Number.NaN)).toBe(25);
-    expect(normalizeTicketListQuery({ pageSize: 500 }).pageSize).toBe(50);
+    expect(normalizeTicketListQuery({ pageSize: 500 }).pageSize).toBe(100);
   });
 });

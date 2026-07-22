@@ -177,6 +177,7 @@ describe("TicketWorkspace ticket-level communication composer", () => {
         customerReplies: true,
         loadTicketDetailAction,
         updateTicketMetadataAction,
+        userId: "user-1",
       });
 
       const article = getCustomerArticle();

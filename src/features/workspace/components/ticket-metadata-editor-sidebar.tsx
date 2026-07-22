@@ -1,4 +1,3 @@
-import type { TicketMetadataMutationActionState } from "@/features/tickets/mutation-model";
 import type {
   SearchWorkspaceTicketLinkTargetsAction,
   WorkspaceTicketLinkTarget,
@@ -20,19 +19,14 @@ type Props = Pick<
   dirtyFields: TicketMetadataDraftDirtyFields;
   draft: SelectedTicketDraft;
   hasChanges: boolean;
-  mutationResult: TicketMetadataMutationActionState;
   onDraftChange(draft: SelectedTicketDraft): void;
   recentlyViewedLinkTargets: WorkspaceTicketLinkTarget[];
   saving: boolean;
   searchTicketLinkTargetsAction: SearchWorkspaceTicketLinkTargetsAction;
-  statusText?: string;
   validationMessage?: string;
 };
 
 export function TicketMetadataEditorSidebar(props: Props) {
-  const statusIsWarning = props.mutationResult.status === "failed" ||
-    props.mutationResult.status === "saved-refresh-failed" ||
-    props.mutationResult.status === "partially-saved";
   return (
     <TicketDetailSidebar>
       <TicketPrimaryMetadataFields
@@ -64,11 +58,6 @@ export function TicketMetadataEditorSidebar(props: Props) {
       {props.hasChanges && props.validationMessage ? (
         <p className="text-xs text-amber-700" role="alert">
           {props.validationMessage}
-        </p>
-      ) : null}
-      {props.statusText ? (
-        <p className={statusIsWarning ? "text-xs text-amber-700" : "text-xs text-slate-600"} role="alert">
-          {props.statusText}
         </p>
       ) : null}
     </TicketDetailSidebar>

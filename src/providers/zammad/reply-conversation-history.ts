@@ -10,6 +10,7 @@ import type {
 import {
   normalizeZammadSignatureBoundaries,
   sanitizeZammadArticleBody,
+  zammadArticleSignatureDetectionLine,
 } from "./article-body";
 import {
   classifyZammadArticleAttachments,
@@ -152,7 +153,10 @@ export function zammadVisibleReplyHistoryArticleBody(
     ? `<p>${escapeHtml(article.body ?? "").replace(/\n/gu, "<br>")}</p>`
     : article.body ?? "";
   return visibleTicketArticleMessageHtml(
-    normalizeZammadSignatureBoundaries(body),
+    normalizeZammadSignatureBoundaries(
+      body,
+      zammadArticleSignatureDetectionLine(article),
+    ),
   );
 }
 

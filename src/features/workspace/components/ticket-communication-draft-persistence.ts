@@ -7,19 +7,19 @@ import type {
   TicketConversationHistoryScope,
 } from "@/core/ticket-conversation-history";
 import {
-  enqueueCommunicationDraftStorage,
-  setCurrentCommunicationDraftPresence,
   type CommunicationDraftPersistenceScope,
 } from "./ticket-communication-draft-runtime";
 import type { EditorRewriteSelection } from "./ticket-rich-text-editor-selection";
+import {
+  deleteDraftStorageRecord,
+  draftStorageUnavailableReason,
+  putDraftStorageRecord,
+  readDraftStorageRecord,
+} from "./ticket-communication-draft-indexeddb";
 export type {
   CommunicationDraftPersistenceScope,
 } from "./ticket-communication-draft-runtime";
 
-const databaseName = "resolvrr-workspace-drafts";
-const storeName = "communicationDrafts";
-const databaseVersion = 8;
-export const communicationDraftRetentionMs = 7 * 24 * 60 * 60 * 1_000;
 export const maxPersistedAiSuggestions = 3;
 
 export type PersistedDraftAiSuggestion = {
@@ -42,7 +42,8 @@ export type PersistedCommunicationDraft = {
   conversationHistoryContextVersion?: string;
   conversationHistoryScope?: TicketConversationHistoryScope;
   contextVersion?: string;
-  expiresAt: number;
+  /** Legacy version 8 field, retained only while reading older browser records. */
+  expiresAt?: number;
   id: string;
   intent?: TicketReplyIntent;
   /** Legacy version 7 Forward field, read only during draft restoration. */
@@ -50,7 +51,9 @@ export type PersistedCommunicationDraft = {
   includeConversationHistory?: boolean;
   kind?: "internal-comment" | "customer-forward" | "customer-reply";
   mode?: "comment" | "reply";
+  pendingClear?: boolean;
   scope: CommunicationDraftPersistenceScope;
+  localRevision: number;
   sourceArticleExternalId?: string;
   suggestions: PersistedDraftAiSuggestion[];
   signatureContext?: TicketSignatureSelection;
@@ -59,13 +62,33 @@ export type PersistedCommunicationDraft = {
   updatedAt: number;
 };
 
-function storageAvailable() {
-  return typeof window !== "undefined" && "indexedDB" in window;
-}
+export type CommunicationDraftStorageResult<T> =
+  | { status: "available"; value: T }
+  | { status: "unavailable"; reason: "indexeddb-unavailable" | "storage-failed" };
+
+export type SavePersistedCommunicationDraftInput = {
+  articleId?: string;
+  attachmentExternalIds?: string[];
+  bodyHtml: string;
+  cc?: string[];
+  conversationHistoryContextVersion?: string;
+  conversationHistoryScope?: TicketConversationHistoryScope;
+  contextVersion?: string;
+  intent?: TicketReplyIntent;
+  includeConversationHistory?: boolean;
+  kind: "internal-comment" | "customer-forward" | "customer-reply";
+  localRevision?: number;
+  recipientEdited?: boolean;
+  scope: CommunicationDraftPersistenceScope | undefined;
+  signatureContext?: TicketSignatureSelection;
+  suggestions: PersistedDraftAiSuggestion[];
+  subject?: string;
+  to?: string[];
+};
 
 function draftId(scope: CommunicationDraftPersistenceScope): string {
   return [
-    "v5",
+    "v6",
     scope.userId,
     scope.workspaceId,
     scope.helpdeskConnectionId,
@@ -74,53 +97,31 @@ function draftId(scope: CommunicationDraftPersistenceScope): string {
   ].join(":");
 }
 
-function openDraftDatabase(): Promise<IDBDatabase | null> {
-  if (!storageAvailable()) return Promise.resolve(null);
-  return new Promise((resolve) => {
-    const request = window.indexedDB.open(databaseName, databaseVersion);
-    request.onupgradeneeded = () => {
-      const database = request.result;
-      if (!database.objectStoreNames.contains(storeName)) {
-        database.createObjectStore(storeName, { keyPath: "id" });
-      }
+export async function readPersistedCommunicationDraft(
+  scope: CommunicationDraftPersistenceScope,
+): Promise<CommunicationDraftStorageResult<PersistedCommunicationDraft | undefined>> {
+  try {
+    const record = await readDraftStorageRecord<PersistedCommunicationDraft>(
+      draftId(scope),
+    );
+    return {
+      status: "available",
+      value: record && communicationDraftMatchesScope(record.scope, scope)
+        ? normalizedRecord(record)
+        : undefined,
     };
-    request.onerror = () => resolve(null);
-    request.onsuccess = () => resolve(request.result);
-  });
+  } catch (error) {
+    return { status: "unavailable", reason: draftStorageUnavailableReason(error) };
+  }
 }
 
-async function withStore<T>(
-  mode: IDBTransactionMode,
-  callback: (store: IDBObjectStore) => IDBRequest<T>,
-): Promise<T | null> {
-  const database = await openDraftDatabase();
-  if (!database) return null;
-  return new Promise((resolve) => {
-    const transaction = database.transaction(storeName, mode);
-    let requestResult: T | null = null;
-    let settled = false;
-    const finish = (result: T | null) => {
-      if (settled) return;
-      settled = true;
-      database.close();
-      resolve(result);
-    };
-    try {
-      const request = callback(transaction.objectStore(storeName));
-      request.onsuccess = () => {
-        requestResult = request.result;
-      };
-      request.onerror = () => {
-        requestResult = null;
-      };
-      transaction.oncomplete = () => finish(requestResult);
-      transaction.onerror = () => finish(null);
-      transaction.onabort = () => finish(null);
-    } catch {
-      transaction.abort();
-      finish(null);
-    }
-  });
+function normalizedRecord(
+  record: PersistedCommunicationDraft,
+): PersistedCommunicationDraft {
+  return {
+    ...record,
+    localRevision: record.localRevision ?? 1,
+  };
 }
 
 export function communicationDraftMatchesScope(
@@ -140,102 +141,75 @@ export async function loadPersistedCommunicationDrafts(
   scope: CommunicationDraftPersistenceScope | undefined,
 ): Promise<PersistedCommunicationDraft[]> {
   if (!scope) return [];
-  const records = await enqueueCommunicationDraftStorage(() =>
-    withStore<PersistedCommunicationDraft[]>(
-      "readonly",
-      (store) => store.getAll(),
-    )
-  );
-  const now = Date.now();
-  const matching = (records ?? []).filter(
-    (record) => communicationDraftMatchesScope(record.scope, scope) && record.expiresAt > now,
-  );
-  if ((records ?? []).some((record) => record.expiresAt <= now)) {
-    void pruneExpiredCommunicationDrafts();
-  }
-  return matching.sort((left, right) => right.updatedAt - left.updatedAt);
+  const result = await readPersistedCommunicationDraft(scope);
+  return result.status === "available" && result.value ? [result.value] : [];
 }
 
-export async function savePersistedCommunicationDraft(input: {
-  articleId?: string;
-  attachmentExternalIds?: string[];
-  bodyHtml: string;
-  cc?: string[];
-  conversationHistoryContextVersion?: string;
-  conversationHistoryScope?: TicketConversationHistoryScope;
-  contextVersion?: string;
-  intent?: TicketReplyIntent;
-  includeConversationHistory?: boolean;
-  kind: "internal-comment" | "customer-forward" | "customer-reply";
-  recipientEdited?: boolean;
-  scope: CommunicationDraftPersistenceScope | undefined;
-  suggestions: PersistedDraftAiSuggestion[];
-  signatureContext?: TicketSignatureSelection;
-  subject?: string;
-  to?: string[];
-}): Promise<void> {
+export function persistedCommunicationDraftFromInput(
+  input: SavePersistedCommunicationDraftInput,
+): PersistedCommunicationDraft | undefined {
   const scope = input.scope;
-  if (!scope) return;
+  if (!scope) return undefined;
   const suggestions = input.suggestions.slice(0, maxPersistedAiSuggestions);
   const present = Boolean(
     input.bodyHtml.trim() ||
     suggestions.length > 0 ||
     input.recipientEdited,
   );
-  setCurrentCommunicationDraftPresence(scope, present);
-  if (!present) {
-    await enqueueCommunicationDraftStorage(() =>
-      withStore("readwrite", (store) => store.delete(draftId(scope)))
-    );
-    return;
-  }
+  if (!present) return undefined;
   const now = Date.now();
-  await enqueueCommunicationDraftStorage(() =>
-    withStore("readwrite", (store) => store.put({
-      bodyHtml: input.bodyHtml,
-      attachmentExternalIds: input.attachmentExternalIds,
-      cc: input.cc,
-      conversationHistoryContextVersion:
-        input.conversationHistoryContextVersion,
-      conversationHistoryScope: input.conversationHistoryScope,
-      contextVersion: input.contextVersion,
-      expiresAt: now + communicationDraftRetentionMs,
-      id: draftId(scope),
-      intent: input.intent,
-      includeConversationHistory: input.includeConversationHistory,
-      kind: input.kind,
-      scope,
-      sourceArticleExternalId: input.articleId,
-      suggestions,
-      signatureContext: input.signatureContext,
-      subject: input.subject,
-      to: input.to,
-      updatedAt: now,
-    } satisfies PersistedCommunicationDraft))
-  );
+  return {
+    bodyHtml: input.bodyHtml,
+    attachmentExternalIds: input.attachmentExternalIds,
+    cc: input.cc,
+    conversationHistoryContextVersion:
+      input.conversationHistoryContextVersion,
+    conversationHistoryScope: input.conversationHistoryScope,
+    contextVersion: input.contextVersion,
+    id: draftId(scope),
+    intent: input.intent,
+    includeConversationHistory: input.includeConversationHistory,
+    kind: input.kind,
+    localRevision: input.localRevision ?? 1,
+    scope,
+    sourceArticleExternalId: input.articleId,
+    suggestions,
+    signatureContext: input.signatureContext,
+    subject: input.subject,
+    to: input.to,
+    updatedAt: now,
+  };
+}
+
+export async function putPersistedCommunicationDraft(
+  record: PersistedCommunicationDraft,
+): Promise<CommunicationDraftStorageResult<void>> {
+  try {
+    await putDraftStorageRecord(record);
+    return { status: "available", value: undefined };
+  } catch (error) {
+    return { status: "unavailable", reason: draftStorageUnavailableReason(error) };
+  }
+}
+
+export async function savePersistedCommunicationDraft(
+  input: SavePersistedCommunicationDraftInput,
+): Promise<CommunicationDraftStorageResult<void>> {
+  const record = persistedCommunicationDraftFromInput(input);
+  if (!record) return clearPersistedCommunicationDrafts(input.scope);
+  return putPersistedCommunicationDraft(record);
 }
 
 export async function clearPersistedCommunicationDrafts(
   scope: CommunicationDraftPersistenceScope | undefined,
-): Promise<void> {
-  if (!scope) return;
-  setCurrentCommunicationDraftPresence(scope, false);
-  await enqueueCommunicationDraftStorage(
-    () => withStore("readwrite", (store) => store.delete(draftId(scope))),
-  );
-}
-
-export async function pruneExpiredCommunicationDrafts(): Promise<void> {
-  await enqueueCommunicationDraftStorage(async () => {
-    const records = await withStore<PersistedCommunicationDraft[]>(
-      "readonly",
-      (store) => store.getAll(),
-    );
-    const now = Date.now();
-    await Promise.all(
-      (records ?? [])
-        .filter((record) => record.expiresAt <= now)
-        .map((record) => withStore("readwrite", (store) => store.delete(record.id))),
-    );
-  });
+): Promise<CommunicationDraftStorageResult<void>> {
+  if (!scope) {
+    return { status: "unavailable", reason: "indexeddb-unavailable" };
+  }
+  try {
+    await deleteDraftStorageRecord(draftId(scope));
+    return { status: "available", value: undefined };
+  } catch (error) {
+    return { status: "unavailable", reason: draftStorageUnavailableReason(error) };
+  }
 }

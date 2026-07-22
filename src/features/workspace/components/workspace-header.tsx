@@ -4,10 +4,9 @@ import {
   Building2,
   ChevronDown,
   LogOut,
-  Search,
   SlidersHorizontal,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { MenuDropdown, type MenuDropdownItem } from "@/components/ui";
 import type {
@@ -15,6 +14,10 @@ import type {
   WorkspaceSettingsConnection,
 } from "@/features/helpdesk-connections/service-types";
 import type { WorkspaceSettingsSection } from "./workspace-settings-dialog";
+import {
+  WorkspaceTicketSearch,
+  type WorkspaceTicketSearchProps,
+} from "./workspace-ticket-search";
 
 export type WorkspaceMenuConnection = {
   id: string;
@@ -36,8 +39,7 @@ type WorkspaceHeaderProps = {
   notifications?: ReactNode;
   logoutAction(formData: FormData): void | Promise<void>;
   onOpenSettings(section: WorkspaceSettingsSection): void;
-  onSearchQueryChange?(query: string): void;
-  searchQuery?: string;
+  ticketSearch?: WorkspaceTicketSearchProps;
   setActiveConnectionAction(
     formData: FormData,
   ): void | Promise<void | HelpdeskConnectionActionResult>;
@@ -98,8 +100,7 @@ export function WorkspaceHeader({
   notifications,
   logoutAction,
   onOpenSettings,
-  onSearchQueryChange,
-  searchQuery,
+  ticketSearch,
   setActiveConnectionAction,
   userAvatarDataUrl,
   userDisplayName,
@@ -109,12 +110,6 @@ export function WorkspaceHeader({
 }: WorkspaceHeaderProps) {
   const router = useRouter();
   const [logoAvailable, setLogoAvailable] = useState(true);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const searchEnabled = Boolean(onSearchQueryChange);
-  const query = searchEnabled ? searchQuery ?? "" : "";
-  const searchPlaceholder = searchEnabled
-    ? "Filter loaded tickets by number, title, customer, or owner"
-    : "Ticket filter unavailable";
   const selectedWorkspace = connections.find((connection) => connection.active);
   const displayName = profileDisplayName({
     displayName: userDisplayName,
@@ -165,34 +160,6 @@ export function WorkspaceHeader({
     [connections, onOpenSettings, router, setActiveConnectionAction],
   );
 
-  useEffect(() => {
-    function handleShortcut(event: globalThis.KeyboardEvent) {
-      if (
-        !searchEnabled ||
-        event.key.toLowerCase() !== "k" ||
-        (!event.metaKey && !event.ctrlKey) ||
-        event.altKey
-      ) {
-        return;
-      }
-
-      event.preventDefault();
-      searchInputRef.current?.focus();
-      searchInputRef.current?.select();
-    }
-
-    window.addEventListener("keydown", handleShortcut);
-    return () => window.removeEventListener("keydown", handleShortcut);
-  }, [searchEnabled]);
-
-  function handleQueryChange(nextQuery: string) {
-    if (!onSearchQueryChange) {
-      return;
-    }
-
-    onSearchQueryChange(nextQuery);
-  }
-
   return (
     <header className="relative z-20 flex h-12 shrink-0 items-center gap-2 border-b border-indigo-900 bg-indigo-950 px-4">
       <div className="flex shrink-0 items-center">
@@ -206,27 +173,7 @@ export function WorkspaceHeader({
           />
         ) : null}
       </div>
-      <label className="flex h-8 min-w-40 max-w-[480px] flex-1 items-center gap-2 rounded-md border border-indigo-800 bg-indigo-900 px-3 text-indigo-100 focus-within:border-indigo-300 focus-within:bg-indigo-900 focus-within:outline focus-within:outline-2 focus-within:outline-indigo-400">
-        <Search aria-hidden="true" className="size-3 shrink-0 text-indigo-200" />
-        <span className="sr-only">Filter loaded tickets</span>
-        <input
-          ref={searchInputRef}
-          className="min-w-0 flex-1 bg-transparent text-xs text-white outline-none placeholder:text-indigo-200/70 disabled:cursor-not-allowed disabled:text-indigo-200/60 disabled:placeholder:text-indigo-200/50"
-          disabled={!searchEnabled}
-          onChange={(event) => handleQueryChange(event.currentTarget.value)}
-          placeholder={searchPlaceholder}
-          type="search"
-          value={query}
-        />
-        {searchEnabled ? (
-          <kbd
-            aria-hidden="true"
-            className="hidden h-5 shrink-0 items-center rounded border border-indigo-700 bg-indigo-800 px-1.5 text-[11px] font-medium leading-none text-indigo-100 sm:inline-flex"
-          >
-            Ctrl/Cmd K
-          </kbd>
-        ) : null}
-      </label>
+      {ticketSearch ? <WorkspaceTicketSearch {...ticketSearch} /> : null}
       <div className="ml-auto flex min-w-0 shrink-0 items-center gap-2">
         {controls ? (
           <div className="flex min-w-0 shrink-0 items-center gap-2">

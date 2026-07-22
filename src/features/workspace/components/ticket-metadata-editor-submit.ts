@@ -10,23 +10,6 @@ import {
 
 export function noopMetadataSavedDetailRefresh() {}
 
-export function mutationStatusText(
-  saving: boolean,
-  result: TicketMetadataMutationActionState,
-) {
-  if (saving) {
-    return undefined;
-  }
-  if (
-    result.status === "failed" ||
-    result.status === "saved-refresh-failed" ||
-    result.status === "partially-saved"
-  ) {
-    return result.message;
-  }
-  return undefined;
-}
-
 export function actionErrorState(): TicketMetadataMutationActionState {
   return {
     status: "failed",

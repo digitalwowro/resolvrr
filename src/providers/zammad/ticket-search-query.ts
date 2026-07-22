@@ -13,6 +13,7 @@ import {
 } from "@/core/tickets";
 import { mapPriority, mapState } from "./mapping";
 import type { ZammadGenericNamedAsset } from "./schemas";
+import { zammadFullTextSearchClause } from "./ticket-full-text-search";
 
 export type ZammadBucketDefinition =
   | {
@@ -89,6 +90,10 @@ function zammadTicketSearchQuery(query: TicketListQuery, baseQuery?: string) {
   const parts: string[] = [];
   if (baseQuery && baseQuery !== "*") {
     parts.push(baseQuery);
+  }
+  const fullTextSearch = zammadFullTextSearchClause(query.filter.searchText);
+  if (fullTextSearch) {
+    parts.push(fullTextSearch);
   }
 
   if (query.filter.states?.length) {
@@ -183,7 +188,6 @@ export function zammadTicketListPath(
   const params = new URLSearchParams({
     page: String(page),
     per_page: String(limit),
-    expand: "true",
     full: "true",
   });
 

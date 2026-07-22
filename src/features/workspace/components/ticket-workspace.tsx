@@ -7,21 +7,14 @@ import { workspaceTicketListGroups } from "@/features/tickets/workspace-adapter"
 import { TicketWorkspaceDisplay } from "./ticket-workspace-display";
 import { WorkspaceHeader } from "./workspace-header";
 import { UnavailableState } from "./workspace-states";
-import {
-  WorkspaceSettingsDialog,
-  type WorkspaceSettingsSection,
-} from "./workspace-settings-dialog";
-import {
-  unavailableLinkTargetSearchAction,
-  unavailableNotificationMarkReadAction,
-  unavailableNotificationsAction,
-  unavailableTicketAiSummaryAction,
-  unavailableTicketDetailAction,
-} from "./ticket-workspace-fallbacks";
+import { WorkspaceSettingsDialog, type WorkspaceSettingsSection } from "./workspace-settings-dialog";
+import { unavailableLinkTargetSearchAction, unavailableNotificationMarkReadAction,
+  unavailableNotificationsAction, unavailableTicketAiSummaryAction,
+  unavailableTicketDetailAction } from "./ticket-workspace-fallbacks";
 import type { TicketWorkspaceProps } from "./ticket-workspace-types";
 import { workspaceSavedViewOptionsFromSettingsData } from "./workspace-saved-view-options";
 import { workspaceSettingsConnectionFromMenu } from "./workspace-settings-connections";
-
+import { WorkspaceCommunicationDraftBoundary } from "./workspace-communication-draft-boundary";
 export { workspaceSavedViewOptionsFromSettingsData } from "./workspace-saved-view-options";
 export function TicketWorkspace({
   changePasswordAction,
@@ -40,6 +33,7 @@ export function TicketWorkspace({
   listResult,
   loadTicketDetailAction,
   loadTicketListPageAction,
+  searchWorkspaceTicketsAction,
   loadAiPromptCenterAction,
   loadMyStyleAction,
   loadUserManagementAction,
@@ -99,9 +93,8 @@ export function TicketWorkspace({
   const [workspaceSavedViewOptions, setWorkspaceSavedViewOptions] = useState<
     WorkspaceSavedView[]
   >(() => savedViews ?? [{ id: allTicketsSavedViewId, label: "All tickets" }]);
-  const [savedViewSettingsData, setSavedViewSettingsData] = useState(
-    initialSavedViewSettingsData,
-  );
+  const [savedViewSettingsData, setSavedViewSettingsData] =
+    useState(initialSavedViewSettingsData);
   const [aiSettingsData, setAiSettingsData] = useState(initialAiSettingsData);
   const [rephraseStyleOptions, setRephraseStyleOptions] = useState(
     initialRephraseStyleOptions,
@@ -138,12 +131,10 @@ export function TicketWorkspace({
   );
   const activeWorkspace = connections.find((connection) => connection.active);
   const activeWorkspaceId = activeWorkspace?.id;
-
   function openSettings(section: WorkspaceSettingsSection) {
     setSettingsSection(section);
     setSettingsOpen(true);
   }
-
   return (
     <main className="flex h-screen min-h-screen flex-col overflow-hidden">
       {listResult.status === "unavailable" ? (
@@ -165,6 +156,12 @@ export function TicketWorkspace({
           />
         </>
       ) : (
+        <WorkspaceCommunicationDraftBoundary
+          helpdeskConnectionId={activeWorkspace?.connectionId ?? undefined}
+          identityVersion={activeWorkspace?.identityVersion ?? undefined}
+          userId={userId}
+          workspaceId={activeWorkspaceId}
+        >
         <TicketWorkspaceDisplay
           key={`${activeWorkspaceId ?? "none"}:${activeWorkspace?.connectionId ?? "none"}:${activeWorkspace?.identityVersion ?? "none"}`}
           columns={columns}
@@ -174,6 +171,7 @@ export function TicketWorkspace({
           detailResult={detailResult}
           loadTicketDetailAction={effectiveLoadTicketDetailAction}
           loadTicketListPageAction={loadTicketListPageAction}
+          searchWorkspaceTicketsAction={searchWorkspaceTicketsAction}
           loadWorkspaceNotificationsAction={
             effectiveLoadWorkspaceNotificationsAction
           }
@@ -217,6 +215,7 @@ export function TicketWorkspace({
           userLastName={profileUser.lastName}
           onOpenSettings={openSettings}
         />
+        </WorkspaceCommunicationDraftBoundary>
       )}
       {settingsOpen ? (
         <WorkspaceSettingsDialog

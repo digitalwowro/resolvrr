@@ -70,6 +70,11 @@ export {
   type WorkspaceTicketListPageLoadResult,
 } from "./list-page-action-result";
 export {
+  type SearchWorkspaceTicketsAction,
+  type WorkspaceTicketSearchRequest,
+  type WorkspaceTicketSearchResult,
+} from "./search-action-result";
+export {
   type SearchWorkspaceTicketLinkTargetsAction,
   type WorkspaceTicketLinkTarget,
   type WorkspaceTicketLinkTargetSearchRequest,

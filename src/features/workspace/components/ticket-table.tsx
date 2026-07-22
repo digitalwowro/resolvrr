@@ -50,6 +50,7 @@ type TicketTableProps = {
   rows: WorkspaceTicketRow[];
   selectedRowIds: Set<string>;
   sortingEnabled?: boolean;
+  sortEnabledFor?(key: WorkspaceTicketSortKey): boolean;
   sortDirectionFor(key: WorkspaceTicketSortKey): SortDirection | undefined;
   totalCount?: number;
   visibleColumns: Set<WorkspaceTicketColumnKey>;
@@ -80,6 +81,7 @@ export function TicketTable({
   rows,
   selectedRowIds,
   sortingEnabled = true,
+  sortEnabledFor,
   sortDirectionFor,
   totalCount,
   visibleColumns,
@@ -99,11 +101,19 @@ export function TicketTable({
     groupBy === "none" && (canLoadMore || loadingMore) && Boolean(onLoadMore);
 
   function sortHandler(key: WorkspaceTicketSortKey) {
-    return sortingEnabled && groupBy !== key ? () => onSort(key) : undefined;
+    return sortingEnabled &&
+      groupBy !== key &&
+      (sortEnabledFor?.(key) ?? true)
+      ? () => onSort(key)
+      : undefined;
   }
 
   function sortDirection(key: WorkspaceTicketSortKey) {
-    return sortingEnabled && groupBy !== key ? sortDirectionFor(key) : undefined;
+    return sortingEnabled &&
+      groupBy !== key &&
+      (sortEnabledFor?.(key) ?? true)
+      ? sortDirectionFor(key)
+      : undefined;
   }
 
   if (rows.length === 0) {

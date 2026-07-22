@@ -4,8 +4,6 @@ import { requireCurrentUser } from "@/auth/current-user";
 import { env } from "@/config/env";
 import type {
   TicketListQueryInput,
-  TicketSort,
-  TicketSortKey,
 } from "@/core/providers";
 import { isCompleteResultTicketSortKey } from "@/core/ticket-list-query";
 import { ticketPriorities, ticketStates } from "@/core/tickets";
@@ -19,39 +17,22 @@ import { providerRegistry } from "@/providers";
 import type {
   WorkspaceTicketListPageLoadResult,
   WorkspaceTicketListPageRequest,
-  WorkspaceTicketListSort,
 } from "./list-page-action-result";
 import { unavailableTicketRead } from "./read-model";
 import { loadWorkspaceTicketList } from "./service";
-import type { WorkspaceTicketSortKey } from "./workspace-adapter";
 import {
   workspaceTicketListGroups,
   workspaceTicketRows,
 } from "./workspace-adapter";
-
-const workspaceSortKeyMap: Record<WorkspaceTicketSortKey, TicketSortKey> = {
-  number: "number",
-  title: "title",
-  customer: "customer",
-  owner: "owner",
-  state: "state",
-  priority: "priority",
-  pendingTill: "pendingUntil",
-  updatedAt: "updatedAt",
-};
-const ticketSortKeyMap = Object.fromEntries(
-  Object.entries(workspaceSortKeyMap).map(([workspaceKey, ticketKey]) => [
-    ticketKey,
-    workspaceKey,
-  ]),
-) as Partial<Record<TicketSortKey, WorkspaceTicketSortKey>>;
-
-function ticketListSort(sort: WorkspaceTicketListSort): TicketSort {
-  return {
-    key: workspaceSortKeyMap[sort.key],
-    direction: sort.direction,
-  };
-}
+import {
+  providerCanSortWorkspaceTickets,
+  providerTicketListSort,
+  workspaceTicketListSort,
+} from "./workspace-list-sort";
+import {
+  workspaceGroupedTicketListPageSize,
+  workspaceTicketListPageSize,
+} from "./list-page-sizes";
 
 function groupFilter(
   request: WorkspaceTicketListPageRequest,
@@ -75,16 +56,6 @@ function groupFilter(
   return { priorities: [priority] };
 }
 
-function workspaceSort(sort: TicketSort | undefined): WorkspaceTicketListSort | undefined {
-  const key = sort ? ticketSortKeyMap[sort.key] : undefined;
-  return key && sort
-    ? {
-        key,
-        direction: sort.direction,
-      }
-    : undefined;
-}
-
 function providerBackedGroup(
   group: WorkspaceTicketListPageRequest["group"] | StoredSavedView["group"],
 ) {
@@ -105,11 +76,12 @@ function ticketListQuery(
   };
 
   return {
+    pageSize: providerGroup
+      ? workspaceGroupedTicketListPageSize
+      : workspaceTicketListPageSize,
     ...(request.cursor ? { cursor: request.cursor } : {}),
-    ...(request.sort && !isCompleteResultTicketSortKey(
-      workspaceSortKeyMap[request.sort.key],
-    )
-      ? { sort: ticketListSort(request.sort) }
+    ...(request.sort && providerCanSortWorkspaceTickets(request.sort)
+      ? { sort: providerTicketListSort(request.sort) }
       : savedView?.query.sort &&
           !isCompleteResultTicketSortKey(savedView.query.sort.key)
         ? { sort: savedView.query.sort }
@@ -191,13 +163,11 @@ export async function loadWorkspaceTicketListPageAction(
     appliedGroupBy: request.group ?? savedView?.query.group?.key,
     appliedSavedViewId: request.savedViewId ?? allTicketsSavedViewId,
     appliedSort:
-      request.sort && !isCompleteResultTicketSortKey(
-        workspaceSortKeyMap[request.sort.key],
-      )
+      request.sort && providerCanSortWorkspaceTickets(request.sort)
         ? request.sort
         : savedView?.query.sort &&
             !isCompleteResultTicketSortKey(savedView.query.sort.key)
-          ? workspaceSort(savedView.query.sort)
+          ? workspaceTicketListSort(savedView.query.sort)
           : undefined,
   };
 }

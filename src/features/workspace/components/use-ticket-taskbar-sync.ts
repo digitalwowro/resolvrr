@@ -1,17 +1,10 @@
 "use client";
 
-import {
-  useCallback,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import type {
   TaskbarSyncRequest,
   WorkspaceTaskbarSyncResult,
 } from "@/features/taskbar-sync/model";
-import { loadPersistedCommunicationDrafts } from "./ticket-communication-draft-persistence";
-import { hasCurrentCommunicationDraft } from "./ticket-communication-draft-runtime";
 import {
   cappedTaskbarProviderIds,
   sameTaskbarIds,
@@ -24,15 +17,20 @@ import {
 import { hydrateTaskbarTabs } from "./ticket-taskbar-hydration";
 import {
   createTicketTaskbarRuntime,
+  recentlyClosedTaskbarIds,
   taskbarRuntimeFor,
   taskbarSyncScopeKey,
   type TicketTaskbarRuntime,
 } from "./ticket-taskbar-runtime";
+import { useTicketTaskbarControls } from "./ticket-taskbar-controls";
 import type { TicketTaskbarSyncOptions } from "./ticket-taskbar-sync-types";
 import { useTicketTaskbarPolling } from "./use-ticket-taskbar-polling";
+import { useWorkspaceCommunicationDraftController } from
+  "./workspace-communication-draft-context";
 export type { SynchronizeWorkspaceTaskbarAction } from "./ticket-taskbar-sync-types";
 
 export function useTicketTaskbarSync(options: TicketTaskbarSyncOptions) {
+  const draftController = useWorkspaceCommunicationDraftController();
   const [unsynchronizedIds, setUnsynchronizedIds] = useState<string[]>([]);
   const [draftConflictIds, setDraftConflictIds] = useState<string[]>([]);
   const [incompatible, setIncompatible] = useState(false);
@@ -106,6 +104,7 @@ export function useTicketTaskbarSync(options: TicketTaskbarSyncOptions) {
     }
     const pendingClose = new Set([
       ...result.pendingCloseTicketExternalIds,
+      ...recentlyClosedTaskbarIds(runtime),
       ...localPending.flatMap((request) =>
         request.kind === "close" ? [request.ticketExternalId] : [],
       ),
@@ -124,7 +123,9 @@ export function useTicketTaskbarSync(options: TicketTaskbarSyncOptions) {
         ]
       : providerIds;
     const knownTabs = new Map(
-      [...current.openTicketTabs, ...current.ticketTabs].map((tab) => [tab.id, tab]),
+      [...current.ticketTabs, ...current.openTicketTabs]
+        .filter((tab) => !runtime.locallyClosedIds.has(tab.id))
+        .map((tab) => [tab.id, tab]),
     );
     const hydrated = await hydrateTaskbarTabs({
       activeProviderTicketId: result.activeTicketExternalId,
@@ -138,6 +139,10 @@ export function useTicketTaskbarSync(options: TicketTaskbarSyncOptions) {
       revision !== runtime.explicitRevision ||
       runtime !== taskbarRuntimeFor(runtimes.current, scopeKeyRef.current)
     ) return;
+
+    for (const tab of hydrated.tabs) {
+      if (!pendingClose.has(tab.id)) runtime.locallyClosedIds.delete(tab.id);
+    }
 
     const remoteIdSet = new Set(hydrated.tabs.map((tab) => tab.id));
     const pendingOpen = new Set([
@@ -159,14 +164,8 @@ export function useTicketTaskbarSync(options: TicketTaskbarSyncOptions) {
       mergedSourceIds,
     );
     const conflictChecks = await Promise.all(absentLocalIds.map(async (ticketId) => {
-      if (!current.scope) return null;
-      const draftScope = {
-        ...current.scope,
-        ticketExternalId: ticketId,
-      };
-      if (hasCurrentCommunicationDraft(draftScope)) return ticketId;
-      const drafts = await loadPersistedCommunicationDrafts(draftScope);
-      return drafts.length > 0 ? ticketId : null;
+      if (!current.scope || !draftController) return null;
+      return await draftController.ensureHasDraft(ticketId) ? ticketId : null;
     }));
     if (
       revision !== runtime.explicitRevision ||
@@ -194,7 +193,7 @@ export function useTicketTaskbarSync(options: TicketTaskbarSyncOptions) {
       synchronizedActiveTicketId,
     );
     return hydrated.corrections;
-  }, []);
+  }, [draftController]);
 
   const synchronize = useCallback((request: TaskbarSyncRequest) => {
     const { action, scope } = optionsRef.current;
@@ -275,6 +274,7 @@ export function useTicketTaskbarSync(options: TicketTaskbarSyncOptions) {
   useTicketTaskbarPolling(
     Boolean(options.action && options.scope),
     scopeKey,
+    options.initialSelectedTicketId,
     synchronize,
   );
 
@@ -282,15 +282,17 @@ export function useTicketTaskbarSync(options: TicketTaskbarSyncOptions) {
     setDraftConflictIds((current) => current.filter((id) => id !== ticketId));
   }
 
+  const controls = useTicketTaskbarControls(
+    runtimes,
+    scopeKeyRef,
+    synchronize,
+  );
+
   return {
-    activate: (ticketExternalId: string) => synchronize({ kind: "activate", ticketExternalId }),
-    close: (ticketExternalId: string) => synchronize({ kind: "close", ticketExternalId }),
+    ...controls,
     dismissDraftConflict,
     draftConflictIds,
-    deactivate: () => synchronize({ kind: "deactivate" }),
     incompatible,
-    open: (ticketExternalId: string) => synchronize({ kind: "open", ticketExternalId }),
-    reorder: (ticketExternalIds: string[]) => synchronize({ kind: "reorder", ticketExternalIds }),
     selectionUnsynchronized,
     unsynchronizedIds,
   };

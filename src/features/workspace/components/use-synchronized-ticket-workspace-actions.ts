@@ -14,8 +14,9 @@ type DisplayState = ReturnType<typeof useTicketWorkspaceDisplayState>;
 type Options = {
   action?: SynchronizeWorkspaceTaskbarAction;
   displayState: DisplayState;
+  initialSelectedTicketId?: string;
   loadTicketDetailAction: Parameters<typeof useTicketTaskbarSync>[0]["loadTicketDetailAction"];
-  onExplicitClose(ticketId: string): void;
+  onExplicitClose(ticketId: string): boolean;
   scope?: Omit<CommunicationDraftPersistenceScope, "ticketExternalId">;
   ticketTabs: WorkspaceTicketTab[];
 };
@@ -69,6 +70,7 @@ export function evictedTaskbarTicketId(
 export function useSynchronizedTicketWorkspaceActions({
   action,
   displayState,
+  initialSelectedTicketId,
   loadTicketDetailAction,
   onExplicitClose,
   scope,
@@ -77,6 +79,7 @@ export function useSynchronizedTicketWorkspaceActions({
   const taskbar = useTicketTaskbarSync({
     action,
     activeTicketId: displayState.activeTicketId,
+    initialSelectedTicketId,
     loadTicketDetailAction,
     openTicketTabs: displayState.openTicketTabs,
     reconcileOpenTicketTabs: displayState.reconcileOpenTicketTabs,
@@ -133,7 +136,7 @@ export function useSynchronizedTicketWorkspaceActions({
     const nextActiveTicketId = wasActive
       ? nextActiveTicketAfterClose(displayState.openTicketTabs, ticketId)
       : undefined;
-    onExplicitClose(ticketId);
+    if (!onExplicitClose(ticketId)) return;
     void taskbar.close(ticketId);
     if (!wasActive) return;
     if (nextActiveTicketId) synchronizeActivation(nextActiveTicketId);

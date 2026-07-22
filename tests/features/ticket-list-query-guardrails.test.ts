@@ -22,7 +22,7 @@ describe("ticket list query guardrails", () => {
       providerGrouping: true,
       groupedTotalCount: true,
       fullTextSearch: true,
-      maxPageSize: 50,
+      maxPageSize: 100,
       unsupportedCombinations: [],
     });
   });

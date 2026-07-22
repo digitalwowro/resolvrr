@@ -11,7 +11,10 @@ import type {
   TicketState,
 } from "@/core/tickets";
 import { ticketInlineImagePath } from "@/core/ticket-inline-images";
-import { sanitizeZammadArticleBody } from "./article-body";
+import {
+  sanitizeZammadArticleBody,
+  zammadArticleSignatureDetectionLine,
+} from "./article-body";
 import {
   articleAuthor,
   namedAssetValue,
@@ -247,6 +250,7 @@ export function mapArticle(
 ): TicketArticle {
   const direction = articleDirection(article);
   const sanitizedHtml = sanitizeZammadArticleBody(article.body ?? "", {
+    signatureDetectionLine: zammadArticleSignatureDetectionLine(article),
     rewriteImageSource: (source) => {
       const attachmentId = zammadInlineAttachmentIdForSource(article, source);
       if (attachmentId === undefined || !options?.helpdeskConnectionId) {

@@ -26,6 +26,7 @@ type TicketThreadArticleProps = {
   canForward: boolean;
   canReply: boolean;
   helpdeskConnectionId?: string;
+  isLast: boolean;
   onForward(): void;
   onReply(intent: TicketReplyIntent): void;
   ticketExternalId: string;
@@ -38,6 +39,7 @@ export function TicketThreadArticle({
   canForward,
   canReply,
   helpdeskConnectionId,
+  isLast,
   onForward,
   onReply,
   ticketExternalId,
@@ -74,7 +76,10 @@ export function TicketThreadArticle({
   return (
     <article
       aria-label={`${articleTypeLabel[article.direction]} from ${article.author}`}
-      className="group border-b border-slate-200 bg-white transition-colors hover:bg-slate-50/40 focus-within:bg-slate-50/40"
+      className={cn(
+        "group bg-white transition-colors hover:bg-slate-50/40 focus-within:bg-slate-50/40",
+        !isLast && "border-b border-slate-200",
+      )}
     >
       <div
         className="relative flex gap-3 py-4 pl-8 pr-4"

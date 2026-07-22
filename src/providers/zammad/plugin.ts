@@ -163,6 +163,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "notifications:list",
     "notifications:mark-read",
     "ticket-taskbar:sync",
+    "search:full-text",
   ],
   credentialSchemes: [
     {

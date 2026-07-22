@@ -8,6 +8,7 @@ import type {
   LoadWorkspaceTicketListPageAction,
   WorkspaceTicketListGroup,
 } from "@/features/tickets/list-page-action-result";
+import type { SearchWorkspaceTicketsAction } from "@/features/tickets/search-action-result";
 import type {
   SearchWorkspaceTicketLinkTargetsAction,
 } from "@/features/tickets/link-target-search-action-result";
@@ -50,6 +51,7 @@ export type TicketWorkspaceDisplayProps = {
   detailResult?: WorkspaceTicketDetailHydrationResult;
   loadTicketDetailAction: LoadWorkspaceTicketDetailHydrationAction;
   loadTicketListPageAction?: LoadWorkspaceTicketListPageAction;
+  searchWorkspaceTicketsAction?: SearchWorkspaceTicketsAction;
   loadWorkspaceNotificationsAction: LoadWorkspaceNotificationsAction;
   logoutAction(formData: FormData): void | Promise<void>;
   markWorkspaceNotificationsReadAction: MarkWorkspaceNotificationsReadAction;

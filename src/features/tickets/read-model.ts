@@ -25,6 +25,7 @@ export type TicketReadUnavailableReason =
   | "provider-rate-limited"
   | "provider-temporary-failure"
   | "provider-unexpected-response"
+  | "invalid-search-query"
   | "unsupported-query"
   | "query-too-expensive"
   | "invalid-connection";
