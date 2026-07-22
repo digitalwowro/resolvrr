@@ -17,7 +17,6 @@ type HorizontalTicketTabsProps = {
   onReorderTicket(sourceTicketId: string, targetIndex: number): void;
   savedViewLabel: string;
   tabs: WorkspaceTicketTab[];
-  unsynchronizedTicketIds?: string[];
 };
 
 export function HorizontalTicketTabs({
@@ -29,7 +28,6 @@ export function HorizontalTicketTabs({
   onReorderTicket,
   savedViewLabel,
   tabs,
-  unsynchronizedTicketIds = [],
 }: HorizontalTicketTabsProps) {
   const ticketTabsRowRef = useRef<HTMLDivElement | null>(null);
   const fullNumberMeasureRef = useRef<HTMLSpanElement | null>(null);
@@ -156,7 +154,6 @@ export function HorizontalTicketTabs({
                 onTabKeyDown={reorderProps.onKeyDown}
                 title={tab.title}
                 tooltip={ticketTabTooltip(tab)}
-                syncPending={unsynchronizedTicketIds.includes(tab.id)}
               />
             );
           })}

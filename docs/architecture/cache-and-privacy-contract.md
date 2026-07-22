@@ -195,8 +195,8 @@ Cached data must be classified before persistence:
 - Personal draft content: unsent comment/reply/forward bodies, recipient
   selections, source context identifiers/versions, and local AI suggestion
   alternatives. It must never be logged. The authored communication projection
-  may cross the authenticated server boundary only for the signed-in user's
-  provider taskbar synchronization; local AI alternatives are excluded.
+  may cross the authenticated server boundary only through explicit draft or
+  communication actions; local AI alternatives are excluded.
 - Secrets: provider credentials, session tokens, cookies, password material, and
   AI credentials. These are never cache data.
 

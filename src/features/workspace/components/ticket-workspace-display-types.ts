@@ -41,7 +41,7 @@ import type {
 } from "@/features/tickets/workspace-adapter";
 import type { WorkspaceSettingsSection } from "./workspace-settings-dialog";
 import type { WorkspaceMenuConnection } from "./workspace-header";
-import type { SynchronizeWorkspaceTaskbarAction } from "./use-ticket-taskbar-sync";
+import type { ImportWorkspaceTicketTabsAction } from "./use-ticket-tab-import";
 
 export type TicketWorkspaceDisplayProps = {
   connections: WorkspaceMenuConnection[];
@@ -67,7 +67,7 @@ export type TicketWorkspaceDisplayProps = {
   rewriteDraftAction?: RewriteDraftAction;
   rephraseStyleOptions?: AiRephraseStyleOption[];
   summarizeTicketAction: SummarizeWorkspaceTicketAction;
-  synchronizeWorkspaceTaskbarAction?: SynchronizeWorkspaceTaskbarAction;
+  importWorkspaceTicketTabsAction?: ImportWorkspaceTicketTabsAction;
   initialTicketAiSummary?: {
     result: Extract<TicketAiSummaryResult, { status: "available" }>;
     ticketId: string;

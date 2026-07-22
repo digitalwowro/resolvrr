@@ -59,7 +59,7 @@ import { loadWorkspaceTicketDetailHydrationAction } from "@/features/workspace/t
 import { dispatchCurrentHelpdeskUserRead } from "@/features/tickets/ticket-lookup-service";
 import { loadWorkspaceNotificationsAction, markWorkspaceNotificationsReadAction } from "@/features/notifications";
 import { saveWorkspaceOpenTabsStateAction } from "@/features/workspace/actions";
-import { synchronizeWorkspaceTaskbarAction } from "@/features/taskbar-sync/actions";
+import { importWorkspaceTicketTabsAction } from "@/features/tab-import/actions";
 import {
   ensureMyWorkSavedViewResult,
   initialWorkspaceSavedViewSelection,
@@ -265,7 +265,11 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       saveWorkspaceAiPromptAction={saveWorkspaceAiPromptAction}
       searchTicketLinkTargetsAction={searchWorkspaceTicketLinkTargetsAction}
       summarizeTicketAction={summarizeWorkspaceTicketAction}
-      synchronizeWorkspaceTaskbarAction={synchronizeWorkspaceTaskbarAction}
+      importWorkspaceTicketTabsAction={
+        activeProvider?.capabilities.includes("ticket-tabs:import")
+          ? importWorkspaceTicketTabsAction
+          : undefined
+      }
       savedViews={workspaceSavedViews(
         savedViews,
         listResult.status === "available"

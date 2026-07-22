@@ -35,11 +35,7 @@ import {
 import { getZammadTicketInlineImage } from "./ticket-inline-images";
 import { getZammadTicketAttachment } from "./ticket-attachments";
 import { zammadConnectionIdentity } from "./connection-identity";
-import { parseZammadTaskbar } from "./taskbar-schema";
-import {
-  readZammadTicketTaskbar,
-  syncZammadTicketTaskbar,
-} from "./taskbar-sync";
+import { readZammadTicketTabs } from "./taskbar-import";
 import {
   listZammadMentionableUsers,
 } from "./ticket-mentions";
@@ -108,25 +104,7 @@ async function validateBasicAuth(
     throw classifyZammadResponse(response.status);
   }
 
-  const identity = zammadConnectionIdentity(response.data);
-  try {
-    const taskbarResponse = await safeProviderJson(`${baseUrl}/api/v1/taskbar`, {
-      allowedAddresses: input.validatedAddresses,
-      maxResponseBytes: 512 * 1024,
-      headers: {
-        Authorization: buildBasicAuthHeader(credentialsResult.data),
-        Accept: "application/json",
-        "User-Agent": zammadValidationUserAgent,
-      },
-      signal: AbortSignal.timeout(input.timeoutMs ?? defaultValidationTimeoutMs),
-    });
-    if (taskbarResponse.status >= 200 && taskbarResponse.status < 300) {
-      parseZammadTaskbar(taskbarResponse.data);
-    }
-  } catch {
-    // Taskbar synchronization is optional and is disabled safely at runtime.
-  }
-  return identity;
+  return zammadConnectionIdentity(response.data);
 }
 
 export const zammadProviderPlugin: HelpdeskProviderPlugin = {
@@ -162,7 +140,7 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
     "lookup:tags",
     "notifications:list",
     "notifications:mark-read",
-    "ticket-taskbar:sync",
+    "ticket-tabs:import",
     "search:full-text",
   ],
   credentialSchemes: [
@@ -198,6 +176,5 @@ export const zammadProviderPlugin: HelpdeskProviderPlugin = {
   searchLinkTargets: searchZammadLinkTargets,
   listNotifications: listZammadNotifications,
   markNotificationsRead: markZammadNotificationsRead,
-  readTicketTaskbar: readZammadTicketTaskbar,
-  syncTicketTaskbar: syncZammadTicketTaskbar,
+  readTicketTabs: readZammadTicketTabs,
 };

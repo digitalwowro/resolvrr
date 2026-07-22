@@ -236,53 +236,26 @@ explicit measured phases. Lookup lists are request-scoped reads; the app may
 reuse them only through the existing active-session selected-ticket detail
 cache. UI components must not introduce provider fetch fan-out.
 
-## Ticket Taskbar Synchronization
+## Ticket Tab Import
 
-`ticket-taskbar:sync` is an optional provider capability. Core exposes only an
-ordered set of ticket external IDs, active-selection reliability, a positively
-identified active ticket, an opaque contract version, and idempotent
-open/close/activate/reorder commands.
-Provider task IDs, callback names, parameter fields, endpoint paths, and
-non-ticket task types never cross the plugin boundary.
+`ticket-tabs:import` is an optional, read-only provider capability. Core exposes
+only an ordered set of ticket external IDs and an opaque contract version.
+Provider task IDs, callback names, application names, parameter fields,
+endpoint paths, and non-ticket task types never cross the plugin boundary.
 
-The Zammad implementation pins and validates its undocumented REST taskbar
-contract. Connection validation performs a best-effort compatibility probe;
-runtime validation is authoritative and disables synchronization without
-affecting ticket access when the contract is incompatible. Basic Auth cannot
-authenticate Zammad's session-cookie taskbar subscription, so the workspace
-reconciles every 60 seconds and when the browser regains focus.
+The Zammad implementation pins and validates the undocumented REST taskbar
+response only when the user explicitly presses `Sync tabs`. It performs exactly
+one GET, accepts desktop ticket tasks, ignores other applications and task
+types, sorts by provider priority, and deduplicates ticket IDs. It implements no
+taskbar POST, PUT, or DELETE operation. Connection validation does not probe the
+taskbar endpoint, and ordinary workspace activity never calls it.
 
-Selecting List is an explicit provider-neutral `deactivate` intent. It shares
-the durable active-selection outbox key with ticket activation, so the latest
-local selection wins and retries safely. Zammad maps it to `active: false` only
-for currently active ticket taskbar records; non-ticket taskbar records remain
-untouched. While activation/deactivation is pending, remote active-ticket state
-cannot replace the local pane.
-
-Resolvrr persists each explicit local taskbar action before attempting a
-provider write. Open, close, activate, and reorder operations are idempotent,
-remain marked unsynchronized after failure, and are retried. State and pending
-operations are scoped to the signed-in user's personal connection and reset on
-identity-version change; membership never grants access to another user's
-taskbar or credentials.
-Per-connection provider synchronization is serialized with a PostgreSQL
-advisory lock so multiple Resolvrr windows cannot race provider writes. The
-outbox uses that locked transaction's database client, avoiding pool starvation
-from lock waiters. Browser retries stop once the server reports the action as
-durably staged; later reconciliation processes the outbox without reclassifying
-an old retry as a newer explicit action.
-Activation idempotently creates a missing ticket task before selecting it.
-It deactivates other ticket tasks before activating the target, avoiding a
-transient multiple-active state. Every provider command is reread and verified
-before its durable outbox entry is confirmed; an unconfirmed write remains
-retryable.
-Closing the active tab durably selects its local successor or deactivates ticket
-selection when none remains. Normal in-flight commands are not presented as
-failures; only a rejected or durably pending command shows synchronization
-status. Requests carry the originating personal connection through the server
-boundary together with its identity version and are ownership-checked there, so
-a queued action cannot drift to a newly selected workspace or reconnected
-identity. An incompatible runtime contract clears its disabled outbox.
+The server action requires ownership of the personal helpdesk connection and
+an exact identity-version match before decrypting credentials or calling the
+provider. An incompatible contract disables only that import attempt. Errors
+are not retried automatically. Safe telemetry records only status, duration,
+retryability, and counts—never ticket IDs, titles, credentials, or raw taskbar
+payloads.
 
 Personal composer drafts are deliberately not part of the provider contract.
 Live characterization disproved the assumption that the REST taskbar record
@@ -312,7 +285,7 @@ advertises `ticket:list`,
 `ticket:add-internal-note`, `ticket:add-customer-reply`,
 `ticket:forward-customer-email`,
 `lookup:link-targets`, `lookup:assignable-users`, `lookup:groups`,
-`lookup:tags`, `lookup:mentionable-users`, and `ticket-taskbar:sync`.
+`lookup:tags`, `lookup:mentionable-users`, and `ticket-tabs:import`.
 Zammad also advertises `search:full-text` for permission-scoped global ticket
 search.
 Assignable-owner lookup is contextual: core supplies only provider-neutral

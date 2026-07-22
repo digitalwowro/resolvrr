@@ -26,6 +26,7 @@ type WorkspaceHeaderChromeProps = {
   onOpenSettings(section: WorkspaceSettingsSection): void;
   onOpenNotificationTicket(tab: WorkspaceTicketTab): void;
   onRefreshTicket(ticketId: string): void;
+  onSyncTabs?(): void;
   onTabOrientationChange(orientation: TicketTabOrientation): void;
   recentTickets: WorkspaceTicketTab[];
   ticketSearch: WorkspaceTicketSearchProps;
@@ -33,6 +34,7 @@ type WorkspaceHeaderChromeProps = {
     formData: FormData,
   ): void | Promise<void | HelpdeskConnectionActionResult>;
   tabOrientation: TicketTabOrientation;
+  syncingTabs?: boolean;
   userAvatarDataUrl?: string | null;
   userDisplayName?: string | null;
   userEmail: string;
@@ -49,11 +51,13 @@ export function WorkspaceHeaderChrome({
   onOpenNotificationTicket,
   onOpenSettings,
   onRefreshTicket,
+  onSyncTabs,
   onTabOrientationChange,
   recentTickets,
   ticketSearch,
   setActiveConnectionAction,
   tabOrientation,
+  syncingTabs,
   userAvatarDataUrl,
   userDisplayName,
   userEmail,
@@ -63,6 +67,8 @@ export function WorkspaceHeaderChrome({
   const controls = (
     <WorkspaceControls
       onTabOrientationChange={onTabOrientationChange}
+      onSyncTabs={onSyncTabs}
+      syncingTabs={syncingTabs}
       tabOrientation={tabOrientation}
       tone="dark"
     />
@@ -107,7 +113,6 @@ type WorkspaceTabsChromeProps = {
   orientation: TicketTabOrientation;
   savedViewLabel: string;
   tabs: WorkspaceTicketTab[];
-  unsynchronizedTicketIds?: string[];
 };
 
 export function WorkspaceTabsChrome({
@@ -120,7 +125,6 @@ export function WorkspaceTabsChrome({
   orientation,
   savedViewLabel,
   tabs,
-  unsynchronizedTicketIds,
 }: WorkspaceTabsChromeProps) {
   return (
     <TicketTabsPanel
@@ -134,7 +138,6 @@ export function WorkspaceTabsChrome({
       orientation={orientation}
       savedViewLabel={savedViewLabel}
       tabs={tabs}
-      unsynchronizedTicketIds={unsynchronizedTicketIds}
     />
   );
 }

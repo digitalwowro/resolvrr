@@ -43,7 +43,6 @@ model HelpdeskConnection {
   threadSnapshotCaches        ThreadSnapshotCache[]
   aiSummaryCaches             AiSummaryCache[]
   providerMutationLogs        ProviderMutationLog[]
-  taskbarSyncState            TaskbarSyncState?
 
   @@unique([workspaceId, userId])
   @@unique([workspaceId, providerIdentityExternalId])

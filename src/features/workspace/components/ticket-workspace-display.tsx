@@ -15,8 +15,8 @@ import { WorkspaceHeaderChrome, WorkspaceTabsChrome } from "./ticket-workspace-c
 import { useTicketWorkspaceSavedViewSelection } from "./use-ticket-workspace-saved-view-selection";
 import { TicketWorkspaceDisplayWorkArea } from "./ticket-workspace-display-work-area";
 import { TicketMergeNotice } from "./ticket-merge-notice";
-import { hiddenTaskbarSyncCount, TaskbarSyncNotice } from "./taskbar-sync-notice";
-import { useSynchronizedTicketWorkspaceActions } from "./use-synchronized-ticket-workspace-actions";
+import { TicketTabImportNotice } from "./ticket-tab-import-notice";
+import { useTicketTabImport } from "./use-ticket-tab-import";
 import { isCompleteListSortKey } from "./ticket-table-grouping";
 import { useTicketSearchController } from "./use-ticket-search-controller";
 import { workspaceTicketSearchProps } from "./ticket-workspace-search-props";
@@ -48,7 +48,7 @@ export function TicketWorkspaceDisplay({
   rewriteDraftAction,
   savedViews,
   summarizeTicketAction,
-  synchronizeWorkspaceTaskbarAction,
+  importWorkspaceTicketTabsAction,
   initialTicketAiSummary,
   initialWorkspaceOpenTabsState,
   saveWorkspaceOpenTabsStateAction,
@@ -124,6 +124,7 @@ export function TicketWorkspaceDisplay({
     groupedRows,
     handleGroupByChange,
     isActiveTicketDetailStale,
+    importOpenTicketTabs,
     listActive,
     openTicketTabs,
     recentTicketTabs,
@@ -194,22 +195,21 @@ export function TicketWorkspaceDisplay({
 
   const communicationDraftCloseGuard =
     useCommunicationDraftCloseGuard(closeTicket);
-  const synchronized = useSynchronizedTicketWorkspaceActions({
-    action: synchronizeWorkspaceTaskbarAction,
-    displayState,
-    initialSelectedTicketId: selectedTicketId,
+  const tabImport = useTicketTabImport({
+    action: importWorkspaceTicketTabsAction,
+    helpdeskConnectionId,
+    identityVersion,
+    importOpenTicketTabs,
     loadTicketDetailAction,
-    onExplicitClose: communicationDraftCloseGuard.requestClose,
-    scope: persistenceScope,
-    ticketTabs: pagedTicketTabs,
+    openTicketTabs,
   });
   const headerSearch = workspaceTicketSearchProps({
     controller: ticketSearch,
-    onSelectTicket: synchronized.displayState.showTicketFromRow,
+    onSelectTicket: displayState.showTicketFromRow,
     onSubmit: () => {
       clearRowSelection();
       ticketSearch.submitDetailed();
-      synchronized.showList();
+      displayState.showList();
     },
   });
   const workArea = (
@@ -217,7 +217,7 @@ export function TicketWorkspaceDisplay({
       activeTicketSummary={activeTicketSummary}
       columns={columns}
       communicationCapabilities={communicationCapabilities}
-      displayState={synchronized.displayState}
+      displayState={displayState}
       handleRefreshList={handleRefreshList}
       handleSavedViewChange={handleSavedViewChange}
       handleWorkspaceGroupByChange={handleWorkspaceGroupByChange}
@@ -247,42 +247,37 @@ export function TicketWorkspaceDisplay({
     <WorkspaceTabsChrome
       activeTicketId={activeTicketId}
       listActive={listActive}
-      onCloseTicket={synchronized.closeTicket}
-      onReorderTicket={synchronized.reorderOpenTicketTabs}
-      onSelectList={synchronized.showList}
-      onSelectTicket={synchronized.showOpenTicket}
+      onCloseTicket={communicationDraftCloseGuard.requestClose}
+      onReorderTicket={displayState.reorderOpenTicketTabs}
+      onSelectList={displayState.showList}
+      onSelectTicket={displayState.showOpenTicket}
       orientation={tabOrientation}
       savedViewLabel={searchActive ? "Search" : activeSavedView?.label ?? "All tickets"}
       tabs={openTicketTabs}
-      unsynchronizedTicketIds={synchronized.unsynchronizedIds}
     />
   );
 
   return (
     <>
-      {communicationDraftCloseGuard.dialog(synchronized.closeTicket)}
+      {communicationDraftCloseGuard.dialog(communicationDraftCloseGuard.requestClose)}
       <TicketMergeNotice message={displayState.mergeNotice} />
-      <TaskbarSyncNotice
-        conflictIds={synchronized.draftConflictIds}
-        hiddenUnsynchronizedCount={hiddenTaskbarSyncCount(openTicketTabs, synchronized.unsynchronizedIds)}
-        incompatible={synchronized.incompatible}
-        onCloseConflict={synchronized.closeDraftConflict}
-        selectionUnsynchronized={synchronized.selectionUnsynchronized}
-      />
+      <TicketTabImportNotice notice={tabImport.notice} />
       <WorkspaceHeaderChrome
         activeTicketId={activeTicketId}
         connections={connections}
         loadNotificationsAction={loadWorkspaceNotificationsAction}
         logoutAction={logoutAction}
         markNotificationsReadAction={markWorkspaceNotificationsReadAction}
-        onOpenNotificationTicket={synchronized.showNotificationTicket}
+        onOpenNotificationTicket={displayState.showNotificationTicket}
         onOpenSettings={onOpenSettings}
         onRefreshTicket={refreshTicketDetailById}
+        onSyncTabs={tabImport.available ? tabImport.importTabs : undefined}
         onTabOrientationChange={setTabOrientation}
         recentTickets={recentTicketTabs}
         ticketSearch={headerSearch}
         setActiveConnectionAction={setActiveConnectionAction}
         tabOrientation={tabOrientation}
+        syncingTabs={tabImport.loading}
         userAvatarDataUrl={userAvatarDataUrl}
         userDisplayName={userDisplayName}
         userEmail={userEmail}

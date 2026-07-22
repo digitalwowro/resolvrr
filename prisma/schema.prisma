@@ -59,17 +59,3 @@ enum WorkspaceSignatureSource {
   ZAMMAD
   RESOLVRR
 }
-
-enum TaskbarSyncCompatibility {
-  UNKNOWN
-  SUPPORTED
-  UNSUPPORTED
-}
-
-enum TaskbarSyncOperationKind {
-  OPEN
-  CLOSE
-  ACTIVATE
-  DEACTIVATE
-  REORDER
-}

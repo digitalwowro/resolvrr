@@ -76,7 +76,7 @@ import type {
   UpdateAvatarAction,
   UpdateProfileAction,
 } from "./workspace-settings-profile-section";
-import type { SynchronizeWorkspaceTaskbarAction } from "./use-ticket-taskbar-sync";
+import type { ImportWorkspaceTicketTabsAction } from "./use-ticket-tab-import";
 
 export type TicketWorkspaceProps = {
   changePasswordAction?: ChangePasswordAction;
@@ -105,7 +105,7 @@ export type TicketWorkspaceProps = {
   searchTicketLinkTargetsAction?: SearchWorkspaceTicketLinkTargetsAction;
   rewriteDraftAction?: RewriteDraftAction;
   summarizeTicketAction?: SummarizeWorkspaceTicketAction;
-  synchronizeWorkspaceTaskbarAction?: SynchronizeWorkspaceTaskbarAction;
+  importWorkspaceTicketTabsAction?: ImportWorkspaceTicketTabsAction;
   initialTicketAiSummary?: {
     result: Extract<TicketAiSummaryResult, { status: "available" }>;
     ticketId: string;

@@ -166,8 +166,8 @@ added, moved, renamed, or removed.
       context and reviewed forward input contracts.
     - `ticket-lifecycle.ts` (`src/core/ticket-lifecycle.ts`): observable, selectable, and mutable
       ticket state types plus provider-neutral merged replacement/retirement contracts.
-    - `ticket-taskbar.ts` (`src/core/ticket-taskbar.ts`): provider-neutral ordered ticket taskbar
-      snapshot, idempotent command, and synchronization result contracts.
+    - `ticket-tab-import.ts` (`src/core/ticket-tab-import.ts`): provider-neutral ordered,
+      read-only ticket-tab import snapshot contract.
     - `ticket-signatures.ts` (`src/core/ticket-signatures.ts`): provider-neutral signature source,
       reviewed context, provider request/result, and resolved signature contracts.
     - `tickets.ts` (`src/core/tickets.ts`): canonical ticket values and provider-neutral
@@ -202,10 +202,6 @@ added, moved, renamed, or removed.
     - `ticket-detail-cache-repository.ts` (`src/data/ticket-detail-cache-repository.ts`):
       Prisma-backed selected-ticket detail cache repository that encrypts normalized detail/thread
       payloads and keeps cache identity/freshness metadata scoped to user and connection.
-    - `taskbar-sync-repository.ts` (`src/data/taskbar-sync-repository.ts`): Prisma-backed
-      personal-connection taskbar compatibility state and deduplicated retryable local intent.
-    - `taskbar-sync-lock.ts` (`src/data/taskbar-sync-lock.ts`): PostgreSQL advisory lock that
-      serializes taskbar provider reconciliation per personal connection across app processes.
     - `user-management-repository.ts` (`src/data/user-management-repository.ts`): Prisma-backed
       admin user-management repository for listing users, workspace memberships, password reset,
       owner transfer, hard delete, and deactivate/scrub workflows.
@@ -513,13 +509,12 @@ added, moved, renamed, or removed.
       - `workspace-adapter.ts` (`src/features/tickets/workspace-adapter.ts`): canonical
         ticket/detail to workspace render model adapter, including formatted and ISO pending-time
         values for selected-ticket metadata drafts.
-    - `src/features/taskbar-sync`: provider-neutral durable taskbar synchronization workflow.
-      - `actions.ts` (`src/features/taskbar-sync/actions.ts`): authenticated strict taskbar sync
-        server action with originating personal-connection validation.
-      - `model.ts` (`src/features/taskbar-sync/model.ts`): strict local action input and
-        serializable synchronization result contracts.
-      - `service.ts` (`src/features/taskbar-sync/service.ts`): personal provider-context loading,
-        durable outbox processing, compatibility handling, retry state, and snapshot mapping.
+    - `src/features/tab-import`: provider-neutral, explicit ticket-tab import workflow.
+      - `actions.ts` (`src/features/tab-import/actions.ts`): authenticated server action with
+        strict personal-connection and identity-version inputs.
+      - `model.ts` (`src/features/tab-import/model.ts`): serializable import result contracts.
+      - `service.ts` (`src/features/tab-import/service.ts`): ownership-safe read orchestration,
+        capability checks, safe diagnostics, and provider error mapping.
     - `src/features/workspace`: workspace feature entrypoint, actions, and client-side state
       boundaries.
       - `src/features/workspace/components`: workspace UI composition and local client state
@@ -803,9 +798,6 @@ added, moved, renamed, or removed.
         - `ticket-tab-metadata.ts` (`src/features/workspace/components/ticket-tab-metadata.ts`):
           small helper for patching open ticket tab display metadata after successful staged
           updates.
-        - `taskbar-sync-notice.tsx`
-          (`src/features/workspace/components/taskbar-sync-notice.tsx`): incompatible-contract and
-          unsaved-draft remote-close conflict notices.
         - `ticket-table-cells.tsx` (`src/features/workspace/components/ticket-table-cells.tsx`):
           production state and priority display cells driven by canonical ticket labels and keys.
         - `ticket-table-grid.tsx` (`src/features/workspace/components/ticket-table-grid.tsx`):
@@ -958,33 +950,19 @@ added, moved, renamed, or removed.
         - `use-ticket-workspace-tabs-state.ts`
           (`src/features/workspace/components/use-ticket-workspace-tabs-state.ts`): use ticket
           workspace tabs state workspace helper module.
-        - `use-ticket-taskbar-sync.ts`
-          (`src/features/workspace/components/use-ticket-taskbar-sync.ts`): 60-second/focus
-          reconciliation, coalesced focus work, latest-intent queueing, active propagation, draft
-          protection, personal-connection binding, and pending status client hook.
-        - `use-ticket-taskbar-polling.ts`
-          (`src/features/workspace/components/use-ticket-taskbar-polling.ts`): focused visible-page
-          interval and browser-focus reconciliation lifecycle.
-        - `ticket-taskbar-hydration.ts`
-          (`src/features/workspace/components/ticket-taskbar-hydration.ts`): remote ticket-task
-          hydration, merged-source replacement mapping, and phased provider correction commands.
-        - `ticket-taskbar-runtime.ts`
-          (`src/features/workspace/components/ticket-taskbar-runtime.ts`): isolated per-user,
-          workspace, personal-connection, and identity-version queues and merge-correction state.
+        - `use-ticket-tab-import.ts`
+          (`src/features/workspace/components/use-ticket-tab-import.ts`): explicit import control,
+          capacity handling, result feedback, and local append orchestration.
+        - `ticket-tab-import-hydration.ts`
+          (`src/features/workspace/components/ticket-tab-import-hydration.ts`): bounded-concurrency
+          provider-neutral detail hydration, merged-source resolution, and deduplication.
+        - `ticket-tab-import-notice.tsx`
+          (`src/features/workspace/components/ticket-tab-import-notice.tsx`): accessible import
+          success, partial-result, and failure feedback.
         - `ticket-communication-draft-runtime.ts`
           (`src/features/workspace/components/ticket-communication-draft-runtime.ts`): complete
           personal draft scope keys and ordered IndexedDB work used to close the remote-tab/draft
           persistence race.
-        - `ticket-taskbar-sync-requests.ts`
-          (`src/features/workspace/components/ticket-taskbar-sync-requests.ts`): focused local
-          request deduplication, retry-state, ticket-ID, and active-tab cap rules.
-        - `ticket-taskbar-sync-types.ts`
-          (`src/features/workspace/components/ticket-taskbar-sync-types.ts`): client taskbar action
-          and hook option contracts with mandatory personal-connection and identity arguments.
-        - `use-synchronized-ticket-workspace-actions.ts`
-          (`src/features/workspace/components/use-synchronized-ticket-workspace-actions.ts`):
-          focused controller that pairs local open/close/activate/reorder behavior with durable
-          taskbar commands.
         - `use-saved-view-settings-data.ts`
           (`src/features/workspace/components/use-saved-view-settings-data.ts`): one-time Views
           provider lookup enrichment over immediately available saved-view definitions.
@@ -1160,8 +1138,8 @@ added, moved, renamed, or removed.
         connection validation boundary.
       - `taskbar-schema.ts` (`src/providers/zammad/taskbar-schema.ts`): pinned Zammad taskbar DTO
         validation and strict ticket-task recognition.
-      - `taskbar-sync.ts` (`src/providers/zammad/taskbar-sync.ts`): provider-local taskbar REST
-        reads and idempotent ticket open, close, activation, and relative-order writes.
+      - `taskbar-import.ts` (`src/providers/zammad/taskbar-import.ts`): provider-local, read-only
+        desktop ticket-task import with ordering and deduplication.
       - `reply-addresses.ts` (`src/providers/zammad/reply-addresses.ts`): server-only RFC address
         list parsing, normalization, managed-address cleanup, and To/Cc deduplication.
       - `reply-context.ts` (`src/providers/zammad/reply-context.ts`): pure Zammad-native Reply and
@@ -1352,8 +1330,6 @@ added, moved, renamed, or removed.
     metadata-only mutation log schema with durable workspace and optional personal-connection
     identity.
   - `my-style.prisma` (`prisma/my-style.prisma`): encrypted per-user/per-workspace My Style schema.
-  - `taskbar-sync.prisma` (`prisma/taskbar-sync.prisma`): per-personal-connection taskbar
-    compatibility state and retryable deduplicated local operation schema.
   - `workspace-signatures.prisma` (`prisma/workspace-signatures.prisma`): encrypted workspace
     default/group signature templates and immutable revision snapshots.
   - `prisma/migrations`: database migration history.
@@ -1382,6 +1358,8 @@ added, moved, renamed, or removed.
       migration for personal taskbar compatibility state and retryable operation outbox.
     - `prisma/migrations/20260717090000_add_taskbar_deactivate`: extends the durable taskbar
       operation kind with explicit List/ticket-deactivation intent.
+    - `prisma/migrations/20260722120000_remove_ticket_taskbar_sync`: removes the obsolete
+      automatic synchronization compatibility state, operation outbox, and enums.
     - `prisma/migrations/20260718100000_make_ai_summaries_durable`: removes time-based expiry
       from fingerprinted encrypted selected-ticket AI summaries while preserving existing rows.
     - `prisma/migrations/20260606003000_add_workspace_ai_settings`: contains related
@@ -1468,35 +1446,17 @@ added, moved, renamed, or removed.
     - `workspace-communication-draft-controller.test.ts`
       (`tests/features/workspace-communication-draft-controller.test.ts`): verifies exact personal
       browser scope, memory-first publishing, local revisioning, restore, and storage-safe clear.
-    - `taskbar-sync-model.test.ts` (`tests/features/taskbar-sync-model.test.ts`): verifies strict,
-      bounded provider-neutral taskbar command parsing.
-    - `ticket-taskbar-reconciliation.test.tsx`
-      (`tests/features/ticket-taskbar-reconciliation.test.tsx`): verifies tab caps, transport
-      retry visibility, stale-active suppression during local activation, and unchanged-state
-      reuse.
-    - `ticket-taskbar-draft-protection.test.tsx`
-      (`tests/features/ticket-taskbar-draft-protection.test.tsx`): verifies initial provider
-      replacement preserves both persisted and not-yet-persisted identity-scoped drafts as
-      conflicts.
+    - `tab-import-service.test.ts` (`tests/features/tab-import-service.test.ts`): verifies
+      ownership and identity fail-closed behavior, read-only provider dispatch, ordering, and
+      incompatible-contract handling.
+    - `ticket-tab-import.test.tsx` (`tests/features/ticket-tab-import.test.tsx`): verifies
+      explicit-only import, capacity behavior, unavailable tickets, and merged-target deduplication.
     - `ticket-communication-draft-runtime.test.ts`
       (`tests/features/ticket-communication-draft-runtime.test.ts`): verifies exact-scope
       synchronous draft presence and ordered IndexedDB work.
-    - `ticket-taskbar-sync-races.test.tsx`
-      (`tests/features/ticket-taskbar-sync-races.test.tsx`): verifies stale-result suppression,
-      retry-on-focus, focus coalescing, active-tab retention at the cap, and latest rapid
-      selection behavior.
-    - `ticket-taskbar-sync-scope.test.tsx`
-      (`tests/features/ticket-taskbar-sync-scope.test.tsx`): verifies unreliable active values
-      remain local, unscoped work is suppressed, and queued work stays bound to its originating
-      personal connection.
-    - `ticket-taskbar-test-scope.ts`
-      (`tests/features/ticket-taskbar-test-scope.ts`): shared complete personal-connection scope
-      and strict server-action argument helper for taskbar client tests.
-    - `ticket-taskbar-merged-sync.test.tsx`
-      (`tests/features/ticket-taskbar-merged-sync.test.tsx`): verifies phased normalization of a
-      stale merged-source provider task to its surviving ticket.
-    - `taskbar-sync-service.test.ts` (`tests/features/taskbar-sync-service.test.ts`): verifies
-      explicit personal-connection provider loading and provider active-reliability mapping.
+    - `ticket-workspace-local-tabs.test.tsx`
+      (`tests/features/ticket-workspace-local-tabs.test.tsx`): verifies normal navigation is local
+      and the provider import action runs only after pressing `Sync tabs`.
     - `ai-ticket-summary-action.test.ts` (`tests/features/ai-ticket-summary-action.test.ts`):
       verifies scoped selected-ticket detail reload, blank-request rejection, and the single
       configuration re-read/auth-recovery retry.
@@ -1889,10 +1849,9 @@ added, moved, renamed, or removed.
         malformed responses.
       - `subscription-mutations.test.ts` (`tests/providers/zammad/subscription-mutations.test.ts`):
         verifies subscription mutations behavior.
-      - `taskbar-sync.test.ts` (`tests/providers/zammad/taskbar-sync.test.ts`): verifies pinned
-        taskbar parsing, ticket-only exposure, idempotent create/close, access preflight, and
-        ticket-relative ordering without moving non-ticket tasks, post-write confirmation, and
-        deactivate-before-activate ordering.
+      - `taskbar-import.test.ts` (`tests/providers/zammad/taskbar-import.test.ts`): verifies pinned
+        taskbar parsing, desktop ticket-only exposure, ordering, deduplication, fail-closed
+        validation, and the absence of provider writes.
       - `ticket-search-query.test.ts` (`tests/providers/zammad/ticket-search-query.test.ts`):
         verifies Zammad-owned compilation of provider-neutral saved-view filters and raw global
         full-text expressions, including immutable merged-ticket exclusion.

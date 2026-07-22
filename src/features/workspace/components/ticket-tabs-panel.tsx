@@ -16,7 +16,6 @@ type TicketTabsPanelProps = {
   orientation?: TicketTabOrientation;
   savedViewLabel: string;
   tabs: WorkspaceTicketTab[];
-  unsynchronizedTicketIds?: string[];
 };
 
 export function TicketTabsPanel({
@@ -29,7 +28,6 @@ export function TicketTabsPanel({
   orientation = "horizontal",
   savedViewLabel,
   tabs,
-  unsynchronizedTicketIds = [],
 }: TicketTabsPanelProps) {
   if (orientation === "vertical") {
     return (
@@ -42,7 +40,6 @@ export function TicketTabsPanel({
         onSelectTicket={onSelectTicket}
         savedViewLabel={savedViewLabel}
         tabs={tabs}
-        unsynchronizedTicketIds={unsynchronizedTicketIds}
       />
     );
   }
@@ -57,7 +54,6 @@ export function TicketTabsPanel({
       onSelectTicket={onSelectTicket}
       savedViewLabel={savedViewLabel}
       tabs={tabs}
-      unsynchronizedTicketIds={unsynchronizedTicketIds}
     />
   );
 }

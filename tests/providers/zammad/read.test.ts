@@ -54,7 +54,7 @@ describe("Zammad ticket reads", () => {
       "lookup:tags",
       "notifications:list",
       "notifications:mark-read",
-      "ticket-taskbar:sync",
+      "ticket-tabs:import",
       "search:full-text",
     ]);
   });
