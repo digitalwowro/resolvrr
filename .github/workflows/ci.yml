@@ -63,6 +63,3 @@ jobs:
 
       - name: Check generated Next env
         run: npm run next-env:check
-
-      - name: Audit dependencies
-        run: npm audit --audit-level=moderate

@@ -12,7 +12,8 @@ The local app boundary is `/home/resolvrr/resolvrr`.
 - Start the app directly: `npm run dev`
 - Clear local caches: `npm run cache:clear`
 - Run checks: `npm run lint`, `npm run typecheck`, `npm run size:check`,
-  `npm test`, `npm run build`, `npm audit`
+  `npm test`, `npm run build`
+- Audit dependency changes: `npm audit --audit-level=moderate`
 
 Merged-ticket changes require focused coverage for provider query exclusion,
 history/replacement chains, cache source invalidation, zero-write mutation

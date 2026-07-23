@@ -25,6 +25,8 @@ added, moved, renamed, or removed.
   - `.github/workflows`: GitHub Actions workflow definitions.
     - `ci.yml` (`.github/workflows/ci.yml`): GitHub Actions workflow for normal verification CI on
       pull requests and pushes to `main`.
+    - `dependency-audit.yml` (`.github/workflows/dependency-audit.yml`): dependency-only audit
+      workflow for package manifest or lockfile changes, with manual dispatch support.
     - `codeql.yml` (`.github/workflows/codeql.yml`): GitHub CodeQL workflow for JavaScript and
       TypeScript analysis on main, pull requests to main, and a weekly schedule.
   - `dependabot.yml` (`.github/dependabot.yml`): Dependabot update configuration for npm packages
