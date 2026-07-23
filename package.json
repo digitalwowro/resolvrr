@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "overrides": {
-    "@hono/node-server": "1.19.14",
-    "postcss": "8.5.14"
+    "postcss": "8.5.14",
+    "sharp": "0.35.3"
   },
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0 --port 3005",
@@ -30,24 +30,24 @@
   },
   "dependencies": {
     "@node-rs/argon2": "2.0.2",
-    "@prisma/adapter-pg": "7.8.0",
-    "@prisma/client": "7.8.0",
+    "@prisma/adapter-pg": "7.9.0",
+    "@prisma/client": "7.9.0",
     "domhandler": "6.0.1",
     "dotenv": "17.4.2",
     "email-addresses": "5.0.0",
     "htmlparser2": "12.0.0",
-    "lucide-react": "1.24.0",
-    "next": "16.2.10",
-    "pg": "8.21.0",
+    "lucide-react": "1.26.0",
+    "next": "16.2.11",
+    "pg": "8.22.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "sanitize-html": "2.17.6",
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@eslint/js": "9.39.4",
+    "@eslint/js": "9.39.5",
     "@playwright/test": "1.61.1",
-    "@tailwindcss/postcss": "4.3.2",
+    "@tailwindcss/postcss": "4.3.3",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
     "@testing-library/user-event": "14.6.1",
@@ -57,13 +57,13 @@
     "@types/react-dom": "19.2.3",
     "@types/sanitize-html": "2.16.1",
     "@vitest/coverage-v8": "4.1.8",
-    "eslint": "9.39.4",
-    "eslint-config-next": "16.2.10",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.2.11",
     "jsdom": "29.1.1",
-    "prisma": "7.8.0",
-    "tailwindcss": "4.3.2",
+    "prisma": "7.9.0",
+    "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.60.1",
+    "typescript-eslint": "8.65.0",
     "vitest": "4.1.8"
   }
 }
