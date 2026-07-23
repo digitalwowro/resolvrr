@@ -4,8 +4,13 @@ import {
 } from "./ticket-article-content-html";
 import {
   findStructuralSignatureCluster,
-  type SignatureStructuralBlock,
 } from "./ticket-article-content-signature-cluster";
+import {
+  hasStructuralSeparation,
+  leavesSubstantiveMessage,
+  structuralBlockRanges,
+  type SignatureStructuralBlock,
+} from "./ticket-article-content-signature-dom";
 import { findNestedSignatureEnvelope } from
   "./ticket-article-content-signature-envelope";
 import type { CollapseCandidate } from "./ticket-article-content-types";
@@ -16,9 +21,7 @@ type StructuralSignatureRange = HtmlBlockRange & {
   strength: number;
 };
 
-const structuralTags = new Set(["address", "div", "footer", "section", "table"]);
 const semanticSignatureTags = new Set(["address", "footer"]);
-const tagPattern = /<\/?\s*([a-z0-9-]+)(?:\s[^>]*)?>/giu;
 const anchorPattern =
   /<a\b[^>]*href=(['"])([^'"]+)\1[^>]*>([\s\S]*?)<\/a>/giu;
 const emphasisPattern = /<(?:b|strong)\b/iu;
@@ -30,17 +33,20 @@ const phoneTextPattern = /(?:^|\D)\+?\d[\d\s().-]{6,}\d(?:\D|$)/u;
 const displayedAddressPattern =
   /^(?:https?:\/\/|www\.)?[^\s/]+\.[^\s/]+(?:\/\S*)?$/iu;
 const compoundFooterForbiddenPattern =
-  /<(?:a|address|article|blockquote|code|div|footer|h[1-6]|img|li|ol|p|pre|section|table|ul)\b/iu;
+  /<(?:a|address|article|blockquote|code|div|footer|h[1-6]|img|li|ol|pre|section|table|ul)\b/iu;
+const singleParagraphPattern = /^\s*<p\b[^>]*>[\s\S]*<\/p>\s*$/iu;
+const paragraphPattern = /<p\b/giu;
+const htmlTagPattern = /<[a-z][^>]*>/iu;
 
 export function findStructuralSignatureCandidate(
   html: string,
-  explicitMarkerStart?: number,
+  advisoryBoundaryStart?: number,
 ): CollapseCandidate | null {
   const blocks = structuralBlockRanges(html);
   const envelope = findNestedSignatureEnvelope(
     html,
     blocks,
-    explicitMarkerStart,
+    advisoryBoundaryStart,
   );
   const cluster = findStructuralSignatureCluster(html, blocks);
   const candidates = blocks
@@ -53,7 +59,7 @@ export function findStructuralSignatureCandidate(
     .filter(
       (range) =>
         isTerminalRange(html, range) ||
-        isContactBlockBeforeMarker(html, range, explicitMarkerStart) ||
+        isContactBlockBeforeBoundary(html, range, advisoryBoundaryStart) ||
         isContactBlockWithTrailingFooter(html, range),
     )
     .sort(compareStructuralCandidates);
@@ -79,15 +85,6 @@ function compareStructuralCandidates(
   );
 }
 
-function leavesSubstantiveMessage(html: string, candidateStart: number) {
-  const visibleText = plainTextFromHtml(html.slice(0, candidateStart)).trim();
-  const visibleLines = visibleText
-    .split("\n")
-    .map(normalizeLine)
-    .filter(Boolean);
-  return visibleLines.length >= 2 || normalizeLine(visibleText).length >= 80;
-}
-
 function isContactBlockWithTrailingFooter(
   html: string,
   range: HtmlBlockRange,
@@ -105,56 +102,38 @@ function isContactBlockWithTrailingFooter(
     .split("\n")
     .map(normalizeLine)
     .filter(Boolean);
+  const isSingleParagraph =
+    (trailingHtml.match(paragraphPattern) ?? []).length === 1 &&
+    singleParagraphPattern.test(trailingHtml);
   return (
     trailingText.length >= 120 &&
     trailingText.length <= 1_000 &&
     trailingLines.length <= 8 &&
+    (isSingleParagraph || !htmlTagPattern.test(trailingHtml)) &&
     !compoundFooterForbiddenPattern.test(trailingHtml)
   );
 }
 
-function isContactBlockBeforeMarker(
+function isContactBlockBeforeBoundary(
   html: string,
   range: HtmlBlockRange,
-  explicitMarkerStart?: number,
+  advisoryBoundaryStart?: number,
 ) {
   if (range.tagName !== "div" && range.tagName !== "section") return false;
   if (
-    explicitMarkerStart === undefined ||
-    explicitMarkerStart <= range.end ||
-    explicitMarkerStart - range.end > 200
+    advisoryBoundaryStart === undefined ||
+    advisoryBoundaryStart <= range.end ||
+    advisoryBoundaryStart - range.end > 200
   ) {
     return false;
   }
   const interveningText = plainTextFromHtml(
-    html.slice(range.end, explicitMarkerStart),
+    html.slice(range.end, advisoryBoundaryStart),
   ).trim();
   return (
     interveningText.length <= 80 &&
     hasStructuralSeparation(html.slice(0, range.start), range.tagName)
   );
-}
-
-function structuralBlockRanges(html: string): HtmlBlockRange[] {
-  const stack: Array<{ depth: number; start: number; tagName: string }> = [];
-  const ranges: HtmlBlockRange[] = [];
-
-  for (const match of html.matchAll(tagPattern)) {
-    const tagName = match[1]?.toLowerCase();
-    if (!tagName || !structuralTags.has(tagName)) continue;
-
-    if (!match[0].startsWith("</")) {
-      stack.push({ depth: stack.length, start: match.index, tagName });
-      continue;
-    }
-
-    const stackIndex = stack.findLastIndex((entry) => entry.tagName === tagName);
-    if (stackIndex < 0) continue;
-    const [opened] = stack.splice(stackIndex, 1);
-    if (opened) ranges.push({ end: match.index + match[0].length, ...opened });
-  }
-
-  return ranges;
 }
 
 function isTerminalRange(html: string, range: HtmlBlockRange) {
@@ -166,16 +145,6 @@ function isTerminalRange(html: string, range: HtmlBlockRange) {
   }
   if (plainTextFromHtml(html.slice(range.end)).trim() !== "") return false;
   return hasStructuralSeparation(html.slice(0, range.start), range.tagName);
-}
-
-function hasStructuralSeparation(htmlBefore: string, tagName: string) {
-  const tail = htmlBefore.slice(-180);
-  return (
-    /(?:<br\b[^>]*>\s*){2,}$/iu.test(tail) ||
-    /<\/(?:div|p|section)>\s*$/iu.test(tail) ||
-    (tagName === "table" &&
-      /(?:<br\b[^>]*>|<(?:div|section)\b[^>]*>)\s*$/iu.test(tail))
-  );
 }
 
 function signatureStrength(html: string, range: HtmlBlockRange) {

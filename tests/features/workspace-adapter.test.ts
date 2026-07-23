@@ -83,6 +83,10 @@ describe("workspace ticket adapter date formatting", () => {
                 },
               ],
               sanitizedHtml: "<p>Hello</p>",
+              signatureHints: [{
+                boundaryOffset: 12,
+                kind: "provider-marker",
+              }],
               visibility: "public",
             },
           ],
@@ -128,6 +132,10 @@ describe("workspace ticket adapter date formatting", () => {
           byteSize: 2048,
         },
       ]);
+      expect(detail.articles[0]?.signatureHints).toEqual([{
+        boundaryOffset: 12,
+        kind: "provider-marker",
+      }]);
       expect(detail.links).toEqual([
         {
           direction: "related",

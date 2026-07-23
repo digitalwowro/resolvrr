@@ -3,9 +3,9 @@
 ## Status
 
 Deferred and disabled. Resolvrr composer drafts are local-only and are never
-read from or written to Zammad. Ticket taskbar synchronization remains enabled
-for ticket open/close state, ordering, and best-effort active selection; it does
-not include draft content.
+read from or written to Zammad. Automatic ticket taskbar synchronization has
+also been removed. The separate `Sync tabs` control performs a read-only,
+best-effort import of desktop ticket tabs and does not include draft content.
 
 ## Why The Earlier Approach Was Removed
 

@@ -47,6 +47,10 @@ conversation content.
   membership alone cannot select or read another member's cache. It does not cache
   raw provider payloads, provider request/response bodies, or background sync
   data.
+- Ticket-detail cache source version `v6` invalidates pre-hint article snapshots.
+  Refreshed encrypted records may contain typed provider-neutral signature hint
+  offsets tied to their sanitized HTML, but never raw provider signature fields,
+  classes, or unsanitized message bodies.
 - Merged source cache records are invalidated and never copied to the surviving
   ticket. Only the final provider-neutral detail may be cached under the final
   ticket identity.
@@ -129,14 +133,11 @@ conversation content.
   history for the current user/workspace/ticket. Validation, provider,
   partial-success, and uncertain-delivery failures retain it; confirmed success,
   explicit discard/close, or retention expiry clears it.
-- Ticket taskbar sync state and retryable intent are scoped to the current
-  user's personal connection and identity version. They contain only ticket
-  external IDs, order, action kind, timing, compatibility, and safe error codes,
-  never credentials, raw taskbar payloads, ticket content, or another member's
-  state. Remote close conflicts inspect only the current user's identity-scoped
-  IndexedDB draft record. Each synchronization request is bound to and
-  ownership-checked against the originating personal connection, including
-  requests that finish after the user switches workspaces.
+- Manual ticket-tab import is bound to the signed-in user's personal connection
+  and exact identity version. Membership alone cannot read another user's
+  provider tabs or credentials. The provider response is used transiently and
+  is not persisted; telemetry contains only status, duration, retryability, and
+  aggregate counts, never ticket IDs, titles, or raw taskbar payloads.
 - Reviewed agentic actions may prepare suggestions for existing
   provider-neutral update paths, but provider writes still require explicit user
   review and the normal submit/update path.

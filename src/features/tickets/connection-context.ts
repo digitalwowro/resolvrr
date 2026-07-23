@@ -73,10 +73,17 @@ export async function loadTicketProviderContextForConnection(
   userId: string,
   connectionId: string,
   operation: TicketReadOperation,
+  expectedIdentityVersion?: string,
 ): Promise<TicketProviderContextResult> {
   const lookupStart = ticketReadTimingStart();
   const connection = await repository.findForUser(userId, connectionId);
-  if (!connection) return unavailableTicketRead("no-active-connection");
+  if (
+    !connection ||
+    (expectedIdentityVersion &&
+      connection.identityVersion !== expectedIdentityVersion)
+  ) {
+    return unavailableTicketRead("no-active-connection");
+  }
   return loadTicketProviderContext(
     repository,
     registry,

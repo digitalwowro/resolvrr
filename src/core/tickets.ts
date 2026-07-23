@@ -8,6 +8,7 @@ import type {
   TicketArticleForwardContext,
   TicketCustomerForwardInput,
 } from "./ticket-forwards";
+import type { TicketArticleSignatureHint } from "./ticket-article-signatures";
 import {
   ticketSelectableStates,
   type TicketMutableState,
@@ -173,11 +174,19 @@ export type TicketArticle = {
   createdAt: Date;
   subject?: string;
   sanitizedHtml: string;
+  signatureHints?: TicketArticleSignatureHint[];
   textPreview?: string;
   attachments: TicketAttachment[];
   forwardContext?: TicketArticleForwardContext;
   replyContext?: TicketArticleReplyContext;
 };
+
+export type {
+  TicketArticleSignatureHint,
+  TicketArticleProviderContainerSignatureHint,
+  TicketArticleProviderLearnedLineSignatureHint,
+  TicketArticleProviderMarkerSignatureHint,
+} from "./ticket-article-signatures";
 
 export type TicketCommunicationBodyFormat = "plain" | "html";
 

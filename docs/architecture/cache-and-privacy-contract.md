@@ -29,6 +29,10 @@ job queues remain out of scope. Read-only AI behavior is defined separately in
   refresh, and post-save detail refresh fetch provider source-of-truth rather
   than returning a fresh database cache hit.
 - Provider detail refreshes write through to the selected-ticket detail cache.
+- The ticket-detail cache source is version `v6`. This revision invalidates
+  snapshots created before typed provider-neutral signature hints were part of
+  article records, ensuring cached articles are refreshed from provider source
+  before the shared signature decision consumes hint offsets.
 - Merged source details are never cached as ordinary detail. Merge resolution
   invalidates source entries and stores only the final survivor under its own
   provider identity; the detail cache source version is bumped when this rule
@@ -148,6 +152,8 @@ Thread snapshots may contain provider-neutral article records:
 - article kind, visibility, direction, author, recipients, and timestamp;
 - sanitized article HTML or derived plain text if the future implementation
   needs it for display or prompt preparation;
+- optional typed provider-neutral signature hints whose offsets refer only to
+  the cached sanitized HTML; raw provider marker fields are excluded;
 - provider-classified visible attachment metadata only: filename, content type,
   and byte size; provider-internal inline resources and message alternatives are
   excluded;
@@ -195,8 +201,8 @@ Cached data must be classified before persistence:
 - Personal draft content: unsent comment/reply/forward bodies, recipient
   selections, source context identifiers/versions, and local AI suggestion
   alternatives. It must never be logged. The authored communication projection
-  may cross the authenticated server boundary only for the signed-in user's
-  provider taskbar synchronization; local AI alternatives are excluded.
+  may cross the authenticated server boundary only through explicit draft or
+  communication actions; local AI alternatives are excluded.
 - Secrets: provider credentials, session tokens, cookies, password material, and
   AI credentials. These are never cache data.
 

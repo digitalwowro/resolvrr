@@ -46,7 +46,8 @@ export function TicketWorkspace({
   rows,
   searchTicketLinkTargetsAction,
   summarizeTicketAction,
-  synchronizeWorkspaceTaskbarAction,
+  importWorkspaceTicketTabsAction,
+  hydrateWorkspaceTabImportAction,
   savedViews,
   initialTicketAiSummary,
   initialAiSettingsData,
@@ -197,7 +198,8 @@ export function TicketWorkspace({
             searchTicketLinkTargetsAction ?? unavailableLinkTargetSearchAction
           }
           summarizeTicketAction={effectiveSummarizeTicketAction}
-          synchronizeWorkspaceTaskbarAction={synchronizeWorkspaceTaskbarAction}
+          importWorkspaceTicketTabsAction={importWorkspaceTicketTabsAction}
+          hydrateWorkspaceTabImportAction={hydrateWorkspaceTabImportAction}
           initialTicketAiSummary={initialTicketAiSummary}
           rewriteDraftAction={rewriteDraftAction}
           rephraseStyleOptions={rephraseStyleOptions}

@@ -125,6 +125,33 @@ describe("Zammad reply conversation history", () => {
     expect(html).not.toContain("Private investigation");
   });
 
+  it("refines an overbroad provider signature container to its terminal contact card", () => {
+    const source = article(1, {
+      body: [
+        "<p>Hello recipient,</p>",
+        '<div data-signature="true">',
+        "<p>Here is the updated data from our systems.</p>",
+        "<p>Could you confirm that it is correct?</p>",
+        "<p>Kind regards,</p>",
+        "<table><tr><td>",
+        "<strong>Example Agent</strong><br>",
+        '<a href="mailto:agent@example.com">agent@example.com</a>',
+        "</td></tr></table>",
+        "</div>",
+      ].join(""),
+    });
+    const html = zammadReplyConversationHistoryHtml({
+      articles: [source],
+      inlineImages: new Map(),
+    });
+
+    expect(html).toContain("Here is the updated data from our systems.");
+    expect(html).toContain("Could you confirm that it is correct?");
+    expect(html).toContain("Kind regards,");
+    expect(html).not.toContain("Example Agent");
+    expect(html).not.toContain("agent@example.com");
+  });
+
   it("preserves bounded inline images supplied by the provider loader", () => {
     const source = article(1, {
       attachments: [{

@@ -1,12 +1,14 @@
 "use client";
 
-import { PanelLeft, PanelTop } from "lucide-react";
+import { PanelLeft, PanelTop, RefreshCw } from "lucide-react";
 import { Tooltip } from "@/components/ui";
 import { cn } from "@/components/ui/classnames";
 
 type WorkspaceControlsProps = {
   className?: string;
   onTabOrientationChange(orientation: "horizontal" | "vertical"): void;
+  onSyncTabs?(): void;
+  syncingTabs?: boolean;
   tabOrientation: "horizontal" | "vertical";
   tone?: "dark" | "default";
 };
@@ -14,6 +16,8 @@ type WorkspaceControlsProps = {
 export function WorkspaceControls({
   className,
   onTabOrientationChange,
+  onSyncTabs,
+  syncingTabs = false,
   tabOrientation,
   tone = "default",
 }: WorkspaceControlsProps) {
@@ -24,6 +28,21 @@ export function WorkspaceControls({
         className,
       )}
     >
+      {onSyncTabs ? (
+        <button
+          aria-busy={syncingTabs || undefined}
+          className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-indigo-100 hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={syncingTabs}
+          onClick={onSyncTabs}
+          type="button"
+        >
+          <RefreshCw
+            aria-hidden="true"
+            className={syncingTabs ? "size-4 animate-spin" : "size-4"}
+          />
+          <span className="hidden sm:inline">Sync tabs</span>
+        </button>
+      ) : null}
       <TabLayoutSwitch
         onChange={onTabOrientationChange}
         tone={tone}

@@ -22,12 +22,10 @@ import {
 import type { ActiveWorkspacePane } from "./ticket-workspace-state-types";
 import { replaceWorkspaceUrl } from "./workspace-url";
 import {
-  reconciledActiveTicketId,
-  reconciledTicketTabs,
   reorderedTicketTabs,
   sameTicketTabs,
   ticketTabsWithOpenedTicket,
-} from "./ticket-workspace-tab-reconciliation";
+} from "./ticket-tab-collection";
 import { useWorkspaceTabsPersistence } from "./use-workspace-tabs-persistence";
 
 type UseTicketWorkspaceTabsStateOptions = {
@@ -245,29 +243,15 @@ export function useTicketWorkspaceTabsState({
     setOpenTicketTabs((current) => reorderedTicketTabs(current, sourceTicketId, targetIndex));
   }
 
-  function reconcileOpenTicketTabs(
-    synchronizedTabs: WorkspaceTicketTab[],
-    protectedTicketIds: string[],
-    synchronizedActiveTicketId?: string,
-  ) {
-    const next = reconciledTicketTabs(
-      synchronizedTabs,
-      openTicketTabs,
-      protectedTicketIds,
-      synchronizedActiveTicketId,
-    );
-    setOpenTicketTabs(next);
-    setRecentTicketTabs((current) => {
-      const reconciled = cappedWorkspaceTabs([...synchronizedTabs, ...current]);
-      return sameTicketTabs(current, reconciled) ? current : reconciled;
+  function importOpenTicketTabs(importedTabs: WorkspaceTicketTab[]) {
+    setOpenTicketTabs((current) => {
+      const currentIds = new Set(current.map((tab) => tab.id));
+      const next = cappedWorkspaceTabs([
+        ...current,
+        ...importedTabs.filter((tab) => !currentIds.has(tab.id)),
+      ]);
+      return sameTicketTabs(current, next) ? current : next;
     });
-    const nextActiveId = reconciledActiveTicketId(
-      next, activeTicketId, synchronizedActiveTicketId,
-    );
-    if (nextActiveId === undefined) return;
-    setActiveWorkspacePane(nextActiveId ? { ticketId: nextActiveId } : "list");
-    replaceWorkspaceUrl(nextActiveId ?? undefined);
-    if (nextActiveId === synchronizedActiveTicketId) ensureTicketDetail(nextActiveId);
   }
 
   return {
@@ -276,7 +260,7 @@ export function useTicketWorkspaceTabsState({
     listActive,
     openTicketTabs,
     recentTicketTabs,
-    reconcileOpenTicketTabs,
+    importOpenTicketTabs,
     replaceMergedTicket,
     reorderOpenTicketTabs,
     returnActiveTicketToList,

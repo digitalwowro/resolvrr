@@ -4,13 +4,12 @@ import { ProviderError } from "@/core/providers";
 const positiveInteger = z.coerce.number().int().positive();
 
 const zammadTaskbarItemSchema = z.object({
+  app: z.string(),
   id: positiveInteger,
   key: z.string(),
   callback: z.string(),
   params: z.record(z.string(), z.unknown()).default({}),
   prio: z.coerce.number().int(),
-  active: z.boolean(),
-  updated_at: z.coerce.date(),
 }).passthrough();
 
 export type ZammadTaskbarItem = z.infer<typeof zammadTaskbarItemSchema>;
@@ -18,10 +17,10 @@ export type ZammadTaskbarItem = z.infer<typeof zammadTaskbarItemSchema>;
 function mismatch(): ProviderError {
   return new ProviderError(
     "provider-data-mismatch",
-    "The helpdesk taskbar contract is not compatible with this Zammad version.",
+    "The helpdesk tab import contract is not compatible with this Zammad version.",
     false,
     undefined,
-    "taskbar-contract-mismatch",
+    "tab-import-contract-mismatch",
   );
 }
 

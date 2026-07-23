@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { trimArticleBodyHtml } from "@/features/workspace/components/ticket-article-body-trim";
+import {
+  providerSignatureBoundary,
+  trimWithProviderSignatureBoundary,
+} from "./ticket-article-signature-test-helpers";
 
 describe("precision-first article signature detection", () => {
   it("keeps the full message and sign-off before a terminal signature table", () => {
@@ -70,7 +74,7 @@ describe("precision-first article signature detection", () => {
   });
 
   it("prefers an earlier compact contact block over a quoted marker", () => {
-    const result = trimArticleBodyHtml(`
+    const result = trimWithProviderSignatureBoundary(`
       <div>
         <div>The available times are listed above.</div>
         <div>Arbitrary sign-off</div>
@@ -79,7 +83,7 @@ describe("precision-first article signature detection", () => {
           <strong>+1 (555) 867-5309</strong><br>
           <u>person@example.test</u>
         </div>
-        <div>Earlier author<br><span data-resolvrr-signature-boundary="explicit"></span></div>
+        <div>Earlier author<br>${providerSignatureBoundary}</div>
         <div>Older signature content with enough text to keep the disclosure useful.</div>
       </div>
     `);
@@ -169,10 +173,10 @@ describe("precision-first article signature detection", () => {
   });
 
   it("prefers an explicit boundary over earlier linked content", () => {
-    const result = trimArticleBodyHtml(`
+    const result = trimWithProviderSignatureBoundary(`
       <p>Use <a href="https://one.example.test">one</a> and <a href="https://two.example.test">two</a> to complete the work.</p>
       <p>Arbitrary sign-off</p>
-      <span data-resolvrr-signature-boundary="explicit"></span>
+      ${providerSignatureBoundary}
       <div>Example Agent<br>Customer Operations<br>agent@example.test</div>
     `);
 

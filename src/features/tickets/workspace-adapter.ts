@@ -188,6 +188,7 @@ export function workspaceTicketDetail(
       kind: article.kind,
       meta: articleMeta(article),
       sanitizedHtml: article.sanitizedHtml,
+      signatureHints: article.signatureHints,
       visibility: article.visibility,
       attachments: article.attachments.map(workspaceAttachment),
       forwardContext: article.forwardContext,

@@ -37,6 +37,7 @@ export { updateWorkspaceTicketMetadata } from "./metadata-mutation-service";
 export type WorkspaceTicketDetailLoadOptions =
   TicketDetailCacheLoadOptions & {
     helpdeskConnectionId?: string;
+    identityVersion?: string;
     workspaceId?: string;
   };
 
@@ -128,6 +129,7 @@ export async function loadWorkspaceTicketDetail(
         userId,
         options.helpdeskConnectionId,
         "detail",
+        options.identityVersion,
       )
     : await loadActiveTicketProviderContext(
         repository,

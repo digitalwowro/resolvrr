@@ -12,7 +12,7 @@ import type {
 } from "@/core/tickets";
 import { ticketInlineImagePath } from "@/core/ticket-inline-images";
 import {
-  sanitizeZammadArticleBody,
+  sanitizeZammadArticleBodyResult,
   zammadArticleSignatureDetectionLine,
 } from "./article-body";
 import {
@@ -249,20 +249,23 @@ export function mapArticle(
   options?: { helpdeskConnectionId?: string },
 ): TicketArticle {
   const direction = articleDirection(article);
-  const sanitizedHtml = sanitizeZammadArticleBody(article.body ?? "", {
-    signatureDetectionLine: zammadArticleSignatureDetectionLine(article),
-    rewriteImageSource: (source) => {
-      const attachmentId = zammadInlineAttachmentIdForSource(article, source);
-      if (attachmentId === undefined || !options?.helpdeskConnectionId) {
-        return undefined;
-      }
-      return ticketInlineImagePath(options.helpdeskConnectionId, {
-        articleExternalId: String(article.id),
-        attachmentExternalId: String(attachmentId),
-        ticketExternalId: String(article.ticket_id),
-      });
+  const { sanitizedHtml, signatureHints } = sanitizeZammadArticleBodyResult(
+    article.body ?? "",
+    {
+      signatureDetectionLine: zammadArticleSignatureDetectionLine(article),
+      rewriteImageSource: (source) => {
+        const attachmentId = zammadInlineAttachmentIdForSource(article, source);
+        if (attachmentId === undefined || !options?.helpdeskConnectionId) {
+          return undefined;
+        }
+        return ticketInlineImagePath(options.helpdeskConnectionId, {
+          articleExternalId: String(article.id),
+          attachmentExternalId: String(attachmentId),
+          ticketExternalId: String(article.ticket_id),
+        });
+      },
     },
-  });
+  );
   const role = participantRole(direction);
 
   return {
@@ -275,6 +278,7 @@ export function mapArticle(
     createdAt: requiredDate(article.created_at),
     subject: article.subject ?? undefined,
     sanitizedHtml,
+    ...(signatureHints.length > 0 ? { signatureHints } : {}),
     textPreview: textPreview(sanitizedHtml),
     attachments: attachments(article),
   };

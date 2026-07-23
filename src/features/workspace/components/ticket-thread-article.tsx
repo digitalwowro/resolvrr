@@ -120,7 +120,10 @@ export function TicketThreadArticle({
           {hasRecipientDetails && isExpanded ? (
             <ArticleContactDetails article={article} />
           ) : null}
-          <TicketArticleBody html={article.sanitizedHtml} />
+          <TicketArticleBody
+            html={article.sanitizedHtml}
+            signatureHints={article.signatureHints}
+          />
           <TicketArticleAttachments
             articleExternalId={article.id}
             attachments={article.attachments}

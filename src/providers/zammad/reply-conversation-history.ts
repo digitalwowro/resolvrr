@@ -8,7 +8,7 @@ import type {
   TicketConversationHistoryScope,
 } from "@/core/ticket-conversation-history";
 import {
-  normalizeZammadSignatureBoundaries,
+  normalizeZammadSignatureBodyResult,
   sanitizeZammadArticleBody,
   zammadArticleSignatureDetectionLine,
 } from "./article-body";
@@ -152,11 +152,13 @@ export function zammadVisibleReplyHistoryArticleBody(
   const body = article.content_type?.toLowerCase() === "text/plain"
     ? `<p>${escapeHtml(article.body ?? "").replace(/\n/gu, "<br>")}</p>`
     : article.body ?? "";
+  const normalized = normalizeZammadSignatureBodyResult(
+    body,
+    zammadArticleSignatureDetectionLine(article),
+  );
   return visibleTicketArticleMessageHtml(
-    normalizeZammadSignatureBoundaries(
-      body,
-      zammadArticleSignatureDetectionLine(article),
-    ),
+    normalized.html,
+    { signatureHints: normalized.signatureHints },
   );
 }
 

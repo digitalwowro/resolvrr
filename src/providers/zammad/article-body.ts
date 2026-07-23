@@ -1,72 +1,46 @@
+import type { TicketArticleSignatureHint } from "@/core/ticket-article-signatures";
 import {
   sanitizeProviderHtml,
   type ProviderHtmlSanitizationOptions,
 } from "@/security/sanitize-html";
+import {
+  finalizeZammadSignatureHints,
+  prepareZammadSignatureHints,
+} from "./article-signature-hints";
 import type { ZammadArticle } from "./schemas";
-
-const zammadSignatureMarkerPattern =
-  /<span\b[^>]*class=(['"])[^'"]*\bjs-signatureMarker\b[^'"]*\1[^>]*>\s*<\/span>/giu;
-const zammadSignatureContainerPattern = /<(?:div|section)\b[^>]*>/giu;
-const classAttributePattern = /\sclass=(['"])([^'"]*)\1/giu;
-const temporarySignatureMarker =
-  '<span class="js-signatureMarker"></span>';
-
-const neutralSignatureBoundary =
-  '<span data-resolvrr-signature-boundary="explicit"></span>';
 
 type ZammadArticleBodyOptions = ProviderHtmlSanitizationOptions & {
   signatureDetectionLine?: number;
 };
 
-function isZammadSignatureContainer(tag: string) {
-  return /\bclass\s*=\s*(['"])[^'"]*\bjs-signatureMarker\b[^'"]*\1/iu
-      .test(tag) ||
-    /\bdata-signature\s*=\s*(['"])true\1/iu.test(tag);
+export type NormalizedZammadSignatureBody = {
+  html: string;
+  signatureHints: TicketArticleSignatureHint[];
+};
+
+export type SanitizedZammadArticleBody = {
+  sanitizedHtml: string;
+  signatureHints: TicketArticleSignatureHint[];
+};
+
+function isValidSignatureDetectionLine(value: unknown): value is number {
+  return typeof value === "number" &&
+    Number.isFinite(value) &&
+    Number.isInteger(value) &&
+    value > 0;
 }
 
-function prepareZammadSignatureBoundaries(
+function normalizedSignatureBody(
   html: string,
   signatureDetectionLine?: number,
-) {
-  const hasStandaloneMarker = zammadSignatureMarkerPattern.test(html);
-  zammadSignatureMarkerPattern.lastIndex = 0;
-  let prepared = hasStandaloneMarker
-    ? html
-    : html.replace(zammadSignatureContainerPattern, (tag) =>
-        isZammadSignatureContainer(tag)
-          ? `${temporarySignatureMarker}${tag}`
-          : tag
-      );
-  if (
-    Number.isInteger(signatureDetectionLine) &&
-    Number(signatureDetectionLine) > 0 &&
-    !zammadSignatureMarkerPattern.test(prepared)
-  ) {
-    const parts = prepared.split(/<br\s*\/?>/iu);
-    const insertionIndex = Math.min(Number(signatureDetectionLine), parts.length);
-    parts.splice(insertionIndex, 0, temporarySignatureMarker);
-    prepared = parts.join("<br>");
-  }
-  zammadSignatureMarkerPattern.lastIndex = 0;
-  return prepared;
-}
-
-function removeZammadMarkerClasses(html: string) {
-  return html.replace(classAttributePattern, (_attribute, quote, value) => {
-    const classes = String(value)
-      .split(/\s+/u)
-      .filter((className) => className && className !== "js-signatureMarker");
-    return classes.length ? ` class=${quote}${classes.join(" ")}${quote}` : "";
-  });
-}
-
-function finalizeZammadSignatureBoundaries(html: string) {
-  const normalized = html.replace(
-    zammadSignatureMarkerPattern,
-    neutralSignatureBoundary,
+): NormalizedZammadSignatureBody {
+  const prepared = prepareZammadSignatureHints(
+    html,
+    isValidSignatureDetectionLine(signatureDetectionLine)
+      ? signatureDetectionLine
+      : undefined,
   );
-  zammadSignatureMarkerPattern.lastIndex = 0;
-  return removeZammadMarkerClasses(normalized);
+  return finalizeZammadSignatureHints(prepared.html, prepared.protocol);
 }
 
 export function zammadArticleSignatureDetectionLine(
@@ -75,29 +49,40 @@ export function zammadArticleSignatureDetectionLine(
   const preferences = article.preferences;
   if (!preferences || typeof preferences !== "object") return undefined;
   const value = (preferences as Record<string, unknown>).signature_detection;
-  const line = Number(value);
-  return Number.isInteger(line) && line > 0 ? line : undefined;
+  return isValidSignatureDetectionLine(value) ? value : undefined;
 }
 
-export function normalizeZammadSignatureBoundaries(
+export function normalizeZammadSignatureBodyResult(
   html: string,
   signatureDetectionLine?: number,
-): string {
-  return finalizeZammadSignatureBoundaries(
-    prepareZammadSignatureBoundaries(html, signatureDetectionLine),
+): NormalizedZammadSignatureBody {
+  return normalizedSignatureBody(html, signatureDetectionLine);
+}
+
+export function sanitizeZammadArticleBodyResult(
+  html: string,
+  options: ZammadArticleBodyOptions = {},
+): SanitizedZammadArticleBody {
+  const { signatureDetectionLine, ...sanitizationOptions } = options;
+  const prepared = prepareZammadSignatureHints(
+    html,
+    isValidSignatureDetectionLine(signatureDetectionLine)
+      ? signatureDetectionLine
+      : undefined,
   );
+  const finalized = finalizeZammadSignatureHints(
+    sanitizeProviderHtml(prepared.html, sanitizationOptions),
+    prepared.protocol,
+  );
+  return {
+    sanitizedHtml: finalized.html,
+    signatureHints: finalized.signatureHints,
+  };
 }
 
 export function sanitizeZammadArticleBody(
   html: string,
   options: ZammadArticleBodyOptions = {},
 ): string {
-  const { signatureDetectionLine, ...sanitizationOptions } = options;
-  const prepared = prepareZammadSignatureBoundaries(
-    html,
-    signatureDetectionLine,
-  );
-  return finalizeZammadSignatureBoundaries(
-    sanitizeProviderHtml(prepared, sanitizationOptions),
-  );
+  return sanitizeZammadArticleBodyResult(html, options).sanitizedHtml;
 }

@@ -35,11 +35,7 @@ import type {
   TicketListQuery,
   TicketListResult,
 } from "./ticket-list-query";
-import type {
-  TicketTaskbarCommand,
-  TicketTaskbarSnapshot,
-  TicketTaskbarSyncResult,
-} from "./ticket-taskbar";
+import type { TicketTabImportSnapshot } from "./ticket-tab-import";
 export type {
   TicketListBucket,
   TicketListCountRequest,
@@ -87,7 +83,7 @@ export type ProviderCapability =
   | "lookup:current-user"
   | "notifications:list"
   | "notifications:mark-read"
-  | "ticket-taskbar:sync"
+  | "ticket-tabs:import"
   | "search:full-text";
 
 export type ProviderErrorKind =
@@ -230,9 +226,5 @@ export type HelpdeskProviderPlugin = {
     context: ProviderContext,
     input: HelpdeskNotificationMarkReadInput,
   ): Promise<void>;
-  readTicketTaskbar?(context: ProviderContext): Promise<TicketTaskbarSnapshot>;
-  syncTicketTaskbar?(
-    context: ProviderContext,
-    commands: TicketTaskbarCommand[],
-  ): Promise<TicketTaskbarSyncResult>;
+  readTicketTabs?(context: ProviderContext): Promise<TicketTabImportSnapshot>;
 };

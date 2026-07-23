@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { trimArticleBodyHtml } from "@/features/workspace/components/ticket-article-body-trim";
+import {
+  providerSignatureBoundary,
+  trimWithProviderSignatureBoundary,
+} from "./ticket-article-signature-test-helpers";
 
 describe("trimArticleBodyHtml", () => {
   it("normalizes void tags for hydration-safe rendering", () => {
@@ -129,7 +133,7 @@ describe("trimArticleBodyHtml", () => {
 
   it("collapses the raw Zammad nested contact signature before a quoted reply", () => {
     const result = trimArticleBodyHtml(
-      '<div><div>Hello,<br /><br />Yes, this looks great!<br /><br />Fusce tempor sollicitudin varius. Vestibulum sit amet scelerisque augue, eu posuere augue. Aenean eget odio eros. Pellentesque eu felis sed augue malesuada bibendum vel at magna. Vivamus imperdiet pellentesque massa eget pharetra. Ut ultrices porttitor tellus, eget interdum arcu consectetur id. Nulla a nisi vulputate, scelerisque est et, ultricies mi. Nunc at mauris eget sapien luctus pulvinar. Maecenas consectetur lectus vel est eleifend, eu vehicula orci blandit.<br /><br /></div><div><div><div><strong>Razvan Rosca</strong></div><div><br /></div><div>+40 731 059 660<br /></div><div><a href="https://example.com/profile" rel="noreferrer noopener" target="_blank">Profile</a></div><div><a href="mailto:agent@example.com" rel="noreferrer noopener" target="_blank">agent@example.com</a></div></div></div><br /></div><br /><div><div>On Tue, Jun 2, 2026 at 5:01 PM Za Mad via Users &lt;users@example.com&gt; wrote:<br /></div><blockquote><div><div>Hello,<br /><br />Thanks, we\'re working on it!<br /><br />Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ullamcorper ipsum odio, eu pretium justo porta quis. Sed tempus sodales libero, eget bibendum dui dignissim in. Pellentesque sollicitudin feugiat sapien maximus varius. Integer eget elit dictum, pulvinar tortor a, egestas dolor. Nam pretium enim quis pharetra mattis. Sed pellentesque augue quis tellus bibendum sodales. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent maximus urna commodo tincidunt dapibus. Vestibulum cursus dui a malesuada laoreet. Suspendisse est mauris, efficitur vitae rutrum sed, rutrum vitae nisi. Nullam lorem arcu, ultrices cursus eleifend ac, auctor vitae mi. Praesent a tristique erat. Phasellus viverra, lacus in convallis iaculis, ex turpis bibendum dolor, vitae posuere mauris tellus in arcu. Etiam in ipsum neque. Pellentesque faucibus erat eget est vulputate vulputate sit amet et mi. Quisque eget faucibus massa.<br /><br /><div>Za Mad<br /><span data-resolvrr-signature-boundary="explicit"></span><br />--<br /> Super Support - Waterford Business Park<br /> 5201 Blue Lagoon Drive - 8th Floor &amp; 9th Floor - Miami, 33126 USA<br /> <a href="mailto:hot@example.com" rel="noreferrer noopener" target="_blank">hot@example.com</a> - <a href="http://www.example.com/" rel="noreferrer noopener" target="_blank">http://www.example.com/</a><br />--</div></div></div></blockquote></div>',
+      '<div><div>Hello,<br /><br />Yes, this looks great!<br /><br />Fusce tempor sollicitudin varius. Vestibulum sit amet scelerisque augue, eu posuere augue. Aenean eget odio eros. Pellentesque eu felis sed augue malesuada bibendum vel at magna. Vivamus imperdiet pellentesque massa eget pharetra. Ut ultrices porttitor tellus, eget interdum arcu consectetur id. Nulla a nisi vulputate, scelerisque est et, ultricies mi. Nunc at mauris eget sapien luctus pulvinar. Maecenas consectetur lectus vel est eleifend, eu vehicula orci blandit.<br /><br /></div><div><div><div><strong>Razvan Rosca</strong></div><div><br /></div><div>+40 731 059 660<br /></div><div><a href="https://example.com/profile" rel="noreferrer noopener" target="_blank">Profile</a></div><div><a href="mailto:agent@example.com" rel="noreferrer noopener" target="_blank">agent@example.com</a></div></div></div><br /></div><br /><div><div>On Tue, Jun 2, 2026 at 5:01 PM Za Mad via Users &lt;users@example.com&gt; wrote:<br /></div><blockquote><div><div>Hello,<br /><br />Thanks, we\'re working on it!<br /><br />Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ullamcorper ipsum odio, eu pretium justo porta quis. Sed tempus sodales libero, eget bibendum dui dignissim in. Pellentesque sollicitudin feugiat sapien maximus varius. Integer eget elit dictum, pulvinar tortor a, egestas dolor. Nam pretium enim quis pharetra mattis. Sed pellentesque augue quis tellus bibendum sodales. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent maximus urna commodo tincidunt dapibus. Vestibulum cursus dui a malesuada laoreet. Suspendisse est mauris, efficitur vitae rutrum sed, rutrum vitae nisi. Nullam lorem arcu, ultrices cursus eleifend ac, auctor vitae mi. Praesent a tristique erat. Phasellus viverra, lacus in convallis iaculis, ex turpis bibendum dolor, vitae posuere mauris tellus in arcu. Etiam in ipsum neque. Pellentesque faucibus erat eget est vulputate vulputate sit amet et mi. Quisque eget faucibus massa.<br /><br /><div>Za Mad<br><br />--<br /> Super Support - Waterford Business Park<br /> 5201 Blue Lagoon Drive - 8th Floor &amp; 9th Floor - Miami, 33126 USA<br /> <a href="mailto:hot@example.com" rel="noreferrer noopener" target="_blank">hot@example.com</a> - <a href="http://www.example.com/" rel="noreferrer noopener" target="_blank">http://www.example.com/</a><br />--</div></div></div></blockquote></div>',
     );
 
     expect(result.collapsed).toBe(true);
@@ -142,13 +146,13 @@ describe("trimArticleBodyHtml", () => {
   });
 
   it("closes visible inline tags when trimming inside a wrapper", () => {
-    const result = trimArticleBodyHtml(
+    const result = trimWithProviderSignatureBoundary(
       [
         "<span>Hello,<br><br>",
         "Thanks, we're working on it!<br><br>",
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>",
         "Za Mad<br><br>",
-        '<span data-resolvrr-signature-boundary="explicit"></span>',
+        providerSignatureBoundary,
         "+40 731 059 660<br>",
         "https://example.com/profile<br>",
         "https://example.com/company<br><br>",
@@ -166,13 +170,13 @@ describe("trimArticleBodyHtml", () => {
   });
 
   it("removes trailing breaks inside the final visible block", () => {
-    const result = trimArticleBodyHtml(
+    const result = trimWithProviderSignatureBoundary(
       [
         "Hello,<br><br>",
         "Thanks, we're working on it!<br><br>",
         "<span>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</span><br><br>",
         "<div>  Za Mad<br><br></div>",
-        "<span data-resolvrr-signature-boundary=\"explicit\"></span><br>--<br>",
+        `${providerSignatureBoundary}<br>--<br>`,
         "Super Support - Waterford Business Park<br>",
         "5201 Blue Lagoon Drive<br>",
         "Email: hot@example.com - Web: http://www.example.com/<br>--",
@@ -221,12 +225,12 @@ describe("trimArticleBodyHtml", () => {
   });
 
   it("keeps authored content after an inline quoted line", () => {
-    const result = trimArticleBodyHtml(`
+    const result = trimWithProviderSignatureBoundary(`
       <p>Hi Remon,</p>
       <p>&gt; A selected sentence from the earlier message.</p>
       <p>Could you confirm how many deployments are planned?</p>
       <p>The required training must be completed before access.</p>
-      <span data-resolvrr-signature-boundary="explicit"></span>
+      ${providerSignatureBoundary}
       <div><p>Regards,<br>Example Agent<br>example.test</p></div>
     `);
 
@@ -240,11 +244,11 @@ describe("trimArticleBodyHtml", () => {
   });
 
   it("does not let an earlier ordinary table override an explicit boundary", () => {
-    const result = trimArticleBodyHtml(`
+    const result = trimWithProviderSignatureBoundary(`
       <p>Authored message with enough context to remain visible.</p>
       <table><tbody><tr><td>Ordinary business data</td></tr></tbody></table>
       <p>Additional authored content after the table.</p>
-      <span data-resolvrr-signature-boundary="explicit"></span>
+      ${providerSignatureBoundary}
       <div><p>Regards,<br>Example Agent<br>example.test</p></div>
     `);
 

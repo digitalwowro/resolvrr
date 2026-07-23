@@ -138,60 +138,41 @@ cannot overwrite a newer local tab action.
 Persisted tabs without a valid selectable state key are removed individually;
 legacy `Unknown` merged tabs do not invalidate otherwise valid preferences.
 
-When the active provider supports ticket taskbar synchronization, Zammad's
-ticket tasks are the initial source of truth for open tabs and ordering.
-Resolvrr then sends every explicit local open, close, activation, and reorder
-immediately. Failed writes keep the local action, show `Not synchronized` on
-affected tabs, and retry during the 60-second/focus reconciliation. Once the
-server confirms that an action is durably staged, the browser stops resending
-that explicit action and polls the server outbox instead, so an old retry cannot
-overwrite a newer action from another window. Only ticket tasks participate;
-other provider taskbar item types are untouched.
-When the affected tab is no longer visible, such as after a failed close,
-Resolvrr shows one global pending-change notice instead of silently hiding the
-retry state.
-Opening a new local ticket stages independent durable open and active intents;
-selecting an existing tab sends only the idempotent activation. This preserves
-every newly opened tab while rapid selection keeps only the latest active
-intent. The provider also creates a missing ticket task defensively before
-activating it. Older asynchronous provider snapshots cannot replace a newer
-local action. Closing the active tab also synchronizes
-the selected successor, or List when no successor remains. Ordinary in-flight
-commands do not show warning dots or banners. The existing workspace open-tab
-cap still bounds hydration and rendering, but always retains a positively
-identified active ticket and any local draft-protected conflict. Opening beyond
-the cap synchronizes the resulting local eviction as a provider close. Repeated
-focus events are coalesced, rapid selections send only the latest active intent,
-and separate in-memory queues are bound to the full user, workspace, personal
-connection, and identity-version scope. Old-scope responses cannot update the
-current workspace. Polling and explicit synchronization stay disabled until
-that complete personal scope is available; the client never submits an
-unscoped taskbar request.
-Opening a ticket from notifications preserves the notification-first local
-position in the provider; pending reorder intent executes after pending
-open/close work so it cannot be applied before the referenced task exists.
+Resolvrr tabs are authoritative local workspace state. Ordinary ticket opens,
+closes, activation, ordering, direct links, notifications, browser focus, and
+refreshes never read or write another application's tab state. There is no
+background polling, retry queue, remote active-ticket navigation, or
+`Not synchronized` tab state.
+
+When the provider advertises `ticket-tabs:import`, the global header shows a
+`Sync tabs` button. It performs one explicit, read-only, best-effort import of
+the signed-in user's desktop ticket tabs. Existing Resolvrr tabs keep their
+order, the active Resolvrr pane never changes, and missing provider tabs are
+appended in provider order. Non-ticket and non-desktop provider tasks are
+ignored. Resolvrr never closes, reorders, or evicts a local tab to match the
+provider, and it never pushes Resolvrr tabs back. The 20-tab cap remains
+authoritative; excess provider tabs are skipped with visible feedback. Imported
+tabs do not become recently viewed until the user actually opens them. Each
+import hydrates no more tickets than the free capacity present when the action
+starts, and a second click cannot start a concurrent import.
+
+Imported identifiers are hydrated through the same personal connection,
+workspace, and identity version used for the initial import read. Merged sources
+resolve to their final accessible survivor, duplicates are removed, and
+inaccessible/deleted tickets are skipped. Import reports committed imports,
+unavailable items, duplicates, capacity skips, and bounded-scan skips separately.
+Ticket-specific unavailable results do not prevent later candidates from being
+considered. An import-wide connection, credential, rate-limit, or temporary
+provider failure stops further hydration after the current bounded batch and
+shows the applicable retry guidance. If the scoped workspace component unmounts,
+the obsolete in-flight generation cannot append tabs or publish late feedback.
+A failed or incompatible read is shown once and is retried only when the user
+presses `Sync tabs` again.
+
 Notification reads remain available when one stale notification references a
 ticket that was deleted or is no longer accessible. Only that item is omitted;
 provider authentication, connectivity, and contract failures continue to show
 the notification error state.
-
-Provider absence closes a clean local tab unless a newer local open remains
-pending. Unsent communication keeps its tab open as a conflict; explicit close
-offers Cancel, Keep draft & close, and Discard & close. Keep retains the local
-browser recovery record; Discard clears it locally before closing. Draft
-presence publishes before IndexedDB settles, preventing reconciliation or
-initial replacement from closing the tab.
-A positively identified provider active ticket switches every visible Resolvrr
-session on its next reconciliation. Missing, multiple, or indeterminate active
-values never force Resolvrr to List. An active non-ticket Zammad task also makes
-ticket selection indeterminate rather than allowing a stale ticket-active flag
-to switch Resolvrr.
-
-If a stale provider task points to a merged source ticket, Resolvrr resolves it
-through the normal provider-neutral merge contract, ensures the surviving
-ticket task exists and is active when required, and only then closes the source
-task. The workspace renders and selects the surviving ticket without exposing a
-nested or editable merged source.
 
 Horizontal ticket tabs sit directly above the list toolbar or selected-ticket
 pane. The List tab starts the tab strip; horizontal tabs stay constrained to the
@@ -232,11 +213,8 @@ The browser URL is kept aligned with the active ticket or List view. The ticket
 detail header also exposes an icon-only copy-link control that writes the
 current ticket's direct `/workspace?ticket=ID` URL to the clipboard.
 
-With ticket taskbar synchronization enabled, selecting List is a synchronized
-active-pane action rather than a browser-only state. Resolvrr immediately keeps
-List selected, clears active ticket tasks through the provider, and retries a
-failed deactivation without allowing an older remote active ticket to bounce the
-workspace back during mount, interval, or focus reconciliation.
+Selecting List is browser-local workspace navigation and never changes provider
+task state.
 
 An old URL or tab for a merged source resolves to the final surviving ticket
 before editable detail is rendered. The source tab is replaced and deduplicated,
@@ -265,16 +243,22 @@ images render in place through authenticated same-origin URLs and retain safe
 provider dimensions; remote images stay blocked. Wide layouts scroll within the article.
 Public reply-capable articles expose provider-neutral Reply and, for email,
 enabled or disabled Reply all. Internal/system/unsupported articles expose no reply action.
-Article signature collapse is precision-first and language-neutral: provider-normalized
-explicit containers and learned boundaries are authoritative anchors; a strongly isolated
-adjacent signature block may extend their range. A plain-text `>` quote collapses
-only as a terminal quoted suffix. Terminal rich-media contact tables require multiple
-images and links, a displayed contact link, and phone-shaped text; this keeps galleries
-visible. Structural candidates rank local evidence and nesting depth. Sibling clusters
-may join contact, branding, and footer tables; a dense nested envelope may move an
-end-positioned marker to its start. Boundaries must leave more than only a greeting.
-A strong image contact block may include a bounded terminal footer. Ambiguous
-text remains visible, and sign-off wording is never evidence.
+Article signature collapse is precision-first and language-neutral. The provider may
+attach typed marker, container, or learned-line hints whose offsets refer to the final
+sanitized article HTML, but those hints are advisory evidence rather than instructions
+to hide content. The shared core detector validates every boundary, refines an
+over-broad provider container to a safer inner delimiter or terminal structural block
+when possible, and otherwise fails open with the complete article visible. A parser-based
+structural pass considers isolated terminal contact cards, semantic containers, sibling
+clusters, and nested envelopes without using sign-off wording as evidence. A plain-text
+`>` quote collapses only as a terminal quoted suffix. Terminal rich-media contact tables
+require multiple images and links, a displayed contact link, and phone-shaped text; this
+keeps galleries visible. Boundaries must leave substantive authored content, not only a
+greeting. The same validated split removes signatures from outbound conversation history,
+while the workspace additionally applies a presentation-only size threshold before
+showing a disclosure for short hidden content. Redacted golden fixtures cover known
+signature shapes and ambiguous business content so future detector changes are
+regression-checked without retaining live message bodies.
 Public email articles expose Forward independently of Reply eligibility.
 Comment exists only in the ticket footer. Footer Reply and Reply all use the
 newest reply-capable public article; an older article action explicitly overrides
