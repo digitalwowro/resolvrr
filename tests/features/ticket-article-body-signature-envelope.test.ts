@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { trimArticleBodyHtml } from
-  "@/features/workspace/components/ticket-article-body-trim";
+import {
+  providerSignatureBoundary,
+  trimWithProviderSignatureBoundary,
+} from "./ticket-article-signature-test-helpers";
 
 const nestedEnvelope = `
   <div>
@@ -58,11 +60,11 @@ const quotedHistory = `
 
 describe("nested signature envelope detection", () => {
   it("moves an end-positioned provider marker before the contact envelope", () => {
-    const result = trimArticleBodyHtml(`
+    const result = trimWithProviderSignatureBoundary(`
       <div>Any update on this inquiry?</div>
       ${nestedEnvelope}
       <div><br></div>
-      <span data-resolvrr-signature-boundary="explicit"></span>
+      ${providerSignatureBoundary}
       ${quotedHistory}
     `);
 
@@ -79,10 +81,10 @@ describe("nested signature envelope detection", () => {
   });
 
   it("does not move the boundary when only a short greeting precedes it", () => {
-    const result = trimArticleBodyHtml(`
+    const result = trimWithProviderSignatureBoundary(`
       <div>Hello recipient,</div>
       ${nestedEnvelope}
-      <span data-resolvrr-signature-boundary="explicit"></span>
+      ${providerSignatureBoundary}
       ${quotedHistory}
     `);
 
@@ -93,9 +95,9 @@ describe("nested signature envelope detection", () => {
   });
 
   it("preserves a normal provider marker placed before the signature", () => {
-    const result = trimArticleBodyHtml(`
+    const result = trimWithProviderSignatureBoundary(`
       <p>The requested account update has now been completed.</p>
-      <span data-resolvrr-signature-boundary="explicit"></span>
+      ${providerSignatureBoundary}
       ${nestedEnvelope}
     `);
 

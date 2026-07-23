@@ -98,6 +98,7 @@ export type WorkspaceArticle = {
   kind?: TicketArticle["kind"];
   meta: string;
   sanitizedHtml: string;
+  signatureHints?: TicketArticle["signatureHints"];
   visibility: string;
   attachments: WorkspaceAttachment[];
   forwardContext?: TicketArticleForwardContext;

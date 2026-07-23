@@ -92,7 +92,7 @@ bounds; responses are `private, no-store`, with no raw provider URL or credentia
 Provider plugins must sanitize provider HTML before returning articles to core
 features. Raw provider article bodies are not part of the contract. UI code
 renders `sanitizedHtml` as read-only rich text and must not reintroduce raw
-provider HTML.
+provider HTML. Signature hints never authorize removal; shared core validates, refines, or fails open.
 
 ## Controlled Metadata Mutations
 

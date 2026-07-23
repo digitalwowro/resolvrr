@@ -188,12 +188,24 @@ newest-first read-only transcript after the current outbound signature.
 Internal notes, system events, and private articles never enter the transcript.
 Mention conversion applies only to the newly authored body.
 
-Inbound Zammad article mapping treats explicit signature marker containers and
-the provider's learned signature position as authoritative anchors. Those raw
-signals become one provider-neutral marker before workspace rendering; a strong
-adjacent signature structure may extend the hidden range to include the complete
-current signature before an older quoted marker. A plain-text `>` line collapses
-only when it begins a terminal quoted suffix, so it cannot hide later authored text.
+Inbound Zammad article mapping converts explicit signature markers, explicit
+signature containers, and strictly valid positive-integer learned signature
+positions into typed provider-neutral hints over the final sanitized HTML.
+Raw classes, attributes, learned-position fields, and provider conditionals stay
+inside `src/providers/zammad/**`; no synthetic boundary element is injected into
+article HTML, so typed hints remain the single provider signal. These hints are
+deliberately advisory: provider
+markup can be over-broad and may enclose authored message content. The shared core
+detector validates each hint, may refine an over-broad container to a safer inner
+delimiter or terminal structural block, and fails open when no safe boundary
+exists. A parser-based structural pass supplies independent language-neutral
+evidence for compact contact cards, semantic containers, sibling clusters, and
+nested envelopes. The workspace disclosure and outbound conversation-history
+assembly consume the same validated split; only the workspace applies an
+additional presentation threshold before showing a disclosure. A redacted golden
+corpus covers the known provider shapes and ambiguous non-signature content. A
+plain-text `>` line collapses only when it begins a terminal quoted suffix, so it
+cannot hide later authored text.
 
 Zammad forwarding is independent of reply derivation. Any public email article
 may expose a provider-neutral forward context, including system-originated mail

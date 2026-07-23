@@ -28,7 +28,10 @@ function publicConversationArticles(
 }
 
 function ConversationArticle({ article }: { article: WorkspaceArticle }) {
-  const visibleHtml = visibleTicketArticleMessageHtml(article.sanitizedHtml);
+  const visibleHtml = visibleTicketArticleMessageHtml(
+    article.sanitizedHtml,
+    { signatureHints: article.signatureHints },
+  );
   return (
     <div className="border-t border-slate-100 py-3 first:border-t-0 first:pt-0">
       <p className="text-xs font-semibold text-slate-700">

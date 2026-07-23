@@ -155,9 +155,13 @@ added, moved, renamed, or removed.
     - `ticket-attachments.ts` (`src/core/ticket-attachments.ts`): provider-neutral visible-file
       locator, bounded byte result, and authenticated same-origin download-path contracts.
     - `ticket-article-content*.ts` (`src/core/ticket-article-content*.ts`): shared provider-neutral
-      sanitized article quote/signature detection, containment-aware structural, sibling-cluster,
-      and nested-envelope ranking, visible-message extraction, and disclosure contracts used by
-      workspace rendering and outbound transcript assembly.
+      sanitized article quote/signature decision, parser-based structural analysis,
+      containment-aware sibling-cluster and nested-envelope ranking, typed-hint validation and
+      refinement, visible-message extraction, and disclosure contracts used by workspace
+      rendering and outbound transcript assembly.
+    - `ticket-article-signatures.ts` (`src/core/ticket-article-signatures.ts`): typed
+      provider-neutral advisory marker, container-range, and learned-line signature hints whose
+      offsets refer to final sanitized article HTML.
     - `ticket-conversation-history.ts` (`src/core/ticket-conversation-history.ts`):
       provider-neutral current/through-source history scope and opaque reviewed context contracts.
     - `ticket-replies.ts` (`src/core/ticket-replies.ts`): focused provider-neutral contextual
@@ -1122,8 +1126,13 @@ added, moved, renamed, or removed.
         message-alternative, referenced-inline-resource, and user-visible attachment
         classification for raw CID and transformed inline-URL article bodies.
       - `article-body.ts` (`src/providers/zammad/article-body.ts`): sanitized Zammad article-body
-        mapping that normalizes explicit signature containers and learned signature positions to
-        a provider-neutral boundary and accepts provider-owned inline-image source rewriting.
+        mapping that parses explicit markers and containers, strictly validates learned signature
+        positions, emits typed provider-neutral advisory hints with final-HTML offsets, removes
+        raw provider markers, and accepts provider-owned inline-image source rewriting.
+      - `article-signature-hints.ts` (`src/providers/zammad/article-signature-hints.ts`):
+        per-operation unguessable hint transport, raw marker/container parsing, exact normalized
+        offset derivation, and reserved-class cleanup shared by sanitized display and raw
+        conversation-history preparation.
       - `mutation-policy.ts` (`src/providers/zammad/mutation-policy.ts`): Zammad-only state mutation
         availability rules, exposed to core/UI as canonical hidden state keys and pending-date
         requirements.
@@ -1446,6 +1455,15 @@ added, moved, renamed, or removed.
     - `tooltip.test.tsx` (`tests/components/tooltip.test.tsx`): verifies tooltip hover,
       keyboard-visible focus, viewport positioning, portal rendering, and close behavior.
   - `tests/features`: feature workflow, workspace behavior, saved-view, and ticket-service tests.
+    - `ticket-article-signature-golden-fixtures.ts`,
+      `ticket-article-signature-golden-fail-open-fixtures.ts`, and
+      `ticket-article-signature-golden-support.ts` (`tests/features`): split positive and fail-open
+      synthetic/redacted regression shapes plus typed-hint materialization helpers, without
+      storing live article content.
+    - `ticket-article-signature-golden.test.ts`
+      (`tests/features/ticket-article-signature-golden.test.ts`): verifies fail-open boundary
+      validation, over-broad provider-hint refinement, UI disclosure semantics, and shared
+      conversation-history extraction across the golden corpus.
     - `workspace-communication-draft-controller.test.ts`
       (`tests/features/workspace-communication-draft-controller.test.ts`): verifies exact personal
       browser scope, memory-first publishing, local revisioning, restore, and storage-safe clear.

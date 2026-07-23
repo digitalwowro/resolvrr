@@ -243,16 +243,22 @@ images render in place through authenticated same-origin URLs and retain safe
 provider dimensions; remote images stay blocked. Wide layouts scroll within the article.
 Public reply-capable articles expose provider-neutral Reply and, for email,
 enabled or disabled Reply all. Internal/system/unsupported articles expose no reply action.
-Article signature collapse is precision-first and language-neutral: provider-normalized
-explicit containers and learned boundaries are authoritative anchors; a strongly isolated
-adjacent signature block may extend their range. A plain-text `>` quote collapses
-only as a terminal quoted suffix. Terminal rich-media contact tables require multiple
-images and links, a displayed contact link, and phone-shaped text; this keeps galleries
-visible. Structural candidates rank local evidence and nesting depth. Sibling clusters
-may join contact, branding, and footer tables; a dense nested envelope may move an
-end-positioned marker to its start. Boundaries must leave more than only a greeting.
-A strong image contact block may include a bounded terminal footer. Ambiguous
-text remains visible, and sign-off wording is never evidence.
+Article signature collapse is precision-first and language-neutral. The provider may
+attach typed marker, container, or learned-line hints whose offsets refer to the final
+sanitized article HTML, but those hints are advisory evidence rather than instructions
+to hide content. The shared core detector validates every boundary, refines an
+over-broad provider container to a safer inner delimiter or terminal structural block
+when possible, and otherwise fails open with the complete article visible. A parser-based
+structural pass considers isolated terminal contact cards, semantic containers, sibling
+clusters, and nested envelopes without using sign-off wording as evidence. A plain-text
+`>` quote collapses only as a terminal quoted suffix. Terminal rich-media contact tables
+require multiple images and links, a displayed contact link, and phone-shaped text; this
+keeps galleries visible. Boundaries must leave substantive authored content, not only a
+greeting. The same validated split removes signatures from outbound conversation history,
+while the workspace additionally applies a presentation-only size threshold before
+showing a disclosure for short hidden content. Redacted golden fixtures cover known
+signature shapes and ambiguous business content so future detector changes are
+regression-checked without retaining live message bodies.
 Public email articles expose Forward independently of Reply eligibility.
 Comment exists only in the ticket footer. Footer Reply and Reply all use the
 newest reply-capable public article; an older article action explicitly overrides

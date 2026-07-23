@@ -47,6 +47,10 @@ conversation content.
   membership alone cannot select or read another member's cache. It does not cache
   raw provider payloads, provider request/response bodies, or background sync
   data.
+- Ticket-detail cache source version `v6` invalidates pre-hint article snapshots.
+  Refreshed encrypted records may contain typed provider-neutral signature hint
+  offsets tied to their sanitized HTML, but never raw provider signature fields,
+  classes, or unsanitized message bodies.
 - Merged source cache records are invalidated and never copied to the surviving
   ticket. Only the final provider-neutral detail may be cached under the final
   ticket identity.

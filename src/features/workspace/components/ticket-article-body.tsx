@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/components/ui/classnames";
+import type { TicketArticleSignatureHint } from
+  "@/core/ticket-article-signatures";
 import {
   trimArticleBodyHtml,
   type ArticleBodyHiddenKind,
@@ -9,6 +11,7 @@ import {
 
 type TicketArticleBodyProps = {
   html: string;
+  signatureHints?: readonly TicketArticleSignatureHint[];
 };
 
 const hiddenLabel: Record<ArticleBodyHiddenKind, string> = {
@@ -28,9 +31,15 @@ const articleBodyClassName = cn(
   "[&_img]:!h-auto [&_img]:!max-w-full [&_strong]:font-semibold [&_table]:max-w-full",
 );
 
-export function TicketArticleBody({ html }: TicketArticleBodyProps) {
+export function TicketArticleBody({
+  html,
+  signatureHints,
+}: TicketArticleBodyProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const body = useMemo(() => trimArticleBodyHtml(html), [html]);
+  const body = useMemo(
+    () => trimArticleBodyHtml(html, { signatureHints }),
+    [html, signatureHints],
+  );
 
   if (!body.collapsed) {
     return (

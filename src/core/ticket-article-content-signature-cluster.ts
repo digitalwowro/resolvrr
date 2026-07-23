@@ -2,14 +2,14 @@ import {
   normalizeLine,
   plainTextFromHtml,
 } from "./ticket-article-content-html";
+import {
+  countMatches,
+  hasStructuralSeparation,
+  isEmptyStructuralSeparator,
+  leavesSubstantiveMessage,
+  type SignatureStructuralBlock,
+} from "./ticket-article-content-signature-dom";
 import type { CollapseCandidate } from "./ticket-article-content-types";
-
-export type SignatureStructuralBlock = {
-  depth: number;
-  end: number;
-  start: number;
-  tagName: string;
-};
 
 const phoneTextPattern = /(?:^|\D)\+?\d[\d\s().|-]{6,}\d(?:\D|$)/u;
 const mailLinkPattern = /<a\b[^>]*href=(['"])mailto:[^'"]+\1/iu;
@@ -44,8 +44,8 @@ function isContactCardAnchor(html: string, block: SignatureStructuralBlock) {
   if (block.tagName !== "table") return false;
   const blockHtml = html.slice(block.start, block.end);
   const blockText = plainTextFromHtml(blockHtml).trim();
-  const rowCount = count(blockHtml, /<tr\b/giu);
-  const cellCount = count(blockHtml, /<t[dh]\b/giu);
+  const rowCount = countMatches(blockHtml, /<tr\b/giu);
+  const cellCount = countMatches(blockHtml, /<t[dh]\b/giu);
   return (
     blockText.length >= 30 &&
     blockText.length <= 800 &&
@@ -53,8 +53,8 @@ function isContactCardAnchor(html: string, block: SignatureStructuralBlock) {
     rowCount <= 3 &&
     cellCount >= 2 &&
     cellCount <= 8 &&
-    count(blockHtml, imagePattern) >= 2 &&
-    count(blockHtml, anchorPattern) >= 2 &&
+    countMatches(blockHtml, imagePattern) >= 2 &&
+    countMatches(blockHtml, anchorPattern) >= 2 &&
     emphasisPattern.test(blockHtml) &&
     mailLinkPattern.test(blockHtml) &&
     phoneTextPattern.test(blockText)
@@ -78,22 +78,24 @@ function hasTerminalSignatureTail(
 
   let cursor = anchor.end;
   for (const follower of followers) {
-    if (!isEmptySeparator(html.slice(cursor, follower.start))) return false;
+    if (!isEmptyStructuralSeparator(html.slice(cursor, follower.start), 800)) {
+      return false;
+    }
     if (!isAllowedSignatureTailTable(html.slice(follower.start, follower.end))) {
       return false;
     }
     cursor = follower.end;
   }
-  return isEmptySeparator(html.slice(cursor));
+  return isEmptyStructuralSeparator(html.slice(cursor), 800);
 }
 
 function isAllowedSignatureTailTable(tableHtml: string) {
   if (forbiddenTailPattern.test(tableHtml)) return false;
   const text = plainTextFromHtml(tableHtml).trim();
-  const rowCount = count(tableHtml, /<tr\b/giu);
-  const cellCount = count(tableHtml, /<td\b/giu);
-  const imageCount = count(tableHtml, imagePattern);
-  const linkCount = count(tableHtml, anchorPattern);
+  const rowCount = countMatches(tableHtml, /<tr\b/giu);
+  const cellCount = countMatches(tableHtml, /<td\b/giu);
+  const imageCount = countMatches(tableHtml, imagePattern);
+  const linkCount = countMatches(tableHtml, anchorPattern);
 
   const imageOnlyBranding =
     normalizeLine(text).length <= 4 &&
@@ -110,33 +112,4 @@ function isAllowedSignatureTailTable(tableHtml: string) {
     rowCount === 1 &&
     cellCount === 1;
   return imageOnlyBranding || singleCellFooter;
-}
-
-function leavesSubstantiveMessage(html: string, candidateStart: number) {
-  const visibleText = plainTextFromHtml(html.slice(0, candidateStart)).trim();
-  const visibleLines = visibleText
-    .split("\n")
-    .map(normalizeLine)
-    .filter(Boolean);
-  return visibleLines.length >= 2 || normalizeLine(visibleText).length >= 80;
-}
-
-function hasStructuralSeparation(htmlBefore: string) {
-  const tail = htmlBefore.slice(-220);
-  return (
-    /(?:<br\b[^>]*>\s*){2,}$/iu.test(tail) ||
-    /<\/(?:div|p|section)>\s*$/iu.test(tail)
-  );
-}
-
-function isEmptySeparator(html: string) {
-  return (
-    html.length <= 800 &&
-    plainTextFromHtml(html).trim() === "" &&
-    !/<(?:a|address|article|blockquote|footer|img|section|table)\b/iu.test(html)
-  );
-}
-
-function count(html: string, pattern: RegExp) {
-  return (html.match(pattern) ?? []).length;
 }
